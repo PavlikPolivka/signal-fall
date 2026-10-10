@@ -1,0 +1,43 @@
+{
+  "id": "holdout",
+  "name": "Holdout",
+  "palette": { "primary": "#6b7240", "secondary": "#8a4b2a", "accent": "#e8c35a" },
+  "constructionUnit": "homestead",
+  "harvester": "mule",
+  "engineer": "wrench",
+  "mechanics": {
+    "placement": "adjacent",
+    "adjacencyRange": 3,
+    "airGapped": true,
+    "salvagePct": 25
+  },
+  "structures": [
+    { "id": "holdfast", "name": "Holdfast", "role": "conyard", "tier": 1, "cost": 3000, "buildTime": 20, "hp": 3000, "power": 10, "footprint": [3, 3], "sight": 6 },
+    { "id": "dynamo", "name": "Dynamo", "role": "power", "key": "P", "category": "structures", "tier": 1, "cost": 300, "buildTime": 8, "hp": 800, "power": 100, "footprint": [2, 2], "sight": 4 },
+    { "id": "smelter", "name": "Smelter", "role": "refinery", "key": "R", "category": "structures", "tier": 1, "cost": 1400, "buildTime": 16, "hp": 1600, "power": -30, "footprint": [3, 3], "sight": 5, "requires": ["power"] },
+    { "id": "bunkhouse", "name": "Bunkhouse", "role": "barracks", "key": "B", "category": "structures", "tier": 1, "cost": 400, "buildTime": 10, "hp": 1000, "power": -20, "footprint": [2, 2], "sight": 5, "requires": ["power"], "produces": "infantry" },
+    { "id": "motor_pool", "name": "Motor Pool", "role": "factory", "key": "F", "category": "structures", "tier": 1, "cost": 1600, "buildTime": 18, "hp": 2000, "power": -30, "footprint": [3, 3], "sight": 5, "requires": ["refinery"], "produces": "vehicles" },
+    { "id": "radio_mast", "name": "Radio Mast", "role": "radar", "key": "U", "category": "structures", "tier": 1, "cost": 900, "buildTime": 14, "hp": 1000, "power": -40, "footprint": [2, 2], "sight": 10, "requires": ["refinery"] },
+    { "id": "garage", "name": "Garage", "role": "special", "key": "S", "category": "structures", "tier": 1, "cost": 700, "buildTime": 12, "hp": 1400, "power": -20, "footprint": [3, 2], "sight": 5, "requires": ["factory"], "repairRadius": 3 },
+    { "id": "airstrip", "name": "Airstrip", "role": "airfield", "key": "A", "category": "structures", "tier": 2, "cost": 1200, "buildTime": 18, "hp": 1400, "power": -30, "footprint": [3, 3], "sight": 5, "requires": ["radar"], "produces": "air" },
+    { "id": "foundry", "name": "Foundry", "role": "tech", "key": "T", "category": "structures", "tier": 2, "cost": 1800, "buildTime": 25, "hp": 1600, "power": -60, "footprint": [3, 3], "sight": 5, "requires": ["radar"] },
+    { "id": "pillbox", "name": "Pillbox", "role": "defense", "key": "D", "category": "defenses", "tier": 1, "cost": 500, "buildTime": 10, "hp": 1200, "power": -15, "footprint": [1, 1], "sight": 7, "requires": ["barracks"], "weapon": { "damage": 22, "type": "kinetic", "range": 5.5, "cooldown": 0.6, "targets": "ground" } },
+    { "id": "flak_nest", "name": "Flak Nest", "role": "antiAir", "key": "A", "category": "defenses", "tier": 2, "cost": 700, "buildTime": 12, "hp": 1000, "power": -20, "footprint": [2, 2], "sight": 8, "requires": ["radar"], "weapon": { "damage": 40, "type": "flak", "range": 7.5, "cooldown": 0.8, "targets": "air" } },
+    { "id": "bastion", "name": "Bastion", "role": "heavyDefense", "key": "H", "category": "defenses", "tier": 3, "cost": 1400, "buildTime": 20, "hp": 2200, "power": -50, "footprint": [2, 2], "sight": 10, "requires": ["tech"], "weapon": { "damage": 140, "type": "explosive", "range": 8.5, "cooldown": 2.2, "targets": "ground", "projectileSpeed": 12 } },
+    { "id": "barricade", "name": "Barricade", "role": "wall", "key": "W", "category": "defenses", "tier": 1, "cost": 40, "buildTime": 2, "hp": 600, "power": 0, "footprint": [1, 1], "sight": 1, "requires": ["power"] }
+  ],
+  "units": [
+    { "id": "grunt", "name": "Grunt", "key": "G", "tab": "infantry", "tier": 1, "armor": "light", "cost": 100, "buildTime": 4, "hp": 100, "speed": 1.6, "sight": 6, "radius": 0.3, "role": "Anti-infantry, cheap", "requires": ["barracks"], "weapon": { "damage": 12, "type": "kinetic", "range": 4, "cooldown": 0.6, "targets": "both" } },
+    { "id": "tankbuster", "name": "Tankbuster", "key": "T", "tab": "infantry", "tier": 1, "armor": "light", "cost": 300, "buildTime": 6, "hp": 120, "speed": 1.4, "sight": 6, "radius": 0.3, "role": "Anti-armor", "requires": ["barracks"], "weapon": { "damage": 70, "type": "explosive", "range": 5.5, "cooldown": 1.5, "targets": "ground", "projectileSpeed": 10 } },
+    { "id": "wrench", "name": "Wrench", "key": "W", "tab": "infantry", "tier": 1, "armor": "light", "cost": 500, "buildTime": 8, "hp": 80, "speed": 1.6, "sight": 5, "radius": 0.3, "role": "Engineer: capture, repair, salvage", "requires": ["barracks"], "abilities": [{ "kind": "engineer", "capture": true, "repair": true, "salvage": true }] },
+    { "id": "jackrabbit", "name": "Jackrabbit", "key": "J", "tab": "vehicles", "tier": 1, "armor": "medium", "cost": 400, "buildTime": 7, "hp": 240, "speed": 3.2, "sight": 8, "radius": 0.45, "role": "Scout, raid harvesters", "requires": ["factory"], "weapon": { "damage": 15, "type": "kinetic", "range": 4.5, "cooldown": 0.5, "targets": "both" } },
+    { "id": "mule", "name": "Mule", "key": "M", "tab": "vehicles", "tier": 1, "armor": "heavy", "cost": 1400, "buildTime": 12, "hp": 900, "speed": 1.4, "sight": 5, "radius": 0.6, "role": "Harvester", "requires": ["factory", "refinery"], "abilities": [{ "kind": "harvest", "capacity": 700 }] },
+    { "id": "bulldog", "name": "Bulldog", "key": "B", "tab": "vehicles", "tier": 2, "armor": "heavy", "cost": 900, "buildTime": 10, "hp": 800, "speed": 1.6, "sight": 6, "radius": 0.6, "role": "Main battle tank", "requires": ["factory", "radar"], "weapon": { "damage": 75, "type": "explosive", "range": 5, "cooldown": 1.5, "targets": "ground", "splash": 0.6, "projectileSpeed": 14 } },
+    { "id": "flak_track", "name": "Flak Track", "key": "F", "tab": "vehicles", "tier": 2, "armor": "medium", "cost": 700, "buildTime": 9, "hp": 320, "speed": 2.0, "sight": 7, "radius": 0.5, "role": "Mobile AA", "requires": ["factory", "radar"], "weapon": { "damage": 30, "type": "flak", "range": 6.5, "cooldown": 0.8, "targets": "air", "splash": 0.5 } },
+    { "id": "thumper", "name": "Thumper", "key": "T", "tab": "vehicles", "tier": 2, "armor": "medium", "cost": 900, "buildTime": 11, "hp": 240, "speed": 1.4, "sight": 6, "radius": 0.5, "role": "Artillery, long range", "requires": ["factory", "radar"], "weapon": { "damage": 90, "type": "siege", "range": 10, "minRange": 3, "cooldown": 3.5, "targets": "ground", "splash": 1, "projectileSpeed": 8 } },
+    { "id": "patch", "name": "Patch", "key": "P", "tab": "vehicles", "tier": 2, "armor": "medium", "cost": 600, "buildTime": 8, "hp": 320, "speed": 2.0, "sight": 6, "radius": 0.5, "role": "Repairs nearby vehicles", "requires": ["factory", "special"], "abilities": [{ "kind": "repairAura", "radius": 3, "hpPerSecond": 12 }] },
+    { "id": "hornet", "name": "Hornet", "key": "H", "tab": "air", "tier": 2, "armor": "air", "cost": 1000, "buildTime": 12, "hp": 300, "speed": 3.5, "sight": 8, "radius": 0.5, "role": "Anti-infantry gunship", "requires": ["airfield"], "weapon": { "damage": 18, "type": "kinetic", "range": 4, "cooldown": 0.4, "targets": "ground" } },
+    { "id": "ironclad", "name": "Ironclad", "key": "I", "tab": "vehicles", "tier": 3, "armor": "heavy", "cost": 2000, "buildTime": 20, "hp": 2400, "speed": 0.9, "sight": 7, "radius": 0.9, "role": "Walker: slow, huge HP, anti-everything ground", "requires": ["factory", "tech"], "weapon": { "damage": 110, "type": "explosive", "range": 6, "cooldown": 1.8, "targets": "ground", "splash": 0.9, "projectileSpeed": 14 } },
+    { "id": "homestead", "name": "Homestead", "key": "H", "tab": "vehicles", "tier": 1, "armor": "heavy", "cost": 3000, "buildTime": 20, "hp": 1500, "speed": 1.0, "sight": 6, "radius": 0.9, "role": "Construction unit: deploys a new base", "requires": ["factory", "refinery"], "abilities": [{ "kind": "deploy", "into": "holdfast" }] }
+  ]
+}

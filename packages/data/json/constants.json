@@ -1,0 +1,18 @@
+{
+  "tickRate": 20,
+  "startCredits": 7500,
+  "unitCap": 200,
+  "echoValuePerCrystal": 25,
+  "echoCellCap": 12,
+  "echoRegrowSeconds": 30,
+  "lowPowerSpeedPct": 50,
+  "sellRefundPct": 50,
+  "repairCostPct": 50,
+  "repairHpPctPerSecond": 4,
+  "extraFactoryBonusPct": [50, 25, 12],
+  "veterancyThresholdPct": [100, 250, 500],
+  "veterancyDamagePct": 10,
+  "veterancyHpPct": 10,
+  "wreckLifetime": 60,
+  "upgradeLevels": 2
+}

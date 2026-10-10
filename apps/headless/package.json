@@ -1,0 +1,17 @@
+{
+  "name": "@signal-fall/headless",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "signal-fall": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@signal-fall/data": "workspace:*",
+    "@signal-fall/sim": "workspace:*"
+  }
+}

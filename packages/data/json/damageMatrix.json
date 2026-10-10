@@ -1,0 +1,7 @@
+{
+  "kinetic": { "light": 100, "medium": 60, "heavy": 25, "air": 50, "structure": 25 },
+  "explosive": { "light": 40, "medium": 100, "heavy": 100, "air": 0, "structure": 75 },
+  "energy": { "light": 75, "medium": 100, "heavy": 60, "air": 75, "structure": 50 },
+  "flak": { "light": 50, "medium": 25, "heavy": 10, "air": 150, "structure": 10 },
+  "siege": { "light": 60, "medium": 75, "heavy": 50, "air": 0, "structure": 150 }
+}

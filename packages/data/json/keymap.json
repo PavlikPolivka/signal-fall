@@ -1,0 +1,36 @@
+{
+  "global": {
+    "panUp": ["ArrowUp"],
+    "panDown": ["ArrowDown"],
+    "panLeft": ["ArrowLeft"],
+    "panRight": ["ArrowRight"],
+    "jumpToAlert": ["Space"],
+    "jumpToBase": ["Backspace"],
+    "selectArmy": ["F2"],
+    "selectIdleHarvesters": ["F3"],
+    "controlGroupAssign": ["Ctrl+Digit#", "Alt+Digit#"],
+    "controlGroupAdd": ["Shift+Digit#"],
+    "controlGroupSelect": ["Digit#"],
+    "cycleSubgroup": ["Tab"],
+    "cancel": ["Escape"],
+    "menu": ["F10"]
+  },
+  "units": {
+    "move": ["KeyM"],
+    "attackMove": ["KeyA"],
+    "stop": ["KeyS"],
+    "hold": ["KeyH"],
+    "patrol": ["KeyP"],
+    "guard": ["KeyG"],
+    "scatter": ["KeyX"],
+    "deploy": ["KeyD"],
+    "ability": ["KeyF"]
+  },
+  "base": {
+    "buildMenu": ["KeyB"],
+    "defenseMenu": ["KeyN"],
+    "repair": ["Alt+KeyR"],
+    "sell": ["Alt+KeyS"]
+  },
+  "modifiers": { "queue": "Shift", "queueFive": "Shift" }
+}

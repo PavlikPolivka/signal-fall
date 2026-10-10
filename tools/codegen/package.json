@@ -1,0 +1,10 @@
+{
+  "name": "@signal-fall/codegen",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "trig": "tsx trig-table.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

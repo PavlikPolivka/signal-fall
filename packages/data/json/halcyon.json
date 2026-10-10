@@ -1,0 +1,43 @@
+{
+  "id": "halcyon",
+  "name": "Halcyon",
+  "monospaceNames": true,
+  "palette": { "primary": "#e8ecef", "secondary": "#2b2f36", "accent": "#3ee6ff" },
+  "constructionUnit": "init",
+  "harvester": "fetch",
+  "engineer": "fork",
+  "mechanics": {
+    "placement": "coverage",
+    "coverageFireRatePct": 15,
+    "coverageRegenHpPerSecond": 3,
+    "recompileRefundPct": 25
+  },
+  "structures": [
+    { "id": "kernel", "name": "kernel", "role": "conyard", "tier": 1, "cost": 3000, "buildTime": 20, "hp": 2600, "power": 10, "footprint": [3, 3], "sight": 6, "coverageRadius": 9 },
+    { "id": "powerd", "name": "powerd", "role": "power", "key": "P", "category": "structures", "tier": 1, "cost": 300, "buildTime": 8, "hp": 700, "power": 100, "footprint": [2, 2], "sight": 4, "coverageRadius": 4 },
+    { "id": "ingest", "name": "ingest", "role": "refinery", "key": "R", "category": "structures", "tier": 1, "cost": 1400, "buildTime": 16, "hp": 1400, "power": -30, "footprint": [3, 3], "sight": 5, "requires": ["power"], "coverageRadius": 6 },
+    { "id": "spawn", "name": "spawn", "role": "barracks", "key": "B", "category": "structures", "tier": 1, "cost": 400, "buildTime": 10, "hp": 900, "power": -20, "footprint": [2, 2], "sight": 5, "requires": ["power"], "produces": "infantry", "coverageRadius": 4 },
+    { "id": "make", "name": "make", "role": "factory", "key": "F", "category": "structures", "tier": 1, "cost": 1600, "buildTime": 18, "hp": 1800, "power": -30, "footprint": [3, 3], "sight": 5, "requires": ["refinery"], "produces": "vehicles", "coverageRadius": 5 },
+    { "id": "scan", "name": "scan", "role": "radar", "key": "U", "category": "structures", "tier": 1, "cost": 900, "buildTime": 14, "hp": 900, "power": -40, "footprint": [2, 2], "sight": 10, "requires": ["refinery"], "coverageRadius": 5 },
+    { "id": "relay", "name": "relay", "role": "special", "key": "S", "category": "structures", "tier": 1, "cost": 400, "buildTime": 8, "hp": 500, "power": -10, "footprint": [1, 1], "sight": 6, "requires": ["power"], "coverageRadius": 9 },
+    { "id": "launchd", "name": "launchd", "role": "airfield", "key": "A", "category": "structures", "tier": 2, "cost": 1200, "buildTime": 18, "hp": 1200, "power": -30, "footprint": [3, 3], "sight": 5, "requires": ["radar"], "produces": "air", "coverageRadius": 5 },
+    { "id": "sudo", "name": "sudo", "role": "tech", "key": "T", "category": "structures", "tier": 2, "cost": 1800, "buildTime": 25, "hp": 1400, "power": -60, "footprint": [3, 3], "sight": 5, "requires": ["radar"], "coverageRadius": 5 },
+    { "id": "guard", "name": "guard", "role": "defense", "key": "D", "category": "defenses", "tier": 1, "cost": 500, "buildTime": 10, "hp": 1000, "power": -15, "footprint": [1, 1], "sight": 7, "requires": ["barracks"], "weapon": { "damage": 16, "type": "energy", "range": 5.5, "cooldown": 0.5, "targets": "ground" } },
+    { "id": "filter", "name": "filter", "role": "antiAir", "key": "A", "category": "defenses", "tier": 2, "cost": 700, "buildTime": 12, "hp": 900, "power": -20, "footprint": [2, 2], "sight": 8, "requires": ["radar"], "weapon": { "damage": 40, "type": "flak", "range": 7.5, "cooldown": 0.8, "targets": "air" } },
+    { "id": "sigkill", "name": "sigkill", "role": "heavyDefense", "key": "H", "category": "defenses", "tier": 3, "cost": 1400, "buildTime": 20, "hp": 1800, "power": -50, "footprint": [2, 2], "sight": 10, "requires": ["tech"], "weapon": { "damage": 120, "type": "energy", "range": 9, "cooldown": 1.8, "targets": "ground" } },
+    { "id": "block", "name": "block", "role": "wall", "key": "W", "category": "defenses", "tier": 1, "cost": 40, "buildTime": 2, "hp": 500, "power": 0, "footprint": [1, 1], "sight": 1, "requires": ["power"] }
+  ],
+  "units": [
+    { "id": "sentry", "name": "sentry", "key": "S", "tab": "infantry", "tier": 1, "armor": "light", "cost": 150, "buildTime": 4, "hp": 90, "speed": 2.0, "sight": 6, "radius": 0.3, "role": "Anti-infantry bot", "requires": ["barracks"], "weapon": { "damage": 14, "type": "energy", "range": 4.5, "cooldown": 0.5, "targets": "both" } },
+    { "id": "lance", "name": "lance", "key": "L", "tab": "infantry", "tier": 1, "armor": "light", "cost": 300, "buildTime": 6, "hp": 100, "speed": 1.8, "sight": 6, "radius": 0.3, "role": "Anti-armor bot", "requires": ["barracks"], "weapon": { "damage": 65, "type": "explosive", "range": 5.5, "cooldown": 1.4, "targets": "ground", "projectileSpeed": 12 } },
+    { "id": "fork", "name": "fork", "key": "F", "tab": "infantry", "tier": 1, "armor": "light", "cost": 500, "buildTime": 8, "hp": 70, "speed": 2.0, "sight": 5, "radius": 0.3, "role": "Engineer: capture, repair", "requires": ["barracks"], "abilities": [{ "kind": "engineer", "capture": true, "repair": true }] },
+    { "id": "ping", "name": "ping", "key": "P", "tab": "vehicles", "tier": 1, "armor": "medium", "cost": 400, "buildTime": 7, "hp": 200, "speed": 4.0, "sight": 9, "radius": 0.45, "role": "Fast hover scout", "requires": ["factory"], "weapon": { "damage": 14, "type": "energy", "range": 4.5, "cooldown": 0.5, "targets": "both" } },
+    { "id": "fetch", "name": "fetch", "key": "F", "tab": "vehicles", "tier": 1, "armor": "heavy", "cost": 1400, "buildTime": 12, "hp": 750, "speed": 1.8, "sight": 5, "radius": 0.6, "role": "Harvester", "requires": ["factory", "refinery"], "abilities": [{ "kind": "harvest", "capacity": 700 }] },
+    { "id": "vector", "name": "vector", "key": "V", "tab": "vehicles", "tier": 2, "armor": "heavy", "cost": 1000, "buildTime": 10, "hp": 640, "speed": 2.2, "sight": 6, "radius": 0.6, "role": "Fast, lower-HP tank", "requires": ["factory", "radar"], "weapon": { "damage": 40, "type": "energy", "range": 5, "cooldown": 1.0, "targets": "ground" } },
+    { "id": "firewall", "name": "firewall", "key": "W", "tab": "vehicles", "tier": 2, "armor": "medium", "cost": 700, "buildTime": 9, "hp": 280, "speed": 2.4, "sight": 7, "radius": 0.5, "role": "Mobile AA", "requires": ["factory", "radar"], "weapon": { "damage": 30, "type": "flak", "range": 6.5, "cooldown": 0.8, "targets": "air", "splash": 0.5 } },
+    { "id": "broadcast", "name": "broadcast", "key": "B", "tab": "vehicles", "tier": 2, "armor": "medium", "cost": 1000, "buildTime": 11, "hp": 220, "speed": 1.8, "sight": 6, "radius": 0.5, "role": "Artillery, chains between targets", "requires": ["factory", "radar"], "weapon": { "damage": 75, "type": "siege", "range": 9.5, "minRange": 3, "cooldown": 3.5, "targets": "ground", "projectileSpeed": 10 }, "abilities": [{ "kind": "chain", "jumps": 2, "falloffPct": 60 }] },
+    { "id": "seek", "name": "seek", "key": "S", "tab": "air", "tier": 2, "armor": "air", "cost": 1100, "buildTime": 12, "hp": 260, "speed": 4.2, "sight": 8, "radius": 0.5, "role": "Anti-armor air", "requires": ["airfield"], "weapon": { "damage": 70, "type": "explosive", "range": 4.5, "cooldown": 1.6, "targets": "ground", "projectileSpeed": 14 } },
+    { "id": "root", "name": "root", "key": "R", "tab": "vehicles", "tier": 3, "armor": "heavy", "cost": 2200, "buildTime": 20, "hp": 1800, "speed": 1.4, "sight": 8, "radius": 0.9, "role": "Hover platform with Override", "requires": ["factory", "tech"], "weapon": { "damage": 60, "type": "energy", "range": 6, "cooldown": 0.9, "targets": "both" }, "abilities": [{ "kind": "override", "range": 7, "duration": 12, "cooldown": 45 }] },
+    { "id": "init", "name": "init", "key": "I", "tab": "vehicles", "tier": 1, "armor": "heavy", "cost": 3000, "buildTime": 20, "hp": 1300, "speed": 1.2, "sight": 6, "radius": 0.9, "role": "Construction unit: deploys a new base", "requires": ["factory", "refinery"], "abilities": [{ "kind": "deploy", "into": "kernel" }] }
+  ]
+}
