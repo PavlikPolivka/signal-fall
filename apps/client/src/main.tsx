@@ -32,8 +32,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
   let fpsFrames = 0;
   let fpsStart = performance.now();
   renderer.app.ticker.add((t) => {
+    const t0 = performance.now();
     input?.update(t.deltaMS / 1000);
     renderer.frame();
+    state.frameMs = state.frameMs * 0.95 + (performance.now() - t0) * 0.05;
     fpsFrames++;
     const now = performance.now();
     if (now - fpsStart >= 500) {

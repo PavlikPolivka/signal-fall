@@ -67,6 +67,8 @@ export class ClientState {
   /** Every command sent, newest last (for UI feedback and tests). */
   sent: Command[] = [];
   fps = 0;
+  /** Smoothed main-thread ms per frame spent in input + render prep. */
+  frameMs = 0;
 
   private listeners = new Set<() => void>();
   private uiVersion = 0;
