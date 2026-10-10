@@ -5,7 +5,8 @@ import type { Renderer } from '../render/renderer';
 import { bindings, matches, type Binding, type Context } from './keymap';
 
 const FX = 1024;
-const EDGE = 8;
+/** Edge-scroll zone in px from each side of the game view. */
+const EDGE = 48;
 const PAN_SPEED = 900; // world px per second at zoom 1
 const DOUBLE_MS = 350;
 
@@ -58,9 +59,7 @@ export class Input {
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
     // Track the cursor anywhere in the window; stop edge scrolling when it leaves.
-    document.addEventListener('pointerleave', () => (this.mouse.inside = false));
-    document.addEventListener('pointerenter', () => (this.mouse.inside = true));
-    window.addEventListener('pointerover', () => (this.mouse.inside = true));
+    document.documentElement.addEventListener('mouseleave', () => (this.mouse.inside = false));
   }
 
   // --- per-frame camera movement ---
@@ -77,11 +76,15 @@ export class Input {
     if (on('panUp')) dy -= step;
     if (on('panDown')) dy += step;
     if (this.mouse.inside && !this.drag && !this.state.menuOpen) {
-      // Scroll when the cursor touches any edge of the browser window.
-      if (this.mouse.x < EDGE) dx -= step;
-      if (this.mouse.x > window.innerWidth - EDGE) dx += step;
-      if (this.mouse.y < EDGE) dy -= step;
-      if (this.mouse.y > window.innerHeight - EDGE) dy += step;
+      // Scroll when the cursor is near an edge of the game view; faster closer to the edge.
+      const r = this.canvas.getBoundingClientRect();
+      const mx = this.mouse.x;
+      const my = this.mouse.y;
+      if (mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom) {
+        const ramp = (d: number) => (d < EDGE ? 0.35 + 0.65 * (1 - d / EDGE) : 0);
+        dx += step * (ramp(mx - r.left) > 0 ? -ramp(mx - r.left) : ramp(r.right - mx));
+        dy += step * (ramp(my - r.top) > 0 ? -ramp(my - r.top) : ramp(r.bottom - my));
+      }
     }
     if (dx || dy) {
       cam.x += dx;
@@ -252,6 +255,7 @@ export class Input {
   private onPointerMove(e: PointerEvent): void {
     this.mouse.x = e.clientX;
     this.mouse.y = e.clientY;
+    this.mouse.inside = true;
     const p = this.local(e);
     if (!this.drag) {
       if (e.target === this.canvas) this.updateCursor(p.x, p.y);
