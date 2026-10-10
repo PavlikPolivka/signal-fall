@@ -133,3 +133,36 @@ describe('stances and fog', () => {
     expect(Math.abs(e.x[g]! - at(10))).toBeLessThanOrEqual(FX_ONE + (FX_ONE >> 1));
   });
 });
+
+describe('attack orders', () => {
+  it('keep fighting toward the target position after it dies, instead of stopping', () => {
+    const sim = makeSim({ size: 48 });
+    const w = sim.world;
+    const e = w.entities;
+    const target = spawnUnit(w, unit('grace'), 1, at(30), at(10));
+    const guardian = spawnUnit(w, unit('grace'), 1, at(34), at(14)) & 0xffff;
+    const army = [spawnUnit(w, unit('bulldog'), 0, at(6), at(10)), spawnUnit(w, unit('grunt'), 0, at(6), at(12))];
+    // Reveal the target so the order is legal.
+    spawnUnit(w, unit('jackrabbit'), 0, at(26), at(10));
+    sim.run(4);
+    sim.schedule({ tick: sim.tick, player: 0, cmd: { type: 'attack', units: army, target } });
+    e.hp[target & 0xffff] = 1; // dies to the first hit
+    sim.run(20 * 30);
+    expect(e.resolve(target)).toBe(-1);
+    // The army pushed on and engaged the second enemy near the target's position.
+    expect(e.alive[guardian] === 0 || e.hp[guardian]! + e.shields[guardian]! < 100).toBe(true);
+  });
+
+  it('idle units shoot back at attackers beyond their acquire radius', () => {
+    const sim = makeSim({ size: 48 });
+    const w = sim.world;
+    const e = w.entities;
+    const tank = spawnUnit(w, unit('bulldog'), 0, at(10), at(10)) & 0xffff;
+    const arty = spawnUnit(w, unit('crescendo'), 1, at(19), at(10)) & 0xffff;
+    // Enemy artillery can see the tank via a spotter.
+    spawnUnit(w, unit('glissando'), 1, at(14), at(14));
+    sim.schedule({ tick: 0, player: 1, cmd: { type: 'attack', units: [w.entities.handle(arty)], target: w.entities.handle(tank) } });
+    sim.run(20 * 10);
+    expect(e.hp[arty]! + e.shields[arty]!).toBeLessThan(240);
+  });
+});

@@ -184,3 +184,46 @@ export function goldenHash(rules: Rules): number {
   sim.run(ticks);
   return sim.hash();
 }
+
+/**
+ * Client sandbox before maps and economy exist: an obstacle map with a few
+ * structures and mixed armies per side. `unitsPerSide` large = stress test.
+ */
+export function sandbox(rules: Rules, opts: { unitsPerSide?: number; size?: number; seed?: number } = {}): Sim {
+  const size = opts.size ?? 96;
+  const sim = new Sim({
+    rules,
+    seed: opts.seed ?? 7,
+    width: size,
+    height: size,
+    terrain: obstacleTerrain(size),
+    players: [
+      { faction: 0, team: 0 },
+      { faction: 1, team: 1 },
+    ],
+    victoryRules: false,
+  });
+  const w = sim.world;
+  const per = opts.unitsPerSide ?? 24;
+  const sides: [number, string[], string[], number][] = [
+    [0, ['grunt', 'grunt', 'tankbuster', 'jackrabbit', 'bulldog', 'flak_track', 'thumper', 'hornet', 'mule', 'homestead'], ['holdfast', 'dynamo', 'bunkhouse', 'motor_pool', 'pillbox'], 6],
+    [1, ['sentry', 'sentry', 'lance', 'ping', 'vector', 'firewall', 'broadcast', 'seek', 'fetch', 'init'], ['kernel', 'powerd', 'spawn', 'make', 'guard'], size - 22],
+  ];
+  for (const [owner, units, structures, x0] of sides) {
+    let sx = x0;
+    for (const id of structures) {
+      const rule = structureRule(rules, id);
+      const r = rules.structures[rule]!;
+      if (spawnStructure(w, rule, owner, sx, 6) >= 0) sx += r.footprintW + 1;
+    }
+    for (let i = 0; i < per; i++) {
+      const rule = unitRule(rules, units[i % units.length]!);
+      const tx = x0 + (i % 14);
+      const ty = 14 + idiv(i, 14);
+      if (ty >= size) break;
+      if (w.map.nav[ty * size + tx] !== 1 && !rules.units[rule]!.isAir) continue;
+      spawnUnit(w, rule, owner, (tx << FX_SHIFT) + FX_HALF, (ty << FX_SHIFT) + FX_HALF);
+    }
+  }
+  return sim;
+}

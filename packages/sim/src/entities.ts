@@ -13,7 +13,8 @@ export const STANCE = { normal: 0, hold: 1 } as const;
 export type Order =
   | { type: 'move'; x: number; y: number; flow: boolean; cx: number; cy: number }
   | { type: 'attackMove'; x: number; y: number; flow: boolean; cx: number; cy: number }
-  | { type: 'attack'; target: number }
+  /** x, y = target's last known position, used when it dies or vanishes into fog. */
+  | { type: 'attack'; target: number; x: number; y: number }
   | { type: 'patrol'; ax: number; ay: number; bx: number; by: number; toB: boolean }
   | { type: 'guard'; target: number };
 
@@ -237,6 +238,10 @@ function serializeOrder(o: Order, w: IntWriter): void {
       w.push(o.cy);
       return;
     case 'attack':
+      w.push(o.target);
+      w.push(o.x);
+      w.push(o.y);
+      return;
     case 'guard':
       w.push(o.target);
       return;

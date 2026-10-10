@@ -95,7 +95,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       if (t < 0) return;
       for (const s of ownedUnits(world, c.player, cmd.units)) {
         if (teamOf(world, t) === player.team) continue;
-        give(world, s, { type: 'attack', target: cmd.target }, cmd.queue ?? false);
+        give(world, s, { type: 'attack', target: cmd.target, x: e.x[t]!, y: e.y[t]! }, cmd.queue ?? false);
       }
       return;
     }
@@ -124,6 +124,10 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
         e.anchorY[s] = e.y[s]!;
         resetMovement(world, s);
       }
+      return;
+    case 'deploy':
+    case 'ability':
+      // Accepted now so clients and replays can carry them; behavior lands in M3 (deploy) and M7 (abilities).
       return;
     case 'scatter': {
       const w = world.map.width * FX_ONE - 1;

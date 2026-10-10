@@ -1,7 +1,7 @@
 import type { WeaponRule } from '@signal-fall/data';
 import { FX_ONE, ilength } from '../fx';
 import { KIND, NO_ENTITY, STANCE, type Order } from '../entities';
-import { acquireTarget, canTarget, distToBody, inWeaponRange, weaponOf } from '../query';
+import { acquireTarget, canTarget, distToBody, inWeaponRange, visibleTo, weaponOf } from '../query';
 import type { World } from '../world';
 
 /** Units re-scan for targets every this many ticks (staggered by slot). */
@@ -14,6 +14,11 @@ const IDLE_ACQUIRE_BONUS = 2 * FX_ONE;
 const GUARD_FOLLOW = 2 * FX_ONE;
 /** Guards engage enemies within this distance of the guarded entity. */
 const GUARD_RADIUS = 8 * FX_ONE;
+
+/** Units that cannot shoot an attack target stay this close to it. */
+const ESCORT_RANGE = 3 * FX_ONE;
+/** Idle units return fire if hit within this many ticks. */
+const RETALIATE_TICKS = 40;
 
 /** Distance within which a unit counts as arrived at its own slot. */
 const ARRIVE = FX_ONE >> 2;
@@ -85,6 +90,16 @@ function engage(world: World, s: number, weapon: WeaponRule, radius: number): nu
   return t;
 }
 
+/** Idle units shoot back at whoever hit them recently, even from beyond their acquire radius. */
+function retaliate(world: World, s: number, weapon: WeaponRule): number {
+  const e = world.entities;
+  if (e.lastHitTick[s]! < 0 || world.tick - e.lastHitTick[s]! > RETALIATE_TICKS) return -1;
+  const a = e.resolve(e.lastAttacker[s]!);
+  if (a < 0 || !canTarget(world, s, weapon, a)) return -1;
+  e.target[s] = e.handle(a);
+  return a;
+}
+
 /** Move toward the target until in range. */
 function approach(world: World, s: number, weapon: WeaponRule, t: number): void {
   const e = world.entities;
@@ -105,7 +120,8 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
       engage(world, s, weapon, weapon.range);
       return;
     }
-    const t = engage(world, s, weapon, weapon.range + IDLE_ACQUIRE_BONUS);
+    let t = engage(world, s, weapon, weapon.range + IDLE_ACQUIRE_BONUS);
+    if (t < 0) t = retaliate(world, s, weapon);
     if (t >= 0) {
       const fromAnchor = ilength(e.x[t]! - e.anchorX[s]!, e.y[t]! - e.anchorY[s]!);
       if (fromAnchor > LEASH + weapon.range) {
@@ -151,12 +167,30 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
     }
     case 'attack': {
       const t = e.resolve(o.target);
-      if (t < 0 || !weapon || !canTarget(world, s, weapon, t)) {
-        completeOrder(world, s);
+      const seen = t >= 0 && visibleTo(world, e.owner[s]!, t);
+      if (seen) {
+        o.x = e.x[t]!;
+        o.y = e.y[t]!;
+      }
+      if (!seen) {
+        // Target died or vanished into fog: keep fighting toward where it was.
+        e.orders[s]![0] = { type: 'attackMove', x: o.x, y: o.y, flow: false, cx: o.x, cy: o.y };
         return;
       }
-      e.target[s] = e.handle(t);
-      approach(world, s, weapon, t);
+      if (weapon && canTarget(world, s, weapon, t)) {
+        e.target[s] = e.handle(t);
+        approach(world, s, weapon, t);
+        return;
+      }
+      // Can't hit it (unarmed, or wrong layer): advance with the group and fight what we can.
+      if (weapon) {
+        const other = engage(world, s, weapon, sight);
+        if (other >= 0) {
+          approach(world, s, weapon, other);
+          return;
+        }
+      }
+      if (distToBody(world, e.x[s]!, e.y[s]!, t) > ESCORT_RANGE) setGoal(world, s, o.x, o.y);
       return;
     }
     case 'guard': {

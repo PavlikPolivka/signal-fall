@@ -28,6 +28,9 @@ export function weaponSystem(world: World): void {
     const ticks = weapon.projectileSpeed > 0 ? idiv(dist + weapon.projectileSpeed - 1, weapon.projectileSpeed) : 0;
     world.projectiles.push({
       owner: e.owner[s]!,
+      ox: e.x[s]!,
+      oy: e.y[s]!,
+      total: ticks,
       source: e.handle(s),
       target: e.handle(t),
       x: e.x[t]!,

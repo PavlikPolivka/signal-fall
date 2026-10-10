@@ -6,14 +6,13 @@
     "panRight": ["ArrowRight"],
     "jumpToAlert": ["Space"],
     "jumpToBase": ["Backspace"],
-    "selectArmy": ["F2"],
-    "selectIdleHarvesters": ["F3"],
+    "selectArmy": ["Ctrl+KeyA"],
+    "selectIdleHarvesters": ["KeyE"],
     "controlGroupAssign": ["Ctrl+Digit#", "Alt+Digit#"],
     "controlGroupAdd": ["Shift+Digit#"],
     "controlGroupSelect": ["Digit#"],
     "cycleSubgroup": ["Tab"],
-    "cancel": ["Escape"],
-    "menu": ["F10"]
+    "cancel": ["Escape"]
   },
   "units": {
     "move": ["KeyM"],

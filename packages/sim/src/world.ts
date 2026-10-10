@@ -22,6 +22,10 @@ export interface PlayerState {
 
 export interface Projectile {
   owner: number;
+  /** Where it was fired from and its total flight time, for rendering. */
+  ox: number;
+  oy: number;
+  total: number;
   source: number;
   target: number;
   /** Impact point (tracks the target while it lives). */
@@ -134,6 +138,9 @@ export function serializeWorld(world: World, w: IntWriter): void {
   w.push(world.projectiles.length);
   for (const p of world.projectiles) {
     w.push(p.owner);
+    w.push(p.ox);
+    w.push(p.oy);
+    w.push(p.total);
     w.push(p.source);
     w.push(p.target);
     w.push(p.x);

@@ -210,7 +210,7 @@ Hotkeys are per production tab, so a letter can repeat across tabs (Choir: G is 
 
 ## Controls and UI
 
-Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. The keymap lives in one JSON file, so rebinding is a later UI feature, not a refactor.
+Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. No function keys (owner decision, 2026-10-11). Mouse follows C&C: with units selected, left-click on ground moves and on an enemy attacks; edge of the window scrolls. The keymap lives in one JSON file, so rebinding is a later UI feature, not a refactor.
 
 ### Global and camera
 
@@ -219,19 +219,18 @@ Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. 
 | Pan camera | Arrow keys, screen-edge, middle-mouse drag |
 | Jump to last alert | Space |
 | Jump to main base | Backspace |
-| Select all army (excludes harvesters, engineers) | F2 |
-| Select idle harvesters / cycle | F3 |
+| Select all army (excludes harvesters, engineers) | Ctrl+A |
+| Select idle harvesters / cycle | E |
 | Assign / add to / select control group | Ctrl+0–9 / Shift+0–9 / 0–9 (double-tap centers camera) |
 | Select all of type on screen | Ctrl+click or double-click |
 | Cycle subgroups in selection | Tab |
-| Cancel / close menu | Esc |
-| Pause (vs AI) / menu | F10 |
+| Cancel mode / clear selection / open menu (pauses vs AI) | Esc |
 
 ### Unit commands
 
 | Action | Key |
 |---|---|
-| Move | Right-click (M + click) |
+| Move | Left-click ground with units selected, or right-click (M + click) |
 | Attack-move | A + click |
 | Stop | S |
 | Hold position | H |

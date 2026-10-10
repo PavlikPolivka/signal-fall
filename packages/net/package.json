@@ -1,0 +1,18 @@
+{
+  "name": "@signal-fall/net",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@signal-fall/sim": "workspace:*"
+  },
+  "devDependencies": {
+    "@signal-fall/data": "workspace:*"
+  }
+}

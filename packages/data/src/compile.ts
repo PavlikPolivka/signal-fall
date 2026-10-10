@@ -76,6 +76,8 @@ export interface UnitRule {
   weapon: WeaponRule | null;
   abilities: AbilityRule[];
   requires: Role[];
+  /** One-line role description for the UI. */
+  role: string;
 }
 
 export interface StructureRule {
@@ -408,5 +410,6 @@ function compileUnit(
     weapon: weapon(u.weapon),
     abilities: u.abilities.map(ability),
     requires: u.requires,
+    role: u.role,
   };
 }

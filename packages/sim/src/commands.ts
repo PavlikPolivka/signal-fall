@@ -13,7 +13,11 @@ export type Command =
   | { type: 'guard'; units: number[]; target: number; queue?: boolean }
   | { type: 'stop'; units: number[] }
   | { type: 'hold'; units: number[] }
-  | { type: 'scatter'; units: number[] };
+  | { type: 'scatter'; units: number[] }
+  /** Deploy construction units (M3). */
+  | { type: 'deploy'; units: number[] }
+  /** Faction ability: blink, phase, override (M7). Optional target point or entity. */
+  | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number };
 
 export type CommandType = Command['type'];
 
