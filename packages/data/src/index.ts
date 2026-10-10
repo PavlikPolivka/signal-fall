@@ -1,10 +1,10 @@
-import choir from '../json/choir.json';
-import constants from '../json/constants.json';
-import damageMatrix from '../json/damageMatrix.json';
-import halcyon from '../json/halcyon.json';
-import holdout from '../json/holdout.json';
-import keymap from '../json/keymap.json';
-import upgrades from '../json/upgrades.json';
+import choir from '../json/choir.json' with { type: 'json' };
+import constants from '../json/constants.json' with { type: 'json' };
+import damageMatrix from '../json/damageMatrix.json' with { type: 'json' };
+import halcyon from '../json/halcyon.json' with { type: 'json' };
+import holdout from '../json/holdout.json' with { type: 'json' };
+import keymap from '../json/keymap.json' with { type: 'json' };
+import upgrades from '../json/upgrades.json' with { type: 'json' };
 import { compileRules, type RawData, type Rules } from './compile';
 import {
   constantsSchema,

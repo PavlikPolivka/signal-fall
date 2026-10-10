@@ -1,0 +1,13 @@
+{
+  "name": "@signal-fall/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@signal-fall/data": "workspace:*",
+    "@signal-fall/sim": "workspace:*"
+  }
+}

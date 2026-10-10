@@ -1,5 +1,21 @@
-/** Player commands: the only input to the sim. M0 has the bare minimum; M1+ extends the union. */
-export type Command = { type: 'noop' } | { type: 'surrender' };
+/**
+ * Player commands: the only input to the sim. Unit lists are entity handles;
+ * positions are Q10 world coordinates. `queue` appends instead of replacing
+ * current orders (Shift in the client).
+ */
+export type Command =
+  | { type: 'noop' }
+  | { type: 'surrender' }
+  | { type: 'move'; units: number[]; x: number; y: number; queue?: boolean }
+  | { type: 'attackMove'; units: number[]; x: number; y: number; queue?: boolean }
+  | { type: 'attack'; units: number[]; target: number; queue?: boolean }
+  | { type: 'patrol'; units: number[]; x: number; y: number; queue?: boolean }
+  | { type: 'guard'; units: number[]; target: number; queue?: boolean }
+  | { type: 'stop'; units: number[] }
+  | { type: 'hold'; units: number[] }
+  | { type: 'scatter'; units: number[] };
+
+export type CommandType = Command['type'];
 
 export interface ScheduledCommand {
   /** Tick at which the command is applied (before systems run). */

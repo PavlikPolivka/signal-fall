@@ -1,15 +1,14 @@
-import type { Rules } from '@signal-fall/data';
 import { CommandQueue, type ScheduledCommand } from './commands';
 import { IntWriter } from './hash';
-import { createWorld, serializeWorld, type PlayerSetup, type World } from './world';
+import { applyCommand } from './orders';
+import { behaviorSystem } from './systems/behavior';
+import { deathSystem, projectileSystem, shieldSystem, weaponSystem } from './systems/combat';
+import { fogSystem } from './systems/fog';
+import { movementSystem } from './systems/movement';
+import { victorySystem } from './systems/victory';
+import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
 
-export interface SimSetup {
-  rules: Rules;
-  seed: number;
-  width: number;
-  height: number;
-  players: PlayerSetup[];
-}
+export type SimSetup = WorldOptions;
 
 /** Ticks between state hashes exchanged in lockstep. */
 export const HASH_INTERVAL = 20;
@@ -20,7 +19,8 @@ export class Sim {
   private readonly writer = new IntWriter();
 
   constructor(setup: SimSetup) {
-    this.world = createWorld(setup.rules, setup.seed, setup.width, setup.height, setup.players);
+    this.world = createWorld(setup);
+    fogSystem(this.world, true);
   }
 
   get tick(): number {
@@ -33,12 +33,22 @@ export class Sim {
     this.queue.push(c);
   }
 
-  /** Advance one tick: apply this tick's commands, then run systems in fixed order. */
+  /** Advance one tick: apply this tick's commands, then run systems in a fixed order. */
   step(): void {
     const w = this.world;
     for (const c of this.queue.take(w.tick)) applyCommand(w, c);
-    // Systems are added here in later milestones, always in this fixed order:
-    // production -> economy -> pathing -> movement -> combat -> deaths -> fog -> victory.
+    if (!w.ended) {
+      w.spatial.rebuild(w.entities);
+      behaviorSystem(w);
+      movementSystem(w);
+      w.spatial.rebuild(w.entities);
+      weaponSystem(w);
+      projectileSystem(w);
+      deathSystem(w);
+      shieldSystem(w);
+      fogSystem(w);
+      victorySystem(w);
+    }
     w.tick++;
   }
 
@@ -51,17 +61,5 @@ export class Sim {
     this.writer.reset();
     serializeWorld(this.world, this.writer);
     return this.writer.hash();
-  }
-}
-
-function applyCommand(w: World, c: ScheduledCommand): void {
-  const player = w.players[c.player]!;
-  switch (c.cmd.type) {
-    case 'noop':
-      return;
-    case 'surrender':
-      player.surrendered = true;
-      player.defeated = true;
-      return;
   }
 }

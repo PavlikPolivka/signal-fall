@@ -44,3 +44,24 @@ describe('determinism', () => {
     expect(() => sim.schedule({ tick: 2, player: 0, cmd: { type: 'noop' } })).toThrow();
   });
 });
+
+describe('big battle determinism', () => {
+  it('two runs of a 240-unit battle with commands produce identical hash streams', async () => {
+    const { bigBattle } = await import('../src/scenarios');
+    const run = () => {
+      const { sim } = bigBattle(defaultRules(), { unitsPerSide: 120 });
+      const hashes: number[] = [];
+      for (let t = 0; t < 1000; t++) {
+        sim.step();
+        if (sim.tick % 20 === 0) hashes.push(sim.hash());
+      }
+      return hashes;
+    };
+    expect(run()).toEqual(run());
+  });
+
+  it('golden hash is stable (update deliberately when sim rules change)', async () => {
+    const { goldenHash } = await import('../src/scenarios');
+    expect(goldenHash(defaultRules()).toString(16)).toMatchInlineSnapshot(`"f1dc09ee"`);
+  });
+});

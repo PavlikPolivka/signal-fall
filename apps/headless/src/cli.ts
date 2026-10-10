@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 import { parseArgs } from 'node:util';
-import { parseFactions, runMatch } from './run';
+import { parseFactions, runBench, runMatch } from './run';
 
 const USAGE = `signal-fall <command> [options]
 
@@ -11,6 +11,8 @@ Commands:
          --factions <a,b>  factions per player (default holdout,halcyon)
          --size <n>        map size in tiles (default 96)
          --json            print the full result as JSON
+  bench  Tick the 400-unit benchmark battle and report timings
+         --ticks <n>       ticks to measure (default 400)
 `;
 
 function main(argv: string[]): number {
@@ -38,6 +40,12 @@ function main(argv: string[]): number {
       console.log(`ticks ${result.ticks}  final hash ${hex(result.finalHash)}  ${result.ms.toFixed(1)} ms`);
     }
     return 0;
+  }
+  if (command === 'bench') {
+    const { values } = parseArgs({ args: rest, options: { ticks: { type: 'string', default: '400' } } });
+    const r = runBench(Number(values.ticks));
+    console.log(`${r.units} units, ${r.ticks} ticks: avg ${r.avgMs.toFixed(3)} ms, max ${r.maxMs.toFixed(2)} ms`);
+    return r.avgMs <= 4 ? 0 : 1;
   }
   process.stdout.write(USAGE);
   return command === undefined || command === 'help' || command === '--help' ? 0 : 1;

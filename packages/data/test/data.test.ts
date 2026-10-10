@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import holdout from '../json/holdout.json';
+import holdout from '../json/holdout.json' with { type: 'json' };
 import {
   ARMOR,
   DAMAGE,

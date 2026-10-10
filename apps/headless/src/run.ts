@@ -1,5 +1,5 @@
 import { defaultRules, factionIndex, FACTIONS, type FactionId } from '@signal-fall/data';
-import { HASH_INTERVAL, Sim } from '@signal-fall/sim';
+import { HASH_INTERVAL, Sim, bigBattle, countUnits } from '@signal-fall/sim';
 
 export interface RunOptions {
   seed: number;
@@ -23,6 +23,8 @@ export function runMatch(opts: RunOptions): RunResult {
     width: opts.size,
     height: opts.size,
     players: opts.factions.map((f, team) => ({ faction: factionIndex(f), team })),
+    // No starting units until M3, so nobody can be defeated yet.
+    victoryRules: false,
   });
   const hashes: number[] = [];
   const start = performance.now();
@@ -37,4 +39,27 @@ export function parseFactions(s: string): FactionId[] {
   const list = s.split(',').map((x) => x.trim());
   for (const f of list) if (!(FACTIONS as readonly string[]).includes(f)) throw new Error(`unknown faction ${f}`);
   return list as FactionId[];
+}
+
+export interface BenchResult {
+  units: number;
+  ticks: number;
+  avgMs: number;
+  maxMs: number;
+  finalHash: number;
+}
+
+/** Tick the 400-unit benchmark battle and report per-tick timings. */
+export function runBench(ticks: number, unitsPerSide = 200): BenchResult {
+  const { sim } = bigBattle(defaultRules(), { unitsPerSide });
+  const units = countUnits(sim, 0) + countUnits(sim, 1);
+  sim.run(20);
+  let max = 0;
+  const start = performance.now();
+  for (let i = 0; i < ticks; i++) {
+    const t = performance.now();
+    sim.step();
+    max = Math.max(max, performance.now() - t);
+  }
+  return { units, ticks, avgMs: (performance.now() - start) / ticks, maxMs: max, finalHash: sim.hash() };
 }
