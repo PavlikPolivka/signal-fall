@@ -4,6 +4,7 @@ import { applyCommand } from './orders';
 import { behaviorSystem } from './systems/behavior';
 import { deathSystem, projectileSystem, shieldSystem, weaponSystem } from './systems/combat';
 import { fogSystem } from './systems/fog';
+import { buildSystem, computeFacts, echoRegrowSystem, harvestSystem, productionSystem, repairSystem, wreckSystem } from './systems/economy';
 import { movementSystem } from './systems/movement';
 import { victorySystem } from './systems/victory';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
@@ -39,13 +40,20 @@ export class Sim {
     for (const c of this.queue.take(w.tick)) applyCommand(w, c);
     if (!w.ended) {
       w.spatial.rebuild(w.entities);
+      const facts = computeFacts(w);
+      buildSystem(w, facts);
+      productionSystem(w, facts);
       behaviorSystem(w);
+      harvestSystem(w, facts);
       movementSystem(w);
       w.spatial.rebuild(w.entities);
+      repairSystem(w);
       weaponSystem(w);
       projectileSystem(w);
       deathSystem(w);
       shieldSystem(w);
+      wreckSystem(w);
+      echoRegrowSystem(w);
       fogSystem(w);
       victorySystem(w);
     }

@@ -31,8 +31,9 @@ export function fogSystem(world: World, force = false): void {
 
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1) continue;
-    const team = teams[e.owner[s]!]!;
     const r = sightOf(world, s) >> FX_SHIFT;
+    if (r === 0) continue;
+    const team = teams[e.owner[s]!]!;
     const st = stencil(r);
     const cx = e.x[s]! >> FX_SHIFT;
     const cy = e.y[s]! >> FX_SHIFT;

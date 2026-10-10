@@ -10,8 +10,8 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 |---|---|
 | M0 Foundations | ✅ |
 | M1 Sim core | ✅ |
-| M2 Client | ⏳ |
-| M3 Economy and base building | |
+| M2 Client | ✅ (perf + keymap e2e pending) |
+| M3 Economy and base building | ✅ |
 | M4 Map generator | |
 | M5 AI, first playable | |
 | M6 Art and audio (Holdout) | |

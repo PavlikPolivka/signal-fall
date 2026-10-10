@@ -116,6 +116,7 @@ export const structureSchema = z
     id,
     name: z.string().min(1),
     role: z.enum(ROLES),
+    description: z.string().default(''),
     key: hotkey.optional(),
     category: z.enum(BUILD_CATEGORIES).optional(),
     tier: z.number().int().min(1).max(3),

@@ -1,4 +1,5 @@
-import { KIND } from '@signal-fall/sim';
+import { FX_SHIFT, KIND, PLACEMENT_MESSAGES, placementError } from '@signal-fall/sim';
+import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E } from '../protocol';
 import type { ClientState, Mode } from '../game/state';
 import type { Renderer } from '../render/renderer';
@@ -26,6 +27,19 @@ const CURSORS = {
   select: 'pointer',
   tool: 'cell',
 };
+
+const ROLE_NAME: Record<string, string> = {
+  conyard: 'Construction Yard',
+  power: 'Power',
+  refinery: 'Refinery',
+  barracks: 'Barracks',
+  factory: 'Vehicle Factory',
+  radar: 'Radar',
+  special: 'faction special',
+  airfield: 'Airfield',
+  tech: 'Tech Center',
+};
+const roleName = (r: string) => ROLE_NAME[r] ?? r;
 
 /** Modes that wait for a target click. */
 const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability', 'repair', 'sell'];
@@ -104,7 +118,29 @@ export class Input {
     this.held.add(e.code);
     if (e.repeat && !e.code.startsWith('Arrow')) return;
     const contexts = this.activeContexts();
-    // Structure menus (B / N then a letter) take the next letter key: wired in M3.
+    const letter = /^Key([A-Z])$/.exec(e.code)?.[1];
+    const plain = !e.ctrlKey && !e.metaKey && !e.altKey;
+    const s = this.state;
+    // B / N menus: the next letter picks a structure.
+    if ((s.mode === 'buildMenu' || s.mode === 'defenseMenu') && letter && plain) {
+      e.preventDefault();
+      const category = s.mode === 'buildMenu' ? 'structures' : 'defenses';
+      const item = this.factionStructures().find((r) => r.category === category && r.key === letter);
+      this.setMode('normal');
+      if (item) this.activateStructure(item);
+      else s.warn(`No ${category === 'structures' ? 'structure' : 'defense'} on ${letter}`);
+      return;
+    }
+    // A selected factory takes unit letters (Shift queues five).
+    const factory = this.selectedFactory();
+    if (factory && letter && plain) {
+      const unit = this.factionUnits().find((u) => u.tab === factory.produces && u.key === letter);
+      if (unit) {
+        e.preventDefault();
+        this.activateUnit(unit, e.shiftKey ? 5 : 1);
+        return;
+      }
+    }
     for (const b of this.bindings) {
       if (!contexts.includes(b.context)) continue;
       const m = matches(b.chord, e);
@@ -126,7 +162,7 @@ export class Input {
       case 'panRight':
         return; // handled while held, in update()
       case 'jumpToAlert': {
-        const a = s.alerts[s.alerts.length - 1];
+        const a = [...s.alerts].reverse().find((x) => x.x >= 0);
         if (a) this.renderer.centerOnSim(a.x, a.y);
         return;
       }
@@ -176,6 +212,7 @@ export class Input {
       case 'cancel':
         // Esc peels back one layer: menu, then mode, then selection, then opens the menu.
         if (s.menuOpen) this.toggleMenu();
+        else if (s.placing) this.stopPlacing();
         else if (s.mode !== 'normal') this.setMode('normal');
         else if (s.selection.length > 0) s.select([]);
         else this.toggleMenu();
@@ -245,6 +282,10 @@ export class Input {
       return;
     }
     if (e.button !== 0) return;
+    if (this.state.placing) {
+      this.tryPlace(p.x, p.y, e.shiftKey);
+      return;
+    }
     if (TARGET_MODES.includes(this.state.mode)) {
       this.targetClick(p.x, p.y, e.shiftKey);
       return;
@@ -259,6 +300,10 @@ export class Input {
     const p = this.local(e);
     if (!this.drag) {
       if (e.target === this.canvas) this.updateCursor(p.x, p.y);
+      else if (this.state.hoverEntity >= 0) {
+        this.state.hoverEntity = -1;
+        this.state.changed();
+      }
       return;
     }
     if (this.drag.button === 1) {
@@ -290,6 +335,7 @@ export class Input {
     const s = this.state;
     const h = this.renderer.pick(sx, sy);
     const haveUnits = s.selectedUnits().length > 0;
+    if (h >= 0 && s.field(h, E.kind) === KIND.wreck && haveUnits) return { kind: 'move', target: h };
     if (h >= 0 && s.isOwn(h)) return { kind: 'select', target: h };
     if (h >= 0 && haveUnits && this.isEnemy(h)) return { kind: 'attack', target: h };
     if (haveUnits) return { kind: 'move', target: -1 };
@@ -305,6 +351,7 @@ export class Input {
     const s = this.state;
     const intent = this.intentAt(sx, sy);
     const units = s.selectedUnits();
+    if (intent.kind !== 'select' && this.economyClick(sx, sy, intent.target, units, shift, false)) return;
     if (intent.kind === 'attack') {
       s.send({ type: 'attack', units, target: intent.target, queue: shift });
       this.renderer.ping(sx, sy, 0xff5a5a);
@@ -321,6 +368,13 @@ export class Input {
 
   private updateCursor(sx: number, sy: number): void {
     const mode = this.state.mode;
+    const hovered = this.state.placing ? -1 : this.renderer.pick(sx, sy);
+    if (hovered !== this.state.hoverEntity) {
+      const r = this.canvas.getBoundingClientRect();
+      this.state.hoverEntity = hovered;
+      this.state.hoverPos = { x: sx + r.left, y: sy + r.top };
+      this.state.changed();
+    }
     let cursor: string;
     if (mode === 'attackMove' || mode === 'patrol' || mode === 'ability') cursor = CURSORS.attack;
     else if (mode === 'move') cursor = CURSORS.move;
@@ -356,16 +410,28 @@ export class Input {
 
   rightClick(sx: number, sy: number, shift: boolean): void {
     const s = this.state;
+    if (s.placing) {
+      this.stopPlacing();
+      return;
+    }
     if (s.mode !== 'normal') {
       this.setMode('normal');
       return;
     }
     const units = s.selectedUnits();
+    const factory = this.selectedFactory();
+    if (units.length === 0 && factory) {
+      const p = this.simPoint(sx, sy);
+      s.send({ type: 'rally', target: s.selection[0]!, x: p.x, y: p.y });
+      this.renderer.ping(sx, sy, 0xe8c35a);
+      return;
+    }
     if (units.length === 0) {
       s.select([]);
       return;
     }
     const h = this.renderer.pick(sx, sy);
+    if (this.economyClick(sx, sy, h, units, shift, true)) return;
     if (h >= 0 && this.isEnemy(h)) {
       s.send({ type: 'attack', units, target: h, queue: shift });
       this.renderer.ping(sx, sy, 0xff5a5a);
@@ -402,8 +468,12 @@ export class Input {
       case 'ability':
         s.send({ type: 'ability', units, x: p.x, y: p.y });
         break;
+      case 'repair':
+      case 'sell':
+        if (h >= 0 && s.isOwn(h) && !s.isUnit(h)) s.send({ type: s.mode, target: h });
+        break;
       default:
-        break; // repair / sell: M3
+        break;
     }
     // Shift keeps the mode for chaining orders.
     if (!shift) this.setMode('normal');
@@ -443,6 +513,145 @@ export class Input {
     s.select(shift ? [...s.selection, ...hits] : hits);
   }
 
+  // --- economy ---
+
+  /**
+   * Harvesters on Echo (or a refinery, right-click), salvagers on wrecks.
+   * Returns true if the click was handled.
+   */
+  private economyClick(sx: number, sy: number, h: number, units: number[], shift: boolean, right: boolean): boolean {
+    const s = this.state;
+    const harvesters = units.filter((u) => this.isHarvester(u));
+    if (h >= 0 && s.field(h, E.kind) === KIND.wreck) {
+      s.send({ type: 'salvage', units, target: h, queue: shift });
+      this.renderer.ping(sx, sy, 0xe8c35a);
+      return true;
+    }
+    if (harvesters.length === 0) return false;
+    const p = this.simPoint(sx, sy);
+    const tile = (p.y >> FX_SHIFT) * s.width + (p.x >> FX_SHIFT);
+    const onEcho = (s.echo[tile] ?? 0) > 0;
+    const onRefinery = right && h >= 0 && s.isOwn(h) && !s.isUnit(h) && (s.ruleOf(h) as StructureRule).role === 'refinery';
+    if (!onEcho && !onRefinery) return false;
+    s.send({ type: 'harvest', units: harvesters, x: p.x, y: p.y });
+    const others = units.filter((u) => !harvesters.includes(u));
+    if (others.length > 0) s.send({ type: 'move', units: others, x: p.x, y: p.y, queue: shift });
+    this.renderer.ping(sx, sy, 0x3ee6ff);
+    return true;
+  }
+
+  factionStructures(): StructureRule[] {
+    const s = this.state;
+    const f = s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]!;
+    return f.structures.map((i) => s.rules.structures[i]!);
+  }
+
+  factionUnits(): UnitRule[] {
+    const s = this.state;
+    const f = s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]!;
+    return f.units.map((i) => s.rules.units[i]!);
+  }
+
+  /** The single selected own production structure, if any. */
+  selectedFactory(): StructureRule | null {
+    const s = this.state;
+    if (s.selection.length !== 1) return null;
+    const h = s.selection[0]!;
+    if (!s.isOwn(h) || s.isUnit(h) || s.field(h, E.kind) !== KIND.structure) return null;
+    const rule = s.ruleOf(h) as StructureRule;
+    return rule.produces ? rule : null;
+  }
+
+  /** Sidebar click on a structure: start building it, or pick it up for placement when ready. */
+  activateStructure(rule: StructureRule): void {
+    const s = this.state;
+    const cur = s.cur;
+    if (!cur || !rule.category) return;
+    const q = cur.buildQueue(s.localPlayer, rule.category === 'structures' ? 0 : 1);
+    const missing = s.missing(rule.requires);
+    if (q.item === rule.index && q.ready) {
+      s.placing = { category: rule.category, item: rule.index };
+      this.setMode('normal');
+      s.changed();
+    } else if (!s.roles().get('conyard')) {
+      s.warn('No construction yard — deploy your construction vehicle (D)');
+    } else if (q.item === rule.index) {
+      s.warn(`${rule.name} is already being built`);
+    } else if (q.item >= 0) {
+      s.warn(`Already building ${s.rules.structures[q.item]!.name}${q.ready ? ' — place it first' : ''}`);
+    } else if (missing.length > 0) {
+      s.warn(`${rule.name} requires ${missing.map(roleName).join(', ')}`);
+    } else {
+      if (cur.credits(s.localPlayer) <= 0) s.warn('Not enough money');
+      s.send({ type: 'build', category: rule.category, item: rule.index });
+    }
+  }
+
+  cancelStructure(rule: StructureRule): void {
+    const s = this.state;
+    if (!rule.category || !s.cur) return;
+    if (s.cur.buildQueue(s.localPlayer, rule.category === 'structures' ? 0 : 1).item !== rule.index) return;
+    if (s.placing?.item === rule.index) this.stopPlacing();
+    s.send({ type: 'cancelBuild', category: rule.category });
+  }
+
+  activateUnit(rule: UnitRule, count: number): void {
+    const s = this.state;
+    const missing = s.missing(rule.requires);
+    if (missing.length > 0) {
+      s.warn(`${rule.name} requires ${missing.map(roleName).join(', ')}`);
+      return;
+    }
+    s.send({ type: 'train', item: rule.index, count });
+  }
+
+  cancelUnit(rule: UnitRule): void {
+    this.state.send({ type: 'cancelTrain', item: rule.index });
+  }
+
+  stopPlacing(): void {
+    this.state.placing = null;
+    this.state.changed();
+  }
+
+  /** Footprint origin for the placement ghost under the cursor. */
+  placementAt(sx: number, sy: number): { tx: number; ty: number; rule: StructureRule; error: string | null } | null {
+    const s = this.state;
+    if (!s.placing || !s.cur) return null;
+    const rule = s.rules.structures[s.placing.item]!;
+    const { u, v } = this.renderer.screenToTile(sx, sy);
+    const tx = Math.floor(u - rule.footprintW / 2 + 0.5);
+    const ty = Math.floor(v - rule.footprintH / 2 + 0.5);
+    const faction = s.rules.factions[s.players[s.localPlayer]!.faction]!;
+    const err = placementError(s.placementView(), s.localPlayer, faction, rule, tx, ty);
+    return { tx, ty, rule, error: err ? PLACEMENT_MESSAGES[err] : null };
+  }
+
+  /** Last cursor position over the game view, in canvas px (for the placement ghost). */
+  cursor(): { x: number; y: number } | null {
+    if (!this.mouse.inside) return null;
+    const r = this.canvas.getBoundingClientRect();
+    return { x: this.mouse.x - r.left, y: this.mouse.y - r.top };
+  }
+
+  private tryPlace(sx: number, sy: number, shift: boolean): void {
+    const s = this.state;
+    const at = this.placementAt(sx, sy);
+    if (!at || !s.placing) return;
+    if (at.error) {
+      s.notice(at.error);
+      return;
+    }
+    s.send({ type: 'place', category: s.placing.category, tx: at.tx, ty: at.ty });
+    const rule = at.rule;
+    // Shift+click keeps placing walls: queue the next one right away.
+    if (shift && rule.role === 'wall') {
+      s.send({ type: 'build', category: s.placing.category, item: rule.index });
+    }
+    s.placing = null;
+    s.changed();
+  }
+
   // --- queries ---
 
   private allOwnUnits(): number[] {
@@ -467,7 +676,7 @@ export class Input {
     return undefined;
   }
 
-  private isHarvester(h: number): boolean {
+  isHarvester(h: number): boolean {
     const r = this.state.ruleOf(h);
     return r.kind === 'unit' && r.abilities.some((a) => a.kind === 'harvest');
   }

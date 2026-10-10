@@ -21,6 +21,8 @@ export interface GameMap {
   terrain: Uint8Array;
   /** Echo crystals per tile (0 = none). */
   echo: Uint8Array;
+  /** Max crystals a tile regrows to (0 = not part of a field). */
+  echoCap: Uint8Array;
   /** Structure slot occupying each tile, or -1. */
   occupant: Int32Array;
   /** 1 if a ground unit can stand on the tile. */
@@ -29,13 +31,14 @@ export interface GameMap {
   navVersion: number;
 }
 
-export function createMap(width: number, height: number, terrain?: Uint8Array): GameMap {
+export function createMap(width: number, height: number, terrain?: Uint8Array, echo?: Uint8Array): GameMap {
   const n = width * height;
   const map: GameMap = {
     width,
     height,
     terrain: terrain ?? new Uint8Array(n),
-    echo: new Uint8Array(n),
+    echo: echo ? echo.slice() : new Uint8Array(n),
+    echoCap: echo ? echo.slice() : new Uint8Array(n),
     occupant: new Int32Array(n).fill(-1),
     nav: new Uint8Array(n),
     navVersion: 0,

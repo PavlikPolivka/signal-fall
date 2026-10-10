@@ -14,7 +14,7 @@ export function victorySystem(world: World): void {
       if (e.alive[s] !== 1) continue;
       const owner = e.owner[s]!;
       if (e.kind[s] === KIND.structure) hasBase[owner] = true;
-      else if (e.type[s] === world.rules.factions[world.players[owner]!.faction]!.constructionUnit) hasBase[owner] = true;
+      else if (e.kind[s] === KIND.unit && e.type[s] === world.rules.factions[world.players[owner]!.faction]!.constructionUnit) hasBase[owner] = true;
     }
     for (const p of world.players) if (!hasBase[p.index]) p.defeated = true;
   }

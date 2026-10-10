@@ -32,6 +32,7 @@ export class Renderer {
   readonly app = new Application();
   readonly world = new Container();
   private readonly terrainLayer = new Container();
+  private readonly echoLayer = new Graphics();
   private readonly decals = new Graphics();
   private readonly ground = new Container();
   private readonly air = new Container();
@@ -50,6 +51,9 @@ export class Renderer {
   private fogCanvas: HTMLCanvasElement | null = null;
   private fogTexture: Texture | null = null;
   private fogVersion = -1;
+  private echoVersion = -1;
+  /** Supplies the placement ghost under the cursor while placing a structure. */
+  placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number }; error: string | null } | null = () => null;
   /** Click feedback markers in world px. */
   private pings: { x: number; y: number; color: number; at: number }[] = [];
 
@@ -60,7 +64,7 @@ export class Renderer {
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;
-    this.world.addChild(this.terrainLayer, this.decals, this.ground, this.fx, this.air, this.fogLayer, this.overlay);
+    this.world.addChild(this.terrainLayer, this.echoLayer, this.decals, this.ground, this.fx, this.air, this.fogLayer, this.overlay);
     this.app.stage.addChild(this.world, this.screen);
     this.makeTextures();
   }
@@ -150,7 +154,7 @@ export class Renderer {
     if (!s.fog) return true;
     const tx = Math.floor(s.field(h, E.x) / FX);
     const ty = Math.floor(s.field(h, E.y) / FX);
-    if (s.isUnit(h)) return (s.fog[ty * s.width + tx]! & 1) === 1;
+    if (s.field(h, E.kind) !== KIND.structure) return (s.fog[ty * s.width + tx]! & 1) === 1;
     const rule = s.ruleOf(h);
     if (rule.kind !== 'structure') return false;
     // Structures stay drawn once explored (last-seen).
@@ -271,9 +275,21 @@ export class Renderer {
       const visible = this.visibleEntity(h);
       const color = TEAM_COLORS[owner % TEAM_COLORS.length]!;
 
+      if (kind === KIND.wreck) {
+        const rule = s.rules.units[cur.get(o, E.type)]!;
+        this.updateUnit(h, SHAPES[rule.armor]!, false, px, py, 0x2a2a2a, cur.get(o, E.facing), visible);
+        this.units.get(h)!.root.alpha = 0.8;
+        if (visible) this.rendered.set(h, { x: px, y: py, air: false, shape: SHAPES[rule.armor]! });
+        continue;
+      }
       if (kind === KIND.structure) {
         this.updateStructure(h, cur.get(o, E.type), px, py, color, visible);
         this.rendered.set(h, { x: px, y: py, air: false, shape: null });
+        if (visible && cur.get(o, E.repairing) === 1) {
+          const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
+          this.overlay.rect(px - 2, py - 70, 4, 12).fill({ color: 0x4ade80, alpha: pulse });
+          this.overlay.rect(px - 6, py - 66, 12, 4).fill({ color: 0x4ade80, alpha: pulse });
+        }
       } else {
         const rule = s.rules.units[cur.get(o, E.type)]!;
         const shape = SHAPES[rule.armor]!;
@@ -286,6 +302,14 @@ export class Renderer {
       const air = kind === KIND.unit && s.rules.units[cur.get(o, E.type)]!.isAir;
       const lift = air ? AIR_ALTITUDE : 0;
       const isSel = selected.has(h);
+      if (isSel && kind === KIND.structure && cur.get(o, E.rallyX) >= 0 && owner === s.localPlayer) {
+        const rx2 = cur.get(o, E.rallyX) / FX;
+        const ry2 = cur.get(o, E.rallyY) / FX;
+        const fx = isoX(rx2, ry2);
+        const fy = isoY(rx2, ry2);
+        this.overlay.moveTo(px, py).lineTo(fx, fy).stroke({ width: 1, color: 0xe8c35a, alpha: 0.7 });
+        this.overlay.rect(fx - 1, fy - 16, 2, 16).fill(0xe8c35a).poly([fx + 1, fy - 16, fx + 10, fy - 13, fx + 1, fy - 10]).fill(0xe8c35a);
+      }
       if (isSel) {
         const rx = kind === KIND.structure ? 40 : 14;
         this.decals.ellipse(px, py, rx, rx / 2).stroke({ width: 1.5, color: owner === s.localPlayer ? 0x6dff8a : 0xff6d6d });
@@ -315,6 +339,8 @@ export class Renderer {
           this.overlay.rect(px - w / 2, top - 3, w, 2).fill(0x111111);
           this.overlay.rect(px - w / 2, top - 3, (w * sh) / maxSh, 2).fill(0x60a5fa);
         }
+        const cargo = cur.get(o, E.cargo);
+        if (cargo > 0) this.overlay.rect(px - w / 2, top + 4, (w * Math.min(700, cargo)) / 700, 2).fill(0x3ee6ff);
         const rank = cur.get(o, E.rank);
         for (let r = 0; r < rank; r++) this.overlay.rect(px + w / 2 + 2, top + 1 - r * 4, 3, 3).fill(0xfacc15);
       }
@@ -357,7 +383,51 @@ export class Renderer {
       this.overlay.ellipse(p.x, p.y, r, r / 2).stroke({ width: 2, color: p.color, alpha: 1 - t });
     }
 
+    this.updateEcho();
+    this.drawGhost();
     this.updateFog();
+  }
+
+  private updateEcho(): void {
+    const s = this.state;
+    if (this.echoVersion === s.echoVersion) return;
+    this.echoVersion = s.echoVersion;
+    const g = this.echoLayer;
+    g.clear();
+    for (let i = 0; i < s.echo.length; i++) {
+      const n = s.echo[i]!;
+      if (n === 0) continue;
+      const x = i % s.width;
+      const y = Math.floor(i / s.width);
+      const px = isoX(x + 0.5, y + 0.5);
+      const py = isoY(x + 0.5, y + 0.5);
+      g.poly([px, py - 15, px + 30, py, px, py + 15, px - 30, py]).fill({ color: 0x1a8a99, alpha: 0.55 });
+      // Crystal clusters; more crystals = more and taller spikes.
+      const spikes = 2 + Math.min(4, Math.floor(n / 3));
+      for (let k = 0; k < spikes; k++) {
+        const ox = ((x * 31 + y * 17 + k * 13) % 30) - 15;
+        const oy = ((x * 7 + y * 29 + k * 11) % 12) - 6;
+        const hgt = 10 + n * 1.5;
+        g.poly([px + ox - 5, py + oy, px + ox, py + oy - hgt, px + ox + 5, py + oy]).fill(k % 2 ? 0x9cfbff : 0x3ee6ff);
+        g.poly([px + ox, py + oy - hgt, px + ox + 5, py + oy, px + ox + 1, py + oy]).fill({ color: 0x0b4f5a, alpha: 0.6 });
+      }
+    }
+  }
+
+  private drawGhost(): void {
+    const ghost = this.placementGhost();
+    if (!ghost) return;
+    const color = ghost.error ? 0xff5a5a : 0x6dff8a;
+    for (let y = ghost.ty; y < ghost.ty + ghost.rule.footprintH; y++) {
+      for (let x = ghost.tx; x < ghost.tx + ghost.rule.footprintW; x++) {
+        const px = isoX(x, y);
+        const py = isoY(x, y);
+        this.overlay
+          .poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2])
+          .fill({ color, alpha: 0.35 })
+          .stroke({ width: 1, color, alpha: 0.8 });
+      }
+    }
   }
 
   /** Show click feedback at a screen point. */

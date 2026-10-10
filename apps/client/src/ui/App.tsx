@@ -6,6 +6,7 @@ import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import type { Renderer } from '../render/renderer';
 import { chordLabel } from '../input/keymap';
+import { EntityCard, ItemCard } from './InfoCard';
 import { isoX, isoY } from '../game/iso';
 
 const FX = 1024;
@@ -29,8 +30,10 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <TopBar state={state} input={props.input} />
       <div class="game" ref={hostRef} data-testid="game" />
       <BottomPanel state={state} input={props.input} />
-      <Sidebar state={state} renderer={props.renderer} />
+      <Sidebar state={state} input={props.input} renderer={props.renderer} />
+      <HoverCards state={state} />
       {state.menuOpen && <Menu state={state} input={props.input} />}
+      <EndScreen state={state} />
     </div>
   );
 }
@@ -44,7 +47,7 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
   return (
     <header class="topbar">
       <span class="timer" data-testid="timer">{time}</span>
-      <span class={`alert ${fresh ? 'on' : ''}`} data-testid="alert">
+      <span class={`alert ${fresh ? 'on' : ''} ${alert?.kind ?? ''}`} data-testid="alert">
         {fresh ? alert.text : ''}
       </span>
       <span class="fps" data-testid="fps">{state.fps} fps</span>
@@ -63,22 +66,45 @@ const TABS: { id: SidebarTab; label: string }[] = [
   { id: 'air', label: 'Air' },
 ];
 
-function Sidebar({ state, renderer }: { state: ClientState; renderer: Renderer }) {
+const ROLE_NAMES: Record<string, string> = {
+  conyard: 'Construction Yard',
+  power: 'Power',
+  refinery: 'Refinery',
+  barracks: 'Barracks',
+  factory: 'Vehicle Factory',
+  radar: 'Radar',
+  special: 'Special',
+  airfield: 'Airfield',
+  tech: 'Tech Center',
+};
+
+function Sidebar({ state, input, renderer }: { state: ClientState; input: Input; renderer: Renderer }) {
   const faction = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]!;
-  const credits = state.cur?.credits(state.localPlayer) ?? 0;
-  const items: (UnitRule | StructureRule)[] =
-    state.sidebarTab === 'structures' || state.sidebarTab === 'defenses'
-      ? faction.structures.map((i) => state.rules.structures[i]!).filter((s) => s.category === state.sidebarTab)
-      : faction.units.map((i) => state.rules.units[i]!).filter((u) => u.tab === state.sidebarTab);
+  const cur = state.cur;
+  const credits = cur?.credits(state.localPlayer) ?? 0;
+  const produced = cur?.player(state.localPlayer, 2) ?? 0;
+  const used = cur?.player(state.localPlayer, 3) ?? 0;
+  const roles = state.roles();
+  const structureTab = state.sidebarTab === 'structures' || state.sidebarTab === 'defenses';
+  const items: (UnitRule | StructureRule)[] = structureTab
+    ? faction.structures.map((i) => state.rules.structures[i]!).filter((s) => s.category === state.sidebarTab)
+    : faction.units.map((i) => state.rules.units[i]!).filter((u) => u.tab === state.sidebarTab);
+  const tabIndex = state.sidebarTab === 'infantry' ? 0 : state.sidebarTab === 'vehicles' ? 1 : 2;
+  const bq = cur && structureTab ? cur.buildQueue(state.localPlayer, state.sidebarTab === 'structures' ? 0 : 1) : null;
+  const pq = cur && !structureTab ? cur.productionQueue(state.localPlayer, tabIndex) : null;
+  const hasProducer = structureTab ? (roles.get('conyard') ?? 0) > 0 : (roles.get(tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield') ?? 0) > 0;
   return (
     <aside class="sidebar" data-faction={faction.id}>
-      <Minimap state={state} renderer={renderer} />
+      <Minimap state={state} renderer={renderer} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
       <div class="economy">
         <div class="credits" data-testid="credits">
           ${credits.toLocaleString('en-US')}
         </div>
-        <div class="power" title="Power (M3)">
-          <div class="power-bar" />
+        <div class={`power ${used > produced ? 'low' : ''}`} title={`Power ${produced} produced / ${used} used`} data-testid="power">
+          <div class="power-bar" style={{ width: `${Math.min(100, (used / Math.max(1, produced)) * 100)}%` }} />
+          <span>
+            {used}/{produced}
+          </span>
         </div>
       </div>
       <nav class="tabs" data-testid="sidebar-tabs">
@@ -90,17 +116,78 @@ function Sidebar({ state, renderer }: { state: ClientState; renderer: Renderer }
       </nav>
       {(state.mode === 'buildMenu' || state.mode === 'defenseMenu') && (
         <div class="hint" data-testid="menu-hint">
-          Press a letter to build · Esc to cancel
+          {state.mode === 'buildMenu' ? 'Build' : 'Defense'}:{' '}
+          {faction.structures
+            .map((i) => state.rules.structures[i]!)
+            .filter((r) => r.category === (state.mode === 'buildMenu' ? 'structures' : 'defenses'))
+            .map((r) => `${r.key} ${r.name}`)
+            .join(' · ')}{' '}
+          · Esc cancels
         </div>
       )}
-      <div class="grid">
-        {items.map((it) => (
-          <button class="item" disabled title={`${it.name} — ${it.cost} (production arrives in M3)`}>
-            <span class={`name ${faction.monospaceNames ? 'mono' : ''}`}>{it.name}</span>
-            <span class="cost">{it.cost}</span>
-            {it.key && <kbd class="key">{it.key}</kbd>}
-          </button>
-        ))}
+      {state.placing && (
+        <div class="hint" data-testid="placing-hint">
+          Click to place · right-click or Esc to cancel
+        </div>
+      )}
+      {!hasProducer && (
+        <div class="hint muted">{structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${ROLE_NAMES[tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield']}.`}</div>
+      )}
+      <div class="grid" data-testid="build-grid">
+        {items.map((it) => {
+          const missing = state.missing(it.requires, roles);
+          let progress = 0;
+          let ready = false;
+          let busy = false;
+          let count = 0;
+          if (it.kind === 'structure' && bq) {
+            if (bq.item === it.index) {
+              progress = bq.progress;
+              ready = bq.ready;
+            } else busy = bq.item >= 0;
+          }
+          if (it.kind === 'unit' && pq) {
+            count = pq.items.filter((x) => x === it.index).length;
+            if (pq.items[0] === it.index) progress = pq.progress;
+          }
+          const disabled = !hasProducer || missing.length > 0 || busy;
+          const title =
+            missing.length > 0
+              ? `${it.name} — requires ${missing.map((r) => ROLE_NAMES[r] ?? r).join(', ')}`
+              : `${it.name} — $${it.cost}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, right-click: cancel' : ready ? ' · click to place' : ' · right-click: cancel'}`;
+          return (
+            <button
+              class={`item ${ready ? 'ready' : ''} ${progress > 0 && !ready ? 'building' : ''} ${disabled ? 'off' : ''}`}
+              aria-disabled={disabled}
+              aria-label={title}
+              data-item={it.id}
+              onMouseEnter={(e) => {
+                state.hoverItem = { index: it.index, kind: it.kind, top: (e.currentTarget as HTMLElement).getBoundingClientRect().top };
+                state.changed();
+              }}
+              onMouseLeave={() => {
+                state.hoverItem = null;
+                state.changed();
+              }}
+              onClick={(e) => {
+                if (disabled) return;
+                if (it.kind === 'structure') input.activateStructure(it);
+                else input.activateUnit(it, e.shiftKey ? 5 : 1);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (it.kind === 'structure') input.cancelStructure(it);
+                else input.cancelUnit(it);
+              }}
+            >
+              {progress > 0 && !ready && <i class="progress" style={{ height: `${progress / 10}%` }} />}
+              <span class={`name ${faction.monospaceNames ? 'mono' : ''}`}>{it.name}</span>
+              <span class="cost">{ready ? 'READY' : `$${it.cost}`}</span>
+              {it.key && <kbd class="key">{it.key}</kbd>}
+              {count > 0 && <b class="count">{count}</b>}
+            </button>
+          );
+        })}
       </div>
       <div class="mode" data-testid="mode">
         {state.mode !== 'normal' ? `Mode: ${state.mode}` : ''}
@@ -109,8 +196,10 @@ function Sidebar({ state, renderer }: { state: ClientState; renderer: Renderer }
   );
 }
 
-function Minimap({ state, renderer }: { state: ClientState; renderer: Renderer }) {
+function Minimap({ state, renderer, radar }: { state: ClientState; renderer: Renderer; radar: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const radarRef = useRef(radar);
+  radarRef.current = radar;
   useEffect(() => {
     const canvas = ref.current!;
     const ctx = canvas.getContext('2d')!;
@@ -141,6 +230,18 @@ function Minimap({ state, renderer }: { state: ClientState; renderer: Renderer }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = '#05070a';
       ctx.fillRect(0, 0, SIZE, SIZE);
+      if (!radarRef.current) {
+        // No radar (or low power): static.
+        for (let i = 0; i < 400; i++) {
+          ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.12})`;
+          ctx.fillRect(Math.random() * SIZE, Math.random() * SIZE, 2, 2);
+        }
+        ctx.fillStyle = '#8892a0';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(state.lowPower ? 'LOW POWER' : 'NO RADAR', SIZE / 2, SIZE / 2);
+        return;
+      }
       ctx.setTransform(scale, scale * 0.5, -scale, scale * 0.5, h * scale, SIZE * 0.25);
       ctx.drawImage(base, 0, 0);
       if (state.fog) {
@@ -199,7 +300,7 @@ function Minimap({ state, renderer }: { state: ClientState; renderer: Renderer }
       canvas.removeEventListener('pointerdown', click);
     };
   }, [state, renderer]);
-  return <canvas class="minimap" ref={ref} width={220} height={220} data-testid="minimap" />;
+  return <canvas class="minimap" ref={ref} width={220} height={220} data-testid="minimap" data-radar={radar ? 'on' : 'off'} />;
 }
 
 const COMMANDS: { action: string; label: string; key: string }[] = [
@@ -251,6 +352,7 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
             <kbd>{chordLabel(c.key)}</kbd>
           </button>
         ))}
+        <HarvestModeButton state={state} input={input} />
       </div>
     </footer>
   );
@@ -283,6 +385,23 @@ function GroupBar({ state }: { state: ClientState }) {
   );
 }
 
+/** Toggle harvesters between richest-first and nearest-first tile choice. */
+function HarvestModeButton({ state, input }: { state: ClientState; input: Input }) {
+  const harvesters = state.selectedUnits().filter((h) => input.isHarvester(h));
+  if (harvesters.length === 0) return null;
+  const nearest = harvesters.every((h) => state.field(h, E.hmode) === 1);
+  return (
+    <button
+      class="wide"
+      data-testid="harvest-mode"
+      title="Richest: go for tiles with the most crystals. Nearest: shortest trips."
+      onClick={() => state.send({ type: 'harvestMode', units: harvesters, mode: nearest ? 0 : 1 })}
+    >
+      Harvest: {nearest ? 'Nearest' : 'Richest'}
+    </button>
+  );
+}
+
 function SelectedOne({ state, h }: { state: ClientState; h: number }) {
   const rule = state.ruleOf(h);
   const hp = state.field(h, E.hp);
@@ -306,6 +425,62 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
           {maxSh > 0 && ` · Shields ${sh}/${maxSh}`}
         </div>
         {rule.kind === 'unit' && <div class="muted">{rule.role}</div>}
+        {rule.kind === 'structure' && (
+          <div class="muted">
+            Power {rule.power > 0 ? `+${rule.power}` : rule.power}
+            {state.field(h, E.repairing) === 1 ? ' · repairing' : ''}
+          </div>
+        )}
+      </div>
+      {rule.kind === 'structure' && state.isOwn(h) && <StructureActions state={state} h={h} />}
+    </div>
+  );
+}
+
+function HoverCards({ state }: { state: ClientState }) {
+  const item = state.hoverItem;
+  if (item) {
+    const rule = item.kind === 'unit' ? state.rules.units[item.index]! : state.rules.structures[item.index]!;
+    return (
+      <div class="card-anchor side" style={{ top: `${Math.min(item.top, window.innerHeight - 380)}px` }}>
+        <ItemCard state={state} rule={rule} />
+      </div>
+    );
+  }
+  if (state.hoverEntity >= 0 && state.off(state.hoverEntity) >= 0) {
+    const { x, y } = state.hoverPos;
+    const left = Math.min(x + 18, window.innerWidth - 520);
+    return (
+      <div class="card-anchor" style={{ left: `${left}px`, top: `${Math.max(40, y - 10)}px` }}>
+        <EntityCard state={state} h={state.hoverEntity} />
+      </div>
+    );
+  }
+  return null;
+}
+
+function StructureActions({ state, h }: { state: ClientState; h: number }) {
+  return (
+    <div class="actions">
+      <button onClick={() => state.send({ type: 'repair', target: h })}>
+        Repair <kbd>Alt+R</kbd>
+      </button>
+      <button onClick={() => state.send({ type: 'sell', target: h })}>
+        Sell <kbd>Alt+S</kbd>
+      </button>
+    </div>
+  );
+}
+
+function EndScreen({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur || cur.a[1] !== 1) return null;
+  const won = cur.a[2] === state.players[state.localPlayer]?.team;
+  return (
+    <div class="menu-overlay" data-testid="end-screen">
+      <div class="menu">
+        <h2>{won ? 'Victory' : 'Defeat'}</h2>
+        <button onClick={() => location.reload()}>Play again</button>
       </div>
     </div>
   );

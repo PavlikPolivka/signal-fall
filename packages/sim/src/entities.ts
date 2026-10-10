@@ -1,7 +1,13 @@
 import type { IntWriter } from './hash';
 
 /** Entity kinds. */
-export const KIND = { none: 0, unit: 1, structure: 2 } as const;
+export const KIND = { none: 0, unit: 1, structure: 2, wreck: 3 } as const;
+
+/** Harvester states. */
+export const HARVEST = { off: 0, toField: 1, harvesting: 2, toRefinery: 3, waiting: 4, unloading: 5 } as const;
+
+/** Which Echo tiles a harvester prefers. */
+export const HARVEST_MODE = { richest: 0, nearest: 1 } as const;
 
 /** Unit stance. */
 export const STANCE = { normal: 0, hold: 1 } as const;
@@ -16,7 +22,8 @@ export type Order =
   /** x, y = target's last known position, used when it dies or vanishes into fog. */
   | { type: 'attack'; target: number; x: number; y: number }
   | { type: 'patrol'; ax: number; ay: number; bx: number; by: number; toB: boolean }
-  | { type: 'guard'; target: number };
+  | { type: 'guard'; target: number }
+  | { type: 'salvage'; target: number };
 
 export const SLOT_BITS = 16;
 export const MAX_SLOTS = 1 << SLOT_BITS;
@@ -72,6 +79,27 @@ export class Entities {
   /** Structures: footprint origin tile. */
   tileX!: Int16Array;
   tileY!: Int16Array;
+  /** Structures: rally point (Q10), -1 if none. */
+  rallyX!: Int32Array;
+  rallyY!: Int32Array;
+  /** Structures: paid repair in progress. */
+  repairing!: Uint8Array;
+  /** Refineries: handle of the harvester using the dock, or -1. */
+  dock!: Int32Array;
+  /** Harvesters: credits worth of Echo carried. */
+  cargo!: Int32Array;
+  /** Harvesters: HARVEST state. */
+  hstate!: Uint8Array;
+  /** Harvesters: tile being harvested, or -1. */
+  htile!: Int32Array;
+  /** Harvesters: ticks until next crystal / search. */
+  htimer!: Int32Array;
+  /** Harvesters: HARVEST_MODE (richest or nearest tiles first). */
+  hmode!: Uint8Array;
+  /** Wrecks: unit cost the wreck came from. */
+  value!: Int32Array;
+  /** Wrecks: tick at which it disappears. */
+  expires!: Int32Array;
 
   orders: Order[][] = [];
   paths: (Int32Array | null)[] = [];
@@ -122,6 +150,17 @@ export class Entities {
     this.vy = re(this.vy, (n) => new Int32Array(n));
     this.tileX = re(this.tileX, (n) => new Int16Array(n));
     this.tileY = re(this.tileY, (n) => new Int16Array(n));
+    this.rallyX = re(this.rallyX, (n) => new Int32Array(n));
+    this.rallyY = re(this.rallyY, (n) => new Int32Array(n));
+    this.repairing = re(this.repairing, (n) => new Uint8Array(n));
+    this.dock = re(this.dock, (n) => new Int32Array(n));
+    this.cargo = re(this.cargo, (n) => new Int32Array(n));
+    this.hstate = re(this.hstate, (n) => new Uint8Array(n));
+    this.htile = re(this.htile, (n) => new Int32Array(n));
+    this.htimer = re(this.htimer, (n) => new Int32Array(n));
+    this.hmode = re(this.hmode, (n) => new Uint8Array(n));
+    this.value = re(this.value, (n) => new Int32Array(n));
+    this.expires = re(this.expires, (n) => new Int32Array(n));
     this.capacity = capacity;
   }
 
@@ -153,6 +192,17 @@ export class Entities {
     this.maxShields[slot] = 0;
     this.tileX[slot] = 0;
     this.tileY[slot] = 0;
+    this.rallyX[slot] = -1;
+    this.rallyY[slot] = -1;
+    this.repairing[slot] = 0;
+    this.dock[slot] = NO_ENTITY;
+    this.cargo[slot] = 0;
+    this.hstate[slot] = 0;
+    this.htile[slot] = -1;
+    this.htimer[slot] = 0;
+    this.hmode[slot] = 0;
+    this.value[slot] = 0;
+    this.expires[slot] = 0;
     this.orders[slot] = [];
     this.paths[slot] = null;
     return slot | (this.gen[slot]! << SLOT_BITS);
@@ -214,6 +264,19 @@ export class Entities {
       w.push(this.stuck[s]!);
       w.push(this.vx[s]!);
       w.push(this.vy[s]!);
+      w.push(this.tileX[s]!);
+      w.push(this.tileY[s]!);
+      w.push(this.rallyX[s]!);
+      w.push(this.rallyY[s]!);
+      w.push(this.repairing[s]!);
+      w.push(this.dock[s]!);
+      w.push(this.cargo[s]!);
+      w.push(this.hstate[s]!);
+      w.push(this.htile[s]!);
+      w.push(this.htimer[s]!);
+      w.push(this.hmode[s]!);
+      w.push(this.value[s]!);
+      w.push(this.expires[s]!);
       const orders = this.orders[s]!;
       w.push(orders.length);
       for (const o of orders) serializeOrder(o, w);
@@ -224,7 +287,7 @@ export class Entities {
   }
 }
 
-const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5 } as const;
+const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5, salvage: 6 } as const;
 
 function serializeOrder(o: Order, w: IntWriter): void {
   w.push(ORDER_CODE[o.type]);
@@ -243,6 +306,7 @@ function serializeOrder(o: Order, w: IntWriter): void {
       w.push(o.y);
       return;
     case 'guard':
+    case 'salvage':
       w.push(o.target);
       return;
     case 'patrol':

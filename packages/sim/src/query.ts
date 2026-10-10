@@ -36,6 +36,7 @@ export function costOf(world: World, slot: number): number {
 
 export function sightOf(world: World, slot: number): number {
   const e = world.entities;
+  if (e.kind[slot] === KIND.wreck) return 0;
   return e.kind[slot] === KIND.unit
     ? world.rules.units[e.type[slot]!]!.sight
     : world.rules.structures[e.type[slot]!]!.sight;
@@ -84,6 +85,8 @@ export function distToBody(world: World, x: number, y: number, target: number): 
 export function canTarget(world: World, attacker: number, weapon: WeaponRule, victim: number): boolean {
   const e = world.entities;
   if (e.alive[victim] !== 1 || victim === attacker) return false;
+  const k = e.kind[victim];
+  if (k !== KIND.unit && k !== KIND.structure) return false;
   if (teamOf(world, victim) === teamOf(world, attacker)) return false;
   if (isAir(world, victim) ? !weapon.targetsAir : !weapon.targetsGround) return false;
   return visibleTo(world, e.owner[attacker]!, victim);

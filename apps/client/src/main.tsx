@@ -8,11 +8,12 @@ import { App } from './ui/App';
 import './ui/styles.css';
 
 const params = new URLSearchParams(location.search);
-const scenario: ScenarioSpec = {
-  kind: params.get('scenario') === 'stress' ? 'stress' : 'sandbox',
-  unitsPerSide: Number(params.get('units') ?? (params.get('scenario') === 'stress' ? 200 : 24)),
-  seed: Number(params.get('seed') ?? 7),
-};
+const kind = params.get('scenario') ?? 'skirmish';
+const seed = Number(params.get('seed') ?? 7);
+const scenario: ScenarioSpec =
+  kind === 'skirmish'
+    ? { kind, seed, factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)] }
+    : { kind: kind === 'stress' ? 'stress' : 'sandbox', seed, unitsPerSide: Number(params.get('units') ?? (kind === 'stress' ? 200 : 24)) };
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
@@ -23,6 +24,10 @@ let input: Input | null = null;
 async function mountGame(host: HTMLDivElement): Promise<void> {
   await renderer.init(host);
   input = new Input(state, renderer, renderer.app.canvas);
+  renderer.placementGhost = () => {
+    const c = input?.cursor();
+    return c && input ? input.placementAt(c.x, c.y) : null;
+  };
   renderUi();
   let fpsFrames = 0;
   let fpsStart = performance.now();
@@ -50,11 +55,11 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.ready = true;
     } else {
       const first = state.cur === null;
-      state.onSnapshot(new Snapshot(msg.buf), msg.fog);
+      state.onSnapshot(new Snapshot(msg.buf), msg.fog, msg.echo);
       if (first) input?.run('jumpToBase');
     }
   };
-  post({ type: 'start', scenario, localPlayer: 0 });
+  post({ type: 'start', scenario, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
 }
 
 const root = document.getElementById('app')!;

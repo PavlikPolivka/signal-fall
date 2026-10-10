@@ -1,8 +1,11 @@
 import type { Command, ScheduledCommand } from './commands';
-import { FX_ONE, clamp, idiv, ilength, isqrt } from './fx';
-import { KIND, NO_ENTITY, STANCE, type Order } from './entities';
+import { FX_ONE, FX_SHIFT, clamp, idiv, ilength, isqrt } from './fx';
+import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from './entities';
+import { placementError, footprintBlocked, worldPlacementView } from './placement';
 import { teamOf } from './query';
-import type { World } from './world';
+import { removeEntity, spawnStructure } from './spawn';
+import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
+import { BUILD_CATEGORY_INDEX, type World } from './world';
 
 /** Groups of at least this many units share a flow field instead of running A* each. */
 export const FLOW_MIN_GROUP = 4;
@@ -28,8 +31,17 @@ function resetMovement(world: World, s: number): void {
   e.stuck[s] = 0;
 }
 
+/** Any direct order takes a harvester off its harvesting loop. */
+function stopHarvesting(world: World, s: number): void {
+  const e = world.entities;
+  if (e.hstate[s] === HARVEST.off) return;
+  e.hstate[s] = HARVEST.off;
+  e.target[s] = NO_ENTITY;
+}
+
 function give(world: World, s: number, order: Order, queue: boolean): void {
   const e = world.entities;
+  stopHarvesting(world, s);
   if (!queue || e.orders[s]!.length === 0) {
     e.orders[s] = [order];
     e.target[s] = NO_ENTITY;
@@ -117,6 +129,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
     case 'stop':
     case 'hold':
       for (const s of ownedUnits(world, c.player, cmd.units)) {
+        stopHarvesting(world, s);
         e.orders[s] = [];
         e.target[s] = NO_ENTITY;
         e.stance[s] = cmd.type === 'hold' ? STANCE.hold : STANCE.normal;
@@ -125,10 +138,83 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
         resetMovement(world, s);
       }
       return;
-    case 'deploy':
     case 'ability':
-      // Accepted now so clients and replays can carry them; behavior lands in M3 (deploy) and M7 (abilities).
+      // Accepted so clients and replays can carry it; faction abilities land in M7.
       return;
+    case 'deploy':
+      for (const s of ownedUnits(world, c.player, cmd.units)) deploy(world, c.player, s);
+      return;
+    case 'build':
+      startBuild(world, c.player, cmd.category, cmd.item);
+      return;
+    case 'cancelBuild': {
+      const q = player.build[BUILD_CATEGORY_INDEX[cmd.category]]!;
+      player.credits += q.spent;
+      q.item = -1;
+      q.progress = 0;
+      q.spent = 0;
+      q.ready = false;
+      return;
+    }
+    case 'place':
+      place(world, c.player, cmd.category, cmd.tx, cmd.ty);
+      return;
+    case 'train':
+      train(world, c.player, cmd.item, cmd.count);
+      return;
+    case 'cancelTrain': {
+      const rule = world.rules.units[cmd.item];
+      if (!rule) return;
+      const q = player.production[TABS.indexOf(rule.tab)]!;
+      const i = q.items.lastIndexOf(cmd.item);
+      if (i < 0) return;
+      q.items.splice(i, 1);
+      if (i === 0) {
+        player.credits += q.spent;
+        q.progress = 0;
+        q.spent = 0;
+      }
+      return;
+    }
+    case 'rally': {
+      const t = e.resolve(cmd.target);
+      if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;
+      e.rallyX[t] = clamp(cmd.x, 0, world.map.width * FX_ONE - 1);
+      e.rallyY[t] = clamp(cmd.y, 0, world.map.height * FX_ONE - 1);
+      return;
+    }
+    case 'sell': {
+      const t = e.resolve(cmd.target);
+      if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;
+      const rule = world.rules.structures[e.type[t]!]!;
+      player.credits += idiv(rule.cost * world.rules.constants.sellRefundPct, 100);
+      removeEntity(world, t);
+      return;
+    }
+    case 'repair': {
+      const t = e.resolve(cmd.target);
+      if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;
+      e.repairing[t] = e.repairing[t] === 1 || e.hp[t]! >= e.maxHp[t]! ? 0 : 1;
+      return;
+    }
+    case 'harvest':
+      harvest(world, c.player, cmd.units, cmd.x, cmd.y);
+      return;
+    case 'harvestMode':
+      for (const s of ownedUnits(world, c.player, cmd.units)) {
+        e.hmode[s] = cmd.mode === 1 ? 1 : 0;
+        // Re-pick the tile with the new preference unless mid-harvest of a full load.
+        if (e.hstate[s] === HARVEST.toField) e.htile[s] = -1;
+      }
+      return;
+    case 'salvage': {
+      const t = e.resolve(cmd.target);
+      if (t < 0 || e.kind[t] !== KIND.wreck) return;
+      for (const s of ownedUnits(world, c.player, cmd.units)) {
+        if (canSalvage(world, s) && salvageValue(world, c.player, t) > 0) give(world, s, { type: 'salvage', target: cmd.target }, cmd.queue ?? false);
+      }
+      return;
+    }
     case 'scatter': {
       const w = world.map.width * FX_ONE - 1;
       const h = world.map.height * FX_ONE - 1;
@@ -142,4 +228,90 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       return;
     }
   }
+}
+
+// --- economy commands ---
+
+function startBuild(world: World, player: number, category: 'structures' | 'defenses', item: number): void {
+  const p = world.players[player]!;
+  const rule = world.rules.structures[item];
+  if (!rule || rule.category !== category || rule.faction !== p.faction) return;
+  const q = p.build[BUILD_CATEGORY_INDEX[category]]!;
+  if (q.item >= 0) return; // one at a time per category
+  if (!requirementsMet(computeFacts(world)[player]!, rule.requires)) return;
+  q.item = item;
+  q.progress = 0;
+  q.spent = 0;
+  q.ready = false;
+}
+
+function place(world: World, player: number, category: 'structures' | 'defenses', tx: number, ty: number): void {
+  const p = world.players[player]!;
+  const q = p.build[BUILD_CATEGORY_INDEX[category]]!;
+  if (q.item < 0 || !q.ready) return;
+  const rule = world.rules.structures[q.item]!;
+  const faction = world.rules.factions[p.faction]!;
+  if (placementError(worldPlacementView(world, player), player, faction, rule, tx, ty) !== null) return;
+  const h = spawnStructure(world, rule.index, player, tx, ty);
+  if (h < 0) return;
+  q.item = -1;
+  q.progress = 0;
+  q.spent = 0;
+  q.ready = false;
+  if (rule.role === 'refinery') spawnFreeHarvester(world, player, h & 0xffff);
+}
+
+function train(world: World, player: number, item: number, count: number): void {
+  const p = world.players[player]!;
+  const rule = world.rules.units[item];
+  if (!rule || rule.faction !== p.faction) return;
+  const q = p.production[TABS.indexOf(rule.tab)]!;
+  const n = Math.max(1, Math.min(count, MAX_QUEUE - q.items.length));
+  for (let i = 0; i < n && q.items.length < MAX_QUEUE; i++) q.items.push(item);
+}
+
+/** Turn a construction unit into its construction yard, centered where it stands. */
+function deploy(world: World, player: number, s: number): void {
+  const e = world.entities;
+  const rule = world.rules.units[e.type[s]!]!;
+  const ability = rule.abilities.find((a) => a.kind === 'deploy');
+  if (!ability || ability.kind !== 'deploy') return;
+  const si = world.rules.structureIndex.get(ability.into);
+  if (si === undefined) return;
+  const srule = world.rules.structures[si]!;
+  const tx = (e.x[s]! >> FX_SHIFT) - (srule.footprintW >> 1);
+  const ty = (e.y[s]! >> FX_SHIFT) - (srule.footprintH >> 1);
+  if (footprintBlocked(worldPlacementView(world, player, s), srule, tx, ty)) return;
+  removeEntity(world, s);
+  spawnStructure(world, si, player, tx, ty);
+}
+
+function harvest(world: World, player: number, units: number[], x: number, y: number): void {
+  const e = world.entities;
+  const m = world.map;
+  const tx = clamp(x >> FX_SHIFT, 0, m.width - 1);
+  const ty = clamp(y >> FX_SHIFT, 0, m.height - 1);
+  const clicked = ty * m.width + tx;
+  const occupant = m.occupant[clicked]!;
+  const toRefinery =
+    occupant >= 0 && e.alive[occupant] === 1 && e.owner[occupant] === player && world.rules.structures[e.type[occupant]!]!.role === 'refinery';
+  for (const s of ownedUnits(world, player, units)) {
+    const rule = world.rules.units[e.type[s]!]!;
+    if (!rule.abilities.some((a) => a.kind === 'harvest')) continue;
+    e.orders[s] = [];
+    resetMovement(world, s);
+    if (toRefinery) {
+      e.hstate[s] = HARVEST.toRefinery;
+      e.target[s] = e.handle(occupant);
+    } else {
+      e.hstate[s] = HARVEST.toField;
+      e.target[s] = NO_ENTITY;
+      e.htile[s] = m.echo[clicked]! > 0 ? clicked : findEcho(world, tx, ty, 6, e.hmode[s]);
+    }
+  }
+}
+
+export function canSalvage(world: World, s: number): boolean {
+  const rule = world.rules.units[world.entities.type[s]!]!;
+  return rule.abilities.some((a) => a.kind === 'harvest' || (a.kind === 'engineer' && a.salvage));
 }

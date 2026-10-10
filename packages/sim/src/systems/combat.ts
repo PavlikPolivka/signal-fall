@@ -3,6 +3,7 @@ import { FX_ONE, iatan2, idiv, pct } from '../fx';
 import { KIND } from '../entities';
 import { armorOf, canTarget, costOf, distToBody, inWeaponRange, isAir, teamOf, weaponOf } from '../query';
 import { removeEntity } from '../spawn';
+import { spawnWreck } from './economy';
 import type { Projectile, World } from '../world';
 
 const ARMOR_COUNT = ARMOR.length;
@@ -16,6 +17,8 @@ export function weaponSystem(world: World): void {
     if (e.cooldown[s]! > 0) e.cooldown[s]!--;
     const weapon = weaponOf(world, s);
     if (!weapon) continue;
+    // Powered defenses go offline in low power.
+    if (e.kind[s] === KIND.structure && world.players[e.owner[s]!]!.lowPower && world.rules.structures[e.type[s]!]!.power < 0) continue;
     const t = e.resolve(e.target[s]!);
     if (t < 0) continue;
     if (!canTarget(world, s, weapon, t) || !inWeaponRange(world, s, weapon, t)) continue;
@@ -76,6 +79,7 @@ function impact(world: World, p: Projectile, primary: number): void {
   const victims: number[] = [];
   world.spatial.query(p.x, p.y, p.splash + 2 * FX_ONE, (s) => {
     if (s === primary || e.alive[s] !== 1) return;
+    if (e.kind[s] !== KIND.unit && e.kind[s] !== KIND.structure) return;
     if (teamOf(world, s) === team) return;
     if (isAir(world, s) ? !p.hitsAir : !p.hitsGround) return;
     if (distToBody(world, p.x, p.y, s) <= p.splash) victims.push(s);
@@ -112,6 +116,7 @@ export function deathSystem(world: World): void {
       e.xp[killer]! += costOf(world, s);
       promote(world, killer);
     }
+    spawnWreck(world, s);
     removeEntity(world, s);
   }
 }

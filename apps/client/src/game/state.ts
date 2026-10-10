@@ -1,5 +1,5 @@
-import type { Rules, Tab } from '@signal-fall/data';
-import { KIND, type Command } from '@signal-fall/sim';
+import type { Role, Rules, StructureRule, Tab } from '@signal-fall/data';
+import { FX_SHIFT, KIND, type Command, type PlacedStructure, type PlacementView } from '@signal-fall/sim';
 import { E, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
 
 export type Mode =
@@ -17,6 +17,8 @@ export type Mode =
 export type SidebarTab = 'structures' | 'defenses' | Tab;
 
 export interface Alert {
+  /** 'alert' = something is under attack / wrong; 'notice' = good news. */
+  kind: 'alert' | 'notice' | 'warn';
   text: string;
   x: number;
   y: number;
@@ -44,6 +46,15 @@ export class ClientState {
   curAt = 0;
   fog: Uint8Array | null = null;
   fogVersion = 0;
+  echo: Uint8Array = new Uint8Array(0);
+  echoVersion = 0;
+  /** Sidebar item under the cursor and the button's screen top. */
+  hoverItem: { index: number; kind: 'unit' | 'structure'; top: number } | null = null;
+  /** World entity under the cursor and where (client px). */
+  hoverEntity = -1;
+  hoverPos = { x: 0, y: 0 };
+  /** Structure waiting to be placed (placement mode). */
+  placing: { category: 'structures' | 'defenses'; item: number } | null = null;
 
   selection: number[] = [];
   /** Index into the selection's unit-type subgroups (Tab cycles). */
@@ -91,7 +102,7 @@ export class ClientState {
     this.post({ type: 'pause', paused });
   }
 
-  onSnapshot(s: Snapshot, fog: Uint8Array | null): void {
+  onSnapshot(s: Snapshot, fog: Uint8Array | null, echo: Uint8Array | null): void {
     this.prev = this.cur;
     this.cur = s;
     this.curAt = performance.now();
@@ -99,7 +110,12 @@ export class ClientState {
       this.fog = fog;
       this.fogVersion++;
     }
+    if (echo) {
+      this.echo = echo;
+      this.echoVersion++;
+    }
     this.detectAlerts();
+    this.detectEconomyEvents();
     // Drop dead entities from selection and control groups.
     const alive = (h: number) => s.index.has(h);
     const before = this.selection.length;
@@ -134,7 +150,7 @@ export class ClientState {
   /** Rule for a unit or structure handle. */
   ruleOf(h: number) {
     const type = this.field(h, E.type);
-    return this.isUnit(h) ? this.rules.units[type]! : this.rules.structures[type]!;
+    return this.field(h, E.kind) === KIND.structure ? this.rules.structures[type]! : this.rules.units[type]!;
   }
 
   /** Own unit handles in the current selection. */
@@ -159,13 +175,102 @@ export class ClientState {
     this.changed();
   }
 
-  alert(text: string, x: number, y: number): void {
+  alert(text: string, x: number, y: number, kind: Alert['kind'] = 'alert'): void {
     const now = performance.now();
     // One alert of a kind per 8 seconds.
     if (this.alerts.some((a) => a.text === text && now - a.time < 8000)) return;
-    this.alerts.push({ text, x, y, time: now });
+    this.alerts.push({ kind, text, x, y, time: now });
     if (this.alerts.length > 5) this.alerts.shift();
     this.changed();
+  }
+
+  // --- economy views of the current snapshot ---
+
+  /** Roles of the local player's structures, with counts. */
+  roles(player = this.localPlayer): Map<Role, number> {
+    const out = new Map<Role, number>();
+    const cur = this.cur;
+    if (!cur) return out;
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.owner) !== player || cur.get(o, E.kind) !== KIND.structure) continue;
+      const role = this.rules.structures[cur.get(o, E.type)]!.role;
+      out.set(role, (out.get(role) ?? 0) + 1);
+    }
+    return out;
+  }
+
+  /** Missing roles for an item, empty if it can be built. */
+  missing(requires: readonly Role[], roles = this.roles()): Role[] {
+    return requires.filter((r) => !roles.get(r));
+  }
+
+  get lowPower(): boolean {
+    return this.cur?.player(this.localPlayer, 4) === 1;
+  }
+
+  /** Placement view built from the snapshot, for the client-side placement preview. */
+  placementView(): PlacementView {
+    const cur = this.cur!;
+    const structures: PlacedStructure[] = [];
+    const units = new Uint8Array(this.width * this.height);
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      const kind = cur.get(o, E.kind);
+      if (kind === KIND.structure) {
+        // Enemy structures only count where the player has explored.
+        const rule: StructureRule = this.rules.structures[cur.get(o, E.type)]!;
+        structures.push({ owner: cur.get(o, E.owner), rule, tx: cur.get(o, E.tileX), ty: cur.get(o, E.tileY) });
+      } else if (kind === KIND.unit && !this.rules.units[cur.get(o, E.type)]!.isAir) {
+        const tx = cur.get(o, E.x) >> FX_SHIFT;
+        const ty = cur.get(o, E.y) >> FX_SHIFT;
+        units[ty * this.width + tx] = 1;
+      }
+    }
+    return {
+      width: this.width,
+      height: this.height,
+      terrain: this.terrain,
+      echo: this.echo,
+      structures,
+      unitOn: (x, y) => units[y * this.width + x] === 1,
+      coveragePct: 100,
+    };
+  }
+
+  private lastReady = [false, false];
+  private lastQueueLengths = [0, 0, 0];
+  private lastLowPower = false;
+
+  private detectEconomyEvents(): void {
+    const cur = this.cur;
+    if (!cur) return;
+    for (let c = 0; c < 2; c++) {
+      const ready = cur.buildQueue(this.localPlayer, c).ready;
+      if (ready && !this.lastReady[c]) this.notice('Construction complete');
+      this.lastReady[c] = ready;
+    }
+    for (let t = 0; t < 3; t++) {
+      const n = cur.productionQueue(this.localPlayer, t).items.length;
+      if (n < this.lastQueueLengths[t]! && cur.productionQueue(this.localPlayer, t).progress === 0) this.notice('Unit ready');
+      this.lastQueueLengths[t] = n;
+    }
+    if (this.lowPower && !this.lastLowPower) this.alert('Low power', -1, -1);
+    this.lastLowPower = this.lowPower;
+  }
+
+  /** Explain why an action did nothing (shown in the top bar). */
+  warn(text: string): void {
+    const now = performance.now();
+    this.alerts = this.alerts.filter((a) => a.text !== text);
+    this.alerts.push({ kind: 'warn', text, x: -1, y: -1, time: now });
+    if (this.alerts.length > 5) this.alerts.shift();
+    this.changed();
+  }
+
+  /** Non-alarming status line (no camera jump target). */
+  notice(text: string): void {
+    this.alert(text, -1, -1, 'notice');
   }
 
   private detectAlerts(): void {

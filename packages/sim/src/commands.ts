@@ -14,8 +14,27 @@ export type Command =
   | { type: 'stop'; units: number[] }
   | { type: 'hold'; units: number[] }
   | { type: 'scatter'; units: number[] }
-  /** Deploy construction units (M3). */
+  /** Deploy construction units into a construction yard where they stand. */
   | { type: 'deploy'; units: number[] }
+  /** Start building a structure at the construction yard (category queue). */
+  | { type: 'build'; category: 'structures' | 'defenses'; item: number }
+  | { type: 'cancelBuild'; category: 'structures' | 'defenses' }
+  /** Place the finished structure of a category with its footprint origin at tile (tx, ty). */
+  | { type: 'place'; category: 'structures' | 'defenses'; tx: number; ty: number }
+  /** Queue units at the factory queue for their tab. */
+  | { type: 'train'; item: number; count: number }
+  /** Remove the last queued unit of this type (refunds progress if it was being built). */
+  | { type: 'cancelTrain'; item: number }
+  | { type: 'rally'; target: number; x: number; y: number }
+  | { type: 'sell'; target: number }
+  /** Toggle paid repair on a structure. */
+  | { type: 'repair'; target: number }
+  /** Send harvesters to Echo near (x, y), or to a refinery to unload. */
+  | { type: 'harvest'; units: number[]; x: number; y: number }
+  /** Harvester tile preference: 0 = richest first, 1 = nearest first. */
+  | { type: 'harvestMode'; units: number[]; mode: number }
+  /** Collect a wreck for credits (Holdout harvesters and engineers). */
+  | { type: 'salvage'; units: number[]; target: number; queue?: boolean }
   /** Faction ability: blink, phase, override (M7). Optional target point or entity. */
   | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number };
 

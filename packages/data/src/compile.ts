@@ -87,6 +87,7 @@ export interface StructureRule {
   name: string;
   faction: FactionIdx;
   role: Role;
+  description: string;
   key: string | null;
   category: 'structures' | 'defenses' | null;
   tier: number;
@@ -358,6 +359,7 @@ function compileStructure(
     name: s.name,
     faction,
     role: s.role,
+    description: s.description,
     key: s.key ?? null,
     category: s.category ?? null,
     tier: s.tier,

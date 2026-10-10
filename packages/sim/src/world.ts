@@ -11,6 +11,26 @@ export interface PlayerSetup {
   team: number;
 }
 
+/** Construction yard queue for one category (structures or defenses): one item at a time. */
+export interface BuildQueue {
+  /** Structure rule index, or -1 when idle. */
+  item: number;
+  /** Work done, in percent-ticks (total = buildTicks * 100). */
+  progress: number;
+  /** Credits spent on the item so far. */
+  spent: number;
+  /** Finished and waiting to be placed. */
+  ready: boolean;
+}
+
+/** Factory queue for one tab (infantry, vehicles, air): items built in order. */
+export interface ProductionQueue {
+  /** Unit rule indices; items[0] is in progress. */
+  items: number[];
+  progress: number;
+  spent: number;
+}
+
 export interface PlayerState {
   index: number;
   faction: FactionIdx;
@@ -18,7 +38,21 @@ export interface PlayerState {
   credits: number;
   defeated: boolean;
   surrendered: boolean;
+  powerProduced: number;
+  powerUsed: number;
+  lowPower: boolean;
+  /** [structures, defenses] */
+  build: BuildQueue[];
+  /** [infantry, vehicles, air] */
+  production: ProductionQueue[];
+  /** Brutal AI income bonus (percent), 0 for everyone else. */
+  incomeBonusPct: number;
+  /** Stats. */
+  harvested: number;
 }
+
+export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
+export const TAB_INDEX = { infantry: 0, vehicles: 1, air: 2 } as const;
 
 export interface Projectile {
   owner: number;
@@ -78,11 +112,13 @@ export interface WorldOptions {
   height: number;
   players: PlayerSetup[];
   terrain?: Uint8Array;
+  /** Initial Echo crystals per tile (also each tile's regrowth cap). */
+  echo?: Uint8Array;
   victoryRules?: boolean;
 }
 
 export function createWorld(o: WorldOptions): World {
-  const map = createMap(o.width, o.height, o.terrain);
+  const map = createMap(o.width, o.height, o.terrain, o.echo);
   return {
     rules: o.rules,
     seed: o.seed >>> 0,
@@ -100,6 +136,13 @@ export function createWorld(o: WorldOptions): World {
       credits: o.rules.constants.startCredits,
       defeated: false,
       surrendered: false,
+      powerProduced: 0,
+      powerUsed: 0,
+      lowPower: false,
+      build: [0, 1].map(() => ({ item: -1, progress: 0, spent: 0, ready: false })),
+      production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
+      incomeBonusPct: 0,
+      harvested: 0,
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -132,7 +175,25 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.credits);
     w.push(p.defeated ? 1 : 0);
     w.push(p.surrendered ? 1 : 0);
+    w.push(p.powerProduced);
+    w.push(p.powerUsed);
+    w.push(p.lowPower ? 1 : 0);
+    w.push(p.incomeBonusPct);
+    w.push(p.harvested);
+    for (const b of p.build) {
+      w.push(b.item);
+      w.push(b.progress);
+      w.push(b.spent);
+      w.push(b.ready ? 1 : 0);
+    }
+    for (const q of p.production) {
+      w.push(q.items.length);
+      w.pushArray(q.items);
+      w.push(q.progress);
+      w.push(q.spent);
+    }
   }
+  w.pushArray(world.map.echo);
   for (const r of world.aiRng) w.pushArray(r.s);
   world.entities.serialize(w);
   w.push(world.projectiles.length);

@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultRules } from '@signal-fall/data';
 import { LockstepScheduler, NullTransport } from '@signal-fall/net';
-import { Sim, sandbox, type World } from '@signal-fall/sim';
+import { Sim, createMatch, grantBase, sandbox, testMap, type World } from '@signal-fall/sim';
 import {
   E,
   ENT_STRIDE,
@@ -10,6 +10,8 @@ import {
   ORDER_CODE,
   P,
   PLAYER_STRIDE,
+  PROD_STRIDE,
+  QUEUE_SLOTS,
   PR,
   PROJ_STRIDE,
   type FromWorker,
@@ -19,7 +21,7 @@ import {
 
 declare const self: DedicatedWorkerGlobalScope;
 
-const TICK_MS = 50;
+let TICK_MS = 50;
 const MAX_CATCH_UP = 4;
 
 let sim: Sim | null = null;
@@ -35,6 +37,18 @@ function post(msg: FromWorker, transfer: Transferable[] = []): void {
 function createSim(spec: ScenarioSpec): Sim {
   const rules = defaultRules();
   switch (spec.kind) {
+    case 'skirmish': {
+      const map = testMap(96, spec.seed);
+      const sim = createMatch({
+        rules,
+        seed: spec.seed,
+        map,
+        players: spec.factions.map((faction, team) => ({ faction, team })),
+      });
+      // Until the AI exists (M5) the opponent is a passive base.
+      for (let p = 1; p < spec.factions.length; p++) grantBase(sim, p, map.starts[p]!);
+      return sim;
+    }
     case 'sandbox':
     case 'stress':
       return sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
@@ -59,6 +73,21 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
   for (const p of world.players) {
     a[off + P.credits] = p.credits;
     a[off + P.defeated] = p.defeated ? 1 : 0;
+    a[off + P.powerProduced] = p.powerProduced;
+    a[off + P.powerUsed] = p.powerUsed;
+    a[off + P.lowPower] = p.lowPower ? 1 : 0;
+    p.build.forEach((q, i) => {
+      const o = off + P.build + i * 3;
+      a[o] = q.item;
+      a[o + 1] = q.item >= 0 ? Math.floor((q.progress * 1000) / (world.rules.structures[q.item]!.buildTicks * 100)) : 0;
+      a[o + 2] = q.ready ? 1 : 0;
+    });
+    p.production.forEach((q, i) => {
+      const o = off + P.production + i * PROD_STRIDE;
+      const first = q.items[0];
+      a[o] = first !== undefined ? Math.floor((q.progress * 1000) / (world.rules.units[first]!.buildTicks * 100)) : 0;
+      for (let k = 0; k < QUEUE_SLOTS; k++) a[o + 1 + k] = q.items[k] ?? -1;
+    });
     off += PLAYER_STRIDE;
   }
   for (let s = 0; s < e.high; s++) {
@@ -81,10 +110,18 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + E.target] = e.target[s]!;
     const orders = e.orders[s]!;
     a[off + E.orderCount] = orders.length;
+    a[off + E.tileX] = e.tileX[s]!;
+    a[off + E.tileY] = e.tileY[s]!;
+    a[off + E.repairing] = e.repairing[s]!;
+    a[off + E.hstate] = e.hstate[s]!;
+    a[off + E.cargo] = e.cargo[s]!;
+    a[off + E.rallyX] = e.rallyX[s]!;
+    a[off + E.rallyY] = e.rallyY[s]!;
+    a[off + E.hmode] = e.hmode[s]!;
     const o = orders[0];
     a[off + E.order] = o ? ORDER_CODE[o.type] : 0;
     if (o) {
-      if (o.type === 'move' || o.type === 'attackMove') {
+      if (o.type === 'move' || o.type === 'attackMove' || o.type === 'attack') {
         a[off + E.orderX] = o.x;
         a[off + E.orderY] = o.y;
       } else if (o.type === 'patrol') {
@@ -121,7 +158,12 @@ function publish(stalled: boolean): void {
     fog = w.fog[localPlayer]!.slice();
     lastFogTick = w.tick;
   }
-  post({ type: 'snapshot', buf, fog }, fog ? [buf, fog.buffer] : [buf]);
+  // Echo changes slowly; ship it once a second.
+  const echo = w.tick % 20 === 1 || lastFogTick === w.tick ? w.map.echo.slice() : null;
+  const transfer: Transferable[] = [buf];
+  if (fog) transfer.push(fog.buffer);
+  if (echo) transfer.push(echo.buffer);
+  post({ type: 'snapshot', buf, fog, echo }, transfer);
 }
 
 function loop(): void {
@@ -158,6 +200,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     case 'start': {
       sim = createSim(msg.scenario);
       localPlayer = msg.localPlayer;
+      TICK_MS = 50 / Math.max(0.25, Math.min(8, msg.speed ?? 1));
       lockstep = new LockstepScheduler({ localPlayer, peers: [localPlayer], transport: new NullTransport(), delayTurns: 1 });
       const w = sim.world;
       const terrain = w.map.terrain.slice();

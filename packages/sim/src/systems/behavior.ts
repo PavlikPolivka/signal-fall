@@ -1,8 +1,10 @@
 import type { WeaponRule } from '@signal-fall/data';
 import { FX_ONE, ilength } from '../fx';
-import { KIND, NO_ENTITY, STANCE, type Order } from '../entities';
+import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from '../entities';
 import { acquireTarget, canTarget, distToBody, inWeaponRange, visibleTo, weaponOf } from '../query';
 import type { World } from '../world';
+import { removeEntity } from '../spawn';
+import { salvageValue } from './economy';
 
 /** Units re-scan for targets every this many ticks (staggered by slot). */
 const ACQUIRE_INTERVAL = 8;
@@ -15,6 +17,8 @@ const GUARD_FOLLOW = 2 * FX_ONE;
 /** Guards engage enemies within this distance of the guarded entity. */
 const GUARD_RADIUS = 8 * FX_ONE;
 
+/** Engineers and salvagers act within this distance. */
+const CONTACT = (FX_ONE * 3) >> 2;
 /** Units that cannot shoot an attack target stay this close to it. */
 const ESCORT_RANGE = 3 * FX_ONE;
 /** Idle units return fire if hit within this many ticks. */
@@ -36,6 +40,7 @@ export function behaviorSystem(world: World): void {
       if (weapon) structureTargeting(world, s, weapon);
       continue;
     }
+    if (e.kind[s] !== KIND.unit) continue;
     e.hasGoal[s] = 0;
     unitBehavior(world, s, weapon);
   }
@@ -90,6 +95,34 @@ function engage(world: World, s: number, weapon: WeaponRule, radius: number): nu
   return t;
 }
 
+/**
+ * Engineers capture enemy structures (attack order) or fully repair damaged own
+ * structures (guard order) on contact, and are consumed. Returns true if this
+ * unit handled the order as an engineer.
+ */
+function engineerAt(world: World, s: number, t: number, action: 'capture' | 'repair'): boolean {
+  const e = world.entities;
+  if (t < 0 || e.kind[t] !== KIND.structure) return false;
+  const rule = world.rules.units[e.type[s]!]!;
+  const eng = rule.abilities.find((a) => a.kind === 'engineer');
+  if (!eng || eng.kind !== 'engineer') return false;
+  if (action === 'capture' ? !eng.capture : !eng.repair || e.hp[t]! >= e.maxHp[t]!) return false;
+  if (distToBody(world, e.x[s]!, e.y[s]!, t) > CONTACT) {
+    setGoal(world, s, e.x[t]!, e.y[t]!);
+    return true;
+  }
+  if (action === 'capture') {
+    e.owner[t] = e.owner[s]!;
+    e.target[t] = NO_ENTITY;
+    e.repairing[t] = 0;
+    e.dock[t] = NO_ENTITY;
+    e.rallyX[t] = -1;
+    e.rallyY[t] = -1;
+  } else e.hp[t] = e.maxHp[t]!;
+  removeEntity(world, s);
+  return true;
+}
+
 /** Idle units shoot back at whoever hit them recently, even from beyond their acquire radius. */
 function retaliate(world: World, s: number, weapon: WeaponRule): number {
   const e = world.entities;
@@ -113,7 +146,8 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
 
   if (!o) {
     if (!weapon) {
-      e.target[s] = NO_ENTITY;
+      // Harvesters keep their refinery in `target` while working.
+      if (e.hstate[s] === HARVEST.off) e.target[s] = NO_ENTITY;
       return;
     }
     if (e.stance[s] === STANCE.hold) {
@@ -165,8 +199,22 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
       } else setGoal(world, s, gx, gy);
       return;
     }
+    case 'salvage': {
+      const t = e.resolve(o.target);
+      if (t < 0 || e.kind[t] !== KIND.wreck) {
+        completeOrder(world, s);
+        return;
+      }
+      if (ilength(e.x[t]! - e.x[s]!, e.y[t]! - e.y[s]!) <= CONTACT) {
+        world.players[e.owner[s]!]!.credits += salvageValue(world, e.owner[s]!, t);
+        removeEntity(world, t);
+        completeOrder(world, s);
+      } else setGoal(world, s, e.x[t]!, e.y[t]!);
+      return;
+    }
     case 'attack': {
       const t = e.resolve(o.target);
+      if (engineerAt(world, s, t, 'capture')) return;
       const seen = t >= 0 && visibleTo(world, e.owner[s]!, t);
       if (seen) {
         o.x = e.x[t]!;
@@ -199,6 +247,7 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
         completeOrder(world, s);
         return;
       }
+      if (engineerAt(world, s, g, 'repair')) return;
       if (weapon) {
         const t = engage(world, s, weapon, sight);
         if (t >= 0 && ilength(e.x[t]! - e.x[g]!, e.y[t]! - e.y[g]!) <= GUARD_RADIUS) {

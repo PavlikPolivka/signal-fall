@@ -2,11 +2,12 @@ import type { Command } from '@signal-fall/sim';
 
 /** What the worker should set up. */
 export type ScenarioSpec =
+  | { kind: 'skirmish'; seed: number; factions: number[] }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };
 
 export type ToWorker =
-  | { type: 'start'; scenario: ScenarioSpec; localPlayer: number }
+  | { type: 'start'; scenario: ScenarioSpec; localPlayer: number; /** Game speed multiplier (tests). */ speed?: number }
   | { type: 'command'; cmd: Command }
   | { type: 'pause'; paused: boolean };
 
@@ -24,7 +25,7 @@ export type FromWorker =
       players: PlayerInfo[];
       localPlayer: number;
     }
-  | { type: 'snapshot'; buf: ArrayBuffer; fog: Uint8Array | null };
+  | { type: 'snapshot'; buf: ArrayBuffer; fog: Uint8Array | null; echo: Uint8Array | null };
 
 // Snapshot layout (Int32Array):
 //   header (HEADER_LEN), then players (PLAYER_STRIDE each), entities (ENT_STRIDE each),
@@ -40,8 +41,20 @@ export const H = {
 } as const;
 export const HEADER_LEN = 8;
 
-export const P = { credits: 0, defeated: 1 } as const;
-export const PLAYER_STRIDE = 4;
+export const P = {
+  credits: 0,
+  defeated: 1,
+  powerProduced: 2,
+  powerUsed: 3,
+  lowPower: 4,
+  /** Build queues: [structures, defenses] x (item, progress per mille, ready). */
+  build: 8,
+  /** Production queues: [infantry, vehicles, air] x (progress per mille, then QUEUE_SLOTS items, -1 = empty). */
+  production: 14,
+} as const;
+export const QUEUE_SLOTS = 15;
+export const PROD_STRIDE = 1 + QUEUE_SLOTS;
+export const PLAYER_STRIDE = P.production + 3 * PROD_STRIDE;
 
 export const E = {
   handle: 0,
@@ -65,13 +78,21 @@ export const E = {
   stance: 17,
   target: 18,
   orderCount: 19,
+  tileX: 20,
+  tileY: 21,
+  repairing: 22,
+  hstate: 23,
+  cargo: 24,
+  rallyX: 25,
+  rallyY: 26,
+  hmode: 27,
 } as const;
-export const ENT_STRIDE = 20;
+export const ENT_STRIDE = 28;
 
 export const PR = { ox: 0, oy: 1, x: 2, y: 3, type: 4, ticks: 5, total: 6 } as const;
 export const PROJ_STRIDE = 7;
 
-export const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5 } as const;
+export const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5, salvage: 6 } as const;
 
 /** Read-only view of one decoded snapshot. */
 export class Snapshot {
@@ -100,8 +121,27 @@ export class Snapshot {
   get projectileCount(): number {
     return this.a[H.projectileCount]!;
   }
+  /** Field of a player record. */
+  player(player: number, field: number): number {
+    return this.a[HEADER_LEN + player * PLAYER_STRIDE + field]!;
+  }
   credits(player: number): number {
-    return this.a[HEADER_LEN + player * PLAYER_STRIDE + P.credits]!;
+    return this.player(player, P.credits);
+  }
+  /** Build queue state for category 0 (structures) or 1 (defenses). */
+  buildQueue(player: number, cat: number): { item: number; progress: number; ready: boolean } {
+    const o = P.build + cat * 3;
+    return { item: this.player(player, o), progress: this.player(player, o + 1), ready: this.player(player, o + 2) === 1 };
+  }
+  /** Production queue for tab 0..2. progress is per mille of the first item. */
+  productionQueue(player: number, tab: number): { progress: number; items: number[] } {
+    const o = P.production + tab * PROD_STRIDE;
+    const items: number[] = [];
+    for (let i = 0; i < QUEUE_SLOTS; i++) {
+      const v = this.player(player, o + 1 + i);
+      if (v >= 0) items.push(v);
+    }
+    return { progress: this.player(player, o), items };
   }
   /** Offset of entity i. */
   ent(i: number): number {
