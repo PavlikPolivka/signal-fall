@@ -228,6 +228,8 @@ export const constantsSchema = z
     veterancyHpPct: pct,
     wreckLifetime: z.number().positive(),
     upgradeLevels: z.number().int().positive(),
+    /** Damage to shields by damage type, percent (default 100): energy disrupts resonance, bullets glance off. */
+    shieldDamagePct: z.partialRecord(z.enum(DAMAGE), pct).default({}),
   })
   .strict();
 

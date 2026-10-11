@@ -27,6 +27,11 @@ jobs:
         run: pnpm headless bench
       - name: AI acceptance (Hard beats Easy in >= 90% of 200 matches)
         run: pnpm headless balance --matches 200 --size M --min-win 90 --out balance-hard-easy.csv
+      - name: Faction balance (every pairing 45-55% over 300 Hard matches)
+        run: |
+          pnpm headless balance --a holdout:hard --b halcyon:hard --matches 300 --min-win 45 --max-win 55 --out balance-holdout-halcyon.csv
+          pnpm headless balance --a holdout:hard --b choir:hard --matches 300 --min-win 45 --max-win 55 --out balance-holdout-choir.csv
+          pnpm headless balance --a halcyon:hard --b choir:hard --matches 300 --min-win 45 --max-win 55 --out balance-halcyon-choir.csv
       - name: Build and initial-load size budget (15 MB)
         run: pnpm build && pnpm size
       - run: pnpm exec playwright install --with-deps chromium firefox webkit

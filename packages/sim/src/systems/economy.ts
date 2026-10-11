@@ -3,6 +3,7 @@ import { FX_HALF, FX_ONE, FX_SHIFT, idiv, ilength, isqrt, pct } from '../fx';
 import { HARVEST, HARVEST_MODE, KIND, NO_ENTITY } from '../entities';
 import { removeEntity, spawnUnit } from '../spawn';
 import { distToBody } from '../query';
+import { upgradePct } from './faction';
 import type { PlayerState, World } from '../world';
 
 /** Ticks between crystals while harvesting. */
@@ -90,7 +91,9 @@ export function buildSystem(world: World, facts: PlayerFacts[]): void {
     for (const q of p.build) {
       if (q.item < 0 || q.ready) continue;
       const rule = world.rules.structures[q.item]!;
-      if (advance(p, q, rule.cost, rule.buildTicks * 100, speedPct(world, p))) q.ready = true;
+      // Rapid Growth: Choir structures grow faster.
+      const speed = pct(speedPct(world, p), 100 + upgradePct(world, p.index, 'growSpeedPct'));
+      if (advance(p, q, rule.cost, rule.buildTicks * 100, speed)) q.ready = true;
     }
   }
 }
@@ -473,5 +476,5 @@ export function wreckSystem(world: World): void {
 /** Credits a salvaging unit's owner gets for a wreck (0 for factions without salvage). */
 export function salvageValue(world: World, player: number, wreck: number): number {
   const faction = world.rules.factions[world.players[player]!.faction]!;
-  return pct(world.entities.value[wreck]!, faction.salvagePct);
+  return pct(world.entities.value[wreck]!, pct(faction.salvagePct, 100 + upgradePct(world, player, 'salvagePct')));
 }

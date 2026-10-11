@@ -39,7 +39,10 @@ export type Command =
   /** Collect a wreck for credits (Holdout harvesters and engineers). */
   | { type: 'salvage'; units: number[]; target: number; queue?: boolean }
   /** Faction ability: blink, phase, override (M7). Optional target point or entity. */
-  | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number };
+  | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number }
+  /** Research an upgrade (rules.upgrades index) at the tech center; one at a time. */
+  | { type: 'research'; upgrade: number }
+  | { type: 'cancelResearch' };
 
 export type CommandType = Command['type'];
 

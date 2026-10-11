@@ -4,7 +4,10 @@ import {
   FX_ONE,
   FX_SHIFT,
   KIND,
+  canResearch,
+  computeFacts,
   idiv,
+  teamOf,
   ilength,
   placementError,
   pct,
@@ -28,6 +31,11 @@ const ADVANTAGE_X10 = 20;
 const MAX_HARVESTERS = 8;
 /** Max commands per think, even with APM budget saved up. */
 const MAX_ACTIONS_PER_THINK = 6;
+const AIR_ARMOR = ARMOR.indexOf('air');
+/** Keep this much money before starting research. */
+const RESEARCH_RESERVE = 1500;
+/** Override is wasted on cheap units. */
+const OVERRIDE_MIN_COST = 700;
 
 interface Sighting {
   firstSeen: number;
@@ -106,6 +114,8 @@ export class AiPlayer implements Brain {
     this.placeReady(world, own);
     this.construct(world, own);
     this.produce(world, own);
+    this.research(world, own);
+    this.abilities(world, own);
     this.rally(world, own);
     this.defend(world, own);
     this.scout(world, own);
@@ -201,6 +211,27 @@ export class AiPlayer implements Brain {
 
   private count(own: Own, role: Role): number {
     return own.byRole.get(role)?.length ?? 0;
+  }
+
+  // --- tech ---
+
+  /** Research upgrades at the tech center when money allows (Normal and up). Faction upgrades first. */
+  private research(world: World, own: Own): void {
+    if (this.difficulty === 'easy' || this.count(own, 'tech') === 0) return;
+    const p = world.players[this.player]!;
+    if (p.research.item >= 0 || p.credits < RESEARCH_RESERVE) return;
+    const facts = computeFacts(world)[this.player]!;
+    const ups = world.rules.upgrades;
+    const order = [...ups.filter((u) => u.faction === p.faction), ...ups.filter((u) => u.faction < 0)].sort((a, b) => a.tier - b.tier);
+    for (const u of order) {
+      if (!canResearch(world, facts, this.player, u.index)) continue;
+      this.act({ type: 'research', upgrade: u.index });
+      return;
+    }
+  }
+
+  private abilities(world: World, own: Own): void {
+    for (const cmd of abilityOrders(world, this.player, this.home, own.army)) if (!this.act(cmd)) return;
   }
 
   // --- economy ---
@@ -390,23 +421,26 @@ export class AiPlayer implements Brain {
       const pool = candidates.filter((c) => c.rule.tab === tab);
       if (pool.length === 0) continue;
       const pick = this.choose(world, pool);
-      if (p.credits < this.d.armyReserve) continue;
+      if (!pick || p.credits < this.d.armyReserve) continue;
       if (p.credits >= pick.cost || q.items.length === 0) this.act({ type: 'train', item: pick.index, count: 1 });
     }
   }
 
   /** Weighted pick; with counters on, weights grow with effectiveness against what we've seen. */
-  private choose(world: World, pool: { rule: UnitRule; weight: number }[]): UnitRule {
+  private choose(world: World, pool: { rule: UnitRule; weight: number }[]): UnitRule | null {
     const armorValue = new Array<number>(ARMOR.length).fill(0);
     let total = 0;
-    if (this.d.counter) {
-      for (const m of this.known(world)) {
-        if (m.structure || !m.armed) continue;
-        armorValue[m.armor]! += m.cost;
-        total += m.cost;
-      }
+    let air = 0;
+    for (const m of this.known(world)) {
+      if (m.structure || !m.armed) continue;
+      if (m.armor === AIR_ARMOR) air += m.cost;
+      if (!this.d.counter) continue;
+      armorValue[m.armor]! += m.cost;
+      total += m.cost;
     }
     const weights = pool.map((c) => {
+      // Anti-air only once enemy aircraft have shown up.
+      if (c.rule.weapon && !c.rule.weapon.targetsGround && air === 0) return 0;
       if (total === 0 || !c.rule.weapon) return c.weight * 100;
       // Average matrix percent against the enemy army, by value.
       let eff = 0;
@@ -418,7 +452,8 @@ export class AiPlayer implements Brain {
     });
     let sum = 0;
     for (const w of weights) sum += w;
-    let r = world.aiRng[this.player]!.int(Math.max(1, sum));
+    if (sum === 0) return null;
+    let r = world.aiRng[this.player]!.int(sum);
     for (let i = 0; i < pool.length; i++) {
       r -= weights[i]!;
       if (r < 0) return pool[i]!.rule;
@@ -662,4 +697,56 @@ function crowded(view: PlacementView, rule: StructureRule, tx: number, ty: numbe
     if (tx - 1 < s.tx + s.rule.footprintW && s.tx < tx + rule.footprintW + 1 && ty - 1 < s.ty + s.rule.footprintH && s.ty < ty + rule.footprintH + 1) return true;
   }
   return false;
+}
+
+/**
+ * Ability use for a set of units: phase out or blink away when badly hurt,
+ * blink in to close the gap on a target, Override the most valuable enemy
+ * machine in reach. Pure function of the world, so the battle lab can reuse it.
+ */
+export function abilityOrders(world: World, player: number, home: { x: number; y: number }, units: number[]): Command[] {
+  const e = world.entities;
+  const out: Command[] = [];
+  for (const s of units) {
+    if (e.alive[s] !== 1 || world.tick < e.abilityReady[s]!) continue;
+    const rule = world.rules.units[e.type[s]!]!;
+    const ability = rule.abilities.find((a) => a.kind === 'blink' || a.kind === 'phase' || a.kind === 'override');
+    if (!ability) continue;
+    const h = e.handle(s);
+    const life = e.hp[s]! + e.shields[s]!;
+    const max = e.maxHp[s]! + e.maxShields[s]!;
+    const hurt = life * 100 < max * 40 && e.lastHitTick[s]! >= 0 && world.tick - e.lastHitTick[s]! < 20;
+    if (ability.kind === 'phase') {
+      if (hurt) out.push({ type: 'ability', units: [h] });
+      continue;
+    }
+    if (ability.kind === 'blink') {
+      if (hurt) {
+        // Away from the fight, toward home.
+        out.push({ type: 'ability', units: [h], x: (home.x << FX_SHIFT) + FX_HALF, y: (home.y << FX_SHIFT) + FX_HALF });
+        continue;
+      }
+      const t = e.resolve(e.target[s]!);
+      if (t >= 0 && rule.weapon && ilength(e.x[t]! - e.x[s]!, e.y[t]! - e.y[s]!) > rule.weapon.range + 2 * FX_ONE)
+        out.push({ type: 'ability', units: [h], x: e.x[t]!, y: e.y[t]! });
+      continue;
+    }
+    // Override: the most expensive visible enemy vehicle or aircraft within range.
+    let best = -1;
+    let bestCost = 0;
+    const team = teamOf(world, s);
+    world.spatial.query(e.x[s]!, e.y[s]!, ability.range, (n) => {
+      if (e.kind[n] !== KIND.unit || teamOf(world, n) === team || e.homeOwner[n]! >= 0) return;
+      const victim = world.rules.units[e.type[n]!]!;
+      if (victim.tab === 'infantry' || !victim.weapon) return;
+      if (world.rules.factions[world.players[e.owner[n]!]!.faction]!.airGapped) return;
+      if (!visibleTo(world, player, n) || ilength(e.x[n]! - e.x[s]!, e.y[n]! - e.y[s]!) > ability.range) return;
+      if (victim.cost > bestCost || (victim.cost === bestCost && n < best)) {
+        best = n;
+        bestCost = victim.cost;
+      }
+    });
+    if (best >= 0 && bestCost >= OVERRIDE_MIN_COST) out.push({ type: 'ability', units: [h], target: e.handle(best) });
+  }
+  return out;
 }

@@ -28,6 +28,7 @@ Commands:
          --threads <n>     worker threads (default cores - 1)
          --out <file>      CSV path (default stdout summary only)
          --min-win <pct>   exit 1 unless side A wins at least this percent
+         --max-win <pct>   exit 1 if side A wins more than this percent
 `;
 
 function main(argv: string[]): number {
@@ -90,6 +91,7 @@ async function balance(args: string[]): Promise<void> {
       threads: { type: 'string' },
       out: { type: 'string' },
       'min-win': { type: 'string' },
+      'max-win': { type: 'string' },
     },
   });
   const sides: [Side, Side] = [parseSide(values.a), parseSide(values.b)];
@@ -114,4 +116,6 @@ async function balance(args: string[]): Promise<void> {
   );
   const min = values['min-win'];
   if (min !== undefined && pctA < Number(min)) process.exitCode = 1;
+  const max = values['max-win'];
+  if (max !== undefined && pctA > Number(max)) process.exitCode = 1;
 }

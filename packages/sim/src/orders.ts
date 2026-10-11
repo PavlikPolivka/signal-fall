@@ -7,6 +7,7 @@ import { formationSlots } from './formation';
 import { removeEntity, spawnStructure } from './spawn';
 import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
 import { BUILD_CATEGORY_INDEX, type World } from './world';
+import { canResearch, useAbility } from './systems/faction';
 
 /** Groups of at least this many units share a flow field instead of running A* each. */
 export const FLOW_MIN_GROUP = 4;
@@ -127,9 +128,34 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
         resetMovement(world, s);
       }
       return;
-    case 'ability':
-      // Accepted so clients and replays can carry it; faction abilities land in M7.
+    case 'ability': {
+      const units = ownedUnits(world, c.player, cmd.units);
+      if (cmd.x !== undefined && cmd.y !== undefined && units.length > 0) {
+        // Blink keeps the group's shape: each unit aims at the point plus its offset from the group center.
+        let cx = 0;
+        let cy = 0;
+        for (const s of units) {
+          cx += e.x[s]!;
+          cy += e.y[s]!;
+        }
+        cx = idiv(cx, units.length);
+        cy = idiv(cy, units.length);
+        for (const s of units) useAbility(world, c.player, s, cmd.x + e.x[s]! - cx, cmd.y + e.y[s]! - cy, cmd.target ?? -1);
+      } else for (const s of units) useAbility(world, c.player, s, -1, -1, cmd.target ?? -1);
       return;
+    }
+    case 'research': {
+      if (canResearch(world, computeFacts(world)[c.player]!, c.player, cmd.upgrade)) player.research.item = cmd.upgrade;
+      return;
+    }
+    case 'cancelResearch': {
+      const r = player.research;
+      player.credits += r.spent;
+      r.item = -1;
+      r.progress = 0;
+      r.spent = 0;
+      return;
+    }
     case 'deploy':
       for (const s of ownedUnits(world, c.player, cmd.units)) deploy(world, c.player, s);
       return;

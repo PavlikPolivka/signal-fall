@@ -7,6 +7,7 @@ import { fogSystem } from './systems/fog';
 import { buildSystem, computeFacts, echoRegrowSystem, harvestSystem, productionSystem, repairSystem, wreckSystem } from './systems/economy';
 import { movementSystem } from './systems/movement';
 import { victorySystem } from './systems/victory';
+import { abilitySystem, chordRegrowSystem, coverageSystem, researchSystem, sustainSystem } from './systems/faction';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
 
 export type SimSetup = WorldOptions;
@@ -62,6 +63,9 @@ export class Sim {
       const facts = computeFacts(w);
       buildSystem(w, facts);
       productionSystem(w, facts);
+      researchSystem(w, facts);
+      abilitySystem(w);
+      coverageSystem(w);
       behaviorSystem(w);
       harvestSystem(w, facts);
       movementSystem(w);
@@ -71,8 +75,10 @@ export class Sim {
       projectileSystem(w);
       deathSystem(w);
       shieldSystem(w);
+      sustainSystem(w);
       wreckSystem(w);
       echoRegrowSystem(w);
+      chordRegrowSystem(w);
       fogSystem(w);
       victorySystem(w);
       for (const b of this.brains) {

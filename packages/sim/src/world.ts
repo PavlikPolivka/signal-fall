@@ -51,6 +51,10 @@ export interface PlayerState {
   harvested: number;
   /** Units completed per unit rule index. */
   trained: number[];
+  /** 1 per researched upgrade (rules.upgrades index). */
+  upgrades: number[];
+  /** Upgrade being researched (-1 none), paid continuously like construction. */
+  research: { item: number; progress: number; spent: number };
 }
 
 export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
@@ -73,6 +77,11 @@ export interface Projectile {
   hitsGround: boolean;
   hitsAir: boolean;
   ticks: number;
+  /** Chain lightning: further targets to jump to, and the damage kept per jump (percent). */
+  chainJumps: number;
+  chainPct: number;
+  /** Sweeping beam: damages enemies within this distance of the firing line (Q10), 0 = none. */
+  sweep: number;
 }
 
 /** Fog bits per tile and player. */
@@ -81,9 +90,10 @@ export interface Projectile {
  * fire:   a = shooter kind, b = shooter rule index, (x, y) muzzle, (tx, ty) target point
  * impact: a = damage type, b = splash radius, (x, y) impact point
  * death:  a = entity kind, b = rule index, (x, y) where it died
+ * ability: a = 1 blink / 2 phase / 3 override, b = unit rule index, (x, y) from, (tx, ty) to
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
-export const FX_EVENT = { fire: 1, impact: 2, death: 3 } as const;
+export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4 } as const;
 export const FX_STRIDE = 8;
 /** Events kept when nobody drains them (headless runs). */
 const FX_CAP = FX_STRIDE * 4096;
@@ -112,6 +122,8 @@ export interface World {
   projectiles: Projectile[];
   /** Cosmetic event log (FX_EVENT), drained by the client; not part of the state. */
   fx: number[];
+  /** Network coverage per player (tile = 1), rebuilt on a fixed tick cadence from structures. */
+  coverage: Uint8Array[];
   /** fog[player][tile] = FOG_* bits. */
   fog: Uint8Array[];
   players: PlayerState[];
@@ -168,6 +180,7 @@ export function createWorld(o: WorldOptions): World {
     paths: new Pathfinder(map),
     projectiles: [],
     fx: [],
+    coverage: o.players.map(() => new Uint8Array(o.width * o.height)),
     fog: o.players.map(() => new Uint8Array(o.width * o.height)),
     players: o.players.map((p, index) => ({
       index,
@@ -184,6 +197,8 @@ export function createWorld(o: WorldOptions): World {
       incomeBonusPct: 0,
       harvested: 0,
       trained: o.rules.units.map(() => 0),
+      upgrades: o.rules.upgrades.map(() => 0),
+      research: { item: -1, progress: 0, spent: 0 },
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -224,6 +239,10 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.incomeBonusPct);
     w.push(p.harvested);
     w.pushArray(p.trained);
+    w.pushArray(p.upgrades);
+    w.push(p.research.item);
+    w.push(p.research.progress);
+    w.push(p.research.spent);
     for (const b of p.build) {
       w.push(b.item);
       w.push(b.progress);
@@ -255,6 +274,9 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.splash);
     w.push((p.hitsGround ? 1 : 0) | (p.hitsAir ? 2 : 0));
     w.push(p.ticks);
+    w.push(p.chainJumps);
+    w.push(p.chainPct);
+    w.push(p.sweep);
   }
   // Fog: pack visible bits of each player, 32 tiles per word.
   for (const f of world.fog) {

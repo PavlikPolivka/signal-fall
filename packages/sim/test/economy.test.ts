@@ -173,7 +173,7 @@ describe('harvesting and power', () => {
     // Pillbox ignores an enemy in range.
     const enemy = spawnUnit(w, unit('grace'), 1, at(22), at(20)) & 0xffff;
     sim.run(40);
-    expect(w.entities.hp[enemy]).toBe(50);
+    expect(w.entities.hp[enemy]).toBe(rules.units[unit('grace')]!.hp);
   });
 
   it('extra factories speed up production', () => {
@@ -304,7 +304,7 @@ describe('harvester tile preference', () => {
       const mule = spawnUnit(w, unit('mule'), 0, at(9), at(10)) & 0xffff;
       e.hstate[mule] = HARVEST.toField;
       e.hmode[mule] = mode;
-      sim.run(20 * 30);
+      sim.run(20 * 60);
       return w.players[0]!.harvested + e.cargo[mule]!;
     };
     const richest = run(0);

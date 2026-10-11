@@ -1,4 +1,5 @@
-import { FX_HALF, FX_ONE, FX_SHIFT } from './fx';
+import { FX_HALF, FX_ONE, FX_SHIFT, pct } from './fx';
+import { upgradePct } from './systems/faction';
 import { KIND } from './entities';
 import { TERRAIN_SPEED_PCT, inBounds, refreshNav } from './map';
 import type { World } from './world';
@@ -16,10 +17,13 @@ export function spawnUnit(world: World, ruleIndex: number, owner: number, x: num
   e.x[s] = x;
   e.y[s] = y;
   e.radius[s] = rule.radius;
-  e.hp[s] = rule.hp;
-  e.maxHp[s] = rule.hp;
-  e.shields[s] = rule.shields;
-  e.maxShields[s] = rule.shields;
+  // Armor and Harmonic Shields upgrades raise new units' pools too.
+  const hp = pct(rule.hp, 100 + upgradePct(world, owner, 'hpPct'));
+  const shields = pct(rule.shields, 100 + upgradePct(world, owner, 'shieldPct'));
+  e.hp[s] = hp;
+  e.maxHp[s] = hp;
+  e.shields[s] = shields;
+  e.maxShields[s] = shields;
   e.anchorX[s] = x;
   e.anchorY[s] = y;
   e.goalX[s] = x;

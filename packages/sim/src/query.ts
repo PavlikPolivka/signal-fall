@@ -88,6 +88,8 @@ export function canTarget(world: World, attacker: number, weapon: WeaponRule, vi
   const k = e.kind[victim];
   if (k !== KIND.unit && k !== KIND.structure) return false;
   if (teamOf(world, victim) === teamOf(world, attacker)) return false;
+  // Phased-out units are untouchable.
+  if (e.phasedUntil[victim]! > world.tick) return false;
   if (isAir(world, victim) ? !weapon.targetsAir : !weapon.targetsGround) return false;
   return visibleTo(world, e.owner[attacker]!, victim);
 }

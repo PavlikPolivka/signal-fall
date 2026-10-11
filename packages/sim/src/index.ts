@@ -13,3 +13,5 @@ export * from './scenarios';
 export * from './match';
 export * from './placement';
 export { HARVEST_TICKS, UNLOAD_PER_TICK, MAX_QUEUE, TABS } from './systems/economy';
+export { canResearch, inCoverage, isPhased, upgradePct } from './systems/faction';
+export { computeFacts } from './systems/economy';

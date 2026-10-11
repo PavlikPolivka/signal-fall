@@ -3,6 +3,7 @@ import { FX_ONE, FX_SHIFT, ilength, pct } from './fx';
 import { KIND } from './entities';
 import { TERRAIN_BUILDABLE } from './map';
 import type { World } from './world';
+import { upgradePct } from './systems/faction';
 
 /** How far from an Echo tile Choir may grow structures, in tiles. */
 export const CHOIR_ECHO_RANGE = 3;
@@ -133,7 +134,7 @@ export function worldPlacementView(world: World, player: number, ignoreUnit = -1
   };
 }
 
-/** Coverage radius multiplier for a player (100 + Extended Relays bonus, once upgrades exist in M7). */
-export function coveragePctFor(_world: World, _player: number): number {
-  return 100;
+/** Coverage radius multiplier for a player: 100 plus Extended Relays. */
+export function coveragePctFor(world: World, player: number): number {
+  return 100 + upgradePct(world, player, 'coverageRadiusPct');
 }

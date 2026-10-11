@@ -161,6 +161,8 @@ export interface ConstantsRule {
   veterancyHpPct: number;
   wreckLifetimeTicks: number;
   upgradeLevels: number;
+  /** Percent damage to shields, indexed by damage type. */
+  shieldDamagePct: number[];
 }
 
 export interface Rules {
@@ -328,6 +330,7 @@ export function compileRules(raw: RawData): Rules {
     veterancyHpPct: c.veterancyHpPct,
     wreckLifetimeTicks: ticks(c.wreckLifetime),
     upgradeLevels: c.upgradeLevels,
+    shieldDamagePct: DAMAGE.map((d) => c.shieldDamagePct[d] ?? 100),
   };
 
   return {
