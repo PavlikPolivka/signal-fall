@@ -1,9 +1,17 @@
 import type { Command } from '@signal-fall/sim';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
+import type { Difficulty } from '@signal-fall/ai';
 
 /** What the worker should set up. */
 export type ScenarioSpec =
-  | { kind: 'skirmish'; seed: number; factions: number[]; map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle } }
+  | {
+      kind: 'skirmish';
+      seed: number;
+      factions: number[];
+      /** AI difficulty per player slot, null for the human. */
+      ai: (Difficulty | null)[];
+      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
+    }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };
 

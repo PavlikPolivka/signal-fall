@@ -116,6 +116,7 @@ export function productionSystem(world: World, facts: PlayerFacts[]): void {
       q.progress = 0;
       q.spent = 0;
       emitUnit(world, p.index, producers[0]!, rule);
+      p.trained[rule.index]!++;
       f.units++;
     }
   }

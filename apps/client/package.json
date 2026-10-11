@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@signal-fall/ai": "workspace:*",
     "@signal-fall/data": "workspace:*",
     "@signal-fall/mapgen": "workspace:*",
     "@signal-fall/net": "workspace:*",

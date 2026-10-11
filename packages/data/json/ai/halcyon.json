@@ -1,0 +1,19 @@
+{
+  "faction": "halcyon",
+  "opening": ["power", "refinery", "barracks", "refinery", "power", "factory", "radar", "special"],
+  "later": ["power", "special", "tech", "airfield", "power"],
+  "defenses": ["defense", "defense", "antiAir", "heavyDefense"],
+  "harvestersPerRefinery": 2,
+  "maxRefineries": 4,
+  "scout": "ping",
+  "raider": "ping",
+  "army": [
+    ["sentry", 3],
+    ["lance", 2],
+    ["vector", 4],
+    ["broadcast", 1],
+    ["firewall", 1],
+    ["root", 1],
+    ["seek", 1]
+  ]
+}

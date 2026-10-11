@@ -3,6 +3,7 @@ import { defaultRules } from '@signal-fall/data';
 import { LockstepScheduler, NullTransport } from '@signal-fall/net';
 import { Sim, createMatch, grantBase, sandbox, type World } from '@signal-fall/sim';
 import { generateMap, type Biome } from '@signal-fall/mapgen';
+import { attachAi } from '@signal-fall/ai';
 import {
   E,
   ENT_STRIDE,
@@ -52,8 +53,11 @@ function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         map,
         players: spec.factions.map((faction, team) => ({ faction, team })),
       });
-      // Until the AI exists (M5) the opponent is a passive base.
-      for (let p = 1; p < spec.factions.length; p++) grantBase(sim, p, map.starts[p]!);
+      spec.ai.forEach((difficulty, p) => {
+        // A computer player without a difficulty is a passive base (sandbox/testing).
+        if (difficulty) attachAi(sim, p, difficulty, map.starts);
+        else if (p !== 0) grantBase(sim, p, map.starts[p]!);
+      });
       return { sim, extras: { decoration: map.decoration, biome: map.biome, mapSeed: map.seedUsed } };
     }
     case 'sandbox':

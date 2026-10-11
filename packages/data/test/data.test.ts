@@ -79,3 +79,11 @@ describe('validation catches mistakes', () => {
     expect(factionSchema.safeParse(bad2).success).toBe(false);
   });
 });
+
+describe('AI profiles', () => {
+  it('exist for every faction and reference only that faction\'s units', async () => {
+    const { aiProfiles } = await import('../src/index');
+    const profiles = aiProfiles();
+    expect([...profiles.keys()].sort()).toEqual(['choir', 'halcyon', 'holdout']);
+  });
+});

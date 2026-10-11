@@ -25,11 +25,15 @@ jobs:
         run: pnpm headless run --seed 1 --ticks 10000
       - name: Sim benchmark
         run: pnpm headless bench
+      - name: AI acceptance (Hard beats Easy in >= 90% of 200 matches)
+        run: pnpm headless balance --matches 200 --size M --min-win 90 --out balance-hard-easy.csv
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright
-          path: test-results/
+          path: |
+            test-results/
+            balance-*.csv
           retention-days: 7

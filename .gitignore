@@ -10,3 +10,4 @@ playwright-report/
 out/
 *.local
 supabase/.temp/
+balance-*.csv

@@ -1,0 +1,665 @@
+import { ARMOR, type AiProfile, type Role, type StructureRule, type UnitRule } from '@signal-fall/data';
+import {
+  FX_HALF,
+  FX_ONE,
+  FX_SHIFT,
+  KIND,
+  idiv,
+  ilength,
+  placementError,
+  pct,
+  visibleTo,
+  worldPlacementView,
+  type Brain,
+  type Command,
+  type PlacementView,
+  type World,
+} from '@signal-fall/sim';
+import { PROFILES, type Difficulty, type DifficultyProfile } from './difficulty';
+
+const MINUTE = 1200;
+/** Forget enemies not seen for this long. */
+const MEMORY_TICKS = 3 * MINUTE;
+/** A structure counts as under attack if hit this recently. */
+const UNDER_ATTACK_TICKS = 40;
+/** Hard+ attacks only with twice the army value of the largest enemy army it has seen (x10). */
+const ADVANTAGE_X10 = 20;
+/** More harvesters than this just crowd the fields. */
+const MAX_HARVESTERS = 8;
+/** Max commands per think, even with APM budget saved up. */
+const MAX_ACTIONS_PER_THINK = 6;
+
+interface Sighting {
+  firstSeen: number;
+  lastSeen: number;
+  x: number;
+  y: number;
+  owner: number;
+  armor: number;
+  cost: number;
+  structure: boolean;
+  harvester: boolean;
+  armed: boolean;
+}
+
+interface Own {
+  structures: number[];
+  byRole: Map<Role, number[]>;
+  units: number[];
+  army: number[];
+  harvesters: number[];
+  constructionUnits: number[];
+  conyards: number[];
+}
+
+/**
+ * Deterministic AI player. It only reads what its player could know (own
+ * entities, enemies currently in its fog-of-war vision, remembered sightings,
+ * and the static map/start positions every player gets in the lobby) and acts
+ * only through commands, limited by an APM budget.
+ */
+export class AiPlayer implements Brain {
+  readonly player: number;
+  readonly difficulty: Difficulty;
+  private readonly d: DifficultyProfile;
+  private readonly profile: AiProfile;
+  private readonly enemyStarts: { x: number; y: number }[];
+  private readonly home: { x: number; y: number };
+
+  private actionsUsed = 0;
+  private memory = new Map<number, Sighting>();
+  private nextBuildTick = 0;
+  private waveIndex = 0;
+  private nextWaveTick = 0;
+  private attacking = false;
+  private waveStartValue = 0;
+  private waveUnits = new Set<number>();
+  private scoutHandle = -1;
+  private scoutSentTick = -MINUTE * 10;
+  private raiders = new Set<number>();
+  private ralliedFactories = new Set<number>();
+  private cmds: Command[] = [];
+  /** Largest enemy army value seen, fading 1% per think (a pessimistic estimate of what's out there). */
+  private peakEnemyArmy = 0;
+  private budget = 0;
+
+  constructor(opts: { player: number; difficulty: Difficulty; profile: AiProfile; starts: { x: number; y: number }[] }) {
+    this.player = opts.player;
+    this.difficulty = opts.difficulty;
+    this.d = PROFILES[opts.difficulty];
+    this.profile = opts.profile;
+    this.home = opts.starts[opts.player]!;
+    this.enemyStarts = opts.starts.filter((_, i) => i !== opts.player);
+    this.nextWaveTick = this.d.firstAttackTick;
+  }
+
+  think(world: World): Command[] {
+    this.cmds = [];
+    const allowed = idiv(this.d.apm * world.tick, MINUTE) - this.actionsUsed;
+    this.budget = Math.min(MAX_ACTIONS_PER_THINK, allowed);
+    this.remember(world);
+    this.peakEnemyArmy = Math.max(this.knownEnemyArmy(world), this.peakEnemyArmy - idiv(this.peakEnemyArmy, 100));
+    const own = this.survey(world);
+
+    this.deploy(world, own);
+    if (this.recover(world, own)) return this.cmds;
+    this.placeReady(world, own);
+    this.construct(world, own);
+    this.produce(world, own);
+    this.rally(world, own);
+    this.defend(world, own);
+    this.scout(world, own);
+    this.harass(world, own);
+    this.waves(world, own);
+    return this.cmds;
+  }
+
+  /** Issue a command if the APM budget allows. */
+  private act(cmd: Command): boolean {
+    if (this.budget <= 0) return false;
+    this.budget--;
+    this.actionsUsed++;
+    this.cmds.push(cmd);
+    return true;
+  }
+
+  // --- perception ---
+
+  private remember(world: World): void {
+    const e = world.entities;
+    const myTeam = world.players[this.player]!.team;
+    for (let s = 0; s < e.high; s++) {
+      if (e.alive[s] !== 1) continue;
+      const k = e.kind[s];
+      if (k !== KIND.unit && k !== KIND.structure) continue;
+      const owner = e.owner[s]!;
+      if (world.players[owner]!.team === myTeam) continue;
+      if (!visibleTo(world, this.player, s)) continue;
+      const h = e.handle(s);
+      const prev = this.memory.get(h);
+      const isUnit = k === KIND.unit;
+      const urule = isUnit ? world.rules.units[e.type[s]!]! : null;
+      const srule = isUnit ? null : world.rules.structures[e.type[s]!]!;
+      this.memory.set(h, {
+        firstSeen: prev ? prev.firstSeen : world.tick,
+        lastSeen: world.tick,
+        x: e.x[s]!,
+        y: e.y[s]!,
+        owner,
+        armor: urule ? urule.armor : ARMOR.length - 1,
+        cost: urule ? urule.cost : srule!.cost,
+        structure: !isUnit,
+        harvester: urule ? urule.abilities.some((a) => a.kind === 'harvest') : false,
+        armed: urule ? urule.weapon !== null : srule!.weapon !== null,
+      });
+    }
+    // Forget what's stale, and what we can now see is gone (its last-known spot is visible but it isn't there).
+    const fog = world.fog[this.player]!;
+    const w = world.map.width;
+    for (const [h, m] of this.memory) {
+      const spotVisible = (fog[(m.y >> FX_SHIFT) * w + (m.x >> FX_SHIFT)]! & 1) === 1;
+      if (world.tick - m.lastSeen > MEMORY_TICKS || (spotVisible && m.lastSeen !== world.tick)) this.memory.delete(h);
+    }
+  }
+
+  /** Known enemies we have had time to react to. */
+  private known(world: World): Sighting[] {
+    const out: Sighting[] = [];
+    for (const m of this.memory.values()) if (world.tick - m.firstSeen >= this.d.reactionTicks) out.push(m);
+    return out;
+  }
+
+  private survey(world: World): Own {
+    const e = world.entities;
+    const faction = world.rules.factions[world.players[this.player]!.faction]!;
+    const own: Own = { structures: [], byRole: new Map(), units: [], army: [], harvesters: [], constructionUnits: [], conyards: [] };
+    for (let s = 0; s < e.high; s++) {
+      if (e.alive[s] !== 1 || e.owner[s] !== this.player) continue;
+      if (e.kind[s] === KIND.structure) {
+        own.structures.push(s);
+        const role = world.rules.structures[e.type[s]!]!.role;
+        let list = own.byRole.get(role);
+        if (!list) {
+          list = [];
+          own.byRole.set(role, list);
+        }
+        list.push(s);
+        if (role === 'conyard') own.conyards.push(s);
+      } else if (e.kind[s] === KIND.unit) {
+        own.units.push(s);
+        const rule = world.rules.units[e.type[s]!]!;
+        if (rule.index === faction.constructionUnit) own.constructionUnits.push(s);
+        else if (rule.abilities.some((a) => a.kind === 'harvest')) own.harvesters.push(s);
+        else if (rule.weapon) own.army.push(s);
+      }
+    }
+    // Forget assignments of dead units.
+    for (const h of this.waveUnits) if (e.resolve(h) < 0) this.waveUnits.delete(h);
+    for (const h of this.raiders) if (e.resolve(h) < 0) this.raiders.delete(h);
+    return own;
+  }
+
+  private count(own: Own, role: Role): number {
+    return own.byRole.get(role)?.length ?? 0;
+  }
+
+  // --- economy ---
+
+  private deploy(world: World, own: Own): void {
+    if (own.conyards.length > 0 || own.constructionUnits.length === 0) return;
+    const s = own.constructionUnits[0]!;
+    this.act({ type: 'deploy', units: [world.entities.handle(s)] });
+  }
+
+  /**
+   * No harvesters and not enough money for one: cancel builds for the refund,
+   * then sell defenses until a harvester is affordable. Returns true while recovering.
+   */
+  private recover(world: World, own: Own): boolean {
+    if (own.harvesters.length > 0 || this.count(own, 'refinery') === 0) return false;
+    const p = world.players[this.player]!;
+    const faction = world.rules.factions[p.faction]!;
+    const harvester = world.rules.units[faction.harvester]!;
+    const vq = p.production[1]!;
+    if (vq.items.includes(harvester.index)) {
+      // Already buying one: clear everything else so the money goes to it.
+      if (p.build[0]!.item >= 0 && !p.build[0]!.ready) this.act({ type: 'cancelBuild', category: 'structures' });
+      if (p.build[1]!.item >= 0 && !p.build[1]!.ready) this.act({ type: 'cancelBuild', category: 'defenses' });
+      for (const item of vq.items) if (item !== harvester.index) this.act({ type: 'cancelTrain', item });
+      return true;
+    }
+    if (p.credits >= harvester.cost || p.credits + p.build[0]!.spent + p.build[1]!.spent >= harvester.cost) {
+      this.act({ type: 'train', item: harvester.index, count: 1 });
+      return true;
+    }
+    const e = world.entities;
+    const sellable = own.structures.filter((s) => world.rules.structures[e.type[s]!]!.category === 'defenses');
+    if (sellable.length > 0) this.act({ type: 'sell', target: e.handle(sellable[0]!) });
+    return true;
+  }
+
+  private placeReady(world: World, own: Own): void {
+    const p = world.players[this.player]!;
+    p.build.forEach((q, cat) => {
+      if (q.item < 0 || !q.ready) return;
+      const rule = world.rules.structures[q.item]!;
+      const spot = this.findSpot(world, own, rule);
+      if (spot) this.act({ type: 'place', category: cat === 0 ? 'structures' : 'defenses', tx: spot.tx, ty: spot.ty });
+      else this.act({ type: 'cancelBuild', category: cat === 0 ? 'structures' : 'defenses' });
+    });
+  }
+
+  /** Next structure to build: power headroom first, then the opening, then refineries, later tech and defenses. */
+  private nextStructure(world: World, own: Own): Role | null {
+    const p = world.players[this.player]!;
+    // Keep headroom for the next building (most use 20-60).
+    if (p.powerProduced - p.powerUsed < 40 && this.count(own, 'conyard') > 0) return 'power';
+    const seen = new Map<Role, number>();
+    for (const role of this.profile.opening) {
+      seen.set(role, (seen.get(role) ?? 0) + 1);
+      if (this.count(own, role) < seen.get(role)!) return role;
+    }
+    const refineries = this.count(own, 'refinery');
+    if (refineries < Math.min(this.profile.maxRefineries, this.d.maxRefineries) && world.tick > refineries * 3 * MINUTE && p.credits < 3000) return 'refinery';
+    // Tech is a luxury: only with spare money or once the game has gone long.
+    if (this.d.retreat && p.credits < 1500 && world.tick < 8 * MINUTE) return null;
+    for (const role of this.profile.later) {
+      if (this.count(own, role) === 0) return role;
+    }
+    return null;
+  }
+
+  private nextDefense(own: Own): Role | null {
+    const wanted = this.profile.defenses.slice(0, this.d.defenses);
+    const seen = new Map<Role, number>();
+    for (const role of wanted) {
+      seen.set(role, (seen.get(role) ?? 0) + 1);
+      if (this.count(own, role) < seen.get(role)!) return role;
+    }
+    return null;
+  }
+
+  private construct(world: World, own: Own): void {
+    if (world.tick < this.nextBuildTick || own.conyards.length === 0) return;
+    const p = world.players[this.player]!;
+    const faction = world.rules.factions[p.faction]!;
+    const roleRule = (role: Role) => faction.structures.map((i) => world.rules.structures[i]!).find((r) => r.role === role)!;
+    const roles = new Set<Role>(own.byRole.keys());
+    const can = (r: StructureRule) => r.requires.every((x) => roles.has(x));
+    // Low power stalls everything: swap a pending non-power build for a power plant.
+    const q = p.build[0]!;
+    if (p.lowPower && q.item >= 0 && !q.ready && world.rules.structures[q.item]!.role !== 'power') {
+      this.act({ type: 'cancelBuild', category: 'structures' });
+      return;
+    }
+    if (p.build[0]!.item < 0) {
+      const role = this.nextStructure(world, own);
+      const rule = role ? roleRule(role) : null;
+      if (rule && can(rule) && this.act({ type: 'build', category: 'structures', item: rule.index })) this.nextBuildTick = world.tick + this.d.buildDelayTicks;
+    }
+    if (p.build[1]!.item < 0 && world.tick > 3 * MINUTE) {
+      const role = this.nextDefense(own);
+      const rule = role ? roleRule(role) : null;
+      if (rule && can(rule) && p.credits > rule.cost) this.act({ type: 'build', category: 'defenses', item: rule.index });
+    }
+  }
+
+  // --- base planning ---
+
+  /** Pick a spot: refineries near Echo, defenses toward the enemy, everything else around the yard with a gap. */
+  private findSpot(world: World, own: Own, rule: StructureRule): { tx: number; ty: number } | null {
+    const e = world.entities;
+    const yard = own.conyards[own.conyards.length - 1] ?? own.structures[0];
+    if (yard === undefined) return null;
+    const faction = world.rules.factions[world.players[this.player]!.faction]!;
+    const view = worldPlacementView(world, this.player);
+    let ax = e.x[yard]! >> FX_SHIFT;
+    let ay = e.y[yard]! >> FX_SHIFT;
+    if (rule.role === 'refinery') {
+      const echo = nearestEcho(world, ax, ay, 20);
+      if (echo >= 0) {
+        // Halfway between the yard and the field keeps it in build range.
+        ax = idiv(ax + (echo % world.map.width), 2);
+        ay = idiv(ay + idiv(echo, world.map.width), 2);
+      }
+    }
+    // Direction to the enemy, so layouts are the same relative to the front for every start.
+    const enemy = this.enemyStarts[0]!;
+    const ex = enemy.x - ax;
+    const ey = enemy.y - ay;
+    const elen = Math.max(1, ilength(ex, ey));
+    if (rule.category === 'defenses') {
+      ax += idiv(ex * 7, elen);
+      ay += idiv(ey * 7, elen);
+    } else if (rule.role !== 'refinery') {
+      // Grow the base backwards, away from the enemy.
+      ax -= idiv(ex * 3, elen);
+      ay -= idiv(ey * 3, elen);
+    }
+    let best: { tx: number; ty: number } | null = null;
+    let bestD = 0x7fffffff;
+    for (let r = 0; r <= 16 && !best; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const tx = ax + dx - (rule.footprintW >> 1);
+          const ty = ay + dy - (rule.footprintH >> 1);
+          if (placementError(view, this.player, faction, rule, tx, ty) !== null) continue;
+          if (rule.role !== 'wall' && crowded(view, rule, tx, ty)) continue;
+          // Ties (same ring) go to the spot farthest from the enemy: symmetric for mirrored starts.
+          const d = (dx * dx + dy * dy) * 4096 + dx * ex + dy * ey;
+          if (d < bestD) {
+            bestD = d;
+            best = { tx, ty };
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  // --- production ---
+
+  private produce(world: World, own: Own): void {
+    const p = world.players[this.player]!;
+    const faction = world.rules.factions[p.faction]!;
+    const roles = new Set<Role>(own.byRole.keys());
+    const ok = (u: UnitRule) => u.requires.every((r) => roles.has(r));
+
+    // Harvesters first.
+    // Easy under-harvests, Hard over-harvests; Normal follows the faction profile.
+    const perRefinery = this.difficulty === 'easy' ? 1 : this.difficulty === 'normal' ? this.profile.harvestersPerRefinery : this.d.maxHarvestersPerRefinery;
+    const refineries = this.count(own, 'refinery');
+    const wantHarvesters = Math.min(MAX_HARVESTERS, refineries * perRefinery);
+    const harvester = world.rules.units[faction.harvester]!;
+    const vq = p.production[1]!;
+    const queuedHarvesters = vq.items.filter((i) => i === harvester.index).length;
+    const shortOnHarvesters = own.harvesters.length + queuedHarvesters < wantHarvesters && ok(harvester);
+    if (shortOnHarvesters && queuedHarvesters === 0) this.act({ type: 'train', item: harvester.index, count: 1 });
+    // Economy first only for the basics: every refinery needs one harvester, and power must be on.
+    if ((own.harvesters.length < refineries && ok(harvester)) || p.lowPower) return;
+
+    // Scouts/raiders are part of the army list; army fills each tab's queue up to two.
+    const candidates = this.profile.army
+      .map(([id, weight]) => ({ rule: world.rules.units[world.rules.unitIndex.get(id)!]!, weight }))
+      .filter((c) => ok(c.rule));
+    if (candidates.length === 0) return;
+    for (const tab of ['infantry', 'vehicles', 'air'] as const) {
+      const q = p.production[tab === 'infantry' ? 0 : tab === 'vehicles' ? 1 : 2]!;
+      if (q.items.length >= this.d.queueDepth) continue;
+      const pool = candidates.filter((c) => c.rule.tab === tab);
+      if (pool.length === 0) continue;
+      const pick = this.choose(world, pool);
+      if (p.credits < this.d.armyReserve) continue;
+      if (p.credits >= pick.cost || q.items.length === 0) this.act({ type: 'train', item: pick.index, count: 1 });
+    }
+  }
+
+  /** Weighted pick; with counters on, weights grow with effectiveness against what we've seen. */
+  private choose(world: World, pool: { rule: UnitRule; weight: number }[]): UnitRule {
+    const armorValue = new Array<number>(ARMOR.length).fill(0);
+    let total = 0;
+    if (this.d.counter) {
+      for (const m of this.known(world)) {
+        if (m.structure || !m.armed) continue;
+        armorValue[m.armor]! += m.cost;
+        total += m.cost;
+      }
+    }
+    const weights = pool.map((c) => {
+      if (total === 0 || !c.rule.weapon) return c.weight * 100;
+      // Average matrix percent against the enemy army, by value.
+      let eff = 0;
+      for (let a = 0; a < ARMOR.length; a++) {
+        const canHit = a === 3 ? c.rule.weapon.targetsAir : c.rule.weapon.targetsGround;
+        if (canHit) eff += armorValue[a]! * world.rules.damageMatrix[c.rule.weapon.type * ARMOR.length + a]!;
+      }
+      return Math.max(1, idiv(c.weight * idiv(eff, total) * idiv(eff, total), 100));
+    });
+    let sum = 0;
+    for (const w of weights) sum += w;
+    let r = world.aiRng[this.player]!.int(Math.max(1, sum));
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i]!;
+      if (r < 0) return pool[i]!.rule;
+    }
+    return pool[0]!.rule;
+  }
+
+  // --- tactics ---
+
+  /** Staging point in front of the base, toward the enemy. */
+  private stagingPoint(world: World, own: Own): { x: number; y: number } {
+    const e = world.entities;
+    const yard = own.conyards[0] ?? own.structures[0];
+    const bx = yard !== undefined ? e.x[yard]! : (this.home.x << FX_SHIFT) + FX_HALF;
+    const by = yard !== undefined ? e.y[yard]! : (this.home.y << FX_SHIFT) + FX_HALF;
+    const enemy = this.enemyStarts[0]!;
+    const dx = (enemy.x << FX_SHIFT) - bx;
+    const dy = (enemy.y << FX_SHIFT) - by;
+    const len = Math.max(1, ilength(dx, dy));
+    return { x: bx + idiv(dx * 12, len) * FX_ONE, y: by + idiv(dy * 12, len) * FX_ONE };
+  }
+
+  private rally(world: World, own: Own): void {
+    const e = world.entities;
+    const stage = this.stagingPoint(world, own);
+    for (const s of own.structures) {
+      const rule = world.rules.structures[e.type[s]!]!;
+      if (!rule.produces || this.ralliedFactories.has(e.handle(s))) continue;
+      if (this.act({ type: 'rally', target: e.handle(s), x: stage.x, y: stage.y })) this.ralliedFactories.add(e.handle(s));
+    }
+  }
+
+  /** Units not busy with a wave, scouting or raiding. */
+  private reserve(world: World, own: Own): number[] {
+    const e = world.entities;
+    return own.army.map((s) => e.handle(s)).filter((h) => !this.waveUnits.has(h) && !this.raiders.has(h) && h !== this.scoutHandle);
+  }
+
+  private defend(world: World, own: Own): void {
+    const e = world.entities;
+    let threatX = -1;
+    let threatY = 0;
+    // Structures and harvesters both count: losing harvesters loses the game.
+    for (const s of [...own.structures, ...own.harvesters]) {
+      if (e.lastHitTick[s]! < 0 || world.tick - e.lastHitTick[s]! > UNDER_ATTACK_TICKS) continue;
+      if (world.tick - e.lastHitTick[s]! < this.d.reactionTicks && this.d.reactionTicks > UNDER_ATTACK_TICKS) continue;
+      threatX = e.x[s]!;
+      threatY = e.y[s]!;
+      break;
+    }
+    if (threatX < 0) return;
+    if (this.d.retreat && this.attacking && this.knownEnemyArmyNear(world, threatX, threatY) > this.armyValue(world, this.reserve(world, own))) {
+      // The base needs the wave more than the attack does.
+      this.waveUnits.clear();
+      this.attacking = false;
+      this.nextWaveTick = world.tick + MINUTE;
+    }
+    const defenders = this.reserve(world, own);
+    // Recall the wave too if the base is in trouble and it hasn't got far.
+    if (defenders.length === 0) return;
+    if ((world.tick + this.player) % 40 !== 0) return;
+    this.act({ type: 'attackMove', units: defenders, x: threatX, y: threatY });
+  }
+
+  private scout(world: World, own: Own): void {
+    if (!this.d.scout || world.tick < MINUTE || world.tick - this.scoutSentTick < 4 * MINUTE) return;
+    const e = world.entities;
+    const scoutRule = world.rules.unitIndex.get(this.profile.scout);
+    const s = own.army.find((u) => e.type[u] === scoutRule && !this.waveUnits.has(e.handle(u)) && !this.raiders.has(e.handle(u)));
+    if (s === undefined) return;
+    const target = this.enemyStarts[world.aiRng[this.player]!.int(this.enemyStarts.length)]!;
+    if (this.act({ type: 'move', units: [e.handle(s)], x: (target.x << FX_SHIFT) + FX_HALF, y: (target.y << FX_SHIFT) + FX_HALF })) {
+      this.scoutHandle = e.handle(s);
+      this.scoutSentTick = world.tick;
+    }
+  }
+
+  private harass(world: World, own: Own): void {
+    if (!this.d.harass || world.tick < 3 * MINUTE || (world.tick + this.player) % 200 !== 0) return;
+    const e = world.entities;
+    const raiderRule = world.rules.unitIndex.get(this.profile.raider);
+    for (const s of own.army) {
+      if (this.raiders.size >= 2) break;
+      const h = e.handle(s);
+      if (e.type[s] === raiderRule && !this.waveUnits.has(h) && h !== this.scoutHandle) this.raiders.add(h);
+    }
+    if (this.raiders.size === 0) return;
+    // Hit the most recently seen enemy harvester, else the enemy's nearest Echo.
+    let target: { x: number; y: number } | null = null;
+    let latest = -1;
+    for (const m of this.known(world)) {
+      if (!m.harvester || m.lastSeen <= latest) continue;
+      latest = m.lastSeen;
+      target = { x: m.x, y: m.y };
+    }
+    if (!target) {
+      const start = this.enemyStarts[0]!;
+      const echo = nearestEcho(world, start.x, start.y, 24);
+      if (echo < 0) return;
+      target = { x: ((echo % world.map.width) << FX_SHIFT) + FX_HALF, y: (idiv(echo, world.map.width) << FX_SHIFT) + FX_HALF };
+    }
+    this.act({ type: 'attackMove', units: [...this.raiders], x: target.x, y: target.y });
+  }
+
+  private armyValue(world: World, handles: Iterable<number>): number {
+    const e = world.entities;
+    let v = 0;
+    for (const h of handles) {
+      const s = e.resolve(h);
+      if (s >= 0) v += pct(world.rules.units[e.type[s]!]!.cost, idiv(e.hp[s]! * 100, Math.max(1, e.maxHp[s]!)));
+    }
+    return v;
+  }
+
+  /** Value of enemy combat units seen recently near (x, y). */
+  private knownEnemyArmyNear(world: World, x: number, y: number): number {
+    let v = 0;
+    for (const m of this.memory.values()) {
+      if (m.structure || !m.armed || world.tick - m.lastSeen > 100) continue;
+      if (ilength(m.x - x, m.y - y) <= 12 * FX_ONE) v += m.cost;
+    }
+    return v;
+  }
+
+  /** Value of enemy combat units seen in the last two minutes. */
+  private knownEnemyArmy(world: World): number {
+    let v = 0;
+    for (const m of this.known(world)) if (!m.structure && m.armed && world.tick - m.lastSeen < 2 * MINUTE) v += m.cost;
+    return v;
+  }
+
+  /** Attack target: the nearest remembered enemy structure, else an enemy start. */
+  private attackTarget(world: World, own: Own): { x: number; y: number } {
+    const stage = this.stagingPoint(world, own);
+    let best: Sighting | null = null;
+    let bestD = 0x7fffffff;
+    for (const m of this.memory.values()) {
+      if (!m.structure) continue;
+      const d = ilength((m.x - stage.x) >> FX_SHIFT, (m.y - stage.y) >> FX_SHIFT);
+      if (d < bestD) {
+        bestD = d;
+        best = m;
+      }
+    }
+    if (best) return { x: best.x, y: best.y };
+    const start = this.enemyStarts[this.waveIndex % this.enemyStarts.length]!;
+    return { x: (start.x << FX_SHIFT) + FX_HALF, y: (start.y << FX_SHIFT) + FX_HALF };
+  }
+
+  private waves(world: World, own: Own): void {
+    const e = world.entities;
+    if (this.attacking) {
+      const value = this.armyValue(world, this.waveUnits);
+      if (this.waveUnits.size === 0) {
+        this.attacking = false;
+        this.nextWaveTick = world.tick + MINUTE;
+        return;
+      }
+      // Retreat from a lost fight (Hard+).
+      if (this.d.retreat && value * 100 < this.waveStartValue * 35) {
+        const stage = this.stagingPoint(world, own);
+        if (this.act({ type: 'move', units: [...this.waveUnits], x: stage.x, y: stage.y })) {
+          this.waveUnits.clear();
+          this.attacking = false;
+          this.nextWaveTick = world.tick + MINUTE;
+        }
+        return;
+      }
+      // Re-target every few seconds: idle wave units push on.
+      if ((world.tick + this.player) % 100 === 0) {
+        const idle = [...this.waveUnits].filter((h) => {
+          const s = e.resolve(h);
+          return s >= 0 && e.orders[s]!.length === 0;
+        });
+        if (idle.length > 0) {
+          const t = this.attackTarget(world, own);
+          this.act({ type: 'attackMove', units: idle, x: t.x, y: t.y });
+        }
+      }
+      if (this.d.focusFire && (world.tick + this.player) % 30 === 0) this.focusFire(world);
+      return;
+    }
+    if (world.tick < this.nextWaveTick) return;
+    const reserve = this.reserve(world, own);
+    const value = this.armyValue(world, reserve);
+    if (value < this.d.firstWave + this.waveIndex * this.d.waveGrowth) return;
+    // Smarter AIs only attack with a clear edge over the enemy army they know about.
+    if (this.d.retreat && value * 10 < this.peakEnemyArmy * ADVANTAGE_X10) return;
+    const t = this.attackTarget(world, own);
+    const wave = reserve;
+    if (!this.act({ type: 'attackMove', units: wave, x: t.x, y: t.y })) return;
+    for (const h of wave) this.waveUnits.add(h);
+    this.waveStartValue = value;
+    this.attacking = true;
+    this.waveIndex++;
+  }
+
+  /**
+   * Focus fire: wave units already close to a fight gang up on the weakest
+   * visible enemy within 4 tiles of them; units farther away keep attack-moving.
+   */
+  private focusFire(world: World): void {
+    const e = world.entities;
+    for (const [h, m] of this.memory) {
+      if (m.structure || !m.armed || m.lastSeen !== world.tick) continue;
+      const t = e.resolve(h);
+      if (t < 0 || e.hp[t]! + e.shields[t]! > idiv(e.maxHp[t]! + e.maxShields[t]!, 2)) continue;
+      const near: number[] = [];
+      for (const u of this.waveUnits) {
+        const s = e.resolve(u);
+        if (s >= 0 && ilength(e.x[s]! - m.x, e.y[s]! - m.y) <= 4 * FX_ONE) near.push(u);
+      }
+      if (near.length >= 2 && this.act({ type: 'attack', units: near, target: h })) return;
+    }
+  }
+}
+
+/** Nearest tile with Echo within `radius` of (tx, ty) (map knowledge is shared in the lobby). */
+function nearestEcho(world: World, tx: number, ty: number, radius: number): number {
+  const m = world.map;
+  let best = -1;
+  let bestD = 0x7fffffff;
+  for (let y = Math.max(0, ty - radius); y <= Math.min(m.height - 1, ty + radius); y++) {
+    for (let x = Math.max(0, tx - radius); x <= Math.min(m.width - 1, tx + radius); x++) {
+      const i = y * m.width + x;
+      if (m.echo[i] === 0) continue;
+      const d = (x - tx) * (x - tx) + (y - ty) * (y - ty);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+  }
+  return best;
+}
+
+/** Keep a one-tile gap around structures so the base never walls itself in. */
+function crowded(view: PlacementView, rule: StructureRule, tx: number, ty: number): boolean {
+  for (const s of view.structures) {
+    if (s.rule.role === 'wall') continue;
+    if (tx - 1 < s.tx + s.rule.footprintW && s.tx < tx + rule.footprintW + 1 && ty - 1 < s.ty + s.rule.footprintH && s.ty < ty + rule.footprintH + 1) return true;
+  }
+  return false;
+}

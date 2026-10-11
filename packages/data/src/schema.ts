@@ -257,3 +257,20 @@ export type FactionDef = z.infer<typeof factionSchema>;
 export type DamageMatrix = z.infer<typeof damageMatrixSchema>;
 export type Constants = z.infer<typeof constantsSchema>;
 export type Keymap = z.infer<typeof keymapSchema>;
+
+/** Per-faction AI profile: opening build order and army composition (by weight). */
+export const aiProfileSchema = z
+  .object({
+    faction: z.enum(FACTIONS),
+    opening: z.array(z.enum(ROLES)).min(1),
+    later: z.array(z.enum(ROLES)),
+    defenses: z.array(z.enum(ROLES)),
+    harvestersPerRefinery: z.number().int().min(1).max(4),
+    maxRefineries: z.number().int().min(1).max(8),
+    scout: id,
+    raider: id,
+    army: z.array(z.tuple([id, z.number().int().positive()])).min(1),
+  })
+  .strict();
+
+export type AiProfile = z.infer<typeof aiProfileSchema>;

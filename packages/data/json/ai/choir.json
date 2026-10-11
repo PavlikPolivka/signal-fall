@@ -1,0 +1,19 @@
+{
+  "faction": "choir",
+  "opening": ["power", "refinery", "barracks", "refinery", "power", "factory", "radar", "special"],
+  "later": ["power", "tech", "airfield", "power"],
+  "defenses": ["defense", "defense", "antiAir", "heavyDefense"],
+  "harvestersPerRefinery": 2,
+  "maxRefineries": 4,
+  "scout": "glissando",
+  "raider": "glissando",
+  "army": [
+    ["grace", 3],
+    ["staccato", 2],
+    ["basso", 4],
+    ["crescendo", 1],
+    ["falsetto", 1],
+    ["requiem", 1],
+    ["aria", 1]
+  ]
+}

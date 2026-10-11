@@ -38,6 +38,9 @@ importers:
 
   apps/client:
     dependencies:
+      '@signal-fall/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@signal-fall/data':
         specifier: workspace:*
         version: link:../../packages/data
@@ -63,9 +66,15 @@ importers:
 
   apps/headless:
     dependencies:
+      '@signal-fall/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@signal-fall/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@signal-fall/mapgen':
+        specifier: workspace:*
+        version: link:../../packages/mapgen
       '@signal-fall/sim':
         specifier: workspace:*
         version: link:../../packages/sim
@@ -78,6 +87,19 @@ importers:
       '@signal-fall/sim':
         specifier: workspace:*
         version: link:../packages/sim
+
+  packages/ai:
+    dependencies:
+      '@signal-fall/data':
+        specifier: workspace:*
+        version: link:../data
+      '@signal-fall/sim':
+        specifier: workspace:*
+        version: link:../sim
+    devDependencies:
+      '@signal-fall/mapgen':
+        specifier: workspace:*
+        version: link:../mapgen
 
   packages/data:
     dependencies:

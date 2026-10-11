@@ -49,6 +49,8 @@ export interface PlayerState {
   incomeBonusPct: number;
   /** Stats. */
   harvested: number;
+  /** Units completed per unit rule index. */
+  trained: number[];
 }
 
 export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
@@ -143,6 +145,7 @@ export function createWorld(o: WorldOptions): World {
       production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
       incomeBonusPct: 0,
       harvested: 0,
+      trained: o.rules.units.map(() => 0),
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -180,6 +183,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.lowPower ? 1 : 0);
     w.push(p.incomeBonusPct);
     w.push(p.harvested);
+    w.pushArray(p.trained);
     for (const b of p.build) {
       w.push(b.item);
       w.push(b.progress);

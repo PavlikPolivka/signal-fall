@@ -1,4 +1,4 @@
-import { CommandQueue, type ScheduledCommand } from './commands';
+import { CommandQueue, type Command, type ScheduledCommand } from './commands';
 import { IntWriter } from './hash';
 import { applyCommand } from './orders';
 import { behaviorSystem } from './systems/behavior';
@@ -11,6 +11,20 @@ import { createWorld, serializeWorld, type World, type WorldOptions } from './wo
 
 export type SimSetup = WorldOptions;
 
+/**
+ * A deterministic computer player. It runs inside the sim on every peer (so it
+ * needs no network input), reads the world and returns commands, which apply
+ * on the next tick like any player's. Must only use integer math and its own
+ * RNG stream (world.aiRng[player]).
+ */
+export interface Brain {
+  readonly player: number;
+  think(world: World): Command[];
+}
+
+/** Brains think every this many ticks (staggered by player). */
+export const BRAIN_INTERVAL = 10;
+
 /** Ticks between state hashes exchanged in lockstep. */
 export const HASH_INTERVAL = 20;
 
@@ -18,6 +32,7 @@ export class Sim {
   readonly world: World;
   private readonly queue = new CommandQueue();
   private readonly writer = new IntWriter();
+  private readonly brains: Brain[] = [];
 
   constructor(setup: SimSetup) {
     this.world = createWorld(setup);
@@ -26,6 +41,10 @@ export class Sim {
 
   get tick(): number {
     return this.world.tick;
+  }
+
+  addBrain(brain: Brain): void {
+    this.brains.push(brain);
   }
 
   schedule(c: ScheduledCommand): void {
@@ -56,6 +75,10 @@ export class Sim {
       echoRegrowSystem(w);
       fogSystem(w);
       victorySystem(w);
+      for (const b of this.brains) {
+        if (w.players[b.player]!.defeated || (w.tick + b.player) % BRAIN_INTERVAL !== 0) continue;
+        for (const cmd of b.think(w)) this.queue.push({ tick: w.tick + 1, player: b.player, cmd });
+      }
     }
     w.tick++;
   }

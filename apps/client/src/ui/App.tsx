@@ -475,6 +475,7 @@ function EndScreen({ state }: { state: ClientState }) {
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
         <button onClick={() => location.reload()}>Play again</button>
+        <button onClick={() => (location.href = location.pathname)}>New skirmish</button>
       </div>
     </div>
   );

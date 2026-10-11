@@ -5,8 +5,14 @@ import halcyon from '../json/halcyon.json' with { type: 'json' };
 import holdout from '../json/holdout.json' with { type: 'json' };
 import keymap from '../json/keymap.json' with { type: 'json' };
 import upgrades from '../json/upgrades.json' with { type: 'json' };
+import aiHoldout from '../json/ai/holdout.json' with { type: 'json' };
+import aiHalcyon from '../json/ai/halcyon.json' with { type: 'json' };
+import aiChoir from '../json/ai/choir.json' with { type: 'json' };
 import { compileRules, type RawData, type Rules } from './compile';
 import {
+  aiProfileSchema,
+  type AiProfile,
+  type FactionId,
   constantsSchema,
   damageMatrixSchema,
   factionSchema,
@@ -49,4 +55,25 @@ let cached: Rules | null = null;
 export function defaultRules(): Rules {
   cached ??= compileRules(bundledRaw());
   return cached;
+}
+
+let aiCache: Map<FactionId, AiProfile> | null = null;
+
+/** AI profiles per faction, validated against the bundled rules. */
+export function aiProfiles(): Map<FactionId, AiProfile> {
+  if (aiCache) return aiCache;
+  const rules = defaultRules();
+  const profiles = [aiHoldout, aiHalcyon, aiChoir].map((p) => aiProfileSchema.parse(p));
+  for (const p of profiles) {
+    const faction = rules.factions.find((f) => f.id === p.faction)!;
+    const own = (id: string) => {
+      const i = rules.unitIndex.get(id);
+      if (i === undefined || rules.units[i]!.faction !== faction.index) throw new Error(`AI ${p.faction}: unit ${id} is not a ${p.faction} unit`);
+    };
+    own(p.scout);
+    own(p.raider);
+    for (const [id] of p.army) own(id);
+  }
+  aiCache = new Map(profiles.map((p) => [p.faction, p]));
+  return aiCache;
 }

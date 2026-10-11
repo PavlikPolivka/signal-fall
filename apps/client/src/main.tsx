@@ -5,25 +5,48 @@ import { Input } from './input/input';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import { Renderer } from './render/renderer';
 import { App } from './ui/App';
+import { Setup, type SkirmishSettings } from './ui/Setup';
+import type { Difficulty } from '@signal-fall/ai';
+import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
 import './ui/styles.css';
 
 const params = new URLSearchParams(location.search);
-const kind = params.get('scenario') ?? 'skirmish';
-const seed = Number(params.get('seed') ?? 7);
-const scenario: ScenarioSpec =
-  kind === 'skirmish'
-    ? {
-        kind,
-        seed,
-        factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)],
-        map: {
-          size: (params.get('size') ?? 'M') as 'S' | 'M' | 'L',
-          biome: (params.get('biome') ?? 'wasteland') as 'city' | 'wasteland' | 'crystal',
-          resources: (params.get('resources') ?? 'normal') as 'low' | 'normal' | 'rich',
-          terrain: (params.get('terrain') ?? 'normal') as 'open' | 'normal' | 'choke',
-        },
-      }
-    : { kind: kind === 'stress' ? 'stress' : 'sandbox', seed, unitsPerSide: Number(params.get('units') ?? (kind === 'stress' ? 200 : 24)) };
+// Any game parameter in the URL skips the setup screen (tests, shared links).
+const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy'];
+const autostart = AUTOSTART_KEYS.some((k) => params.has(k));
+
+function scenarioFromUrl(): ScenarioSpec {
+  const kind = params.get('scenario') ?? 'skirmish';
+  const seed = Number(params.get('seed') ?? 7);
+  if (kind !== 'skirmish') {
+    return { kind: kind === 'stress' ? 'stress' : 'sandbox', seed, unitsPerSide: Number(params.get('units') ?? (kind === 'stress' ? 200 : 24)) };
+  }
+  const ai = params.get('ai') ?? 'normal';
+  return {
+    kind,
+    seed,
+    factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)],
+    ai: [null, ai === 'none' ? null : (ai as Difficulty)],
+    map: {
+      size: (params.get('size') ?? 'M') as MapSize,
+      biome: (params.get('biome') ?? 'wasteland') as Biome,
+      resources: (params.get('resources') ?? 'normal') as Resources,
+      terrain: (params.get('terrain') ?? 'normal') as TerrainStyle,
+    },
+  };
+}
+
+function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
+  return {
+    kind: 'skirmish',
+    seed: s.seed,
+    factions: [s.faction, s.enemyFaction],
+    ai: [null, s.difficulty],
+    map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain },
+  };
+}
+
+let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : null;
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
@@ -74,12 +97,25 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       if (first) input?.run('jumpToBase');
     }
   };
-  post({ type: 'start', scenario, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
+  post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
 }
 
 const root = document.getElementById('app')!;
 let mounted = false;
 function renderUi(): void {
+  if (!scenario) {
+    render(
+      <Setup
+        rules={state.rules}
+        onStart={(settings) => {
+          scenario = scenarioFromSetup(settings);
+          renderUi();
+        }}
+      />,
+      root,
+    );
+    return;
+  }
   render(
     <App
       state={state}

@@ -1,0 +1,20 @@
+{
+  "faction": "holdout",
+  "opening": ["power", "refinery", "barracks", "refinery", "power", "factory", "radar", "power"],
+  "later": ["special", "power", "tech", "airfield", "power"],
+  "defenses": ["defense", "defense", "antiAir", "heavyDefense"],
+  "harvestersPerRefinery": 2,
+  "maxRefineries": 4,
+  "scout": "jackrabbit",
+  "raider": "jackrabbit",
+  "army": [
+    ["grunt", 3],
+    ["tankbuster", 2],
+    ["bulldog", 4],
+    ["thumper", 1],
+    ["flak_track", 1],
+    ["patch", 1],
+    ["ironclad", 1],
+    ["hornet", 1]
+  ]
+}
