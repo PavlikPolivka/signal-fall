@@ -7,6 +7,9 @@ import { Renderer } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
 import { Setup, type SkirmishSettings } from './ui/Setup';
+import { Multiplayer } from './ui/Multiplayer';
+import { NetSession, degrade } from './net/session';
+import type { PeerLink } from './net/webrtc';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
 import '@fontsource/saira-stencil-one/latin-400.css';
@@ -55,6 +58,13 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
 }
 
 let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : null;
+/** Our player slot (0 unless we joined someone's multiplayer room). */
+let localSlot = 0;
+/** Multiplayer: the connection to the opponent, until the worker is running. */
+let peerLink: PeerLink | null = null;
+let netSession: NetSession | null = null;
+/** Lobby screen showing instead of the skirmish setup. */
+let multiplayerScreen = new URLSearchParams(location.search).has('room');
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
@@ -103,6 +113,20 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
   });
   worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     const msg = ev.data;
+    if (msg.type === 'net') {
+      netSession?.send(msg.msg);
+      return;
+    }
+    if (msg.type === 'netStatus') {
+      state.net = { delayTurns: msg.delayTurns, rtt: msg.rtt, waitingOn: msg.waitingOn };
+      return;
+    }
+    if (msg.type === 'desync') {
+      state.desync = { tick: msg.tick, report: msg.report };
+      state.changed();
+      console.error(`desync at tick ${msg.tick}: local ${msg.local} vs player ${msg.player} ${msg.remote}`);
+      return;
+    }
     if (msg.type === 'ready') {
       state.width = msg.width;
       state.height = msg.height;
@@ -125,7 +149,7 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         });
       }
       state.ready = true;
-    } else {
+    } else if (msg.type === 'snapshot') {
       const first = state.cur === null;
       state.onSnapshot(new Snapshot(msg.buf), msg.fog, msg.echo);
       if (msg.fx) {
@@ -135,15 +159,54 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       if (first) input?.run('jumpToBase');
     }
   };
-  post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
+  if (peerLink) {
+    const link = peerLink;
+    state.multiplayer = true;
+    post({ type: 'start', scenario: scenario!, localPlayer: localSlot, net: { peers: [0, 1] } });
+    void link.ready.then((d) => {
+      const netsim = params.get('netsim');
+      netSession = new NetSession(netsim ? degrade(d, netsim) : d, (m) => post({ type: 'net', msg: m }));
+      netSession.onPeerLost = () => {
+        state.peerLost = true;
+        state.changed();
+      };
+      link.onFailed = () => {
+        state.peerLost = true;
+        state.changed();
+      };
+    });
+  } else post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
 }
 
 const root = document.getElementById('app')!;
 let mounted = false;
 function renderUi(): void {
+  if (!scenario && multiplayerScreen) {
+    render(
+      <Multiplayer
+        rules={state.rules}
+        onBack={() => {
+          multiplayerScreen = false;
+          renderUi();
+        }}
+        onStart={(sc, slot, link) => {
+          scenario = sc;
+          localSlot = slot;
+          peerLink = link;
+          renderUi();
+        }}
+      />,
+      root,
+    );
+    return;
+  }
   if (!scenario) {
     render(
       <Setup
+        onMultiplayer={() => {
+          multiplayerScreen = true;
+          renderUi();
+        }}
         rules={state.rules}
         onStart={(settings) => {
           scenario = scenarioFromSetup(settings);

@@ -1137,3 +1137,65 @@ table.matrix td.lo {
 .research .upgrade.done small {
   color: var(--good);
 }
+
+.setup .mp-btn {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.room-code {
+  font-family: var(--mono);
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+.lobby-players {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 14px;
+  display: grid;
+  gap: 6px;
+}
+.lobby-players li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.mp-status {
+  color: var(--accent);
+  min-height: 1.3em;
+}
+.net-overlay {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #fff;
+  pointer-events: none;
+  z-index: 15;
+}
+.net-badge {
+  font: 11px var(--mono);
+  color: var(--muted);
+}
+.desync-banner {
+  position: fixed;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 8px 14px;
+  background: #5a1414;
+  color: #fff;
+  border: 1px solid #ff6b6b;
+  border-radius: 6px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}

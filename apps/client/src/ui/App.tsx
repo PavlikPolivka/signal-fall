@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'preact/hooks';
 import { KIND } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
-import { E, P } from '../protocol';
+import { E, H, P } from '../protocol';
 import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
@@ -57,6 +57,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
         />
       )}
       <EndScreen state={state} />
+      {state.multiplayer && <NetOverlays state={state} />}
     </div>
   );
 }
@@ -73,6 +74,11 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
       <span class={`alert ${fresh ? 'on' : ''} ${alert?.kind ?? ''}`} data-testid="alert">
         {fresh ? alert.text : ''}
       </span>
+      {state.net && (
+        <span class="net-badge" data-testid="net-badge" title="Round trip and input delay">
+          ping {state.net.rtt >= 0 ? `${Math.round(state.net.rtt)} ms` : '…'} · delay {state.net.delayTurns}
+        </span>
+      )}
       <span class="fps" data-testid="fps">{state.fps} fps</span>
       <button class="menu-btn" onClick={() => input.toggleMenu()} title="Menu (Esc)">
         Menu <kbd>Esc</kbd>
@@ -654,6 +660,49 @@ function StructureActions({ state, h }: { state: ClientState; h: number }) {
   );
 }
 
+let stalledSince = 0;
+
+/** Multiplayer: waiting-for-opponent, desync and disconnect notices. */
+function NetOverlays({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  const stalled = cur ? cur.a[H.stalled] === 1 : false;
+  const now = performance.now();
+  if (!stalled) stalledSince = 0;
+  else if (stalledSince === 0) stalledSince = now;
+  const waiting = stalled && now - stalledSince > 500;
+  const download = () => {
+    if (!state.desync) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([state.desync.report], { type: 'application/json' }));
+    a.download = `signal-fall-desync-${state.desync.tick}.json`;
+    a.click();
+  };
+  return (
+    <>
+      {waiting && !state.peerLost && (
+        <div class="net-overlay" data-testid="net-waiting">
+          Waiting for your opponent…
+        </div>
+      )}
+      {state.desync && (
+        <div class="desync-banner" data-testid="desync">
+          The match went out of sync at tick {state.desync.tick}.
+          <button onClick={download}>Download report</button>
+        </div>
+      )}
+      {state.peerLost && (
+        <div class="menu-overlay" data-testid="peer-lost">
+          <div class="menu">
+            <h2>Opponent disconnected</h2>
+            <p class="muted">The connection to your opponent was lost.</p>
+            <button onClick={() => (location.href = location.pathname)}>Back to menu</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function EndScreen({ state }: { state: ClientState }) {
   const cur = state.cur;
   if (!cur || cur.a[1] !== 1) return null;
@@ -662,7 +711,7 @@ function EndScreen({ state }: { state: ClientState }) {
     <div class="menu-overlay" data-testid="end-screen">
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
-        <button onClick={() => location.reload()}>Play again</button>
+        {!state.multiplayer && <button onClick={() => location.reload()}>Play again</button>}
         <button onClick={() => (location.href = location.pathname)}>New skirmish</button>
       </div>
     </div>
@@ -698,7 +747,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
   return (
     <div class="menu-overlay" data-testid="menu">
       <div class="menu">
-        <h2>Paused</h2>
+        <h2>{state.multiplayer ? 'Menu' : 'Paused'}</h2>
         <button onClick={() => input.toggleMenu()}>Resume</button>
         <button
           data-testid="menu-codex"

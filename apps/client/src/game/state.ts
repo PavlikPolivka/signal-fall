@@ -47,6 +47,11 @@ export class ClientState {
   /** Factions whose rendered art (sprites and icons) has loaded. */
   art = new Set<string>();
   creditsOpen = false;
+  /** Networked match state (null in single player). */
+  multiplayer = false;
+  net: { delayTurns: number; rtt: number; waitingOn: number[] } | null = null;
+  desync: { tick: number; report: string } | null = null;
+  peerLost = false;
   mapSeed = 0;
   players: PlayerInfo[] = [];
   localPlayer = 0;

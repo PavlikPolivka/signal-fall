@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { defaultRules } from '@signal-fall/data';
-import { LockstepScheduler, NullTransport } from '@signal-fall/net';
+import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
 import { KIND, Sim, createMatch, grantBase, inCoverage, sandbox, type World } from '@signal-fall/sim';
 import { generateMap, type Biome } from '@signal-fall/mapgen';
 import { attachAi } from '@signal-fall/ai';
@@ -58,9 +58,9 @@ function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         players: spec.factions.map((faction, team) => ({ faction, team })),
       });
       spec.ai.forEach((difficulty, p) => {
-        // A computer player without a difficulty is a passive base (sandbox/testing).
+        // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.
         if (difficulty) attachAi(sim, p, difficulty, map.starts);
-        else if (p !== 0) grantBase(sim, p, map.starts[p]!);
+        else if (p !== 0 && !spec.humans?.includes(p)) grantBase(sim, p, map.starts[p]!);
       });
       return { sim, extras: { decoration: map.decoration, surface: map.surface, landmark: map.landmark, biome: map.biome, mapSeed: map.seedUsed } };
     }
@@ -203,6 +203,41 @@ function publish(stalled: boolean): void {
   post({ type: 'snapshot', buf, fog, echo, fx }, transfer);
 }
 
+/** Lockstep messages to and from the main thread, which owns the network connection. */
+class PortTransport implements Transport {
+  private handlers: ((m: NetMessage) => void)[] = [];
+  send(msg: NetMessage): void {
+    post({ type: 'net', msg });
+  }
+  onMessage(h: (m: NetMessage) => void): void {
+    this.handlers.push(h);
+  }
+  deliver(msg: NetMessage): void {
+    for (const h of this.handlers) h(msg);
+  }
+  close(): void {}
+}
+
+let port: PortTransport | null = null;
+/** Peer messages that arrived before our own 'start' (the host may start a moment earlier). */
+let earlyNet: NetMessage[] = [];
+let scenario: ScenarioSpec | null = null;
+/** Every command applied, for desync reports. */
+let commandLog: { tick: number; player: number; cmd: unknown }[] = [];
+let desynced = false;
+/** Multiplayer housekeeping: ping, adapt the input delay, exchange state hashes. */
+const HASH_EVERY = 100;
+let lastPing = 0;
+
+function netHousekeeping(now: number): void {
+  if (!port || !lockstep || !sim) return;
+  if (now - lastPing < 1000) return;
+  lastPing = now;
+  lockstep.ping();
+  if (lockstep.rtt > 0) lockstep.setDelay(LockstepScheduler.delayForRtt(lockstep.rtt));
+  post({ type: 'netStatus', delayTurns: lockstep.delayTurns, rtt: lockstep.rtt, waitingOn: lockstep.waitingOn(sim.tick) });
+}
+
 function loop(): void {
   let last = performance.now();
   let acc = 0;
@@ -221,13 +256,18 @@ function loop(): void {
         stalled = true;
         break;
       }
-      for (const c of lockstep.take(sim.tick)) sim.schedule(c);
+      for (const c of lockstep.take(sim.tick)) {
+        sim.schedule(c);
+        if (port) commandLog.push(c);
+      }
       sim.step();
+      if (port && sim.tick % HASH_EVERY === 0) lockstep.reportHash(sim.tick, sim.hash());
       acc -= TICK_MS;
       steps++;
     }
     if (acc > TICK_MS * MAX_CATCH_UP) acc = TICK_MS * MAX_CATCH_UP;
     if (steps > 0 || stalled) publish(stalled);
+    netHousekeeping(now);
   }, 4);
 }
 
@@ -240,7 +280,22 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       const extras = created.extras;
       localPlayer = msg.localPlayer;
       TICK_MS = 50 / Math.max(0.25, Math.min(8, msg.speed ?? 1));
-      lockstep = new LockstepScheduler({ localPlayer, peers: [localPlayer], transport: new NullTransport(), delayTurns: 1 });
+      scenario = msg.scenario;
+      port = msg.net ? new PortTransport() : null;
+      commandLog = [];
+      desynced = false;
+      lockstep = new LockstepScheduler({
+        localPlayer,
+        peers: msg.net ? msg.net.peers : [localPlayer],
+        transport: port ?? new NullTransport(),
+        delayTurns: msg.net ? 3 : 1,
+        onDesync: (tick, local, remote, player) => {
+          if (desynced) return;
+          desynced = true;
+          const report = JSON.stringify({ version: 1, scenario, localPlayer, tick, local, remote, player, commands: commandLog });
+          post({ type: 'desync', tick, local, remote, player, report });
+        },
+      });
       const w = sim.world;
       const terrain = w.map.terrain.slice();
       post(
@@ -260,13 +315,20 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         [terrain.buffer, extras.decoration.buffer, extras.surface.buffer, extras.landmark.buffer],
       );
       publish(false);
+      if (port) for (const m of earlyNet) port.deliver(m);
+      earlyNet = [];
       return;
     }
     case 'command':
       lockstep?.submit(msg.cmd);
       return;
     case 'pause':
-      paused = msg.paused;
+      // Nobody pauses a networked match on their own.
+      if (!port) paused = msg.paused;
+      return;
+    case 'net':
+      if (port) port.deliver(msg.msg);
+      else earlyNet.push(msg.msg);
       return;
   }
 };

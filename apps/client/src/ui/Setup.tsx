@@ -45,7 +45,7 @@ function Choice<T extends string | number>(props: { label: string; value: T; opt
   );
 }
 
-export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishSettings) => void }) {
+export function Setup({ rules, onStart, onMultiplayer }: { rules: Rules; onStart: (s: SkirmishSettings) => void; onMultiplayer: () => void }) {
   const [s, setS] = useState<SkirmishSettings>(() => ({
     faction: 0,
     enemyFaction: 1,
@@ -171,6 +171,9 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
         </div>
         <button class="start" onClick={start} data-testid="start">
           Start
+        </button>
+        <button class="mp-btn" onClick={onMultiplayer} data-testid="open-multiplayer">
+          Multiplayer — 1v1 with a friend
         </button>
         <button class="codex-btn" onClick={() => setCodex(true)} data-testid="open-codex">
           Codex — story, factions, units and how to play

@@ -1,6 +1,7 @@
 import type { Command } from '@signal-fall/sim';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
 import type { Difficulty } from '@signal-fall/ai';
+import type { NetMessage } from '@signal-fall/net';
 
 /** What the worker should set up. */
 export type ScenarioSpec =
@@ -10,15 +11,27 @@ export type ScenarioSpec =
       factions: number[];
       /** AI difficulty per player slot, null for the human. */
       ai: (Difficulty | null)[];
+      /** Player slots controlled by people (multiplayer); others without AI get a passive base. */
+      humans?: number[];
       map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
     }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };
 
 export type ToWorker =
-  | { type: 'start'; scenario: ScenarioSpec; localPlayer: number; /** Game speed multiplier (tests). */ speed?: number }
+  | {
+      type: 'start';
+      scenario: ScenarioSpec;
+      localPlayer: number;
+      /** Game speed multiplier (tests). */
+      speed?: number;
+      /** Multiplayer: the human peers' player slots; lockstep messages travel through 'net' messages. */
+      net?: { peers: number[] };
+    }
   | { type: 'command'; cmd: Command }
-  | { type: 'pause'; paused: boolean };
+  | { type: 'pause'; paused: boolean }
+  /** A lockstep message from a remote peer. */
+  | { type: 'net'; msg: NetMessage };
 
 export interface PlayerInfo {
   faction: number;
@@ -48,7 +61,13 @@ export type FromWorker =
       echo: Uint8Array | null;
       /** Cosmetic events since the last snapshot (sim FX_EVENT records, FX_STRIDE ints each). */
       fx: Int32Array | null;
-    };
+    }
+  /** A lockstep message for the remote peers. */
+  | { type: 'net'; msg: NetMessage }
+  /** Multiplayer status: input delay, round trip, who we are waiting on. */
+  | { type: 'netStatus'; delayTurns: number; rtt: number; waitingOn: number[] }
+  /** State hashes disagreed: the match has diverged. `report` is a JSON replay for the bug report. */
+  | { type: 'desync'; tick: number; local: number; remote: number; player: number; report: string };
 
 // Snapshot layout (Int32Array):
 //   header (HEADER_LEN), then players (PLAYER_STRIDE each), entities (ENT_STRIDE each),
