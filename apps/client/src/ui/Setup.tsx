@@ -178,9 +178,6 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
         <button class="codex-btn" onClick={() => setCredits(true)} data-testid="open-credits">
           Credits
         </button>
-        {(s.faction !== 0 || s.enemyFaction !== 0) && (
-          <p class="muted small">Halcyon and Choir play with shared rules for now; their special mechanics arrive in a later update.</p>
-        )}
       </div>
       <div class="setup-preview">
         <canvas ref={canvas} width={460} height={460} data-testid="map-preview" />

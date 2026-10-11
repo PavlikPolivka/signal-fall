@@ -53,8 +53,8 @@ const FACTION_LORE: Record<string, { tagline: string; story: string; look: strin
     look: 'Violet and amber crystal, glowing cores, floating segments.',
     twists: [
       ['Grown structures', 'Buildings grow near Echo fields or other Choir structures; they build slower but cost less.'],
-      ['Shards, not hulls', 'Units have regenerating shields over a small health pool. Shields recharge out of combat; there is no repair.'],
-      ['Phase', 'Many units can blink or phase out for a moment.'],
+      ['Shards, not hulls', 'Units have regenerating shields over a small health pool. Shields recharge out of combat; there is no repair. Bullets glance off shields, but energy weapons tear through them.'],
+      ['Phase', 'Many units can blink (press F, then click where) or phase out (F) for a moment.'],
     ],
     play: 'Mobile, hit-and-run, punishes poor positioning; weak to sustained burst damage.',
   },

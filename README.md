@@ -15,7 +15,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 | M4 Map generator | ✅ |
 | M5 AI, first playable | ✅ (human playtest pending) |
 | M6 Art and audio (Holdout) | ✅ |
-| M7 Halcyon and Choir | |
+| M7 Halcyon and Choir | ✅ |
 | M8 Multiplayer | |
 | M9 Polish and release | |
 

@@ -169,6 +169,19 @@ def cylinder(name, radius, depth, loc, mat, *, rot=(0, 0, 0), verts=16, bevel=0.
     return _finish(o, mat, bevel, segments=1)
 
 
+def cone(name, r1, r2, depth, loc, mat, *, rot=(0, 0, 0), verts=6):
+    """Cone or frustum (r2 > 0); crystals and spires."""
+    bpy.ops.mesh.primitive_cone_add(radius1=r1, radius2=r2, depth=depth, location=loc, rotation=rot, vertices=verts)
+    o = bpy.context.active_object
+    o.name = name
+    return _finish(o, mat)
+
+
+def hexprism(name, radius, depth, loc, mat, *, rot=(0, 0, 0), bevel=0.0):
+    """Hexagonal prism (Halcyon panels and nodes)."""
+    return cylinder(name, radius, depth, loc, mat, rot=rot, verts=6, bevel=bevel)
+
+
 def wedge(name, size, loc, mat, *, rot=(0, 0, 0), taper=0.6):
     """Box whose top face is shrunk along X: sloped armor plates."""
     o = box(name, size, loc, mat, rot=rot)

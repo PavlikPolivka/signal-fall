@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const PUBLIC = join(ROOT, 'apps/client/public/assets');
 const rules = defaultRules();
-/** Factions whose art is done; the rest still use placeholders (M7). */
-const ARTED = ['holdout'];
+/** Every faction ships rendered art. */
+const ARTED = rules.factions.map((f) => f.id);
 
 function atlasFrames(faction: string): Set<string> {
   const dir = join(PUBLIC, 'sprites', faction);
@@ -45,8 +45,11 @@ describe.each(ARTED)('%s art is complete', (factionId) => {
   it.each(faction.structures.map((i) => rules.structures[i]!.id))('building %s has all states', (id) => {
     for (const state of ['built', 'damaged', 'construction']) expect(frames.has(`${id}/body/${state}/00/0.color`), `${id} ${state}`).toBe(true);
     const rule = rules.structures[rules.structureIndex.get(id)!]!;
+    // Armed defenses aim: they need a turret in 16 directions.
+    // (The Pillbox is a fixed bunker that fires through slits all round.)
+    if (rule.weapon && id !== 'pillbox') expect(catalog.sprites[id]!.turret, `${id} has a weapon but no turret`).toBe(true);
     if (catalog.sprites[id]!.turret) for (let d = 0; d < 16; d++) expect(frames.has(`${id}/turret/idle/${pad(d)}/0.color`)).toBe(true);
-    void rule;
+    expect(existsSync(join(PUBLIC, 'icons', factionId, `${id}.mask.png`))).toBe(true);
     expect(existsSync(join(PUBLIC, 'icons', factionId, `${id}.png`))).toBe(true);
   });
 });
