@@ -13,3 +13,4 @@ supabase/.temp/
 balance-*.csv
 media/
 tools/assets/build/
+__pycache__/
