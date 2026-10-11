@@ -1,8 +1,9 @@
 import type { Command, ScheduledCommand } from './commands';
-import { FX_ONE, FX_SHIFT, clamp, idiv, ilength, isqrt } from './fx';
+import { FX_ONE, FX_SHIFT, clamp, idiv } from './fx';
 import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from './entities';
 import { placementError, footprintBlocked, worldPlacementView } from './placement';
 import { teamOf } from './query';
+import { formationSlots } from './formation';
 import { removeEntity, spawnStructure } from './spawn';
 import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
 import { BUILD_CATEGORY_INDEX, type World } from './world';
@@ -45,7 +46,6 @@ function give(world: World, s: number, order: Order, queue: boolean): void {
   if (!queue || e.orders[s]!.length === 0) {
     e.orders[s] = [order];
     e.target[s] = NO_ENTITY;
-    e.stance[s] = STANCE.normal;
     resetMovement(world, s);
   } else {
     e.orders[s]!.push(order);
@@ -53,38 +53,27 @@ function give(world: World, s: number, order: Order, queue: boolean): void {
 }
 
 /**
- * Formation: each unit keeps its offset from the group's centroid, compressed
- * so the group spreads over at most ~sqrt(n) tiles around the target.
+ * Group orders: every unit gets its own slot in a role-based formation around
+ * the target, and the group shares the slowest member's speed so it arrives
+ * together. Large groups also share a flow field toward the target.
  */
 function groupMove(world: World, units: number[], type: 'move' | 'attackMove', x: number, y: number, queue: boolean): void {
   const e = world.entities;
   const n = units.length;
   if (n === 0) return;
-  let sx = 0;
-  let sy = 0;
-  for (const s of units) {
-    sx += e.x[s]!;
-    sy += e.y[s]!;
-  }
-  const cx = idiv(sx, n);
-  const cy = idiv(sy, n);
-  const spread = idiv((isqrt(n) + 1) * FX_ONE * 3, 4);
+  const slots = formationSlots(world, units, x, y);
   const flow = n >= FLOW_MIN_GROUP;
-  const w = world.map.width * FX_ONE - 1;
-  const h = world.map.height * FX_ONE - 1;
-  for (const s of units) {
-    let ox = e.x[s]! - cx;
-    let oy = e.y[s]! - cy;
-    const len = ilength(ox, oy);
-    if (n === 1) {
-      ox = 0;
-      oy = 0;
-    } else if (len > spread) {
-      ox = idiv(ox * spread, len);
-      oy = idiv(oy * spread, len);
-    }
-    give(world, s, { type, x: clamp(x + ox, 0, w), y: clamp(y + oy, 0, h), flow, cx: x, cy: y }, queue);
+  const group = n > 1 ? world.nextGroup++ : 0;
+  let speed = 0;
+  if (n > 1) {
+    speed = 0x7fffffff;
+    for (const s of units) speed = Math.min(speed, world.rules.units[e.type[s]!]!.speed);
   }
+  units.forEach((s, i) => {
+    const slot = slots[i]!;
+    const base = { x: slot.x, y: slot.y, flow, cx: x, cy: y, group, speed };
+    give(world, s, type === 'move' ? { type, ...base } : { type, ...base, regroupUntil: -1 }, queue);
+  });
 }
 
 export function applyCommand(world: World, c: ScheduledCommand): void {
@@ -132,7 +121,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
         stopHarvesting(world, s);
         e.orders[s] = [];
         e.target[s] = NO_ENTITY;
-        e.stance[s] = cmd.type === 'hold' ? STANCE.hold : STANCE.normal;
+        if (cmd.type === 'hold') e.stance[s] = STANCE.hold;
         e.anchorX[s] = e.x[s]!;
         e.anchorY[s] = e.y[s]!;
         resetMovement(world, s);
@@ -215,6 +204,10 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       }
       return;
     }
+    case 'stance':
+      if (cmd.stance < 0 || cmd.stance > 3) return;
+      for (const s of ownedUnits(world, c.player, cmd.units)) e.stance[s] = cmd.stance;
+      return;
     case 'scatter': {
       const w = world.map.width * FX_ONE - 1;
       const h = world.map.height * FX_ONE - 1;
@@ -223,7 +216,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
         const dy = world.rng.range(-3 * FX_ONE, 3 * FX_ONE);
         const x = clamp(e.x[s]! + dx, 0, w);
         const y = clamp(e.y[s]! + dy, 0, h);
-        give(world, s, { type: 'move', x, y, flow: false, cx: x, cy: y }, false);
+        give(world, s, { type: 'move', x, y, flow: false, cx: x, cy: y, group: 0, speed: 0 }, false);
       }
       return;
     }

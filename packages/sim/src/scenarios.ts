@@ -63,10 +63,11 @@ export function countUnits(sim: Sim, owner: number): number {
   return n;
 }
 
+/** Live units and structures (wrecks don't count). */
 function countAll(sim: Sim, owner: number): number {
   const e = sim.world.entities;
   let n = 0;
-  for (let s = 0; s < e.high; s++) if (e.alive[s] === 1 && e.owner[s] === owner) n++;
+  for (let s = 0; s < e.high; s++) if (e.alive[s] === 1 && e.owner[s] === owner && e.kind[s] !== KIND.wreck) n++;
   return n;
 }
 

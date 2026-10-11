@@ -274,6 +274,7 @@ Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. 
 | Scatter | X |
 | Deploy (construction unit, deployable units) | D |
 | Faction ability (blink, override, phase) | F |
+| Cycle stance (guard area, aggressive, hold ground, hold fire) | Z |
 | Queue orders | Hold Shift |
 
 ### Base and production

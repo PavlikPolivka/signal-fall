@@ -23,7 +23,8 @@
     "guard": ["KeyG"],
     "scatter": ["KeyX"],
     "deploy": ["KeyD"],
-    "ability": ["KeyF"]
+    "ability": ["KeyF"],
+    "stance": ["KeyZ"]
   },
   "base": {
     "buildMenu": ["KeyB"],

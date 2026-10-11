@@ -151,6 +151,7 @@ export function EntityCard({ state, h }: { state: ClientState; h: number }) {
           {DAMAGE_LABEL[rule.weapon.type]} · strong vs {strongVs(state.rules, rule.weapon.type).join(', ')}
         </div>
       )}
+      {!own && !ally && <Matchup state={state} h={h} />}
       {own && rule.kind === 'unit' && <div class="activity">{activity(cur.get(off, 14), cur.get(off, 23), cur.get(off, 24))}</div>}
       {rule.kind === 'structure' && <div class="muted">{rule.description}</div>}
     </div>
@@ -164,4 +165,27 @@ function activity(order: number, hstate: number, cargo: number): string {
   if (hstate === 4) return 'Waiting at refinery';
   if (hstate === 5) return 'Unloading';
   return ['Idle', 'Moving', 'Attack-moving', 'Attacking', 'Patrolling', 'Guarding', 'Salvaging'][order] ?? 'Idle';
+}
+
+/** How well the current selection's weapons do against an enemy (average damage-matrix percent). */
+function Matchup({ state, h }: { state: ClientState; h: number }) {
+  const armor = state.field(h, 1) === 2 ? 4 : (state.ruleOf(h) as UnitRule).armor;
+  const air = armor === 3;
+  let sum = 0;
+  let n = 0;
+  for (const u of state.selectedUnits()) {
+    const w = (state.ruleOf(u) as UnitRule).weapon;
+    if (!w || (air ? !w.targetsAir : !w.targetsGround)) continue;
+    sum += state.rules.damageMatrix[w.type * ARMOR.length + armor]!;
+    n++;
+  }
+  if (state.selectedUnits().length === 0) return null;
+  if (n === 0) return <div class="matchup bad">Your selection can't hurt it</div>;
+  const avg = Math.round(sum / n);
+  const verdict = avg >= 100 ? ['good', 'Strong'] : avg >= 60 ? ['', 'Even'] : ['bad', 'Weak'];
+  return (
+    <div class={`matchup ${verdict[0]}`} data-testid="matchup">
+      Your selection: {verdict[1]} ({avg}% damage)
+    </div>
+  );
 }

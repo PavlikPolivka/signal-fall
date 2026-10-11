@@ -1,8 +1,9 @@
 import type { WeaponRule } from '@signal-fall/data';
-import { FX_ONE, ilength } from '../fx';
+import { ARMOR } from '@signal-fall/data';
+import { FX_HALF, FX_ONE, clamp, idiv, ilength, pct } from '../fx';
 import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from '../entities';
-import { acquireTarget, canTarget, distToBody, inWeaponRange, visibleTo, weaponOf } from '../query';
-import type { World } from '../world';
+import { acquireTarget, armorOf, bestTarget, canTarget, distToBody, inWeaponRange, isAir, targetScore, teamOf, visibleTo, weaponOf, STICKY_BONUS } from '../query';
+import type { GroupInfo, World } from '../world';
 import { removeEntity } from '../spawn';
 import { salvageValue } from './economy';
 
@@ -24,6 +25,21 @@ const ESCORT_RANGE = 3 * FX_ONE;
 /** Idle units return fire if hit within this many ticks. */
 const RETALIATE_TICKS = 40;
 
+/** Units re-check whether a better target is available this often (staggered). */
+const RETARGET_INTERVAL = 10;
+/** A new target must beat the current one by this much score to switch. */
+const SWITCH_MARGIN = 200;
+/** The vanguard of a strung-out group holds at most this long for stragglers. */
+const REGROUP_TICKS = 120;
+/** A group counts as strung out when its last member is this much farther behind than the vanguard. */
+const STRUNG_OUT = 6 * FX_ONE;
+/** Hit this recently = under fire (no regrouping, harvesters flee). */
+const UNDER_FIRE_TICKS = 20;
+/** Kiting units step this far away from their attacker. */
+const KITE_STEP = 2 * FX_ONE;
+/** Artillery backs off this far when enemies get inside its minimum range. */
+const BACKOFF_STEP = 3 * FX_ONE;
+
 /** Distance within which a unit counts as arrived at its own slot. */
 const ARRIVE = FX_ONE >> 2;
 
@@ -33,6 +49,8 @@ const ARRIVE = FX_ONE >> 2;
  */
 export function behaviorSystem(world: World): void {
   const e = world.entities;
+  computePending(world);
+  computeGroups(world);
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1) continue;
     const weapon = weaponOf(world, s);
@@ -47,13 +65,49 @@ export function behaviorSystem(world: World): void {
 }
 
 function structureTargeting(world: World, s: number, weapon: WeaponRule): void {
+  engage(world, s, weapon, weapon.range);
+}
+
+/** Damage already in flight per target, after the damage matrix (overkill avoidance). */
+function computePending(world: World): void {
   const e = world.entities;
-  const t = e.resolve(e.target[s]!);
-  if (t >= 0 && canTarget(world, s, weapon, t) && inWeaponRange(world, s, weapon, t)) return;
-  e.target[s] = NO_ENTITY;
-  if ((world.tick + s) % 4 !== 0) return;
-  const found = acquireTarget(world, s, weapon, weapon.range);
-  if (found >= 0) e.target[s] = e.handle(found);
+  world.pending.clear();
+  for (const p of world.projectiles) {
+    const t = e.resolve(p.target);
+    if (t < 0) continue;
+    const dmg = pct(p.damage, world.rules.damageMatrix[p.type * ARMOR.length + armorOf(world, t)]!);
+    world.pending.set(t, (world.pending.get(t) ?? 0) + dmg);
+  }
+}
+
+/** Remaining-distance stats per formation group (for moving together and regrouping). */
+function computeGroups(world: World): void {
+  const e = world.entities;
+  const rems = new Map<number, number[]>();
+  world.groups.clear();
+  for (let s = 0; s < e.high; s++) {
+    if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit) continue;
+    const o = e.orders[s]![0];
+    if (!o || (o.type !== 'move' && o.type !== 'attackMove') || o.group === 0) continue;
+    const rem = ilength(o.x - e.x[s]!, o.y - e.y[s]!);
+    let list = rems.get(o.group);
+    if (!list) {
+      list = [];
+      rems.set(o.group, list);
+      world.groups.set(o.group, { minRem: rem, medRem: rem, maxRem: rem, underFire: false, engaged: false });
+    }
+    list.push(rem);
+    const g = world.groups.get(o.group)!;
+    if (e.lastHitTick[s]! >= 0 && world.tick - e.lastHitTick[s]! <= UNDER_FIRE_TICKS) g.underFire = true;
+    if (e.resolve(e.target[s]!) >= 0) g.engaged = true;
+  }
+  for (const [id, list] of rems) {
+    list.sort((a, b) => a - b);
+    const g = world.groups.get(id)!;
+    g.minRem = list[0]!;
+    g.maxRem = list[list.length - 1]!;
+    g.medRem = list[list.length >> 1]!;
+  }
 }
 
 function setGoal(world: World, s: number, x: number, y: number): void {
@@ -84,15 +138,103 @@ function arrived(world: World, s: number, x: number, y: number, crowd: number): 
   return e.stuck[s]! > 200;
 }
 
-/** Keep a valid current target or find a new one. Returns the target slot or -1. */
+/**
+ * Keep the current target or find a better one. Targets are scored by
+ * targetScore (effectiveness, threat, low HP, distance, overkill); the current
+ * target gets a stickiness bonus and is re-evaluated every RETARGET_INTERVAL
+ * ticks, switching only for a clearly better one. Returns the target slot or -1.
+ */
 function engage(world: World, s: number, weapon: WeaponRule, radius: number): number {
   const e = world.entities;
   let t = e.resolve(e.target[s]!);
   if (t >= 0 && !canTarget(world, s, weapon, t)) t = -1;
-  if (t >= 0 && distToBody(world, e.x[s]!, e.y[s]!, t) > radius + FX_ONE) t = -1;
-  if (t < 0 && (world.tick + s) % ACQUIRE_INTERVAL === 0) t = acquireTarget(world, s, weapon, radius);
+  const dist = t >= 0 ? distToBody(world, e.x[s]!, e.y[s]!, t) : 0;
+  if (t >= 0 && dist > radius + FX_ONE) t = -1;
+  if (t < 0) {
+    if ((world.tick + s) % ACQUIRE_INTERVAL === 0) t = acquireTarget(world, s, weapon, radius);
+  } else if ((world.tick + s) % RETARGET_INTERVAL === 0) {
+    const current = targetScore(world, s, weapon, t, dist);
+    const best = bestTarget(world, s, weapon, radius);
+    // bestTarget already includes the sticky bonus for the current target; others must beat it by a margin.
+    if (best.slot >= 0 && best.slot !== t && (current === null || best.score > current + SWITCH_MARGIN - STICKY_BONUS)) t = best.slot;
+  }
   e.target[s] = t >= 0 ? e.handle(t) : NO_ENTITY;
   return t;
+}
+
+/** Point `step` away from (fx, fy), as seen from unit s, clamped to the map. */
+function awayFrom(world: World, s: number, fx: number, fy: number, step: number): [number, number] {
+  const e = world.entities;
+  const dx = e.x[s]! - fx;
+  const dy = e.y[s]! - fy;
+  const len = Math.max(1, ilength(dx, dy));
+  const maxX = world.map.width * FX_ONE - 1;
+  const maxY = world.map.height * FX_ONE - 1;
+  return [clamp(e.x[s]! + idiv(dx * step, len), 0, maxX), clamp(e.y[s]! + idiv(dy * step, len), 0, maxY)];
+}
+
+/**
+ * Micro while fighting `t`: artillery backs off from enemies inside its
+ * minimum range; ranged units that outrange and outpace their attacker step
+ * back while reloading (auto-kite). Returns true if it set a movement goal.
+ */
+function micro(world: World, s: number, weapon: WeaponRule, t: number): boolean {
+  const e = world.entities;
+  if (e.stance[s] === STANCE.hold) return false;
+  if (weapon.minRange > 0) {
+    // Nearest visible enemy ground unit inside min range + half a tile.
+    const team = teamOf(world, s);
+    let near = -1;
+    let nearD = weapon.minRange + FX_HALF;
+    world.spatial.query(e.x[s]!, e.y[s]!, nearD + FX_ONE, (o) => {
+      if (e.kind[o] !== KIND.unit || teamOf(world, o) === team || isAir(world, o)) return;
+      if (!visibleTo(world, e.owner[s]!, o)) return;
+      const d = ilength(e.x[o]! - e.x[s]!, e.y[o]! - e.y[s]!);
+      if (d < nearD) {
+        nearD = d;
+        near = o;
+      }
+    });
+    if (near >= 0) {
+      const [gx, gy] = awayFrom(world, s, e.x[near]!, e.y[near]!, BACKOFF_STEP);
+      setGoal(world, s, gx, gy);
+      return true;
+    }
+    return false;
+  }
+  if (e.kind[t] !== KIND.unit || e.cooldown[s]! <= 2) return false;
+  const tr = world.rules.units[e.type[t]!]!;
+  const tw = tr.weapon;
+  if (!tw || !(isAir(world, s) ? tw.targetsAir : tw.targetsGround)) return false;
+  const me = world.rules.units[e.type[s]!]!;
+  if (weapon.range <= tw.range || me.speed <= tr.speed) return false;
+  const d = distToBody(world, e.x[s]!, e.y[s]!, t);
+  if (d >= tw.range + FX_HALF) return false;
+  const [gx, gy] = awayFrom(world, s, e.x[t]!, e.y[t]!, KITE_STEP);
+  setGoal(world, s, gx, gy);
+  return true;
+}
+
+/** Fight `t`: micro if useful, otherwise close to range. */
+function fight(world: World, s: number, weapon: WeaponRule, t: number): void {
+  if (!micro(world, s, weapon, t)) approach(world, s, weapon, t);
+}
+
+/**
+ * Should this attack-moving unit hold for stragglers? The vanguard of a
+ * strung-out group waits (up to REGROUP_TICKS) when it first meets enemies,
+ * unless the group is already under fire.
+ */
+function holdForGroup(world: World, s: number, o: Order & { type: 'attackMove' }): boolean {
+  if (o.group === 0) return false;
+  const g: GroupInfo | undefined = world.groups.get(o.group);
+  if (!g || g.underFire) return false;
+  const e = world.entities;
+  const rem = ilength(o.x - e.x[s]!, o.y - e.y[s]!);
+  const strungOut = g.maxRem - rem > STRUNG_OUT;
+  if (!strungOut) return false;
+  if (o.regroupUntil < 0) o.regroupUntil = world.tick + REGROUP_TICKS;
+  return world.tick < o.regroupUntil;
 }
 
 /**
@@ -144,25 +286,32 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
   const o: Order | undefined = e.orders[s]![0];
   const sight = world.rules.units[e.type[s]!]!.sight;
 
+  const stance = e.stance[s]!;
   if (!o) {
-    if (!weapon) {
+    if (!weapon || stance === STANCE.holdFire) {
       // Harvesters keep their refinery in `target` while working.
       if (e.hstate[s] === HARVEST.off) e.target[s] = NO_ENTITY;
       return;
     }
-    if (e.stance[s] === STANCE.hold) {
+    if (stance === STANCE.hold) {
       engage(world, s, weapon, weapon.range);
       return;
     }
-    let t = engage(world, s, weapon, weapon.range + IDLE_ACQUIRE_BONUS);
+    const aggressive = stance === STANCE.aggressive;
+    let t = engage(world, s, weapon, aggressive ? sight : weapon.range + IDLE_ACQUIRE_BONUS);
     if (t < 0) t = retaliate(world, s, weapon);
     if (t >= 0) {
       const fromAnchor = ilength(e.x[t]! - e.anchorX[s]!, e.y[t]! - e.anchorY[s]!);
-      if (fromAnchor > LEASH + weapon.range) {
+      if (!aggressive && fromAnchor > LEASH + weapon.range) {
         e.target[s] = NO_ENTITY;
         setGoal(world, s, e.anchorX[s]!, e.anchorY[s]!);
       } else {
-        approach(world, s, weapon, t);
+        fight(world, s, weapon, t);
+        // Aggressive units make wherever the chase ends their new post.
+        if (aggressive) {
+          e.anchorX[s] = e.x[s]!;
+          e.anchorY[s] = e.y[s]!;
+        }
       }
     } else if (ilength(e.x[s]! - e.anchorX[s]!, e.y[s]! - e.anchorY[s]!) > FX_ONE) {
       // Drifted away while chasing: walk back.
@@ -182,14 +331,26 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
     case 'patrol': {
       const gx = o.type === 'patrol' ? (o.toB ? o.bx : o.ax) : o.x;
       const gy = o.type === 'patrol' ? (o.toB ? o.by : o.ay) : o.y;
-      if (weapon) {
+      const fights = weapon !== null && stance !== STANCE.holdFire;
+      if (fights) {
         const t = engage(world, s, weapon, sight);
         if (t >= 0) {
-          approach(world, s, weapon, t);
+          // The vanguard holds (still shooting what's in range) while stragglers catch up.
+          if (o.type === 'attackMove' && holdForGroup(world, s, o)) return;
+          fight(world, s, weapon, t);
           return;
         }
       }
       if (arrived(world, s, gx, gy, crowdRadius(world, s))) {
+        // Clear the area: don't finish while enemies are still in sight of the destination.
+        if (fights && o.type === 'attackMove') {
+          const t = acquireTarget(world, s, weapon, sight);
+          if (t >= 0) {
+            e.target[s] = e.handle(t);
+            fight(world, s, weapon, t);
+            return;
+          }
+        }
         if (o.type === 'patrol') {
           o.toB = !o.toB;
           e.stuck[s] = 0;
@@ -222,12 +383,12 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
       }
       if (!seen) {
         // Target died or vanished into fog: keep fighting toward where it was.
-        e.orders[s]![0] = { type: 'attackMove', x: o.x, y: o.y, flow: false, cx: o.x, cy: o.y };
+        e.orders[s]![0] = { type: 'attackMove', x: o.x, y: o.y, flow: false, cx: o.x, cy: o.y, group: 0, speed: 0, regroupUntil: -1 };
         return;
       }
       if (weapon && canTarget(world, s, weapon, t)) {
         e.target[s] = e.handle(t);
-        approach(world, s, weapon, t);
+        fight(world, s, weapon, t);
         return;
       }
       // Can't hit it (unarmed, or wrong layer): advance with the group and fight what we can.

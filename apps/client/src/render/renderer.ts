@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Matrix, Sprite, Texture } from 'pixi.js';
 import { KIND } from '@signal-fall/sim';
-import { E, PR } from '../protocol';
+import { E, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
 
@@ -345,16 +345,37 @@ export class Renderer {
       if (isSel) {
         const rx = kind === KIND.structure ? 40 : 14;
         this.decals.ellipse(px, py, rx, rx / 2).stroke({ width: 1.5, color: owner === s.localPlayer ? 0x6dff8a : 0xff6d6d });
-        // Order line.
+        // Order line (and, with Shift held, the whole queued path with markers).
         const ox = cur.get(o, E.orderX);
         const order = cur.get(o, E.order);
         if (order > 0 && ox >= 0 && owner === s.localPlayer) {
           const oy = cur.get(o, E.orderY);
           const lineColor = order === 1 ? 0x6dff8a : order === 4 ? 0x6db8ff : 0xff9a6d;
-          this.overlay
-            .moveTo(px, py - lift)
-            .lineTo(isoX(ox / FX, oy / FX), isoY(ox / FX, oy / FX))
-            .stroke({ width: 1, color: lineColor, alpha: 0.5 });
+          let lx = isoX(ox / FX, oy / FX);
+          let ly = isoY(ox / FX, oy / FX);
+          this.overlay.moveTo(px, py - lift).lineTo(lx, ly).stroke({ width: 1, color: lineColor, alpha: 0.5 });
+          if (s.shiftHeld) {
+            this.overlay.circle(lx, ly, 3).fill({ color: lineColor, alpha: 0.8 });
+            for (let k = 0; k < WAYPOINTS; k++) {
+              const wx = cur.get(o, E.wp + 2 * k);
+              if (wx < 0) break;
+              const wy = cur.get(o, E.wp + 2 * k + 1);
+              const nx = isoX(wx / FX, wy / FX);
+              const ny = isoY(wx / FX, wy / FX);
+              this.overlay.moveTo(lx, ly).lineTo(nx, ny).stroke({ width: 1, color: 0xe8c35a, alpha: 0.7 });
+              this.overlay.circle(nx, ny, 3).fill({ color: 0xe8c35a, alpha: 0.9 });
+              lx = nx;
+              ly = ny;
+            }
+          }
+        }
+        // Target line: what this unit is shooting at.
+        const tgt = cur.get(o, E.target);
+        const to = tgt >= 0 ? cur.index.get(tgt) : undefined;
+        if (to !== undefined && owner === s.localPlayer) {
+          const tx = cur.get(to, E.x) / FX;
+          const ty = cur.get(to, E.y) / FX;
+          this.overlay.moveTo(px, py - lift).lineTo(isoX(tx, ty), isoY(tx, ty)).stroke({ width: 1, color: 0xff4d4d, alpha: 0.55 });
         }
       }
       const hp = cur.get(o, E.hp);

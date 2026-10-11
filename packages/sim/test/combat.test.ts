@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FX_ONE } from '../src/fx';
+import { STANCE } from '../src/entities';
 import { battle } from '../src/scenarios';
 import { spawnStructure, spawnUnit } from '../src/spawn';
 import { damage } from '../src/systems/combat';
@@ -95,12 +96,14 @@ describe('stances and fog', () => {
     const g = spawnUnit(w, unit('grunt'), 0, at(10), at(10));
     const s = g & 0xffff;
     sim.schedule({ tick: 0, player: 0, cmd: { type: 'hold', units: [g] } });
-    const enemy = spawnUnit(w, unit('grace'), 1, at(13), at(10)) & 0xffff;
-    const far = spawnUnit(w, unit('grace'), 1, at(17), at(10)) & 0xffff;
+    // Staccato is no faster than a Grunt, so it can't kite out of range.
+    const enemy = spawnUnit(w, unit('staccato'), 1, at(13), at(10)) & 0xffff;
+    const far = spawnUnit(w, unit('staccato'), 1, at(17), at(10)) & 0xffff;
+    e.stance[far] = STANCE.holdFire;
     sim.run(100);
     expect(e.x[s]).toBe(at(10));
-    expect(e.alive[enemy] === 0 || e.hp[enemy]! < 50).toBe(true);
-    expect(e.hp[far]).toBe(50);
+    expect(e.alive[enemy] === 0 || e.hp[enemy]! < 60).toBe(true);
+    expect(e.hp[far]).toBe(60);
   });
 
   it('units do not target what their owner cannot see', () => {

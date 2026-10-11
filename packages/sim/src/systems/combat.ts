@@ -26,6 +26,13 @@ export function weaponSystem(world: World): void {
     if (e.kind[s] === KIND.unit && e.hasGoal[s] === 1) continue;
     e.facing[s] = iatan2(e.y[t]! - e.y[s]!, e.x[t]! - e.x[s]!);
     if (e.cooldown[s]! > 0) continue;
+    // Overkill: if shots already in flight will kill an automatic target, hold this one for something else.
+    const life = e.hp[t]! + e.shields[t]!;
+    const explicit = e.kind[s] === KIND.unit && e.orders[s]![0]?.type === 'attack';
+    if (!explicit && (world.pending.get(t) ?? 0) >= life) {
+      e.target[s] = -1;
+      continue;
+    }
     e.cooldown[s] = weapon.cooldown;
     const dist = distToBody(world, e.x[s]!, e.y[s]!, t);
     const ticks = weapon.projectileSpeed > 0 ? idiv(dist + weapon.projectileSpeed - 1, weapon.projectileSpeed) : 0;
@@ -45,6 +52,8 @@ export function weaponSystem(world: World): void {
       hitsAir: weapon.targetsAir,
       ticks,
     });
+    const dealt = pct(pct(weapon.damage, 100 + vetPct * e.rank[s]!), world.rules.damageMatrix[weapon.type * ARMOR_COUNT + armorOf(world, t)]!);
+    world.pending.set(t, (world.pending.get(t) ?? 0) + dealt);
   }
 }
 

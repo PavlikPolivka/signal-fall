@@ -149,6 +149,7 @@ const checks: Record<string, Check> = {
   scatter: sends('scatter'),
   deploy: sends('deploy'),
   ability: sends('ability'),
+  stance: sends('stance'),
   buildMenu: async (page, chord) => {
     await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
     await page.keyboard.press(toKey(chord));

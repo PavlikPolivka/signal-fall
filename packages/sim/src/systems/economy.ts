@@ -11,6 +11,8 @@ export const HARVEST_TICKS = 8;
 export const UNLOAD_PER_TICK = 35;
 /** Harvesters look for Echo this far (tiles) before a full-map search. */
 const LOCAL_SEARCH = 12;
+/** Harvesters stay off the fields this long after being shot at (6 s). */
+const FLEE_TICKS = 120;
 /** Max items per factory queue. */
 export const MAX_QUEUE = 15;
 /** Garage repair per second, percent of max HP. */
@@ -146,7 +148,7 @@ function emitUnit(world: World, owner: number, factory: number, rule: UnitRule):
   if (rule.abilities.some((a) => a.kind === 'harvest')) {
     e.hstate[s] = HARVEST.toField;
   } else if (e.rallyX[factory]! >= 0) {
-    e.orders[s] = [{ type: 'move', x: e.rallyX[factory]!, y: e.rallyY[factory]!, flow: false, cx: e.rallyX[factory]!, cy: e.rallyY[factory]! }];
+    e.orders[s] = [{ type: 'move', x: e.rallyX[factory]!, y: e.rallyY[factory]!, flow: false, cx: e.rallyX[factory]!, cy: e.rallyY[factory]!, group: 0, speed: 0 }];
   }
   return h;
 }
@@ -258,7 +260,26 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
     const tx = e.x[s]! >> FX_SHIFT;
     const ty = e.y[s]! >> FX_SHIFT;
 
+    // Under fire: run to the refinery (with whatever is loaded) and lie low for a while.
+    if (e.lastHitTick[s]! >= 0 && world.tick - e.lastHitTick[s]! <= 2) {
+      e.fleeUntil[s] = world.tick + FLEE_TICKS;
+      if (e.hstate[s] === HARVEST.toField || e.hstate[s] === HARVEST.harvesting) e.hstate[s] = e.cargo[s]! > 0 ? HARVEST.toRefinery : HARVEST.hiding;
+    }
+
     switch (e.hstate[s]) {
+      case HARVEST.hiding: {
+        if (world.tick >= e.fleeUntil[s]!) {
+          e.hstate[s] = HARVEST.toField;
+          break;
+        }
+        // Wait next to the nearest refinery, off its dock.
+        const r = nearestRefinery(world, facts, s);
+        if (r >= 0) {
+          const d = dockPoint(world, r);
+          if (ilength(d.x - e.x[s]!, d.y - e.y[s]!) > 3 * FX_ONE) goal(world, s, d.x, d.y);
+        }
+        break;
+      }
       case HARVEST.toField: {
         if (e.cargo[s]! >= cap) {
           e.hstate[s] = HARVEST.toRefinery;
@@ -331,7 +352,7 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
           const r = e.resolve(e.target[s]!);
           if (r >= 0) e.dock[r] = NO_ENTITY;
           e.target[s] = NO_ENTITY;
-          e.hstate[s] = HARVEST.toField;
+          e.hstate[s] = world.tick < e.fleeUntil[s]! ? HARVEST.hiding : HARVEST.toField;
         }
         break;
       }

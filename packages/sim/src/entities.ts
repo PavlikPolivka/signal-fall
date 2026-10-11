@@ -4,21 +4,31 @@ import type { IntWriter } from './hash';
 export const KIND = { none: 0, unit: 1, structure: 2, wreck: 3 } as const;
 
 /** Harvester states. */
-export const HARVEST = { off: 0, toField: 1, harvesting: 2, toRefinery: 3, waiting: 4, unloading: 5 } as const;
+export const HARVEST = { off: 0, toField: 1, harvesting: 2, toRefinery: 3, waiting: 4, unloading: 5, hiding: 6 } as const;
 
 /** Which Echo tiles a harvester prefers. */
 export const HARVEST_MODE = { richest: 0, nearest: 1 } as const;
 
-/** Unit stance. */
-export const STANCE = { normal: 0, hold: 1 } as const;
+/**
+ * Unit stance. Guard area (default): chase a little, return. Hold ground: never
+ * move on its own, shoot what's in range. Aggressive: chase anything in sight.
+ * Hold fire: only shoot explicit attack targets.
+ */
+export const STANCE = { guard: 0, hold: 1, aggressive: 2, holdFire: 3 } as const;
 
 /**
  * Orders are plain data. A unit executes orders[0]; when it completes it is
  * shifted off. Positions are Q10 world coordinates.
  */
 export type Order =
-  | { type: 'move'; x: number; y: number; flow: boolean; cx: number; cy: number }
-  | { type: 'attackMove'; x: number; y: number; flow: boolean; cx: number; cy: number }
+  /**
+   * x, y = this unit's formation slot; cx, cy = the group's target point (flow
+   * field goal). group > 0 ties units ordered together; speed caps them to the
+   * slowest member (0 = no cap). regroupUntil: tick until which the vanguard may
+   * hold for stragglers (attack-move only, -1 = not holding).
+   */
+  | { type: 'move'; x: number; y: number; flow: boolean; cx: number; cy: number; group: number; speed: number }
+  | { type: 'attackMove'; x: number; y: number; flow: boolean; cx: number; cy: number; group: number; speed: number; regroupUntil: number }
   /** x, y = target's last known position, used when it dies or vanishes into fog. */
   | { type: 'attack'; target: number; x: number; y: number }
   | { type: 'patrol'; ax: number; ay: number; bx: number; by: number; toB: boolean }
@@ -96,6 +106,8 @@ export class Entities {
   htimer!: Int32Array;
   /** Harvesters: HARVEST_MODE (richest or nearest tiles first). */
   hmode!: Uint8Array;
+  /** Harvesters: stay away from the fields until this tick (fleeing). */
+  fleeUntil!: Int32Array;
   /** Wrecks: unit cost the wreck came from. */
   value!: Int32Array;
   /** Wrecks: tick at which it disappears. */
@@ -159,6 +171,7 @@ export class Entities {
     this.htile = re(this.htile, (n) => new Int32Array(n));
     this.htimer = re(this.htimer, (n) => new Int32Array(n));
     this.hmode = re(this.hmode, (n) => new Uint8Array(n));
+    this.fleeUntil = re(this.fleeUntil, (n) => new Int32Array(n));
     this.value = re(this.value, (n) => new Int32Array(n));
     this.expires = re(this.expires, (n) => new Int32Array(n));
     this.capacity = capacity;
@@ -180,7 +193,7 @@ export class Entities {
     this.cooldown[slot] = 0;
     this.xp[slot] = 0;
     this.rank[slot] = 0;
-    this.stance[slot] = STANCE.normal;
+    this.stance[slot] = STANCE.guard;
     this.hasGoal[slot] = 0;
     this.pathIdx[slot] = 0;
     this.pathGoal[slot] = -1;
@@ -201,6 +214,7 @@ export class Entities {
     this.htile[slot] = -1;
     this.htimer[slot] = 0;
     this.hmode[slot] = 0;
+    this.fleeUntil[slot] = 0;
     this.value[slot] = 0;
     this.expires[slot] = 0;
     this.orders[slot] = [];
@@ -275,6 +289,7 @@ export class Entities {
       w.push(this.htile[s]!);
       w.push(this.htimer[s]!);
       w.push(this.hmode[s]!);
+      w.push(this.fleeUntil[s]!);
       w.push(this.value[s]!);
       w.push(this.expires[s]!);
       const orders = this.orders[s]!;
@@ -299,6 +314,9 @@ function serializeOrder(o: Order, w: IntWriter): void {
       w.push(o.flow ? 1 : 0);
       w.push(o.cx);
       w.push(o.cy);
+      w.push(o.group);
+      w.push(o.speed);
+      if (o.type === 'attackMove') w.push(o.regroupUntil);
       return;
     case 'attack':
       w.push(o.target);

@@ -99,8 +99,11 @@ export const E = {
   rallyX: 25,
   rallyY: 26,
   hmode: 27,
+  /** Up to 3 further queued order points (x, y pairs), -1 when absent. */
+  wp: 28,
 } as const;
-export const ENT_STRIDE = 28;
+export const WAYPOINTS = 3;
+export const ENT_STRIDE = 28 + WAYPOINTS * 2;
 
 export const PR = { ox: 0, oy: 1, x: 2, y: 3, type: 4, ticks: 5, total: 6 } as const;
 export const PROJ_STRIDE = 7;

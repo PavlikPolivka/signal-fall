@@ -570,3 +570,7 @@ kbd {
     height: auto;
   }
 }
+.card .matchup {
+  margin-top: 4px;
+  font-weight: 600;
+}

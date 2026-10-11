@@ -54,6 +54,10 @@ export class ClientState {
   fogVersion = 0;
   echo: Uint8Array = new Uint8Array(0);
   echoVersion = 0;
+  /** Shift is down: show queued waypoints of selected units. */
+  shiftHeld = false;
+  /** Recent hits on own units/buildings, for minimap pings. */
+  hits: { x: number; y: number; time: number }[] = [];
   /** Sidebar item under the cursor and the button's screen top. */
   hoverItem: { index: number; kind: 'unit' | 'structure'; top: number } | null = null;
   /** World entity under the cursor and where (client px). */
@@ -293,7 +297,15 @@ export class ClientState {
       const hpBefore = prev.get(po, E.hp) + prev.get(po, E.shields);
       if (hpNow < hpBefore) {
         const isStructure = cur.get(o, E.kind) === KIND.structure;
-        this.alert(isStructure ? 'Base under attack' : 'Unit under attack', cur.get(o, E.x), cur.get(o, E.y));
+        const rule = isStructure ? null : this.rules.units[cur.get(o, E.type)]!;
+        const harvester = rule?.abilities.some((a) => a.kind === 'harvest') ?? false;
+        const x = cur.get(o, E.x);
+        const y = cur.get(o, E.y);
+        this.alert(isStructure ? 'Base under attack' : harvester ? 'Harvester under attack' : 'Unit under attack', x, y);
+        // One minimap ping per spot per second or so.
+        const now = performance.now();
+        if (!this.hits.some((h) => now - h.time < 1000 && Math.abs(h.x - x) < 4096 && Math.abs(h.y - y) < 4096)) this.hits.push({ x, y, time: now });
+        this.hits = this.hits.filter((h) => now - h.time < 3000);
       }
     }
   }

@@ -45,6 +45,8 @@ const ROLE_NAME: Record<string, string> = {
 };
 const roleName = (r: string) => ROLE_NAME[r] ?? r;
 
+export const STANCE_NAMES = ['Guard area', 'Hold ground', 'Aggressive', 'Hold fire'];
+
 /** Modes that wait for a target click. */
 const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability', 'repair', 'sell'];
 
@@ -73,7 +75,10 @@ export class Input {
   ) {
     this.bindings = bindings(state.rules.keymap);
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
-    window.addEventListener('keyup', (e) => this.held.delete(e.code));
+    window.addEventListener('keyup', (e) => {
+      this.held.delete(e.code);
+      this.state.shiftHeld = e.shiftKey;
+    });
     window.addEventListener('blur', () => this.held.clear());
     canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     window.addEventListener('pointermove', (e) => this.onPointerMove(e));
@@ -161,6 +166,7 @@ export class Input {
 
   private onKeyDown(e: KeyboardEvent): void {
     if (e.target instanceof HTMLInputElement) return;
+    this.state.shiftHeld = e.shiftKey;
     this.held.add(e.code);
     if (e.repeat && !e.code.startsWith('Arrow')) return;
     const contexts = this.activeContexts();
@@ -289,6 +295,16 @@ export class Input {
       case 'ability':
         if (units.length > 0) s.send({ type: 'ability', units });
         return;
+      case 'stance': {
+        if (units.length === 0) return;
+        // Cycle guard -> aggressive -> hold ground -> hold fire, from the first unit's stance.
+        const order = [0, 2, 1, 3];
+        const cur = s.field(units[0]!, E.stance);
+        const next = order[(order.indexOf(cur) + 1) % order.length]!;
+        s.send({ type: 'stance', units, stance: next });
+        s.notice(`Stance: ${STANCE_NAMES[next]}`);
+        return;
+      }
       // base
       case 'buildMenu':
         s.sidebarTab = 'structures';
@@ -420,9 +436,10 @@ export class Input {
       return;
     }
     if (intent.kind === 'move') {
+      // Clicking the ground is an attack-move: units fight what they meet (M + click for a pure move).
       const p = this.simPoint(sx, sy);
-      s.send({ type: 'move', units, x: p.x, y: p.y, queue: shift });
-      this.renderer.ping(sx, sy, 0x6dff8a);
+      s.send({ type: 'attackMove', units, x: p.x, y: p.y, queue: shift });
+      this.renderer.ping(sx, sy, 0xffb46d);
       return;
     }
     this.clickSelect(sx, sy, shift, ctrl);
@@ -502,8 +519,8 @@ export class Input {
       this.renderer.ping(sx, sy, 0x6db8ff);
     } else {
       const p = this.simPoint(sx, sy);
-      s.send({ type: 'move', units, x: p.x, y: p.y, queue: shift });
-      this.renderer.ping(sx, sy, 0x6dff8a);
+      s.send({ type: 'attackMove', units, x: p.x, y: p.y, queue: shift });
+      this.renderer.ping(sx, sy, 0xffb46d);
     }
   }
 
@@ -523,8 +540,8 @@ export class Input {
       return true;
     }
     const mode = s.mode;
-    if (mode === 'attackMove' || mode === 'patrol') s.send({ type: mode, units, x, y, queue: shift });
-    else s.send({ type: 'move', units, x, y, queue: shift });
+    if (mode === 'move' || mode === 'patrol') s.send({ type: mode, units, x, y, queue: shift });
+    else s.send({ type: 'attackMove', units, x, y, queue: shift });
     if (TARGET_MODES.includes(mode) && !shift) this.setMode('normal');
     return true;
   }

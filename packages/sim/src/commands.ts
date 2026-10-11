@@ -12,7 +12,10 @@ export type Command =
   | { type: 'patrol'; units: number[]; x: number; y: number; queue?: boolean }
   | { type: 'guard'; units: number[]; target: number; queue?: boolean }
   | { type: 'stop'; units: number[] }
+  /** Hold ground stance (H). */
   | { type: 'hold'; units: number[] }
+  /** Set a stance: 0 guard area, 1 hold ground, 2 aggressive, 3 hold fire. */
+  | { type: 'stance'; units: number[]; stance: number }
   | { type: 'scatter'; units: number[] }
   /** Deploy construction units into a construction yard where they stand. */
   | { type: 'deploy'; units: number[] }

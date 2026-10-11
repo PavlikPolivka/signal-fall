@@ -105,6 +105,24 @@ export interface World {
   ended: boolean;
   /** Winning team, or -1 for none/draw. */
   winnerTeam: number;
+  /**
+   * Derived each tick (not serialized): damage already in flight per target
+   * slot, after the damage matrix. Used for overkill avoidance.
+   */
+  pending: Map<number, number>;
+  /** Derived each tick: progress of each formation group (move/attack-move orders). */
+  groups: Map<number, GroupInfo>;
+}
+
+export interface GroupInfo {
+  /** Remaining distance to own slot: min, median and max over members (Q10). */
+  minRem: number;
+  medRem: number;
+  maxRem: number;
+  /** Some member was hit in the last few ticks. */
+  underFire: boolean;
+  /** Some member is fighting (has a target). */
+  engaged: boolean;
 }
 
 export interface WorldOptions {
@@ -153,6 +171,8 @@ export function createWorld(o: WorldOptions): World {
     victoryRules: o.victoryRules ?? true,
     ended: false,
     winnerTeam: -1,
+    pending: new Map(),
+    groups: new Map(),
   };
 }
 

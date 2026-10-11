@@ -6,6 +6,7 @@ import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
 import { chordLabel } from '../input/keymap';
+import { STANCE_NAMES } from '../input/input';
 import { EntityCard, ItemCard } from './InfoCard';
 import { isoX, isoY } from '../game/iso';
 
@@ -269,6 +270,17 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
           ctx.fillRect(cur.get(o, E.x) / FX - size / 2, cur.get(o, E.y) / FX - size / 2, size, size);
         }
       }
+      // Attack pings: red rings where own units/buildings were recently hit.
+      const now = performance.now();
+      for (const hit of state.hits) {
+        const age = (now - hit.time) / 3000;
+        if (age >= 1) continue;
+        ctx.strokeStyle = `rgba(255,80,80,${1 - age})`;
+        ctx.lineWidth = 1.5 / scale;
+        ctx.beginPath();
+        ctx.arc(hit.x / FX, hit.y / FX, 2 + age * 6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       // Camera viewport.
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       const corners = [
@@ -284,7 +296,7 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
       ctx.closePath();
       ctx.stroke();
     };
-    const id = setInterval(draw, 200);
+    const id = setInterval(draw, 100);
     // Minimap px -> tile coordinates (inverse of the diamond transform).
     const toTile = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect();
@@ -385,6 +397,7 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
             <kbd>{chordLabel(c.key)}</kbd>
           </button>
         ))}
+        <StanceButton state={state} input={input} />
         <HarvestModeButton state={state} input={input} />
       </div>
     </footer>
@@ -415,6 +428,19 @@ function GroupBar({ state }: { state: ClientState }) {
         );
       })}
     </div>
+  );
+}
+
+/** Current stance of the selection; click (or Z) cycles it. */
+function StanceButton({ state, input }: { state: ClientState; input: Input }) {
+  const units = state.selectedUnits().filter((h) => state.ruleOf(h).weapon);
+  if (units.length === 0) return null;
+  const stances = new Set(units.map((h) => state.field(h, E.stance)));
+  const label = stances.size === 1 ? STANCE_NAMES[[...stances][0]!] : 'Mixed';
+  return (
+    <button class="wide" data-testid="stance" title="Guard area → Aggressive → Hold ground → Hold fire" onClick={() => input.run('stance')}>
+      Stance: {label} <kbd>Z</kbd>
+    </button>
   );
 }
 

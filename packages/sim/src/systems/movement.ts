@@ -46,7 +46,7 @@ export function movementSystem(world: World): void {
       const d = ilength(dx, dy);
       if (d > 0) {
         const terrainPct = air || cur < 0 ? 100 : TERRAIN_SPEED_PCT[m.terrain[cur]!]! || 100;
-        const speed = idiv(rule.speed * terrainPct, 100);
+        const speed = idiv(groupSpeed(world, s, rule.speed) * terrainPct, 100);
         const step = d < speed ? d : speed;
         vx = idiv(dx * step, d);
         vy = idiv(dy * step, d);
@@ -171,4 +171,22 @@ function closeTiles(width: number, a: number, b: number): boolean {
     Math.abs((a % width) - (b % width)) <= REPATH_SLACK &&
     Math.abs(idiv(a, width) - idiv(b, width)) <= REPATH_SLACK
   );
+}
+
+/**
+ * Units ordered together move at the slowest member's speed. Stragglers (more
+ * than 2 tiles behind the group's median progress) may use their full speed to
+ * catch up, and units ahead ease off to 3/4 of the group speed. Once the group
+ * is fighting, everyone moves at full speed.
+ */
+function groupSpeed(world: World, s: number, own: number): number {
+  const e = world.entities;
+  const o = e.orders[s]![0];
+  if (!o || (o.type !== 'move' && o.type !== 'attackMove') || o.speed <= 0) return own;
+  const g = world.groups.get(o.group);
+  if (!g || g.engaged) return own;
+  const rem = ilength(o.x - e.x[s]!, o.y - e.y[s]!);
+  if (rem > g.medRem + 2 * FX_ONE) return own;
+  const cap = Math.min(own, o.speed);
+  return rem + FX_ONE < g.medRem ? Math.max(1, idiv(cap * 3, 4)) : cap;
 }

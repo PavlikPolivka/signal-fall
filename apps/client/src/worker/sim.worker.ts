@@ -14,6 +14,7 @@ import {
   PLAYER_STRIDE,
   PROD_STRIDE,
   QUEUE_SLOTS,
+  WAYPOINTS,
   PR,
   PROJ_STRIDE,
   type FromWorker,
@@ -132,6 +133,12 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + E.rallyX] = e.rallyX[s]!;
     a[off + E.rallyY] = e.rallyY[s]!;
     a[off + E.hmode] = e.hmode[s]!;
+    for (let k = 0; k < WAYPOINTS; k++) {
+      const q = orders[k + 1];
+      const p = q && 'x' in q ? q : q && q.type === 'patrol' ? { x: q.bx, y: q.by } : null;
+      a[off + E.wp + 2 * k] = p ? p.x : -1;
+      a[off + E.wp + 2 * k + 1] = p ? p.y : -1;
+    }
     const o = orders[0];
     a[off + E.order] = o ? ORDER_CODE[o.type] : 0;
     if (o) {

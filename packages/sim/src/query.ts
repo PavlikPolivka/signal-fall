@@ -1,5 +1,5 @@
 import type { WeaponRule } from '@signal-fall/data';
-import { FX_ONE, FX_SHIFT, ilength } from './fx';
+import { FX_ONE, FX_SHIFT, idiv, ilength } from './fx';
 import { KIND } from './entities';
 import { FOG_VISIBLE, type World } from './world';
 
@@ -98,37 +98,89 @@ export function inWeaponRange(world: World, attacker: number, weapon: WeaponRule
   return d <= weapon.range && d >= weapon.minRange;
 }
 
-/** Priority class for auto-targeting: lower is preferred. */
-function threatClass(world: World, slot: number): number {
-  const e = world.entities;
-  if (e.kind[slot] === KIND.unit) return world.rules.units[e.type[slot]!]!.weapon ? 0 : 1;
-  const rule = world.rules.structures[e.type[slot]!]!;
-  if (rule.weapon) return 0;
-  return rule.role === 'wall' ? 3 : 2;
-}
+/** Score bonus for the unit's current target, so units don't flicker between targets. */
+export const STICKY_BONUS = 300;
 
 /**
- * Best auto-target for `attacker` within `radius` (Q10, measured to the
- * victim's body): lowest threat class, then nearest, then lowest slot.
+ * How much `attacker` wants to shoot `victim` (higher is better), for automatic
+ * targeting. Combines weapon effectiveness against the victim's armor, whether
+ * the victim can hurt the attacker (threats first), how hurt it is (finish
+ * kills), distance, damage already in flight (overkill avoidance) and target
+ * class (units > defenses > production/power > other buildings > walls).
+ * Siege weapons prefer buildings and clumps. Returns null if it can't be hurt.
+ */
+export function targetScore(world: World, attacker: number, weapon: WeaponRule, victim: number, dist: number): number | null {
+  const e = world.entities;
+  const armor = armorOf(world, victim);
+  const eff = world.rules.damageMatrix[weapon.type * ARMOR_COUNT + armor]!;
+  if (eff <= 0) return null;
+  let score = eff * 10;
+  const siege = weapon.type === DAMAGE_SIEGE || weapon.splash >= FX_ONE;
+  const life = e.hp[victim]! + e.shields[victim]!;
+  const maxLife = Math.max(1, e.maxHp[victim]! + e.maxShields[victim]!);
+
+  if (e.kind[victim] === KIND.unit) {
+    const vr = world.rules.units[e.type[victim]!]!;
+    const vw = vr.weapon;
+    // Threats first: can it shoot back at me?
+    if (vw && (isAir(world, attacker) ? vw.targetsAir : vw.targetsGround)) score += 600;
+    else if (vr.abilities.some((a) => a.kind === 'harvest')) score += 150;
+  } else {
+    const sr = world.rules.structures[e.type[victim]!]!;
+    if (sr.weapon) score += 400;
+    else if (sr.role === 'wall') score -= 800;
+    else if (sr.produces || sr.role === 'power' || sr.role === 'refinery' || sr.role === 'conyard') score += 100;
+    if (siege) score += 500;
+  }
+  // Finish kills: up to +250 for a nearly dead target.
+  score += idiv((maxLife - life) * 250, maxLife);
+  // Overkill: shots already in flight will finish it.
+  if ((world.pending.get(victim) ?? 0) >= life) score -= 2000;
+  // Siege: more enemies inside the splash is better.
+  if (siege && weapon.splash > 0 && e.kind[victim] === KIND.unit) {
+    const team = teamOf(world, attacker);
+    let clump = 0;
+    world.spatial.query(e.x[victim]!, e.y[victim]!, weapon.splash + FX_ONE, (o) => {
+      if (o === victim || e.kind[o] !== KIND.unit || teamOf(world, o) === team) return;
+      if (ilength(e.x[o]! - e.x[victim]!, e.y[o]! - e.y[victim]!) <= weapon.splash) clump++;
+    });
+    score += clump * 120;
+  }
+  // Nearer is better: -40 per tile.
+  score -= (dist * 40) >> 10;
+  if (e.target[attacker] === e.handle(victim)) score += STICKY_BONUS;
+  return score;
+}
+
+const ARMOR_COUNT = 5;
+const DAMAGE_SIEGE = 4;
+
+/**
+ * Best automatic target for `attacker` within `radius` (Q10, to the victim's
+ * body) by targetScore; ties go to the lowest slot. Returns -1 if none.
  */
 export function acquireTarget(world: World, attacker: number, weapon: WeaponRule, radius: number): number {
+  const best = bestTarget(world, attacker, weapon, radius);
+  return best.slot;
+}
+
+export function bestTarget(world: World, attacker: number, weapon: WeaponRule, radius: number): { slot: number; score: number } {
   const e = world.entities;
   const ax = e.x[attacker]!;
   const ay = e.y[attacker]!;
   let best = -1;
-  let bestClass = 99;
-  let bestDist = 0;
+  let bestScore = 0;
   // Structures can be up to 3 tiles wide; widen the query so their centers are found.
   world.spatial.query(ax, ay, radius + 2 * FX_ONE, (s) => {
     if (!canTarget(world, attacker, weapon, s)) return;
     const d = distToBody(world, ax, ay, s);
     if (d > radius || d < weapon.minRange) return;
-    const c = threatClass(world, s);
-    if (best < 0 || c < bestClass || (c === bestClass && (d < bestDist || (d === bestDist && s < best)))) {
+    const score = targetScore(world, attacker, weapon, s, d);
+    if (score === null) return;
+    if (best < 0 || score > bestScore || (score === bestScore && s < best)) {
       best = s;
-      bestClass = c;
-      bestDist = d;
+      bestScore = score;
     }
   });
-  return best;
+  return { slot: best, score: bestScore };
 }
