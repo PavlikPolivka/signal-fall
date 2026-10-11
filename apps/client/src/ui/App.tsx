@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'preact/hooks';
 import { KIND } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
-import { E } from '../protocol';
+import { E, P } from '../protocol';
 import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
@@ -222,7 +222,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
         })}
       </div>
       <div class="mode" data-testid="mode">
-        {state.mode !== 'normal' ? `Mode: ${state.mode}` : ''}
+        {state.mode === 'ability' ? 'Ability: click a point (blink) or an enemy vehicle (Override)' : state.mode !== 'normal' ? `Mode: ${state.mode}` : ''}
       </div>
     </aside>
   );
@@ -417,17 +417,50 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
         )}
       </div>
       <div class="commands" data-testid="command-card">
-        {COMMANDS.map((c) => (
-          <button disabled={!own} class={state.mode === c.action ? 'active' : ''} onClick={() => input.run(c.action)} title={c.label}>
-            {c.label}
-            <kbd>{chordLabel(c.key)}</kbd>
-          </button>
-        ))}
+        {COMMANDS.map((c) => {
+          const ability = c.action === 'ability' ? abilityInfo(state) : null;
+          const label = ability ? ability.label : c.label;
+          return (
+            <button
+              disabled={!own || (c.action === 'ability' && !ability)}
+              class={state.mode === c.action ? 'active' : ''}
+              onClick={() => input.run(c.action)}
+              title={ability ? ability.title : c.label}
+              data-testid={c.action === 'ability' ? 'ability' : undefined}
+            >
+              {label}
+              <kbd>{chordLabel(c.key)}</kbd>
+            </button>
+          );
+        })}
         <StanceButton state={state} input={input} />
         <HarvestModeButton state={state} input={input} />
       </div>
     </footer>
   );
+}
+
+const ABILITY_NAMES: Record<string, [string, string]> = {
+  blink: ['Blink', 'Jump a short distance: press, then click where'],
+  phase: ['Phase', 'Phase out: untouchable, but cannot shoot, for a few seconds'],
+  override: ['Override', 'Take control of an enemy vehicle for a while: press, then click it'],
+};
+
+/** Label for the ability button: the selection's ability and its shortest cooldown. */
+function abilityInfo(state: ClientState): { label: string; title: string } | null {
+  let kind: string | null = null;
+  let left = Infinity;
+  for (const h of state.selectedUnits()) {
+    const rule = state.ruleOf(h);
+    if (rule.kind !== 'unit') continue;
+    const a = rule.abilities.find((x) => x.kind === 'blink' || x.kind === 'phase' || x.kind === 'override');
+    if (!a) continue;
+    kind ??= a.kind;
+    left = Math.min(left, state.field(h, E.abilityLeft));
+  }
+  if (!kind) return null;
+  const [name, title] = ABILITY_NAMES[kind]!;
+  return { label: left > 0 ? `${name} ${Math.ceil(left / 20)}s` : name, title };
 }
 
 /** Control groups 1–9 and 0: click to select, Ctrl+click to assign the current selection. */
@@ -520,6 +553,7 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
         )}
       </div>
       {rule.kind === 'structure' && state.isOwn(h) && <StructureActions state={state} h={h} />}
+      {rule.kind === 'structure' && rule.role === 'tech' && state.isOwn(h) && <ResearchPanel state={state} />}
     </div>
   );
 }
@@ -544,6 +578,67 @@ function HoverCards({ state }: { state: ClientState }) {
     );
   }
   return null;
+}
+
+/** Upgrades at the tech center: researched, in progress, available or locked. */
+function ResearchPanel({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur) return null;
+  const me = state.localPlayer;
+  const faction = state.players[me]!.faction;
+  const done = cur.player(me, P.upgrades);
+  const active = cur.player(me, P.researchItem);
+  const progress = cur.player(me, P.researchProgress);
+  const roles = state.roles();
+  const ups = state.rules.upgrades.filter((u) => u.faction < 0 || u.faction === faction);
+  return (
+    <div class="research" data-testid="research">
+      {ups.map((u) => {
+        const researched = (done & (1 << u.index)) !== 0;
+        const pre = u.requiresUpgrade ? state.rules.upgradeIndex.get(u.requiresUpgrade) : undefined;
+        const locked = (pre !== undefined && (done & (1 << pre)) === 0) || state.missing(u.requires, roles).length > 0;
+        const running = active === u.index;
+        const busy = active >= 0 && !running;
+        const effect = describeEffect(u.effect.kind, u.effect.pct);
+        return (
+          <button
+            class={`upgrade ${researched ? 'done' : ''} ${running ? 'building' : ''}`}
+            disabled={researched || locked || busy}
+            data-upgrade={u.id}
+            title={`${u.name}: ${effect}. $${u.cost}, ${Math.round(u.researchTicks / 20)} s${locked ? ' (locked)' : ''}${running ? ' · click to cancel' : ''}`}
+            onClick={() => state.send(running ? { type: 'cancelResearch' } : { type: 'research', upgrade: u.index })}
+          >
+            {running && <i class="progress" style={{ '--p': `${progress / 10}%` }} />}
+            <span>{u.name}</span>
+            <small>{researched ? 'done' : running ? `${Math.floor(progress / 10)}%` : `$${u.cost}`}</small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function describeEffect(kind: string, pct: number): string {
+  switch (kind) {
+    case 'damagePct':
+      return `+${pct}% weapon damage`;
+    case 'hpPct':
+      return `+${pct}% unit HP`;
+    case 'salvagePct':
+      return `+${pct}% credits from wrecks`;
+    case 'vehicleEnergyResistPct':
+      return `vehicles take ${pct}% less Energy damage`;
+    case 'coverageRadiusPct':
+      return `+${pct}% network coverage radius`;
+    case 'recompileRefundPct':
+      return `Recompile refunds ${pct}% instead`;
+    case 'shieldPct':
+      return `+${pct}% shield capacity`;
+    case 'growSpeedPct':
+      return `structures grow ${pct}% faster`;
+    default:
+      return kind;
+  }
 }
 
 function StructureActions({ state, h }: { state: ClientState; h: number }) {

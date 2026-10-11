@@ -126,6 +126,7 @@ export class Effects {
       if (kind === FX_EVENT.fire) this.fire(a, b, x, y, events[i + 6]!, events[i + 7]!);
       else if (kind === FX_EVENT.impact) this.impact(a, b, x, y);
       else if (kind === FX_EVENT.death) this.death(a, b, x, y);
+      else if (kind === FX_EVENT.ability) this.ability(a, x, y, events[i + 6]!, events[i + 7]!);
     }
   }
 
@@ -211,6 +212,32 @@ export class Effects {
     const air = unit.isAir;
     this.explosion(px, py - (air ? AIR_ALTITUDE : 0), unit.tab === 'vehicles' ? 1.25 : 1.1, 1);
     if (!air) this.scorch(px, py, 1);
+  }
+
+  /** Blink: flashes at both ends; phase: a shimmer; Override: a signal beam to the victim. */
+  private ability(kind: number, x: number, y: number, tx: number, ty: number): void {
+    const px = isoX(x / FX, y / FX);
+    const py = isoY(x / FX, y / FX);
+    if (kind === 1) {
+      const qx = isoX(tx / FX, ty / FX);
+      const qy = isoY(tx / FX, ty / FX);
+      for (const [ex, ey] of [
+        [px, py],
+        [qx, qy],
+      ] as const) {
+        this.spawn(this.hot, ex, ey, 8, { life: 0.25, scale0: 0.6, scale1: 0.2, tint: 0xd7b4ff });
+        this.spawn(this.glow, ex, ey, 6, { life: 0.5, scale0: 0.3, scale1: 0.9, tint: 0x9a6bff });
+      }
+      for (let k = 1; k < 6; k++) this.spawn(this.glow, px + ((qx - px) * k) / 6, py + ((qy - py) * k) / 6, 8, { life: 0.3, scale0: 0.18, scale1: 0.05, tint: 0xc58cff });
+    } else if (kind === 2) {
+      this.spawn(this.glow, px, py, 10, { life: 0.8, scale0: 0.4, scale1: 1.4, tint: 0xc58cff, alpha: 0.7 });
+    } else if (kind === 3) {
+      const qx = isoX(tx / FX, ty / FX);
+      const qy = isoY(tx / FX, ty / FX);
+      for (let k = 0; k <= 10; k++)
+        this.spawn(this.hot, px + ((qx - px) * k) / 10, py + ((qy - py) * k) / 10, 14, { life: 0.4 + k * 0.03, scale0: 0.2, scale1: 0.08, tint: 0x3ee6ff });
+      this.spawn(this.glow, qx, qy, 12, { life: 0.9, scale0: 0.5, scale1: 1.2, tint: 0x3ee6ff });
+    }
   }
 
   /** Fireball, hot core, smoke, sparks. `scale` 1 = vehicle-sized. */

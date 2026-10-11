@@ -1109,3 +1109,31 @@ table.matrix td.lo {
 .menu label.slider input {
   accent-color: var(--accent);
 }
+
+.research {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 150px));
+  gap: 4px;
+  margin-left: 12px;
+  align-content: start;
+}
+.research .upgrade {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 3px 6px;
+  font-size: 11px;
+  text-align: left;
+}
+.research .upgrade small {
+  color: var(--accent);
+  font-family: var(--readout);
+}
+.research .upgrade.done {
+  opacity: 0.6;
+}
+.research .upgrade.done small {
+  color: var(--good);
+}

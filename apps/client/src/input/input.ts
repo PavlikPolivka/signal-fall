@@ -296,9 +296,14 @@ export class Input {
       case 'deploy':
         if (units.length > 0) s.send({ type: action, units });
         return;
-      case 'ability':
-        if (units.length > 0) s.send({ type: 'ability', units });
+      case 'ability': {
+        // Phase fires at once; blink and Override need a target, so they enter targeting mode.
+        const phase = this.withAbility(units, 'phase');
+        if (phase.length > 0) s.send({ type: 'ability', units: phase });
+        if (this.withAbility(units, 'blink').length > 0 || this.withAbility(units, 'override').length > 0) this.setMode('ability');
+        else if (phase.length === 0 && units.length > 0) s.warn('No ability on the selected units');
         return;
+      }
       case 'stance': {
         if (units.length === 0) return;
         // Cycle guard -> aggressive -> hold ground -> hold fire, from the first unit's stance.
@@ -550,6 +555,15 @@ export class Input {
     return true;
   }
 
+  /** Selected units that have an active ability of this kind and can use it now. */
+  withAbility(units: number[], kind: 'blink' | 'phase' | 'override'): number[] {
+    const s = this.state;
+    return units.filter((h) => {
+      const rule = s.ruleOf(h);
+      return rule.kind === 'unit' && rule.abilities.some((a) => a.kind === kind) && s.field(h, E.abilityLeft) === 0;
+    });
+  }
+
   targetClick(sx: number, sy: number, shift: boolean): void {
     const s = this.state;
     const units = s.selectedUnits();
@@ -570,9 +584,16 @@ export class Input {
       case 'guard':
         if (h >= 0 && s.isOwn(h)) s.send({ type: 'guard', units, target: h, queue: shift });
         break;
-      case 'ability':
-        s.send({ type: 'ability', units, x: p.x, y: p.y });
+      case 'ability': {
+        const blink = this.withAbility(units, 'blink');
+        if (blink.length > 0) s.send({ type: 'ability', units: blink, x: p.x, y: p.y });
+        const override = this.withAbility(units, 'override');
+        if (override.length > 0) {
+          if (h >= 0 && s.isUnit(h) && s.teamOf(h) !== s.players[s.localPlayer]!.team) s.send({ type: 'ability', units: override, target: h });
+          else if (blink.length === 0) s.warn('Override: click an enemy vehicle');
+        }
         break;
+      }
       case 'repair':
       case 'sell':
         if (h >= 0 && s.isOwn(h) && !s.isUnit(h)) s.send({ type: s.mode, target: h });

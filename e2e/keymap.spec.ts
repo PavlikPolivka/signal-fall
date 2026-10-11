@@ -151,7 +151,12 @@ const checks: Record<string, Check> = {
   hold: sends('hold'),
   scatter: sends('scatter'),
   deploy: sends('deploy'),
-  ability: sends('ability'),
+  // The sandbox army is Holdout, which has no active abilities: the key is handled and says so.
+  ability: async (page, chord) => {
+    await selectOwnUnits(page);
+    await page.keyboard.press(toKey(chord));
+    await expect(page.getByTestId('alert')).toContainText('No ability');
+  },
   stance: sends('stance'),
   buildMenu: async (page, chord) => {
     await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));

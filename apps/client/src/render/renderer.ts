@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Matrix, Sprite, Texture } from 'pixi.js';
 import { KIND, TERRAIN } from '@signal-fall/sim';
-import { E, PR, WAYPOINTS } from '../protocol';
+import { E, ENT_FLAG, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
 import { SpriteLibrary } from './sprites';
@@ -504,6 +504,17 @@ export class Renderer {
           this.updateUnit(h, shape, rule.weapon !== null, px, py, color, cur.get(o, E.facing), visible);
         if (visible) this.rendered.set(h, { x: px, y: py, air: rule.isAir, shape });
         else this.rendered.delete(h);
+        // Phased-out units shimmer, half there.
+        const flags = cur.get(o, E.flags);
+        const view = this.spriteUnits.get(h)?.root ?? this.units.get(h)?.root;
+        if (view) view.alpha = flags & ENT_FLAG.phased ? 0.3 + 0.15 * Math.sin(performance.now() / 70) : 1;
+        if (visible && flags & ENT_FLAG.overridden) {
+          // Overridden: a cyan signal ring above the unit.
+          const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 120);
+          const top = py - (rule.isAir ? AIR_ALTITUDE : 0) - 26;
+          this.overlay.circle(px, top, 5).stroke({ width: 2, color: 0x3ee6ff, alpha: pulse });
+          this.overlay.circle(px, top, 9).stroke({ width: 1, color: 0x3ee6ff, alpha: pulse * 0.5 });
+        }
       }
       if (!visible) continue;
 
@@ -728,9 +739,34 @@ export class Renderer {
     }
   }
 
+  /**
+   * While placing: where this faction may build. Halcyon sees its network
+   * coverage, Choir its growth range around structures (and Echo).
+   */
+  private drawBuildRange(): void {
+    const s = this.state;
+    const cur = s.cur;
+    const faction = s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]!;
+    if (!cur || faction.placement === 'adjacent') return;
+    const color = faction.placement === 'coverage' ? 0x3ee6ff : 0xc58cff;
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.kind) !== KIND.structure || cur.get(o, E.owner) !== s.localPlayer) continue;
+      const rule = s.rules.structures[cur.get(o, E.type)]!;
+      const r = (faction.placement === 'coverage' ? rule.coverageRadius : rule.growthRadius) / FX;
+      if (r <= 0) continue;
+      const x = cur.get(o, E.x) / FX;
+      const y = cur.get(o, E.y) / FX;
+      // A circle of r tiles is an ellipse on the iso grid.
+      const rx = r * (TILE_W / 2) * Math.SQRT2;
+      this.decals.ellipse(isoX(x, y), isoY(x, y), rx, rx / 2).fill({ color, alpha: 0.06 }).stroke({ width: 1.5, color, alpha: 0.45 });
+    }
+  }
+
   private drawGhost(): void {
     const ghost = this.placementGhost();
     if (!ghost) return;
+    this.drawBuildRange();
     const color = ghost.error ? 0xff5a5a : 0x6dff8a;
     for (let y = ghost.ty; y < ghost.ty + ghost.rule.footprintH; y++) {
       for (let x = ghost.tx; x < ghost.tx + ghost.rule.footprintW; x++) {

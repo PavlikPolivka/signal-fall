@@ -70,6 +70,11 @@ export const P = {
   powerProduced: 2,
   powerUsed: 3,
   lowPower: 4,
+  /** Upgrade being researched (-1 none) and its progress per mille. */
+  researchItem: 5,
+  researchProgress: 6,
+  /** Bit i set = upgrade i researched. */
+  upgrades: 7,
   /** Build queues: [structures, defenses] x (item, progress per mille, ready). */
   build: 8,
   /** Production queues: [infantry, vehicles, air] x (progress per mille, then QUEUE_SLOTS items, -1 = empty). */
@@ -111,9 +116,14 @@ export const E = {
   hmode: 27,
   /** Up to 3 further queued order points (x, y pairs), -1 when absent. */
   wp: 28,
+  /** Ticks until the active ability is ready again (0 = ready). */
+  abilityLeft: 34,
+  /** ENT_FLAG bits. */
+  flags: 35,
 } as const;
 export const WAYPOINTS = 3;
-export const ENT_STRIDE = 28 + WAYPOINTS * 2;
+export const ENT_STRIDE = 36;
+export const ENT_FLAG = { phased: 1, overridden: 2, covered: 4 } as const;
 
 export const PR = { ox: 0, oy: 1, x: 2, y: 3, type: 4, ticks: 5, total: 6 } as const;
 export const PROJ_STRIDE = 7;

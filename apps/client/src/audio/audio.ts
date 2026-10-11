@@ -129,6 +129,8 @@ export class GameAudio {
       } else if (kind === FX_EVENT.impact) {
         if ((a === EXPLOSIVE || a === SIEGE) && b > 0) this.play('boom', x, y, 0.45);
         else if (a === KINETIC && Math.random() < 0.25) this.play('hit', x, y, 0.3);
+      } else if (kind === FX_EVENT.ability) {
+        this.play(a === 3 ? 'alarm' : 'energy', x, y, a === 3 ? 0.5 : 0.7);
       } else if (kind === FX_EVENT.death) {
         if (a === KIND.structure) this.play('bigBoom', x, y, 1);
         else if (a === KIND.unit && this.rules.units[b]?.tab !== 'infantry') this.play('boom', x, y, 0.85);

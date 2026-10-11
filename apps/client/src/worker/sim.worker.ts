@@ -1,11 +1,12 @@
 /// <reference lib="webworker" />
 import { defaultRules } from '@signal-fall/data';
 import { LockstepScheduler, NullTransport } from '@signal-fall/net';
-import { Sim, createMatch, grantBase, sandbox, type World } from '@signal-fall/sim';
+import { KIND, Sim, createMatch, grantBase, inCoverage, sandbox, type World } from '@signal-fall/sim';
 import { generateMap, type Biome } from '@signal-fall/mapgen';
 import { attachAi } from '@signal-fall/ai';
 import {
   E,
+  ENT_FLAG,
   ENT_STRIDE,
   H,
   HEADER_LEN,
@@ -93,6 +94,10 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + P.powerProduced] = p.powerProduced;
     a[off + P.powerUsed] = p.powerUsed;
     a[off + P.lowPower] = p.lowPower ? 1 : 0;
+    const r = p.research;
+    a[off + P.researchItem] = r.item;
+    a[off + P.researchProgress] = r.item >= 0 ? Math.floor((r.progress * 1000) / (world.rules.upgrades[r.item]!.researchTicks * 100)) : 0;
+    a[off + P.upgrades] = p.upgrades.reduce((bits, v, i) => bits | (v << i), 0);
     p.build.forEach((q, i) => {
       const o = off + P.build + i * 3;
       a[o] = q.item;
@@ -135,6 +140,11 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + E.rallyX] = e.rallyX[s]!;
     a[off + E.rallyY] = e.rallyY[s]!;
     a[off + E.hmode] = e.hmode[s]!;
+    a[off + E.abilityLeft] = Math.max(0, e.abilityReady[s]! - world.tick);
+    a[off + E.flags] =
+      (e.phasedUntil[s]! > world.tick ? ENT_FLAG.phased : 0) |
+      (e.homeOwner[s]! >= 0 ? ENT_FLAG.overridden : 0) |
+      (e.kind[s] === KIND.unit && inCoverage(world, s) ? ENT_FLAG.covered : 0);
     for (let k = 0; k < WAYPOINTS; k++) {
       const q = orders[k + 1];
       const p = q && 'x' in q ? q : q && q.type === 'patrol' ? { x: q.bx, y: q.by } : null;
