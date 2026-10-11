@@ -13,7 +13,9 @@
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "headless": "pnpm --filter @signal-fall/headless start",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "build": "pnpm --filter @signal-fall/client build",
+    "size": "node tools/size/size.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",

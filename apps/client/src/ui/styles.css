@@ -1084,3 +1084,28 @@ table.matrix td.lo {
 .layout[data-faction='halcyon'] .card dt {
   color: var(--muted);
 }
+
+.credits {
+  width: min(760px, 100%);
+}
+.credits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.credits-list li {
+  display: grid;
+  gap: 1px;
+}
+.menu label.slider {
+  display: grid;
+  grid-template-columns: 64px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.menu label.slider input {
+  accent-color: var(--accent);
+}

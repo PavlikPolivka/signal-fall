@@ -41,7 +41,14 @@ export type FromWorker =
       players: PlayerInfo[];
       localPlayer: number;
     }
-  | { type: 'snapshot'; buf: ArrayBuffer; fog: Uint8Array | null; echo: Uint8Array | null };
+  | {
+      type: 'snapshot';
+      buf: ArrayBuffer;
+      fog: Uint8Array | null;
+      echo: Uint8Array | null;
+      /** Cosmetic events since the last snapshot (sim FX_EVENT records, FX_STRIDE ints each). */
+      fx: Int32Array | null;
+    };
 
 // Snapshot layout (Int32Array):
 //   header (HEADER_LEN), then players (PLAYER_STRIDE each), entities (ENT_STRIDE each),

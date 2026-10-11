@@ -1,12 +1,13 @@
 // Records marketing gameplay clips with Playwright (placeholder art, pre-M6).
-// Usage: node tools/video/record.mjs [baseUrl]   -> media/*.mp4
+// Usage: node tools/video/record.mjs [baseUrl] [clipPrefix]   -> $MEDIA_OUT or media/*.mp4
+// Set MEDIA_OUT to keep earlier takes (the pre-art clips in media/ are the originals).
 import { chromium } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 const BASE = process.argv[2] ?? 'http://localhost:5173';
-const OUT = join(process.cwd(), 'media');
+const OUT = process.env.MEDIA_OUT ?? join(process.cwd(), 'media');
 const RAW = join(OUT, 'raw');
 mkdirSync(RAW, { recursive: true });
 const SIZE = { width: 1920, height: 1080 };

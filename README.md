@@ -14,7 +14,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 | M3 Economy and base building | ✅ |
 | M4 Map generator | ✅ |
 | M5 AI, first playable | ✅ (human playtest pending) |
-| M6 Art and audio (Holdout) | ⏳ |
+| M6 Art and audio (Holdout) | ✅ |
 | M7 Halcyon and Choir | |
 | M8 Multiplayer | |
 | M9 Polish and release | |
@@ -32,6 +32,10 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 | `apps/headless` | CLI: `run` matches headless and print state hashes, `bench` the 400-unit battle |
 | `e2e` | Playwright tests, including the cross-browser golden hash |
 | `tools/codegen` | Generators for checked-in tables (trig lookup tables) |
+| `tools/assets` | Art pipeline: Blender models and renders (`blender/`), atlas and icon packer (`pack.ts`), procedural terrain textures (`terrain.ts`), map debug renders (`mapshot.ts`) |
+| `tools/size` | Initial-load size budget (15 MB per match) |
+| `tools/video` | Playwright recordings for marketing clips and map screenshots |
+| `apps/client/src/audio` | Synthesized sound effects and the generative score (no audio files) |
 
 ## Development
 
@@ -45,6 +49,19 @@ pnpm headless run --seed 1 --ticks 10000
 pnpm headless bench        # 400-unit battle, fails above 4 ms/tick
 pnpm headless balance --a holdout:hard --b holdout:easy --matches 200 --out out.csv   # AI vs AI
 pnpm e2e                   # Playwright (golden hash in every browser)
+pnpm build && pnpm size    # client build and the initial-load budget
+```
+
+### Art
+
+Generated assets are committed; CI has no Blender. To regenerate (Blender 4.x/5.x on PATH):
+
+```sh
+blender -b --factory-startup -P tools/assets/blender/render.py -- holdout tools/assets/build/raw/holdout
+blender -b --factory-startup -P tools/assets/blender/render_icons.py -- holdout tools/assets/build/raw/holdout/icons
+blender -b --factory-startup -P tools/assets/blender/render_props.py -- tools/assets/build/raw/props
+pnpm --filter @signal-fall/assets atlas holdout      # and: atlas props
+pnpm --filter @signal-fall/assets terrain            # procedural terrain textures
 ```
 
 Firefox e2e runs on Linux only: Playwright's Firefox build does not launch on macOS 27. CI covers it.

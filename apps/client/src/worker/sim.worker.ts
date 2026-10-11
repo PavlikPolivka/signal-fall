@@ -183,10 +183,14 @@ function publish(stalled: boolean): void {
   }
   // Echo changes slowly; ship it once a second.
   const echo = w.tick % 20 === 1 || lastFogTick === w.tick ? w.map.echo.slice() : null;
+  // Hand over the cosmetic events (shots, impacts, deaths) and start a fresh log.
+  const fx = w.fx.length > 0 ? Int32Array.from(w.fx) : null;
+  w.fx.length = 0;
   const transfer: Transferable[] = [buf];
   if (fog) transfer.push(fog.buffer);
   if (echo) transfer.push(echo.buffer);
-  post({ type: 'snapshot', buf, fog, echo }, transfer);
+  if (fx) transfer.push(fx.buffer);
+  post({ type: 'snapshot', buf, fog, echo, fx }, transfer);
 }
 
 function loop(): void {

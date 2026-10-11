@@ -6,9 +6,15 @@ import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../g
 import { SpriteLibrary } from './sprites';
 import { CLIFF_H, TerrainLayer } from './terrain';
 import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
+import { Effects } from './effects';
 
 const FX = 1024;
 const CHUNK = 16;
+// Damage types (data DAMAGE order), for projectile looks.
+const PROJ_KINETIC = 0;
+const PROJ_ENERGY = 2;
+const PROJ_FLAK = 3;
+const PROJ_SIEGE = 4;
 const AIR_ALTITUDE = 26;
 
 // Placeholder terrain palettes per biome: ground, rough, rock, water, cliff, ruins.
@@ -46,6 +52,10 @@ export class Renderer {
   private readonly ground = new Container();
   private readonly air = new Container();
   private readonly fx = new Graphics();
+  /** Particle effects (flashes, fire, smoke) and scorch marks. */
+  private readonly particles = new Container();
+  private readonly scorchLayer = new Container();
+  readonly effects: Effects;
   private readonly fogLayer = new Container();
   private readonly overlay = new Graphics();
   /** Screen-space overlay (selection box). */
@@ -74,14 +84,27 @@ export class Renderer {
   /** Click feedback markers in world px. */
   private pings: { x: number; y: number; color: number; at: number }[] = [];
 
-  constructor(private readonly state: ClientState) {}
+  constructor(private readonly state: ClientState) {
+    this.effects = new Effects(state.rules, this.particles, this.scorchLayer, (x, y) => this.worthDrawing(x, y));
+  }
+
+  /** A sim point (Q10) on or near the screen and visible to the local player. */
+  private worthDrawing(x: number, y: number): boolean {
+    const s = this.state;
+    const tx = x >> 10;
+    const ty = y >> 10;
+    if (s.fog && (s.fog[ty * s.width + tx]! & 1) === 0) return false;
+    const px = (isoX(x / FX, y / FX) - this.camera.x) * this.camera.zoom;
+    const py = (isoY(x / FX, y / FX) - this.camera.y) * this.camera.zoom;
+    return Math.abs(px) < this.width * 0.7 && Math.abs(py) < this.height * 0.7;
+  }
 
   async init(host: HTMLElement): Promise<void> {
     await this.app.init({ resizeTo: host, background: 0x0b0d10, antialias: true, preference: 'webgl' });
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;
-    this.world.addChild(this.terrainLayer, this.echoLayer, this.decals, this.shadows, this.ground, this.fx, this.air, this.fogLayer, this.overlay);
+    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.decals, this.shadows, this.ground, this.fx, this.air, this.particles, this.fogLayer, this.overlay);
     this.app.stage.addChild(this.world, this.screen);
     this.makeTextures();
   }
@@ -590,10 +613,41 @@ export class Renderer {
       const t = total > 0 ? Math.max(0, Math.min(1, 1 - left / total)) : 1;
       const ox = cur.get(p, PR.ox);
       const oy = cur.get(p, PR.oy);
-      const x = ox + (cur.get(p, PR.x) - ox) * t;
-      const y = oy + (cur.get(p, PR.y) - oy) * t;
-      this.fx.circle(isoX(x / FX, y / FX), isoY(x / FX, y / FX) - 6, 2).fill(0xffe9a8);
+      const tx = cur.get(p, PR.x);
+      const ty = cur.get(p, PR.y);
+      const x = ox + (tx - ox) * t;
+      const y = oy + (ty - oy) * t;
+      const px = isoX(x / FX, y / FX);
+      const type = cur.get(p, PR.type);
+      // Shells arc; everything else flies straight at about chest height.
+      const dist = Math.hypot(isoX((tx - ox) / FX, (ty - oy) / FX), isoY((tx - ox) / FX, (ty - oy) / FX));
+      const lift = type === PROJ_SIEGE ? Math.sin(Math.PI * t) * dist * 0.35 : 0;
+      const py = isoY(x / FX, y / FX) - 8 - lift;
+      // Direction on screen, for streaks.
+      const ex = isoX((tx - ox) / FX, (ty - oy) / FX);
+      const ey = isoY((tx - ox) / FX, (ty - oy) / FX) - (type === PROJ_SIEGE ? Math.cos(Math.PI * t) * dist * 0.35 * Math.PI * 0.5 : 0);
+      const el = Math.hypot(ex, ey) || 1;
+      const ux = ex / el;
+      const uy = ey / el;
+      if (type === PROJ_KINETIC || type === PROJ_ENERGY) {
+        const len = type === PROJ_ENERGY ? 14 : 9;
+        this.fx
+          .moveTo(px - ux * len, py - uy * len)
+          .lineTo(px, py)
+          .stroke({ width: type === PROJ_ENERGY ? 2 : 1.5, color: type === PROJ_ENERGY ? 0x8fe8ff : 0xfff0b8, alpha: 0.9 });
+      } else if (type === PROJ_FLAK) {
+        this.fx.circle(px, py - 14, 1.5).fill(0xffd890);
+      } else {
+        // Rockets and shells: glowing head with a fading smoke trail.
+        this.fx
+          .moveTo(px - ux * 12, py - uy * 12)
+          .lineTo(px, py)
+          .stroke({ width: 2.5, color: 0x8a847c, alpha: 0.45 });
+        this.fx.circle(px, py, 2.6).fill(0xffb64a);
+        this.fx.circle(px, py, 1.3).fill(0xfff3cf);
+      }
     }
+    this.effects.update();
 
     // Click feedback: shrinking iso ellipse at ordered points.
     const now = performance.now();

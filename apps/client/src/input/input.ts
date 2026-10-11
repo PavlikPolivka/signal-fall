@@ -272,9 +272,10 @@ export class Input {
         return;
       }
       case 'cancel':
-        // Esc peels back one layer: codex, menu, then mode, then selection, then opens the menu.
-        if (s.codexOpen) {
+        // Esc peels back one layer: codex / credits, menu, then mode, then selection, then opens the menu.
+        if (s.codexOpen || s.creditsOpen) {
           s.codexOpen = false;
+          s.creditsOpen = false;
           s.changed();
         } else if (s.menuOpen) this.toggleMenu();
         else if (s.placing) this.stopPlacing();

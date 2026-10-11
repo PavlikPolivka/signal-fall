@@ -46,6 +46,7 @@ export class ClientState {
   biome: 'city' | 'wasteland' | 'crystal' = 'wasteland';
   /** Factions whose rendered art (sprites and icons) has loaded. */
   art = new Set<string>();
+  creditsOpen = false;
   mapSeed = 0;
   players: PlayerInfo[] = [];
   localPlayer = 0;
@@ -83,6 +84,9 @@ export class ClientState {
   alerts: Alert[] = [];
   /** Every command sent, newest last (for UI feedback and tests). */
   sent: Command[] = [];
+  /** Totals ever pushed to `sent` / `alerts` (the arrays are trimmed), for consumers that track new entries. */
+  sentTotal = 0;
+  alertTotal = 0;
   fps = 0;
   /** Smoothed main-thread ms per frame spent in input + render prep. */
   frameMs = 0;
@@ -113,6 +117,7 @@ export class ClientState {
 
   send(cmd: Command): void {
     this.sent.push(cmd);
+    this.sentTotal++;
     if (this.sent.length > 200) this.sent.shift();
     this.post({ type: 'command', cmd });
   }
@@ -199,6 +204,7 @@ export class ClientState {
     // One alert of a kind per 8 seconds.
     if (this.alerts.some((a) => a.text === text && now - a.time < 8000)) return;
     this.alerts.push({ kind, text, x, y, time: now });
+    this.alertTotal++;
     if (this.alerts.length > 5) this.alerts.shift();
     this.changed();
   }
@@ -283,6 +289,7 @@ export class ClientState {
     const now = performance.now();
     this.alerts = this.alerts.filter((a) => a.text !== text);
     this.alerts.push({ kind: 'warn', text, x: -1, y: -1, time: now });
+    this.alertTotal++;
     if (this.alerts.length > 5) this.alerts.shift();
     this.changed();
   }

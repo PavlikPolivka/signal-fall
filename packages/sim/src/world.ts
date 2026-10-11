@@ -76,6 +76,23 @@ export interface Projectile {
 }
 
 /** Fog bits per tile and player. */
+/**
+ * Cosmetic events for renderers and audio, FX_STRIDE ints each: [kind, a, b, owner, x, y, tx, ty].
+ * fire:   a = shooter kind, b = shooter rule index, (x, y) muzzle, (tx, ty) target point
+ * impact: a = damage type, b = splash radius, (x, y) impact point
+ * death:  a = entity kind, b = rule index, (x, y) where it died
+ * The sim only appends; it never reads them, so they cannot affect determinism.
+ */
+export const FX_EVENT = { fire: 1, impact: 2, death: 3 } as const;
+export const FX_STRIDE = 8;
+/** Events kept when nobody drains them (headless runs). */
+const FX_CAP = FX_STRIDE * 4096;
+
+export function pushFx(world: World, kind: number, a: number, b: number, owner: number, x: number, y: number, tx: number, ty: number): void {
+  if (world.fx.length >= FX_CAP) world.fx.length = 0;
+  world.fx.push(kind, a, b, owner, x, y, tx, ty);
+}
+
 export const FOG_VISIBLE = 1;
 export const FOG_EXPLORED = 2;
 /** Fog is recomputed every this many ticks. */
@@ -93,6 +110,8 @@ export interface World {
   spatial: SpatialGrid;
   paths: Pathfinder;
   projectiles: Projectile[];
+  /** Cosmetic event log (FX_EVENT), drained by the client; not part of the state. */
+  fx: number[];
   /** fog[player][tile] = FOG_* bits. */
   fog: Uint8Array[];
   players: PlayerState[];
@@ -148,6 +167,7 @@ export function createWorld(o: WorldOptions): World {
     spatial: new SpatialGrid(o.width, o.height),
     paths: new Pathfinder(map),
     projectiles: [],
+    fx: [],
     fog: o.players.map(() => new Uint8Array(o.width * o.height)),
     players: o.players.map((p, index) => ({
       index,

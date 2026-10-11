@@ -4,7 +4,7 @@ import { KIND } from '../entities';
 import { armorOf, canTarget, costOf, distToBody, inWeaponRange, isAir, teamOf, weaponOf } from '../query';
 import { removeEntity } from '../spawn';
 import { spawnWreck } from './economy';
-import type { Projectile, World } from '../world';
+import { FX_EVENT, pushFx, type Projectile, type World } from '../world';
 
 const ARMOR_COUNT = ARMOR.length;
 
@@ -52,6 +52,7 @@ export function weaponSystem(world: World): void {
       hitsAir: weapon.targetsAir,
       ticks,
     });
+    pushFx(world, FX_EVENT.fire, e.kind[s]!, e.type[s]!, e.owner[s]!, e.x[s]!, e.y[s]!, e.x[t]!, e.y[t]!);
     const dealt = pct(pct(weapon.damage, 100 + vetPct * e.rank[s]!), world.rules.damageMatrix[weapon.type * ARMOR_COUNT + armorOf(world, t)]!);
     world.pending.set(t, (world.pending.get(t) ?? 0) + dealt);
   }
@@ -82,6 +83,7 @@ export function projectileSystem(world: World): void {
 function impact(world: World, p: Projectile, primary: number): void {
   const e = world.entities;
   const team = world.players[p.owner]!.team;
+  pushFx(world, FX_EVENT.impact, p.type, p.splash, p.owner, p.x, p.y, 0, 0);
   if (primary >= 0) damage(world, primary, p.damage, p.type, p.source);
   if (p.splash <= 0) return;
   // Splash hits enemies on the weapon's layer with linear falloff to 50% at the edge.
@@ -125,6 +127,7 @@ export function deathSystem(world: World): void {
       e.xp[killer]! += costOf(world, s);
       promote(world, killer);
     }
+    pushFx(world, FX_EVENT.death, e.kind[s]!, e.type[s]!, e.owner[s]!, e.x[s]!, e.y[s]!, 0, 0);
     spawnWreck(world, s);
     removeEntity(world, s);
   }

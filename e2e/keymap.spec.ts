@@ -44,11 +44,14 @@ type Check = (page: Page, chord: string) => Promise<void>;
 const pan = (dx: number, dy: number): Check => async (page, chord) => {
   const before = (await state(page)).cam;
   await page.keyboard.down(toKey(chord));
-  await page.waitForTimeout(300);
+  // Hold until the camera has moved: software-rendered CI browsers may only get a few frames in.
+  await expect
+    .poll(async () => {
+      const cam = (await state(page)).cam;
+      return [dx ? Math.sign(cam.x - before.x) : 0, dy ? Math.sign(cam.y - before.y) : 0];
+    }, { timeout: 5000 })
+    .toEqual([dx, dy]);
   await page.keyboard.up(toKey(chord));
-  const after = (await state(page)).cam;
-  if (dx) expect(Math.sign(after.x - before.x)).toBe(dx);
-  if (dy) expect(Math.sign(after.y - before.y)).toBe(dy);
 };
 
 const setsMode = (mode: string): Check => async (page, chord) => {

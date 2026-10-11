@@ -4,6 +4,7 @@ import { ClientState } from './game/state';
 import { Input } from './input/input';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import { Renderer } from './render/renderer';
+import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
 import { Setup, type SkirmishSettings } from './ui/Setup';
 import type { Difficulty } from '@signal-fall/ai';
@@ -60,6 +61,19 @@ const post = (msg: ToWorker) => worker.postMessage(msg);
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
 const renderer = new Renderer(state);
+const audio = new GameAudio(
+  state,
+  state.rules,
+  cameraListener(() => ({ ...renderer.camera, w: renderer.width || window.innerWidth, h: renderer.height || window.innerHeight })),
+);
+// Browsers only allow audio after a user gesture.
+const unlockAudio = () => {
+  void audio.unlock();
+  window.removeEventListener('pointerdown', unlockAudio);
+  window.removeEventListener('keydown', unlockAudio);
+};
+window.addEventListener('pointerdown', unlockAudio);
+window.addEventListener('keydown', unlockAudio);
 let input: Input | null = null;
 
 async function mountGame(host: HTMLDivElement): Promise<void> {
@@ -76,6 +90,7 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     const t0 = performance.now();
     input?.update(t.deltaMS / 1000);
     renderer.frame();
+    audio.update();
     state.frameMs = state.frameMs * 0.95 + (performance.now() - t0) * 0.05;
     fpsFrames++;
     const now = performance.now();
@@ -113,6 +128,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     } else {
       const first = state.cur === null;
       state.onSnapshot(new Snapshot(msg.buf), msg.fog, msg.echo);
+      if (msg.fx) {
+        renderer.effects.ingest(msg.fx);
+        audio.ingest(msg.fx);
+      }
       if (first) input?.run('jumpToBase');
     }
   };
@@ -140,6 +159,7 @@ function renderUi(): void {
       state={state}
       input={input ?? placeholderInput}
       renderer={renderer}
+      audio={audio}
       gameHost={(el) => {
         if (mounted) return;
         mounted = true;
@@ -155,4 +175,4 @@ const placeholderInput = { run: () => undefined, toggleMenu: () => undefined } a
 renderUi();
 
 // Test and debugging hook.
-Object.assign(window, { __signalFall: { state, renderer, get input() { return input; } } });
+Object.assign(window, { __signalFall: { state, renderer, audio, get input() { return input; } } });

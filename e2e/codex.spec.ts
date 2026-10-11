@@ -21,3 +21,14 @@ test('codex opens from setup and the in-game menu, and lists data-driven units',
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-testid=codex]')).toHaveCount(0);
 });
+
+test('credits list the asset licenses', async ({ page }) => {
+  await page.goto('/');
+  await page.click('[data-testid=open-credits]');
+  const credits = page.getByTestId('credits');
+  await expect(credits).toBeVisible();
+  await expect(credits).toContainText('Unit and building sprites');
+  await expect(credits).toContainText('Saira Stencil One');
+  await page.keyboard.press('Escape');
+  await expect(credits).toBeHidden();
+});

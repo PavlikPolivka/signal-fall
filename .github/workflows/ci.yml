@@ -27,6 +27,8 @@ jobs:
         run: pnpm headless bench
       - name: AI acceptance (Hard beats Easy in >= 90% of 200 matches)
         run: pnpm headless balance --matches 200 --size M --min-win 90 --out balance-hard-easy.csv
+      - name: Build and initial-load size budget (15 MB)
+        run: pnpm build && pnpm size
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm e2e
       - uses: actions/upload-artifact@v4

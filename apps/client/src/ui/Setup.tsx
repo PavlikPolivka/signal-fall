@@ -5,6 +5,7 @@ import { generateMap, type Biome, type MapSize, type Resources, type TerrainStyl
 import { BIOME_COLORS } from '../render/renderer';
 import { TEAM_COLORS } from '../game/state';
 import { Codex } from './Codex';
+import { Credits } from './Credits';
 
 export interface SkirmishSettings {
   faction: number;
@@ -58,8 +59,13 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
   }));
   const set = (patch: Partial<SkirmishSettings>) => setS((prev) => ({ ...prev, ...patch }));
   const [codex, setCodex] = useState(false);
+  const [credits, setCredits] = useState(false);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setCodex(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setCodex(false);
+      setCredits(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -169,6 +175,9 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
         <button class="codex-btn" onClick={() => setCodex(true)} data-testid="open-codex">
           Codex — story, factions, units and how to play
         </button>
+        <button class="codex-btn" onClick={() => setCredits(true)} data-testid="open-credits">
+          Credits
+        </button>
         {(s.faction !== 0 || s.enemyFaction !== 0) && (
           <p class="muted small">Halcyon and Choir play with shared rules for now; their special mechanics arrive in a later update.</p>
         )}
@@ -180,6 +189,7 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
         </p>
       </div>
       {codex && <Codex rules={rules} onClose={() => setCodex(false)} />}
+      {credits && <Credits onClose={() => setCredits(false)} />}
     </div>
   );
 }

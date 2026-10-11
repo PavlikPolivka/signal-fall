@@ -11,6 +11,8 @@ import { EntityCard, ItemCard } from './InfoCard';
 import { Codex } from './Codex';
 import { isoX, isoY } from '../game/iso';
 import { Icon } from './Icon';
+import { Credits } from './Credits';
+import type { GameAudio } from '../audio/audio';
 
 const FX = 1024;
 
@@ -21,7 +23,7 @@ function useStateVersion(state: ClientState): void {
 
 const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
 
-export function App(props: { state: ClientState; input: Input; renderer: Renderer; gameHost: (el: HTMLDivElement) => void }) {
+export function App(props: { state: ClientState; input: Input; renderer: Renderer; audio: GameAudio; gameHost: (el: HTMLDivElement) => void }) {
   const { state } = props;
   useStateVersion(state);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -36,7 +38,15 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <BottomPanel state={state} input={props.input} />
       <Sidebar state={state} input={props.input} renderer={props.renderer} />
       <HoverCards state={state} />
-      {state.menuOpen && <Menu state={state} input={props.input} />}
+      {state.menuOpen && <Menu state={state} input={props.input} audio={props.audio} />}
+      {state.creditsOpen && (
+        <Credits
+          onClose={() => {
+            state.creditsOpen = false;
+            state.changed();
+          }}
+        />
+      )}
       {state.codexOpen && (
         <Codex
           rules={state.rules}
@@ -564,7 +574,26 @@ function EndScreen({ state }: { state: ClientState }) {
   );
 }
 
-function Menu({ state, input }: { state: ClientState; input: Input }) {
+function Menu({ state, input, audio }: { state: ClientState; input: Input; audio: GameAudio }) {
+  const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
+  const slider = (label: string, kind: 'music' | 'sfx') => (
+    <label class="slider">
+      {label}
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={Math.round(audio.settings[kind] * 100)}
+        data-testid={`volume-${kind}`}
+        onInput={(e) => {
+          if (!audio.started) void audio.unlock();
+          audio.set(kind, Number((e.currentTarget as HTMLInputElement).value) / 100);
+          force(undefined);
+        }}
+      />
+      <span>{Math.round(audio.settings[kind] * 100)}</span>
+    </label>
+  );
   const fullscreen = async () => {
     await document.documentElement.requestFullscreen();
     // Keyboard Lock lets the game receive Ctrl+W/T/N-style chords in fullscreen (Chromium).
@@ -586,6 +615,17 @@ function Menu({ state, input }: { state: ClientState; input: Input }) {
           Codex
         </button>
         <button onClick={fullscreen}>Fullscreen</button>
+        {slider('Music', 'music')}
+        {slider('Effects', 'sfx')}
+        <button
+          data-testid="menu-credits"
+          onClick={() => {
+            state.creditsOpen = true;
+            state.changed();
+          }}
+        >
+          Credits
+        </button>
         <button
           onClick={() => {
             state.send({ type: 'surrender' });
