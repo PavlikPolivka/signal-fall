@@ -3,6 +3,9 @@ import { KIND } from '@signal-fall/sim';
 import { E, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
+import { SpriteLibrary } from './sprites';
+import { TerrainLayer } from './terrain';
+import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
 
 const FX = 1024;
 const CHUNK = 16;
@@ -38,6 +41,8 @@ export class Renderer {
   private readonly terrainLayer = new Container();
   private readonly echoLayer = new Graphics();
   private readonly decals = new Graphics();
+  /** All sprite shadows, under every unit and building. */
+  private readonly shadows = new Container();
   private readonly ground = new Container();
   private readonly air = new Container();
   private readonly fx = new Graphics();
@@ -50,6 +55,12 @@ export class Renderer {
   private textures = new Map<string, Texture>();
   private units = new Map<number, UnitView>();
   private structures = new Map<number, StructureView>();
+  /** Rendered art (Blender sprites); factions without art use the placeholder views above. */
+  readonly lib = new SpriteLibrary();
+  private readonly terrain = new TerrainLayer();
+  private spriteUnits = new Map<number, UnitSpriteView>();
+  private spriteStructures = new Map<number, StructureSpriteView>();
+  private deaths: DeathEffect[] = [];
   /** Last rendered world-pixel position per entity handle (ground point). */
   readonly rendered = new Map<number, { x: number; y: number; air: boolean; shape: Shape | null }>();
   private fogCanvas: HTMLCanvasElement | null = null;
@@ -68,7 +79,7 @@ export class Renderer {
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;
-    this.world.addChild(this.terrainLayer, this.echoLayer, this.decals, this.ground, this.fx, this.air, this.fogLayer, this.overlay);
+    this.world.addChild(this.terrainLayer, this.echoLayer, this.decals, this.shadows, this.ground, this.fx, this.air, this.fogLayer, this.overlay);
     this.app.stage.addChild(this.world, this.screen);
     this.makeTextures();
   }
@@ -211,6 +222,41 @@ export class Renderer {
   buildMap(): void {
     const s = this.state;
     this.terrainLayer.removeChildren();
+    // Textured terrain (shader); the flat-colour tiles below stay as the instant fallback until it loads.
+    this.drawFlatTerrain();
+    void this.terrain
+      .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain)
+      .then(() => this.drawProps())
+      .catch((err) => console.warn('terrain shader unavailable, using flat tiles', err));
+    this.buildFog();
+  }
+
+  /** Obstacles and decorations on top of the textured terrain (until the Blender props replace them). */
+  private drawProps(): void {
+    const s = this.state;
+    for (let cy = 0; cy < s.height; cy += CHUNK) {
+      for (let cx = 0; cx < s.width; cx += CHUNK) {
+        const g = new Graphics();
+        for (let y = cy; y < Math.min(cy + CHUNK, s.height); y++) {
+          for (let x = cx; x < Math.min(cx + CHUNK, s.width); x++) {
+            const t = s.terrain[y * s.width + x]!;
+            const px = isoX(x, y);
+            const py = isoY(x, y);
+            if (t === 2 || t === 4 || t === 5) {
+              const color = (BIOME_COLORS[s.biome] ?? BIOME_COLORS.wasteland!)[t]!;
+              g.poly([px, py - 10, px + 26, py + 3, px, py + 16, px - 26, py + 3]).fill(color + 0x161616);
+            }
+            this.drawDecoration(g, s.decoration[y * s.width + x] ?? 0, px, py + TILE_H / 2, x * 31 + y * 17);
+          }
+        }
+        g.cacheAsTexture(true);
+        this.terrainLayer.addChild(g);
+      }
+    }
+  }
+
+  private drawFlatTerrain(): void {
+    const s = this.state;
     for (let cy = 0; cy < s.height; cy += CHUNK) {
       for (let cx = 0; cx < s.width; cx += CHUNK) {
         const g = new Graphics();
@@ -233,6 +279,10 @@ export class Renderer {
         this.terrainLayer.addChild(g);
       }
     }
+  }
+
+  private buildFog(): void {
+    const s = this.state;
     // Fog: one pixel per tile, drawn through the iso matrix.
     this.fogCanvas = document.createElement('canvas');
     this.fogCanvas.width = s.width;
@@ -309,13 +359,18 @@ export class Renderer {
 
       if (kind === KIND.wreck) {
         const rule = s.rules.units[cur.get(o, E.type)]!;
-        this.updateUnit(h, SHAPES[rule.armor]!, false, px, py, 0x2a2a2a, cur.get(o, E.facing), visible);
-        this.units.get(h)!.root.alpha = 0.8;
+        if (!this.updateUnitSprite(h, rule.id, px, py, 0, cur.get(o, E.facing), 0, 0, false, visible, true)) {
+          this.updateUnit(h, SHAPES[rule.armor]!, false, px, py, 0x2a2a2a, cur.get(o, E.facing), visible);
+          this.units.get(h)!.root.alpha = 0.8;
+        }
         if (visible) this.rendered.set(h, { x: px, y: py, air: false, shape: SHAPES[rule.armor]! });
         continue;
       }
       if (kind === KIND.structure) {
-        this.updateStructure(h, cur.get(o, E.type), px, py, color, visible);
+        const srule = s.rules.structures[cur.get(o, E.type)]!;
+        const hpFrac = cur.get(o, E.hp) / Math.max(1, cur.get(o, E.maxHp));
+        if (!this.updateStructureSprite(h, srule.id, px, py, py + isoY(srule.footprintW / 2, srule.footprintH / 2), color, hpFrac, cur.get(o, E.facing), visible, cur.tick))
+          this.updateStructure(h, cur.get(o, E.type), px, py, color, visible);
         this.rendered.set(h, { x: px, y: py, air: false, shape: null });
         if (visible && cur.get(o, E.repairing) === 1) {
           const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
@@ -325,7 +380,9 @@ export class Renderer {
       } else {
         const rule = s.rules.units[cur.get(o, E.type)]!;
         const shape = SHAPES[rule.armor]!;
-        this.updateUnit(h, shape, rule.weapon !== null, px, py, color, cur.get(o, E.facing), visible);
+        const firing = cur.get(o, E.target) >= 0;
+        if (!this.updateUnitSprite(h, rule.id, px, py, color, cur.get(o, E.facing), cur.get(o, E.vx), cur.get(o, E.vy), firing, visible, false))
+          this.updateUnit(h, shape, rule.weapon !== null, px, py, color, cur.get(o, E.facing), visible);
         if (visible) this.rendered.set(h, { x: px, y: py, air: rule.isAir, shape });
         else this.rendered.delete(h);
       }
@@ -413,6 +470,21 @@ export class Renderer {
       this.structures.delete(h);
       this.rendered.delete(h);
     }
+    for (const [h, v] of this.spriteUnits) {
+      if (seen.has(h)) continue;
+      // Infantry play their death animation where they fell.
+      if (v.info.kind === 'infantry' && v.root.visible) this.deaths.push(new DeathEffect(this.lib, v.id, v.pose.dir, this.ground, v.root.x, v.root.y));
+      v.destroy();
+      this.spriteUnits.delete(h);
+      this.rendered.delete(h);
+    }
+    for (const [h, v] of this.spriteStructures) {
+      if (seen.has(h)) continue;
+      v.destroy();
+      this.spriteStructures.delete(h);
+      this.rendered.delete(h);
+    }
+    this.deaths = this.deaths.filter((d) => d.update());
 
     // Projectiles: tracer dots interpolated between origin and impact.
     for (let i = 0; i < cur.projectileCount; i++) {
@@ -436,6 +508,7 @@ export class Renderer {
       this.overlay.ellipse(p.x, p.y, r, r / 2).stroke({ width: 2, color: p.color, alpha: 1 - t });
     }
 
+    this.terrain.update();
     this.updateEcho();
     this.drawGhost();
     this.updateFog();
@@ -525,6 +598,46 @@ export class Renderer {
       v.shadow.position.set(px, py);
       v.shadow.zIndex = py - 1;
     }
+  }
+
+  /** Draw a unit with rendered sprites if its faction has art. Returns false to fall back to placeholders. */
+  private updateUnitSprite(h: number, id: string, px: number, py: number, color: number, facing: number, vx: number, vy: number, firing: boolean, visible: boolean, wreck: boolean): boolean {
+    let v = this.spriteUnits.get(h);
+    if (!v) {
+      const info = this.lib.info(id);
+      if (!info) return false;
+      v = new UnitSpriteView(this.lib, id, info, this.shadows, facing);
+      // Art finished loading after this unit appeared: retire its placeholder.
+      const old = this.units.get(h);
+      if (old) {
+        old.root.destroy({ children: true });
+        old.shadow?.destroy();
+        this.units.delete(h);
+      }
+      (info.kind === 'air' ? this.air : this.ground).addChild(v.root);
+      this.spriteUnits.set(h, v);
+    }
+    v.update({ px, py, color, facing, vx, vy, firing, visible, wreck });
+    return true;
+  }
+
+  private updateStructureSprite(h: number, id: string, px: number, py: number, depth: number, color: number, hp: number, facing: number, visible: boolean, tick: number): boolean {
+    let v = this.spriteStructures.get(h);
+    if (!v) {
+      const info = this.lib.info(id);
+      if (!info) return false;
+      // Buildings that exist when the match starts (or are first seen through the fog) skip the build-up.
+      v = new StructureSpriteView(this.lib, id, info, this.shadows, tick < 40 || !visible || this.structures.has(h));
+      const old = this.structures.get(h);
+      if (old) {
+        old.root.destroy();
+        this.structures.delete(h);
+      }
+      this.ground.addChild(v.root);
+      this.spriteStructures.set(h, v);
+    }
+    v.update({ px, py, depth, color, hp, facing, visible });
+    return true;
   }
 
   private updateStructure(h: number, type: number, px: number, py: number, color: number, visible: boolean): void {

@@ -469,6 +469,12 @@ Assets are chosen per type: Blender-rendered sprites for anything that rotates, 
 | Voice cues | AI-generated voice, approach decided at M9 | TTS with robotic/radio filters per faction |
 | Music | CC0 tracks (OpenGameArt) | One menu track, 2–3 in-game loops |
 
+### Art direction (owner decision, 2026-10-11)
+
+- **Gritty**: grime and wear on every surface, harder sunlight with a cool rim light, desaturated faction palettes, team color as clear painted bands so units stay readable.
+- **Faction UI skins**: same layout, different materials. Holdout: riveted steel plates, stencil type, amber readouts. Halcyon: white glass, cyan light lines, monospace. Choir: violet crystal, amber glow.
+- **Maps**: textured terrain with smooth blends between terrain types; real rock and cliff formations and ruins instead of blocks; landmarks (ruined buildings, wrecks, craters, trees, roads, bridges); visual plateaus with cliff edges and ramps (gameplay stays flat in v1); better layouts (rivers with crossings, roads, central plazas, distinct expansions).
+
 ### Blender sprite pipeline (tools/assets)
 
 1. Each unit or building is a Python script that builds the model from primitives and modifiers in the faction's shape language (Holdout: boxy plates; Halcyon: hexes and thin struts; Choir: floating crystal shards).

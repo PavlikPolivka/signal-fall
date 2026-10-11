@@ -1,0 +1,17 @@
+{
+  "name": "@signal-fall/assets",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "atlas": "tsx pack.ts",
+    "render": "blender -b --factory-startup -P blender/render.py --",
+    "terrain": "tsx terrain.ts"
+  },
+  "devDependencies": {
+    "@signal-fall/data": "workspace:*",
+    "maxrects-packer": "2.7.3",
+    "sharp": "0.35.5"
+  }
+}

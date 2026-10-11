@@ -1,0 +1,267 @@
+{
+ "faction": "holdout",
+ "pages": 1,
+ "sprites": {
+  "grunt": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "tankbuster": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "wrench": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "jackrabbit": {
+   "kind": "vehicle",
+   "frame": 72,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "mule": {
+   "kind": "vehicle",
+   "frame": 96,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "bulldog": {
+   "kind": "vehicle",
+   "frame": 96,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "flak_track": {
+   "kind": "vehicle",
+   "frame": 80,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "thumper": {
+   "kind": "vehicle",
+   "frame": 96,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "patch": {
+   "kind": "vehicle",
+   "frame": 80,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "hornet": {
+   "kind": "air",
+   "frame": 96,
+   "dirs": 16,
+   "anims": {
+    "fly": 2
+   },
+   "turret": false
+  },
+  "ironclad": {
+   "kind": "vehicle",
+   "frame": 112,
+   "dirs": 16,
+   "anims": {
+    "idle": 1,
+    "walk": 4
+   },
+   "turret": false
+  },
+  "homestead": {
+   "kind": "vehicle",
+   "frame": 104,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "holdfast": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "dynamo": {
+   "kind": "building",
+   "frame": 176,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "smelter": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "bunkhouse": {
+   "kind": "building",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "motor_pool": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "radio_mast": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "garage": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    2
+   ]
+  },
+  "airstrip": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "foundry": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "pillbox": {
+   "kind": "building",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "flak_nest": {
+   "kind": "building",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "bastion": {
+   "kind": "building",
+   "frame": 176,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "barricade": {
+   "kind": "building",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    1,
+    1
+   ]
+  }
+ }
+}

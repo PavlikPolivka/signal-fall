@@ -12,3 +12,4 @@ out/
 supabase/.temp/
 balance-*.csv
 media/
+tools/assets/build/

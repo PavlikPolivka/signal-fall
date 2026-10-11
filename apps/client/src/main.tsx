@@ -93,6 +93,8 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.players = msg.players;
       state.localPlayer = msg.localPlayer;
       renderer.buildMap();
+      // Load rendered art for the factions in this match (placeholders draw until it arrives).
+      for (const p of msg.players) void renderer.lib.loadFaction(state.rules.factions[p.faction]!.id);
       state.ready = true;
     } else {
       const first = state.cur === null;
