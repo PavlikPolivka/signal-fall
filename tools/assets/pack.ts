@@ -27,7 +27,7 @@ const ICON_PX = 128;
 const ICON_DIR = { 8: 1, 16: 2 } as Record<number, number>;
 
 interface SpriteEntry {
-  kind: 'infantry' | 'vehicle' | 'air' | 'building';
+  kind: 'infantry' | 'vehicle' | 'air' | 'building' | 'prop';
   frame: number;
   dirs?: number;
   anims?: Record<string, number>;
@@ -107,7 +107,7 @@ async function main(): Promise<void> {
   rmSync(OUT, { recursive: true, force: true });
   rmSync(ICONS, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
-  mkdirSync(ICONS, { recursive: true });
+  if (faction !== 'props') mkdirSync(ICONS, { recursive: true });
 
   const items: Packed[] = [];
   for (const [id, entry] of Object.entries(manifest.sprites)) {
@@ -159,6 +159,7 @@ async function main(): Promise<void> {
 
   // Icons: hull/body (+ turret) composited, facing the viewer, trimmed and fit to ICON_PX.
   for (const [id, e] of Object.entries(manifest.sprites)) {
+    if ((e.kind as string) === 'prop') continue;
     const dir = e.kind === 'building' ? 0 : (ICON_DIR[e.dirs ?? 16] ?? 0);
     const base = e.kind === 'building' ? `${id}/body/built/00/0` : `${id}/hull/${Object.keys(e.anims ?? { idle: 1 })[0]}/${String(dir).padStart(2, '0')}/0`;
     const layers = [base];

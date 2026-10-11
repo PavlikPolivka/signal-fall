@@ -85,7 +85,7 @@ const BIOMES: Record<string, Record<'ground' | 'ground2' | 'rough', Look> & { wa
     water: ['1b2f3d', '355062'],
   },
   crystal: {
-    ground: { dark: '2b3a30', base: '3e5244', light: '546b59', stain: '22302a', pebble: '7a6aa0', pebbles: 3, cracks: 0.2 },
+    ground: { dark: '2c3330', base: '3d4744', light: '525d58', stain: '22302a', pebble: '7a6aa0', pebbles: 3, cracks: 0.2 },
     ground2: { dark: '34333f', base: '474659', light: '5d5b72', stain: '28273a', pebble: '9a86c8', pebbles: 3, cracks: 0.3 },
     rough: { dark: '302d3a', base: '484258', light: '615a74', stain: '231f2c', pebble: 'a08ad0', pebbles: 26, cracks: 0.15 },
     water: ['1a3448', '2f6680'],
@@ -123,7 +123,7 @@ async function ground(look: Look, seed: number, file: string): Promise<void> {
   for (let k = 0; k < count; k++) {
     const cx = Math.floor(hash(k, 1, seed) * N);
     const cy = Math.floor(hash(k, 2, seed) * N);
-    const r = 1 + hash(k, 3, seed) * 2.5;
+    const r = 0.7 + hash(k, 3, seed) * 1.3;
     for (let dy = -4; dy <= 4; dy++) {
       for (let dx = -4; dx <= 4; dx++) {
         const d = Math.hypot(dx, dy);
@@ -133,7 +133,8 @@ async function ground(look: Look, seed: number, file: string): Promise<void> {
         const i = (y * N + x) * 3;
         // Top-left lit, bottom-right shadowed.
         const lit = (-dx - dy) / (2 * r);
-        const col = mix(pebble, lit > 0 ? [255, 250, 235] : [0, 0, 0], Math.abs(lit) * 0.35);
+        const under: RGB = [px[i]!, px[i + 1]!, px[i + 2]!];
+        const col = mix(mix(under, pebble, 0.55), lit > 0 ? [255, 250, 235] : [0, 0, 0], Math.abs(lit) * 0.25);
         px[i] = col[0];
         px[i + 1] = col[1];
         px[i + 2] = col[2];

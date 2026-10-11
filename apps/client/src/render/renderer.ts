@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Matrix, Sprite, Texture } from 'pixi.js';
-import { KIND } from '@signal-fall/sim';
+import { KIND, TERRAIN } from '@signal-fall/sim';
 import { E, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
@@ -67,6 +67,8 @@ export class Renderer {
   private fogTexture: Texture | null = null;
   private fogVersion = -1;
   private echoVersion = -1;
+  private propsReady = false;
+  private echoSprites = new Map<number, Sprite>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
   placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number }; error: string | null } | null = () => null;
   /** Click feedback markers in world px. */
@@ -231,28 +233,58 @@ export class Renderer {
     this.buildFog();
   }
 
-  /** Obstacles and decorations on top of the textured terrain (until the Blender props replace them). */
-  private drawProps(): void {
+  /** Obstacle formations and decorations as rendered prop sprites, depth-sorted with units. */
+  private async drawProps(): Promise<void> {
     const s = this.state;
-    for (let cy = 0; cy < s.height; cy += CHUNK) {
-      for (let cx = 0; cx < s.width; cx += CHUNK) {
-        const g = new Graphics();
-        for (let y = cy; y < Math.min(cy + CHUNK, s.height); y++) {
-          for (let x = cx; x < Math.min(cx + CHUNK, s.width); x++) {
-            const t = s.terrain[y * s.width + x]!;
-            const px = isoX(x, y);
-            const py = isoY(x, y);
-            if (t === 2 || t === 4 || t === 5) {
-              const color = (BIOME_COLORS[s.biome] ?? BIOME_COLORS.wasteland!)[t]!;
-              g.poly([px, py - 10, px + 26, py + 3, px, py + 16, px - 26, py + 3]).fill(color + 0x161616);
-            }
-            this.drawDecoration(g, s.decoration[y * s.width + x] ?? 0, px, py + TILE_H / 2, x * 31 + y * 17);
-          }
+    await this.lib.loadFaction('props');
+    if (!this.lib.info('rock_wasteland_0')) return;
+    this.terrainLayer.children.filter((c) => c !== this.terrainLayer.children[0]).forEach((c) => c.destroy());
+    const hash = (x: number, y: number, k: number) => {
+      let h = Math.imul(x + 1, 374761393) + Math.imul(y + 1, 668265263) + Math.imul(k, 982451653);
+      h = Math.imul(h ^ (h >>> 13), 1274126177);
+      return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+    };
+    const obstacle = (t: number): string | null => {
+      if (t === TERRAIN.ruins) return 'rock_city';
+      if (t === TERRAIN.cliff) return s.biome === 'crystal' ? 'rock_crystal' : 'rock_wasteland';
+      if (t === TERRAIN.rock) return s.biome === 'crystal' ? 'rock_crystal' : 'rock_wasteland';
+      return null;
+    };
+    const DECO_IDS = ['', 'deco_rubble', 'deco_wreck', 'deco_outcrop', 'deco_tree'];
+    for (let y = 0; y < s.height; y++) {
+      for (let x = 0; x < s.width; x++) {
+        const i = y * s.width + x;
+        const ob = obstacle(s.terrain[i]!);
+        const deco = DECO_IDS[s.decoration[i] ?? 0] ?? '';
+        const id = ob ? `${ob}_${Math.floor(hash(x, y, 1) * 6)}` : deco ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}` : null;
+        if (!id) continue;
+        const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color');
+        if (!tex) continue;
+        // Jitter inside the tile, random size and mirroring so formations don't repeat.
+        const jx = (hash(x, y, 3) - 0.5) * (ob ? 0.3 : 0.6);
+        const jy = (hash(x, y, 4) - 0.5) * (ob ? 0.3 : 0.6);
+        const px = isoX(x + 0.5 + jx, y + 0.5 + jy);
+        const py = isoY(x + 0.5 + jx, y + 0.5 + jy);
+        const scale = ob ? 1.05 + hash(x, y, 5) * 0.35 : 0.85 + hash(x, y, 5) * 0.3;
+        const flip = hash(x, y, 6) < 0.5 ? -1 : 1;
+        const sh = this.lib.texture(id, 'body', 'idle', 0, 0, 'shadow');
+        if (sh) {
+          const shadow = new Sprite(sh);
+          shadow.anchor.set(0.5);
+          shadow.position.set(px, py);
+          shadow.scale.set(scale * flip, scale);
+          this.shadows.addChild(shadow);
         }
-        g.cacheAsTexture(true);
-        this.terrainLayer.addChild(g);
+        const sp = new Sprite(tex);
+        sp.anchor.set(0.5);
+        sp.position.set(px, py);
+        sp.scale.set(scale * flip, scale);
+        sp.zIndex = py;
+        this.ground.addChild(sp);
       }
     }
+    this.propsReady = true;
+    this.echoVersion = -1;
   }
 
   private drawFlatTerrain(): void {
@@ -518,6 +550,11 @@ export class Renderer {
     const s = this.state;
     if (this.echoVersion === s.echoVersion) return;
     this.echoVersion = s.echoVersion;
+    if (this.propsReady) {
+      this.echoLayer.clear();
+      this.updateEchoSprites();
+      return;
+    }
     const g = this.echoLayer;
     g.clear();
     for (let i = 0; i < s.echo.length; i++) {
@@ -537,6 +574,39 @@ export class Renderer {
         g.poly([px + ox - 5, py + oy, px + ox, py + oy - hgt, px + ox + 5, py + oy]).fill(k % 2 ? 0x9cfbff : 0x3ee6ff);
         g.poly([px + ox, py + oy - hgt, px + ox + 5, py + oy, px + ox + 1, py + oy]).fill({ color: 0x0b4f5a, alpha: 0.6 });
       }
+    }
+  }
+
+  /** Echo crystal clusters: one sprite per tile, sized by crystals left. */
+  private updateEchoSprites(): void {
+    const s = this.state;
+    for (let i = 0; i < s.echo.length; i++) {
+      const n = s.echo[i]!;
+      let sp = this.echoSprites.get(i);
+      if (n === 0) {
+        if (sp) {
+          sp.destroy();
+          this.echoSprites.delete(i);
+        }
+        continue;
+      }
+      const size = n >= 10 ? 4 : n >= 7 ? 3 : n >= 4 ? 2 : 1;
+      const tex = this.lib.texture(`echo_${size}`, 'body', 'idle', 0, 0, 'color');
+      if (!tex) continue;
+      if (!sp) {
+        const x = i % s.width;
+        const y = Math.floor(i / s.width);
+        sp = new Sprite(tex);
+        sp.anchor.set(0.5);
+        const px = isoX(x + 0.5, y + 0.5);
+        const py = isoY(x + 0.5, y + 0.5);
+        sp.position.set(px, py);
+        sp.zIndex = py - 2;
+        if (((x * 7 + y * 13) & 1) === 1) sp.scale.x = -1;
+        this.ground.addChild(sp);
+        this.echoSprites.set(i, sp);
+      }
+      sp.texture = tex;
     }
   }
 

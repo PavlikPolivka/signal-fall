@@ -1,0 +1,244 @@
+{
+ "faction": "props",
+ "pages": 1,
+ "sprites": {
+  "rock_wasteland_0": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_wasteland_1": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_wasteland_2": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_wasteland_3": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_wasteland_4": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_wasteland_5": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_city_0": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_city_1": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_city_2": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_city_3": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_city_4": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_city_5": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_crystal_0": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_crystal_1": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_crystal_2": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_crystal_3": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_crystal_4": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "rock_crystal_5": {
+   "kind": "prop",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_rubble_0": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_rubble_1": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_rubble_2": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_wreck_0": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_wreck_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_wreck_2": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_outcrop_0": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_outcrop_1": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_outcrop_2": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_tree_0": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_tree_1": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_tree_2": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_2": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_4": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  }
+ }
+}
