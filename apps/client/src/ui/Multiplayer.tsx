@@ -4,6 +4,8 @@ import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
 import { makeSignaling, signalingKind } from '../net/connect';
 import type { PeerLink } from '../net/webrtc';
+import { Logo } from './Logo';
+import { MenuVideo } from './Video';
 
 const NAME_KEY = 'signalfall.name';
 
@@ -54,7 +56,9 @@ export function Multiplayer({
   if (!lobby) {
     return (
       <div class="setup mp" data-testid="multiplayer">
+        <MenuVideo />
         <div class="setup-panel">
+          <Logo size={30} />
           <h1>Multiplayer</h1>
           <p class="muted small">1v1 over a direct peer-to-peer connection. Signaling: {signalingKind()}.</p>
           <label class="choice">
@@ -96,6 +100,7 @@ export function Multiplayer({
         : 'Connecting…';
   return (
     <div class="setup mp" data-testid="lobby">
+      <MenuVideo />
       <div class="setup-panel">
         <h1>
           Room <span class="room-code" data-testid="room-code">{s?.code ?? code}</span>

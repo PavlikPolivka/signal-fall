@@ -8,6 +8,7 @@ import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
 import { Setup, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
+import { Cutscene, introToPlay, markIntroSeen } from './ui/Video';
 import { NetSession, degrade } from './net/session';
 import type { PeerLink } from './net/webrtc';
 import type { Difficulty } from '@signal-fall/ai';
@@ -209,8 +210,25 @@ function renderUi(): void {
         }}
         rules={state.rules}
         onStart={(settings) => {
-          scenario = scenarioFromSetup(settings);
-          renderUi();
+          void (async () => {
+            const begin = () => {
+              scenario = scenarioFromSetup(settings);
+              renderUi();
+            };
+            // The intro plays once, before the first match.
+            const intro = await introToPlay();
+            if (!intro) return begin();
+            render(
+              <Cutscene
+                src={intro}
+                onDone={() => {
+                  markIntroSeen();
+                  begin();
+                }}
+              />,
+              root,
+            );
+          })();
         }}
       />,
       root,

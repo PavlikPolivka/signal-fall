@@ -79,6 +79,8 @@ export class Renderer {
   private echoVersion = -1;
   private propsReady = false;
   private echoSprites = new Map<number, Sprite>();
+  /** Shields per entity last frame: a drop means a hit, shown as a shimmer. */
+  private lastShields = new Map<number, number>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
   placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number }; error: string | null } | null = () => null;
   /** Click feedback markers in world px. */
@@ -569,6 +571,11 @@ export class Renderer {
       const maxHp = cur.get(o, E.maxHp);
       const sh = cur.get(o, E.shields);
       const maxSh = cur.get(o, E.maxShields);
+      if (maxSh > 0) {
+        const before = this.lastShields.get(h);
+        if (before !== undefined && sh < before) this.effects.shieldHit(px, py - lift - (kind === KIND.structure ? 30 : 10), kind === KIND.structure ? 2.2 : 0.8);
+        this.lastShields.set(h, sh);
+      }
       if (isSel || hp < maxHp || sh < maxSh) {
         const w = kind === KIND.structure ? 48 : 22;
         const top = py - lift - (kind === KIND.structure ? 56 : 20);
@@ -577,7 +584,7 @@ export class Renderer {
         this.overlay.rect(px - w / 2, top, w * frac, 3).fill(frac > 0.6 ? 0x4ade80 : frac > 0.3 ? 0xfacc15 : 0xef4444);
         if (maxSh > 0) {
           this.overlay.rect(px - w / 2, top - 3, w, 2).fill(0x111111);
-          this.overlay.rect(px - w / 2, top - 3, (w * sh) / maxSh, 2).fill(0x60a5fa);
+          this.overlay.rect(px - w / 2, top - 3, (w * sh) / maxSh, 2).fill(0xb48cff);
         }
         const cargo = cur.get(o, E.cargo);
         if (cargo > 0) this.overlay.rect(px - w / 2, top + 4, (w * Math.min(700, cargo)) / 700, 2).fill(0x3ee6ff);
@@ -615,6 +622,7 @@ export class Renderer {
       this.rendered.delete(h);
     }
     this.deaths = this.deaths.filter((d) => d.update());
+    for (const h of this.lastShields.keys()) if (!seen.has(h)) this.lastShields.delete(h);
 
     // Projectiles: tracer dots interpolated between origin and impact.
     for (let i = 0; i < cur.projectileCount; i++) {

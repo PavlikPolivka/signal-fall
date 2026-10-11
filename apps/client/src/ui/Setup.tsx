@@ -5,6 +5,8 @@ import { generateMap, type Biome, type MapSize, type Resources, type TerrainStyl
 import { BIOME_COLORS } from '../render/renderer';
 import { TEAM_COLORS } from '../game/state';
 import { Codex } from './Codex';
+import { Logo } from './Logo';
+import { MenuVideo } from './Video';
 import { Credits } from './Credits';
 
 export interface SkirmishSettings {
@@ -116,8 +118,9 @@ export function Setup({ rules, onStart, onMultiplayer }: { rules: Rules; onStart
 
   return (
     <div class="setup" data-testid="setup">
+      <MenuVideo />
       <div class="setup-panel">
-        <h1>Signal Fall</h1>
+        <Logo />
         <p class="muted">Skirmish vs AI</p>
         <Choice label="You play" value={s.faction} options={factions} onChange={(v) => set({ faction: v })} testid="faction" />
         <Choice label="Opponent" value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />

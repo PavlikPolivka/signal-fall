@@ -6,25 +6,42 @@ builders return named part lists (hull / turret / body / joints).
 import math
 
 from kit import box, cone, cylinder, hexprism, material, root, strut, wedge
-from mathutils import Vector
+from mathutils import Euler, Vector
 
 TEAM_GREY = "d8d8d8"
 
 
 def mats(style, team=None):
+    # Halcyon is manufactured: smooth "sleek" shells regardless of the global grit; only the ground pads weather.
+    sl = "sleek"
     return {
-        "shell": material("hc_shell", "e4e8ea", rough=0.35, style=style),
-        "shell_dim": material("hc_shell_dim", "b9c0c4", rough=0.4, style=style),
-        "graphite": material("hc_graphite", "2b2f36", rough=0.5, metal=0.3, style=style),
-        "graphite_dark": material("hc_graphite_dark", "1a1d22", rough=0.6, metal=0.3, style=style),
-        "metal": material("hc_metal", "7d868d", rough=0.3, metal=0.8, style=style),
-        "glass": material("hc_glass", "16303a", rough=0.1, metal=0.4, style=style),
-        "cyan": material("hc_cyan", "3ee6ff", emission="1fc8ec", style=style),
-        "cyan_dim": material("hc_cyan_dim", "2a9fb5", emission="137a8f", style=style),
-        "fire": material("hc_fire", "bff6ff", emission="6fe9ff", style=style),
-        "pad": material("hc_pad", "9aa3a8", rough=0.8, style=style),
-        "team": material("team", team or TEAM_GREY, style=style),
+        "shell": material("hc_shell", "e6eaec", rough=0.32, style=sl),
+        "shell_dim": material("hc_shell_dim", "c3cace", rough=0.38, style=sl),
+        "graphite": material("hc_graphite", "2b2f36", rough=0.45, metal=0.3, style=sl),
+        "graphite_dark": material("hc_graphite_dark", "191c21", rough=0.5, metal=0.3, style=sl),
+        "metal": material("hc_metal", "8a939a", rough=0.28, metal=0.85, style=sl),
+        "glass": material("hc_glass", "122a33", rough=0.06, metal=0.5, style=sl),
+        "cyan": material("hc_cyan", "3ee6ff", emission="1fc8ec", style=sl),
+        "cyan_dim": material("hc_cyan_dim", "2a9fb5", emission="137a8f", style=sl),
+        "fire": material("hc_fire", "bff6ff", emission="6fe9ff", style=sl),
+        "pad": material("hc_pad", "8f989d", rough=0.8, style=style),
+        "pad_dark": material("hc_pad_dark", "5d656a", rough=0.8, style=style),
+        "team": material("team", team or TEAM_GREY, rough=0.35, style=sl),
     }
+
+
+def trim(objs, m):
+    """Graphite trim strips along the top edges of a box-like part: panel lines that read at sprite size."""
+    out = []
+    for o in objs:
+        d = o.dimensions
+        x, y, z = o.location
+        top = z + d.z / 2
+        out.append(box("trim", (d.x + 0.01, 0.025, 0.025), (x, y + d.y / 2, top - 0.02), m["graphite"]))
+        out.append(box("trim", (d.x + 0.01, 0.025, 0.025), (x, y - d.y / 2, top - 0.02), m["graphite"]))
+        out.append(box("trim", (0.025, d.y + 0.01, 0.025), (x + d.x / 2, y, top - 0.02), m["graphite"]))
+        out.append(box("trim", (0.025, d.y + 0.01, 0.025), (x - d.x / 2, y, top - 0.02), m["graphite"]))
+    return out
 
 
 def joint(name, loc, parent=None):
@@ -77,7 +94,7 @@ def bot(style, team, kit="rifle"):
     flash_at = None
     if kit == "rifle":
         parts += attach([box("emitter", (0.18, 0.03, 0.035), (0.11, -0.03, 0.28), m["shell_dim"])], torso)
-        parts += attach([box("emitter_line", (0.16, 0.032, 0.008), (0.11, -0.03, 0.3), m["cyan"])], torso)
+        parts += attach([box("emitter_line", (0.12, 0.012, 0.006), (0.12, -0.03, 0.3), m["cyan"])], torso)
         flash_at = (0.21, -0.03, 0.28)
     elif kit == "launcher":
         parts += attach([hexprism("pod", 0.045, 0.22, (0.02, -0.08, 0.38), m["shell"], rot=(0, math.pi / 2, 0))], torso)
@@ -294,169 +311,250 @@ def init(style, team=None):
 
 def pad(w, d, m, h=0.08):
     out = [box("pad", (w - 0.06, d - 0.06, h), (0, 0, h / 2), m["pad"], bevel=0.02)]
+    out.append(box("pad_rim", (w - 0.02, d - 0.02, h * 0.6), (0, 0, h * 0.3), m["pad_dark"]))
     # Cyan seam lines around the pad: every building is a network node.
-    out.append(box("seam", (w - 0.2, 0.02, 0.01), (0, -(d - 0.2) / 2, h + 0.005), m["cyan_dim"]))
-    out.append(box("seam", (0.02, d - 0.2, 0.01), ((w - 0.2) / 2, 0, h + 0.005), m["cyan_dim"]))
+    for sx, sy, lx, ly in ((0, -1, w - 0.25, 0.02), (0, 1, w - 0.25, 0.02), (1, 0, 0.02, d - 0.25), (-1, 0, 0.02, d - 0.25)):
+        out.append(box("seam", (lx, ly, 0.01), (sx * (w - 0.25) / 2, sy * (d - 0.25) / 2, h + 0.005), m["cyan_dim"]))
+    return out
+
+
+def light_slits(x, y, z, r, n, h, m, phase=0.0):
+    """Vertical glowing slits around a hex/cylindrical core."""
+    out = []
+    for k in range(n):
+        a = phase + k * 2 * math.pi / n
+        out.append(box("slit", (0.03, 0.06, h), (x + r * math.cos(a), y + r * math.sin(a), z), m["cyan"], rot=(0, 0, a)))
     return out
 
 
 def kernel(style, team=None):
-    """Construction yard / core node: stacked hex tower with a floating data ring."""
+    """Construction yard / core node: buttressed hex tower, glowing slits, a floating ring of data segments, antenna."""
     m = mats(style, team)
     b = pad(3, 3, m)
-    b.append(hexprism("base", 1.2, 0.35, (0, 0, 0.26), m["shell"], bevel=0.03))
-    b.append(hexprism("tower", 0.7, 0.9, (0, 0, 0.88), m["shell_dim"], bevel=0.03))
-    b.append(hexprism("crown", 0.5, 0.3, (0, 0, 1.48), m["shell"], bevel=0.03))
-    b.append(hexprism("core", 0.28, 1.6, (0, 0, 0.9), m["cyan_dim"]))
-    b.append(cylinder("ring", 0.95, 0.05, (0, 0, 1.2), m["cyan"], verts=6))
-    b.append(hexprism("team_band", 1.21, 0.08, (0, 0, 0.34), m["team"]))
-    for k in range(3):
-        a = k * 2 * math.pi / 3
-        b.append(box("arm", (0.7, 0.12, 0.1), (0.95 * math.cos(a), 0.95 * math.sin(a), 0.5), m["graphite"], rot=(0, 0, a)))
+    b.append(hexprism("base", 1.25, 0.28, (0, 0, 0.22), m["shell_dim"], bevel=0.03))
+    for k in range(6):
+        a = k * math.pi / 3 + math.pi / 6
+        b.append(wedge("buttress", (0.5, 0.16, 0.55), (0.9 * math.cos(a), 0.9 * math.sin(a), 0.5), m["shell"], rot=(0, 0, a), taper=0.3))
+    b.append(hexprism("tower", 0.66, 1.0, (0, 0, 0.88), m["shell"], bevel=0.03))
+    b += light_slits(0, 0, 0.9, 0.6, 6, 0.7, m, math.pi / 6)
+    b.append(hexprism("collar", 0.74, 0.08, (0, 0, 1.42), m["graphite"]))
+    b.append(hexprism("crown", 0.48, 0.32, (0, 0, 1.62), m["shell_dim"], bevel=0.03))
+    b.append(hexprism("crown_glow", 0.3, 0.34, (0, 0, 1.63), m["cyan_dim"]))
+    for k in range(6):
+        a = k * math.pi / 3
+        b.append(box("ring_seg", (0.36, 0.06, 0.05), (1.05 * math.cos(a), 1.05 * math.sin(a), 1.25), m["cyan"], rot=(0, 0, a + math.pi / 2)))
+    b.append(cylinder("antenna", 0.02, 0.6, (0, 0, 2.08), m["metal"], verts=6))
+    b.append(cylinder("antenna_tip", 0.05, 0.05, (0, 0, 2.4), m["cyan"], verts=8))
+    b.append(hexprism("team_band", 1.26, 0.07, (0, 0, 0.32), m["team"]))
+    b.append(hexprism("team_crown", 0.49, 0.06, (0, 0, 1.79), m["team"]))
     return {"body": b}
 
 
 def powerd(style, team=None):
-    """Power daemon: a glowing reactor cell in a white hex housing with cooling fins."""
+    """Power daemon: a reactor cell glowing through slots in a white housing, tall fins, conduits to the pad."""
     m = mats(style, team)
     b = pad(2, 2, m)
-    b.append(hexprism("housing", 0.62, 0.55, (0, 0, 0.36), m["shell"], bevel=0.03))
-    b.append(hexprism("cell", 0.32, 0.7, (0, 0, 0.6), m["cyan"]))
-    b.append(hexprism("cap", 0.4, 0.06, (0, 0, 0.97), m["graphite"]))
+    b.append(hexprism("housing", 0.6, 0.62, (0, 0, 0.39), m["shell"], bevel=0.03))
+    b += light_slits(0, 0, 0.42, 0.55, 6, 0.45, m)
+    b.append(hexprism("cell", 0.28, 0.5, (0, 0, 0.92), m["cyan"]))
+    for k in range(3):
+        a = k * 2 * math.pi / 3
+        b.append(box("cell_cage", (0.04, 0.04, 0.5), (0.3 * math.cos(a), 0.3 * math.sin(a), 0.92), m["metal"]))
+    b.append(hexprism("cap", 0.36, 0.07, (0, 0, 1.2), m["graphite"]))
     for k in range(6):
         a = k * math.pi / 3
-        b.append(box("fin", (0.3, 0.03, 0.45), (0.72 * math.cos(a), 0.72 * math.sin(a), 0.32), m["shell_dim"], rot=(0, 0, a)))
-    b.append(hexprism("team_band", 0.63, 0.06, (0, 0, 0.5), m["team"]))
+        b.append(wedge("fin", (0.3, 0.035, 0.7), (0.76 * math.cos(a), 0.76 * math.sin(a), 0.42), m["shell_dim"], rot=(0, 0, a), taper=0.4))
+    b.append(cylinder("conduit", 0.05, 0.5, (0.55, -0.55, 0.15), m["graphite"], rot=(0, math.pi / 2, math.pi / 4), verts=8))
+    b.append(hexprism("team_band", 0.61, 0.07, (0, 0, 0.66), m["team"]))
     return {"body": b}
 
 
 def ingest(style, team=None):
-    """Refinery: funnel intake, processing block and the dock on the front (-y) side."""
+    """Refinery: twin intake funnels on a processor, a conveyor arm to the dock on the front (-y) side, Echo tanks."""
     m = mats(style, team)
     b = pad(3, 3, m)
-    b.append(box("processor", (1.5, 1.2, 0.7), (-0.5, 0.5, 0.43), m["shell"], bevel=0.04))
-    b.append(box("processor_top", (1.3, 1.0, 0.08), (-0.5, 0.5, 0.82), m["graphite"]))
-    b.append(cone("funnel", 0.5, 0.22, 0.5, (0.7, 0.6, 0.6), m["shell_dim"], verts=6))
-    b.append(cylinder("funnel_glow", 0.22, 0.02, (0.7, 0.6, 0.86), m["cyan"], verts=6))
+    proc = box("processor", (1.5, 1.2, 0.72), (-0.5, 0.5, 0.44), m["shell"], bevel=0.04)
+    b.append(proc)
+    b += trim([proc], m)
+    b.append(box("processor_top", (1.3, 1.0, 0.08), (-0.5, 0.5, 0.84), m["graphite"]))
+    for fx, fy in ((-0.85, 0.75), (-0.2, 0.75)):
+        b.append(cone("funnel", 0.3, 0.12, 0.4, (fx, fy, 1.08), m["shell_dim"], verts=6))
+        b.append(cylinder("funnel_glow", 0.13, 0.02, (fx, fy, 1.29), m["cyan"], verts=6))
+    for k in range(2):
+        b.append(cylinder("echo_tank", 0.22, 0.6, (0.75, 0.25 + k * 0.55, 0.38), material("hc_echo", "2fb7c9", emission="12707d", style="sleek"), verts=12))
+        b.append(cylinder("tank_cap", 0.24, 0.05, (0.75, 0.25 + k * 0.55, 0.7), m["graphite"], verts=12))
+    b.append(strut(Vector((-0.2, 0.0, 0.7)), Vector((0.3, -0.75, 0.3)), 0.06, m["metal"]))
     b.append(box("dock", (0.9, 0.55, 0.12), (0.3, -1.05, 0.12), m["graphite"]))
     b.append(box("dock_glow", (0.8, 0.02, 0.02), (0.3, -0.8, 0.19), m["cyan"]))
-    b.append(box("echo_tank", (0.6, 0.4, 0.3), (-0.5, -0.35, 0.25), material("hc_echo", "2a8f9e", emission="135c66", style=style)))
-    b.append(box("team_band", (1.52, 1.22, 0.08), (-0.5, 0.5, 0.6), m["team"]))
+    b.append(box("window", (1.2, 0.012, 0.1), (-0.5, -0.105, 0.55), m["cyan_dim"]))
+    b.append(box("team_band", (1.52, 1.22, 0.07), (-0.5, 0.5, 0.62), m["team"]))
     return {"body": b}
 
 
 def spawn_bld(style, team=None):
-    """Barracks: a bot printer: open frame with a print bed and gantry."""
+    """Barracks: a bot printer: glass canopy over a print bed with a half-printed bot and a gantry head."""
     m = mats(style, team)
     b = pad(2, 2, m)
-    b.append(box("printer", (1.2, 1.0, 0.55), (-0.15, 0.1, 0.36), m["shell"], bevel=0.03))
-    b.append(box("bay", (0.04, 0.6, 0.4), (0.46, 0.1, 0.3), m["glass"]))
-    b.append(box("bay_glow", (0.045, 0.6, 0.02), (0.465, 0.1, 0.52), m["cyan"]))
-    b.append(box("gantry", (1.3, 0.08, 0.08), (-0.15, -0.45, 0.75), m["graphite"]))
-    for x in (-0.75, 0.45):
-        b.append(box("gantry_leg", (0.06, 0.06, 0.7), (x, -0.45, 0.4), m["graphite"]))
-    b.append(box("team_band", (1.22, 1.02, 0.06), (-0.15, 0.1, 0.5), m["team"]))
+    base = box("printer_base", (1.3, 1.1, 0.25), (-0.1, 0.1, 0.2), m["shell"], bevel=0.03)
+    b.append(base)
+    b += trim([base], m)
+    b.append(box("bed", (0.7, 0.6, 0.03), (-0.1, 0.1, 0.34), m["cyan_dim"]))
+    for x in (-0.65, 0.45):
+        for y in (-0.35, 0.55):
+            b.append(box("post", (0.05, 0.05, 0.7), (x, y, 0.65), m["graphite"]))
+    b.append(box("canopy", (1.15, 0.95, 0.04), (-0.1, 0.1, 1.0), m["glass"]))
+    b.append(box("gantry", (1.15, 0.06, 0.06), (-0.1, 0.1, 0.93), m["metal"]))
+    b.append(box("head", (0.12, 0.12, 0.12), (0.05, 0.1, 0.85), m["shell_dim"]))
+    b.append(box("head_glow", (0.04, 0.04, 0.06), (0.05, 0.1, 0.77), m["cyan"]))
+    # The bot being printed: legs and half a torso.
+    for y in (0.05, 0.15):
+        b.append(box("bot_leg", (0.04, 0.035, 0.18), (-0.15, y, 0.45), m["shell"]))
+    b.append(hexprism("bot_core", 0.07, 0.07, (-0.15, 0.1, 0.58), m["shell"]))
+    b.append(box("team_band", (1.32, 1.12, 0.06), (-0.1, 0.1, 0.27), m["team"]))
     return {"body": b}
 
 
 def make(style, team=None):
-    """Vehicle fabricator: long white hall with a glowing fabrication slot and robot arms."""
+    """Vehicle fabricator: a hall of hex roof panels, a cyan-framed bay door, an overhead crane on the apron."""
     m = mats(style, team)
     b = pad(3, 3, m)
-    b.append(box("hall", (2.2, 1.8, 0.8), (-0.2, 0.2, 0.5), m["shell"], bevel=0.05))
-    b.append(wedge("roof", (2.2, 1.8, 0.2), (-0.2, 0.2, 1.0), m["shell_dim"], taper=0.7))
-    b.append(box("slot", (0.04, 1.1, 0.6), (0.91, 0.2, 0.42), m["graphite_dark"]))
-    b.append(box("slot_glow", (0.05, 1.1, 0.03), (0.915, 0.2, 0.74), m["cyan"]))
-    for y in (-0.5, 0.9):
-        b.append(strut(Vector((1.0, y, 0.1)), Vector((1.2, y * 0.6, 0.7)), 0.04, m["metal"]))
-    b.append(box("team_band", (2.22, 1.82, 0.08), (-0.2, 0.2, 0.7), m["team"]))
+    hall = box("hall", (2.0, 1.8, 0.8), (-0.3, 0.2, 0.5), m["shell"], bevel=0.05)
+    b.append(hall)
+    b += trim([hall], m)
+    for i in range(4):
+        for j in range(3):
+            b.append(hexprism("roof_panel", 0.24, 0.05, (-1.0 + i * 0.47, -0.4 + j * 0.6, 0.93), m["shell_dim"] if (i + j) % 2 else m["graphite"]))
+    b.append(box("door", (0.04, 1.1, 0.62), (0.71, 0.2, 0.42), m["graphite_dark"]))
+    for dy in (-0.36, 0.76):
+        b.append(box("door_frame", (0.06, 0.05, 0.66), (0.72, dy, 0.44), m["cyan"]))
+    b.append(box("door_lintel", (0.06, 1.17, 0.05), (0.72, 0.2, 0.76), m["cyan"]))
+    for y in (-0.7, 1.05):
+        b.append(box("crane_leg", (0.07, 0.07, 1.0), (1.15, y, 0.55), m["graphite"]))
+    b.append(box("crane_beam", (0.1, 1.85, 0.1), (1.15, 0.18, 1.08), m["metal"]))
+    b.append(box("crane_head", (0.16, 0.2, 0.14), (1.15, 0.35, 0.96), m["shell_dim"]))
+    b.append(box("apron", (0.7, 1.4, 0.02), (1.15, 0.2, 0.09), m["pad_dark"]))
+    b.append(box("team_band", (2.02, 1.82, 0.07), (-0.3, 0.2, 0.7), m["team"]))
     return {"body": b}
 
 
 def scan(style, team=None):
-    """Radar: a phased-array panel on a hex pylon."""
+    """Radar: a hex-tiled phased array on a pylon, with a sensor dome and a small equipment hut."""
     m = mats(style, team)
     b = pad(2, 2, m)
-    b.append(hexprism("pylon", 0.3, 1.2, (0, 0, 0.66), m["shell"], bevel=0.02))
-    b.append(box("array", (0.08, 1.1, 0.8), (0.1, 0, 1.5), m["shell_dim"], rot=(0, math.radians(-20), 0), bevel=0.02))
-    for k in range(4):
-        b.append(box("array_line", (0.09, 1.0, 0.015), (0.12, 0, 1.25 + k * 0.17), m["cyan"], rot=(0, math.radians(-20), 0)))
-    b.append(box("hut", (0.5, 0.45, 0.3), (-0.5, -0.5, 0.23), m["graphite"], bevel=0.02))
-    b.append(hexprism("team_band", 0.31, 0.08, (0, 0, 0.5), m["team"]))
+    b.append(hexprism("pylon", 0.26, 1.1, (0, 0, 0.62), m["shell"], bevel=0.02))
+    b.append(cylinder("bearing", 0.3, 0.1, (0, 0, 1.2), m["graphite"], verts=12))
+    tilt = (0, math.radians(-25), math.radians(20))
+    b.append(box("array", (0.07, 1.1, 0.75), (0.08, 0, 1.6), m["graphite"], rot=tilt, bevel=0.02))
+    for i in range(3):
+        for j in range(4):
+            p = Vector((0.12, -0.39 + j * 0.26, -0.24 + i * 0.24))
+            p.rotate(Euler(tilt))
+            b.append(hexprism("cell", 0.1, 0.03, (p.x, p.y, 1.6 + p.z), m["shell_dim"] if (i + j) % 2 else m["cyan_dim"], rot=(0, math.radians(90 - 25), math.radians(20))))
+    b.append(cylinder("dome", 0.18, 0.18, (-0.55, -0.55, 0.4), m["shell"], verts=12))
+    b.append(cone("dome_top", 0.18, 0.0, 0.12, (-0.55, -0.55, 0.55), m["cyan_dim"], verts=12))
+    b.append(box("hut", (0.45, 0.4, 0.28), (0.5, -0.55, 0.22), m["graphite"], bevel=0.02))
+    b.append(hexprism("team_band", 0.27, 0.07, (0, 0, 0.5), m["team"]))
     return {"body": b}
 
 
 def relay(style, team=None):
-    """Relay node (1x1): thin pylon with a floating coverage ring."""
+    """Relay node (1x1): tripod pylon with stacked coverage rings."""
     m = mats(style, team)
-    b = [hexprism("foot", 0.4, 0.12, (0, 0, 0.06), m["pad"])]
-    b.append(hexprism("pylon", 0.1, 1.0, (0, 0, 0.6), m["shell"]))
-    b.append(cylinder("ring", 0.32, 0.03, (0, 0, 1.05), m["cyan"], verts=6))
-    b.append(cylinder("ring2", 0.22, 0.03, (0, 0, 0.8), m["cyan_dim"], verts=6))
-    b.append(hexprism("tip", 0.06, 0.12, (0, 0, 1.16), m["cyan"]))
-    b.append(hexprism("team_band", 0.11, 0.08, (0, 0, 0.3), m["team"]))
+    b = [hexprism("foot", 0.4, 0.1, (0, 0, 0.05), m["pad"])]
+    for k in range(3):
+        a = k * 2 * math.pi / 3
+        b.append(strut(Vector((0.32 * math.cos(a), 0.32 * math.sin(a), 0.08)), Vector((0, 0, 0.6)), 0.025, m["graphite"]))
+    b.append(hexprism("pylon", 0.08, 1.0, (0, 0, 0.62), m["shell"]))
+    b.append(cylinder("ring", 0.3, 0.025, (0, 0, 1.08), m["cyan"], verts=6))
+    b.append(cylinder("ring2", 0.22, 0.025, (0, 0, 0.88), m["cyan_dim"], verts=6))
+    b.append(hexprism("tip", 0.06, 0.14, (0, 0, 1.2), m["cyan"]))
+    b.append(hexprism("team_band", 0.09, 0.08, (0, 0, 0.4), m["team"]))
     return {"body": b}
 
 
 def launchd(style, team=None):
-    """Airfield: hex landing pad with light ring and a launch rail tower."""
+    """Airfield: hex landing pad with light ring, a slim control tower and a launch rail with a parked drone."""
     m = mats(style, team)
     b = pad(3, 3, m, h=0.06)
     b.append(hexprism("landing", 0.95, 0.06, (0.3, -0.3, 0.1), m["graphite"]))
-    b.append(cylinder("landing_ring", 0.8, 0.012, (0.3, -0.3, 0.135), m["cyan"], verts=6))
-    b.append(hexprism("team_mark", 0.3, 0.014, (0.3, -0.3, 0.14), m["team"]))
-    b.append(box("tower", (0.6, 0.6, 0.9), (-0.9, 0.9, 0.5), m["shell"], bevel=0.03))
-    b.append(box("tower_glass", (0.02, 0.5, 0.18), (-0.59, 0.9, 0.82), m["glass"]))
-    b.append(box("rail", (1.2, 0.1, 0.06), (-0.2, 1.0, 0.7), m["metal"], rot=(0, math.radians(-12), 0)))
+    b.append(cylinder("landing_ring", 0.82, 0.012, (0.3, -0.3, 0.135), m["cyan"], verts=6))
+    b.append(hexprism("team_mark", 0.28, 0.014, (0.3, -0.3, 0.14), m["team"]))
+    for k in range(6):
+        a = k * math.pi / 3
+        b.append(cylinder("pad_light", 0.03, 0.03, (0.3 + 0.9 * math.cos(a), -0.3 + 0.9 * math.sin(a), 0.14), m["cyan"], verts=6))
+    tower = box("tower", (0.36, 0.36, 1.0), (-0.95, 0.95, 0.55), m["shell"], bevel=0.03)
+    b.append(tower)
+    b.append(box("tower_cab", (0.56, 0.56, 0.24), (-0.95, 0.95, 1.15), m["shell_dim"], bevel=0.03))
+    b.append(box("tower_glass", (0.58, 0.58, 0.08), (-0.95, 0.95, 1.16), m["glass"]))
+    b.append(box("rail", (1.3, 0.12, 0.05), (0.2, 1.0, 0.4), m["metal"], rot=(0, math.radians(-12), 0)))
+    for x in (-0.3, 0.6):
+        b.append(box("rail_post", (0.05, 0.05, 0.4), (x, 1.0, 0.2), m["graphite"]))
+    b.append(wedge("parked", (0.4, 0.5, 0.05), (0.15, 1.0, 0.5), m["shell"], rot=(0, math.radians(-12), 0), taper=0.2))
     return {"body": b}
 
 
 def sudo(style, team=None):
-    """Tech center: racks of server monoliths under a canopy, glowing data lines."""
+    """Tech center: server monoliths around a holo-projector, under a cantilevered canopy."""
     m = mats(style, team)
     b = pad(3, 3, m)
-    for i in range(4):
-        x = -0.9 + i * 0.6
-        b.append(box("rack", (0.4, 0.9, 1.0 + 0.15 * (i % 2)), (x, 0.3, 0.6 + 0.075 * (i % 2)), m["graphite"], bevel=0.02))
-        b.append(box("rack_light", (0.41, 0.02, 0.8), (x, -0.155, 0.6), m["cyan_dim"]))
-    b.append(box("canopy", (2.6, 1.4, 0.06), (0, 0.3, 1.35), m["shell"]))
-    b.append(hexprism("antenna", 0.08, 0.6, (0.9, -0.9, 0.4), m["shell"]))
-    b.append(box("team_band", (2.6, 1.4, 0.04), (0, 0.3, 1.4), m["team"]))
+    for i in range(5):
+        a = math.pi * 0.15 + i * math.pi * 0.28
+        x, y = 0.95 * math.cos(a), 0.95 * math.sin(a) - 0.2
+        b.append(box("rack", (0.32, 0.4, 1.0 + 0.12 * (i % 2)), (x, y, 0.6 + 0.06 * (i % 2)), m["graphite"], rot=(0, 0, a), bevel=0.02))
+        b.append(box("rack_light", (0.02, 0.3, 0.8), (x - 0.17 * math.cos(a), y - 0.17 * math.sin(a), 0.6), m["cyan_dim"], rot=(0, 0, a)))
+    b.append(hexprism("projector", 0.32, 0.25, (0, -0.2, 0.2), m["shell"]))
+    b.append(cone("holo", 0.04, 0.42, 0.7, (0, -0.2, 0.7), material("hc_holo", "7ff0ff", emission="2fd8f5", style="sleek"), verts=12))
+    b.append(hexprism("holo_core", 0.12, 0.12, (0, -0.2, 0.75), m["cyan"]))
+    b.append(box("canopy", (1.4, 1.0, 0.05), (-0.6, 0.7, 1.4), m["shell"], rot=(0, math.radians(6), 0)))
+    b.append(box("canopy_arm", (0.08, 0.08, 1.4), (-1.15, 1.05, 0.72), m["graphite"]))
+    b.append(box("team_band", (1.41, 1.01, 0.04), (-0.6, 0.7, 1.44), m["team"]))
     return {"body": b}
 
 
 def guard(style, team=None):
-    """Laser turret (1x1): hex base, rotating emitter."""
+    """Laser turret (1x1): stepped hex base, rotating emitter head."""
     m = mats(style, team)
-    b = [hexprism("base", 0.42, 0.3, (0, 0, 0.15), m["shell"], bevel=0.02)]
-    b.append(hexprism("team_band", 0.43, 0.06, (0, 0, 0.22), m["team"]))
-    turret = [cylinder("head", 0.18, 0.16, (0, 0, 0.4), m["graphite"], verts=10)]
-    turret.append(box("emitter", (0.4, 0.07, 0.07), (0.25, 0, 0.42), m["metal"]))
-    turret.append(box("emitter_glow", (0.36, 0.075, 0.015), (0.26, 0, 0.46), m["cyan"]))
+    b = [hexprism("base", 0.44, 0.18, (0, 0, 0.09), m["shell_dim"], bevel=0.02)]
+    b.append(hexprism("base2", 0.34, 0.16, (0, 0, 0.25), m["shell"], bevel=0.02))
+    b.append(hexprism("team_band", 0.35, 0.05, (0, 0, 0.27), m["team"]))
+    turret = [cylinder("head", 0.18, 0.16, (0, 0, 0.42), m["graphite"], verts=10)]
+    turret.append(box("cowl", (0.3, 0.22, 0.1), (0.05, 0, 0.52), m["shell"], bevel=0.02))
+    turret.append(box("emitter", (0.38, 0.06, 0.06), (0.28, 0, 0.45), m["metal"]))
+    turret.append(cylinder("lens", 0.045, 0.03, (0.47, 0, 0.45), m["cyan"], rot=(0, math.pi / 2, 0), verts=8))
     return {"body": b, "turret": turret}
 
 
 def filter_bld(style, team=None):
-    """AA defense (2x2): ring of fins around a turret that fires flak bursts upward."""
+    """AA defense (2x2): ring of radiator fins around a twin-barrel flak turret."""
     m = mats(style, team)
     b = pad(2, 2, m, h=0.06)
     b.append(hexprism("base", 0.7, 0.3, (0, 0, 0.21), m["shell"], bevel=0.03))
+    for k in range(6):
+        a = k * math.pi / 3 + math.pi / 6
+        b.append(wedge("fin", (0.22, 0.04, 0.4), (0.78 * math.cos(a), 0.78 * math.sin(a), 0.26), m["shell_dim"], rot=(0, 0, a), taper=0.3))
     b.append(hexprism("team_band", 0.71, 0.06, (0, 0, 0.28), m["team"]))
     turret = [cylinder("ring", 0.3, 0.1, (0, 0, 0.42), m["graphite"], verts=12)]
+    turret.append(box("cradle", (0.32, 0.4, 0.18), (0, 0, 0.56), m["shell"], bevel=0.03))
     for dy in (-0.12, 0.12):
-        turret.append(box("barrel", (0.5, 0.06, 0.06), (0.2, dy, 0.65), m["metal"], rot=(0, math.radians(-45), 0)))
-    turret.append(box("glow", (0.2, 0.3, 0.02), (0.05, 0, 0.55), m["cyan"]))
+        turret.append(box("barrel", (0.55, 0.06, 0.06), (0.22, dy, 0.72), m["metal"], rot=(0, math.radians(-45), 0)))
+        turret.append(box("barrel_glow", (0.05, 0.065, 0.065), (0.42, dy, 0.92), m["cyan"], rot=(0, math.radians(-45), 0)))
     return {"body": b, "turret": turret}
 
 
 def sigkill(style, team=None):
-    """Heavy defense (2x2): long-range energy cannon on an armored hex plinth."""
+    """Heavy defense (2x2): long-range rail cannon on an armored hex plinth with capacitor banks."""
     m = mats(style, team)
     b = pad(2, 2, m)
     b.append(hexprism("plinth", 0.85, 0.45, (0, 0, 0.3), m["shell_dim"], bevel=0.04))
-    b.append(hexprism("team_band", 0.86, 0.08, (0, 0, 0.42), m["team"]))
+    for k in range(3):
+        a = k * 2 * math.pi / 3 + math.pi / 2
+        b.append(box("capacitor", (0.2, 0.3, 0.35), (0.7 * math.cos(a), 0.7 * math.sin(a), 0.25), m["graphite"], rot=(0, 0, a)))
+        b.append(box("cap_glow", (0.21, 0.04, 0.25), (0.7 * math.cos(a), 0.7 * math.sin(a), 0.25), m["cyan_dim"], rot=(0, 0, a)))
+    b.append(hexprism("team_band", 0.86, 0.07, (0, 0, 0.42), m["team"]))
     turret = [cylinder("mount", 0.38, 0.12, (0, 0, 0.6), m["graphite"], verts=6)]
-    turret.append(box("body", (0.7, 0.5, 0.3), (0, 0, 0.8), m["shell"], bevel=0.05))
+    body = box("body", (0.7, 0.5, 0.3), (0, 0, 0.8), m["shell"], bevel=0.05)
+    turret.append(body)
+    turret += trim([body], m)
     for dy in (-0.1, 0.1):
         turret.append(box("rail", (1.3, 0.06, 0.08), (0.8, dy, 0.82), m["metal"]))
     turret.append(box("rail_glow", (1.25, 0.12, 0.02), (0.82, 0, 0.87), m["cyan"]))
@@ -464,9 +562,10 @@ def sigkill(style, team=None):
 
 
 def block(style, team=None):
-    """Wall: a hex barrier block with a glowing seam."""
+    """Wall: a hex barrier block with a glowing seam and a graphite cap."""
     m = mats(style, team)
     b = [hexprism("block", 0.48, 0.45, (0, 0, 0.23), m["shell"], bevel=0.03)]
+    b.append(hexprism("cap", 0.4, 0.05, (0, 0, 0.47), m["graphite"]))
     b.append(cylinder("seam", 0.49, 0.03, (0, 0, 0.32), m["cyan_dim"], verts=6))
     b.append(hexprism("team_band", 0.49, 0.05, (0, 0, 0.12), m["team"]))
     return {"body": b}

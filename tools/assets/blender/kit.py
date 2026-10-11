@@ -105,6 +105,25 @@ def material(name, color, *, rough=0.8, metal=0.0, emission=None, style="clean")
         nt.links.new(ramp.outputs[0], mix.inputs[7])
         nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
         bsdf.inputs["Roughness"].default_value = min(1.0, rough + 0.1)
+    if style == "sleek" and not emission:
+        # Manufactured surfaces: almost flat, a faint large-scale tone shift so big panels don't look plastic.
+        coord = nodes.new("ShaderNodeTexCoord")
+        noise = nodes.new("ShaderNodeTexNoise")
+        noise.inputs["Scale"].default_value = 3.0
+        noise.inputs["Detail"].default_value = 2.0
+        ramp = nodes.new("ShaderNodeValToRGB")
+        ramp.color_ramp.elements[0].color = (0.9, 0.91, 0.93, 1)
+        ramp.color_ramp.elements[1].color = (1, 1, 1, 1)
+        mix = nodes.new("ShaderNodeMix")
+        mix.data_type = "RGBA"
+        mix.blend_type = "MULTIPLY"
+        mix.inputs["Factor"].default_value = 1.0
+        mix.inputs[6].default_value = hex_rgba(color)
+        nt.links.new(coord.outputs["Object"], noise.inputs["Vector"])
+        nt.links.new(noise.outputs["Fac"], ramp.inputs[0])
+        nt.links.new(ramp.outputs[0], mix.inputs[7])
+        nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
+        bsdf.inputs["Coat Weight"].default_value = 0.3
     if style == "toon":
         # Diffuse lighting quantized into 3 bands, multiplied over the base color.
         diff = nodes.new("ShaderNodeBsdfDiffuse")

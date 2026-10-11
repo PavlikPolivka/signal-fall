@@ -169,6 +169,21 @@ const strongVs = (rules: Rules, type: number) =>
     .filter((a) => rules.damageMatrix[type * ARMOR.length + a]! >= 100)
     .map((a) => ARMOR_LABEL[a]);
 
+const BASE = import.meta.env.BASE_URL;
+/** Team color shown in the codex art, per faction. */
+const CODEX_TEAM = ['#3d8bfd', '#3ee6ff', '#e0a640'];
+
+/** Rendered picture of a unit or building, team areas tinted; hidden if the image is missing. */
+function Art({ faction, id }: { faction: FactionRule; id: string }) {
+  const url = `${BASE}assets/icons/${faction.id}/${id}`;
+  return (
+    <div class="entry-art">
+      <img src={`${url}.png`} alt="" loading="lazy" onError={(e) => ((e.currentTarget as HTMLElement).parentElement!.style.display = 'none')} />
+      <i class="tint" style={{ background: CODEX_TEAM[faction.index], maskImage: `url(${url}.mask.png)`, WebkitMaskImage: `url(${url}.mask.png)` }} />
+    </div>
+  );
+}
+
 function Units({ rules, faction }: { rules: Rules; faction: FactionRule }) {
   const units = faction.units.map((i) => rules.units[i]!);
   const rate = rules.constants.tickRate;
@@ -188,6 +203,7 @@ function Units({ rules, faction }: { rules: Rules; faction: FactionRule }) {
               .sort((a, b) => a.tier - b.tier || a.cost - b.cost)
               .map((u) => (
                 <article class={`entry f-${faction.id}`} data-codex-unit={u.id}>
+                  <Art faction={faction} id={u.id} />
                   <header>
                     <b class={faction.monospaceNames ? 'mono' : ''}>{u.name}</b>
                     <kbd>{u.key}</kbd>
@@ -233,6 +249,7 @@ function Buildings({ rules, faction }: { rules: Rules; faction: FactionRule }) {
     <div class="entry-grid">
       {list.map((s) => (
         <article class={`entry f-${faction.id}`} data-codex-building={s.id}>
+          <Art faction={faction} id={s.id} />
           <header>
             <b class={faction.monospaceNames ? 'mono' : ''}>{s.name}</b>
             {s.key && <kbd>{s.key}</kbd>}

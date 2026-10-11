@@ -527,7 +527,9 @@ kbd {
   justify-content: center;
   height: 100%;
   padding: 24px;
-  background: radial-gradient(circle at 70% 40%, #1a2230, var(--bg) 70%);
+  overflow: auto;
+  /* Key art: the three factions over an Echo field at dusk, darkened toward the panel. */
+  background: url('/assets/ui/keyart.jpg') center / cover no-repeat, var(--bg);
 }
 .setup-panel {
   display: flex;
@@ -535,7 +537,8 @@ kbd {
   gap: 10px;
   width: 440px;
   padding: 24px;
-  background: var(--panel);
+  background: rgba(16, 19, 25, 0.82);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--line);
   border-radius: 10px;
 }
@@ -590,6 +593,11 @@ kbd {
 }
 .setup-preview {
   text-align: center;
+  padding: 12px;
+  background: rgba(10, 12, 18, 0.7);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 .setup-preview canvas {
   width: 460px;
@@ -990,33 +998,30 @@ table.matrix td.lo {
   letter-spacing: 0.02em;
 }
 
-/* Halcyon: white glass and cyan light. */
+/* Halcyon: dark graphite glass traced with cyan light. */
 .layout[data-faction='halcyon'] {
-  --panel: #e6eef3;
-  --panel-2: #f4f8fb;
-  --line: rgba(14, 120, 160, 0.3);
-  --text: #0d2835;
-  --muted: #4d6978;
-  --accent: #0aa8dc;
-  --accent-ink: #f4fbff;
-  --good: #0f9f6e;
-  --bad: #d1343a;
+  --panel: #0f171c;
+  --panel-2: #15212a;
+  --line: rgba(62, 230, 255, 0.22);
+  --text: #dcf3fa;
+  --muted: #7f9ba6;
+  --accent: #3ee6ff;
+  --accent-ink: #04171d;
   --display: 'Rajdhani', var(--font);
   --readout: 'Rajdhani', var(--font);
-  --well: #0b1a22;
-  --panel-bg: linear-gradient(165deg, rgba(244, 249, 252, 0.97) 0%, rgba(206, 222, 232, 0.96) 100%);
-  --btn-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(226, 238, 245, 0.95));
-  --btn-line: rgba(14, 120, 160, 0.28);
-  --strip-bg: linear-gradient(transparent, rgba(240, 248, 252, 0.92) 45%);
-  --strip-ink: #0d2835;
-  color-scheme: light;
+  --well: #060b0e;
+  --panel-bg: linear-gradient(180deg, rgba(62, 230, 255, 0.05) 0, transparent 1px) 0 0 / 100% 24px,
+    linear-gradient(165deg, #13212a 0%, #0b1217 100%);
+  --btn-bg: linear-gradient(180deg, rgba(62, 230, 255, 0.07), rgba(62, 230, 255, 0.02)), #111c23;
+  --btn-line: rgba(62, 230, 255, 0.28);
 }
 .layout[data-faction='halcyon'] button {
-  border-radius: 8px;
+  border-radius: 3px;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
 }
 .layout[data-faction='halcyon'] button.active {
-  background: linear-gradient(180deg, #d9f4ff, #b8e6f7);
-  box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(10, 168, 220, 0.35);
+  background: linear-gradient(180deg, rgba(62, 230, 255, 0.25), rgba(62, 230, 255, 0.08)), #102028;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 12px rgba(62, 230, 255, 0.3);
 }
 .layout[data-faction='halcyon'] .title,
 .layout[data-faction='halcyon'] .menu h2 {
@@ -1026,7 +1031,11 @@ table.matrix td.lo {
 }
 .layout[data-faction='halcyon'] .credits {
   font-weight: 700;
-  color: #6fe0ff;
+}
+.layout[data-faction='halcyon'] .sidebar,
+.layout[data-faction='halcyon'] .bottom,
+.layout[data-faction='halcyon'] .topbar {
+  box-shadow: inset 0 0 0 1px rgba(62, 230, 255, 0.08);
 }
 .layout[data-faction='halcyon'] .card,
 .layout[data-faction='halcyon'] .menu {
@@ -1064,25 +1073,12 @@ table.matrix td.lo {
   font-family: var(--display);
   letter-spacing: 0.04em;
 }
-.layout[data-faction='halcyon'] .card {
-  background: rgba(238, 246, 250, 0.9);
-  color: var(--text);
-  border-color: var(--line);
-}
 .layout[data-faction='choir'] .card {
   background: rgba(22, 15, 38, 0.95);
   border-color: var(--line);
 }
-.layout[data-faction='halcyon'] .tabs button {
-  font-weight: 700;
-  font-size: 11.5px;
-}
 .layout[data-faction='choir'] .tabs button {
   font-size: 9.5px;
-}
-.layout[data-faction='halcyon'] .card .desc,
-.layout[data-faction='halcyon'] .card dt {
-  color: var(--muted);
 }
 
 .credits {
@@ -1198,4 +1194,100 @@ table.matrix td.lo {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.entry-art {
+  position: relative;
+  height: 120px;
+  margin: -4px -4px 8px;
+  border-radius: 6px;
+  background: radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.08), transparent 70%), #0d1014;
+}
+.entry-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+.entry-art .tint {
+  position: absolute;
+  inset: 6px;
+  mix-blend-mode: multiply;
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--accent);
+  font-family: 'Saira Stencil One', var(--font);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.logo b {
+  font-weight: inherit;
+  color: #f2efe6;
+}
+.setup-preview canvas {
+  border-radius: 8px;
+}
+
+.layout[data-faction='halcyon'] .tabs button {
+  font-weight: 700;
+  font-size: 11.5px;
+}
+.layout[data-faction='halcyon'] .card {
+  background: rgba(10, 18, 23, 0.94);
+  border-color: var(--line);
+}
+
+.menu-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+/* Dark vignette over the video (or the key art), under the panels. */
+.setup::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(8, 9, 14, 0.85) 0%, rgba(8, 9, 14, 0.45) 45%, rgba(8, 9, 14, 0.1) 100%);
+}
+.setup {
+  position: relative;
+  isolation: isolate;
+}
+.cutscene {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  display: grid;
+  place-items: center;
+}
+.cutscene video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cutscene .skip {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
 }

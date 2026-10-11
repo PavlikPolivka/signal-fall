@@ -1,4 +1,4 @@
-import { Container, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { DAMAGE, type Rules } from '@signal-fall/data';
 import { FX_EVENT, FX_STRIDE, KIND } from '@signal-fall/sim';
 import { isoX, isoY } from '../game/iso';
@@ -81,6 +81,22 @@ interface Particle {
   spin: number;
 }
 
+interface Beam {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  color: number;
+  width: number;
+  age: number;
+  life: number;
+  /** Jagged arc (chain lightning) instead of a straight beam; re-randomized every frame. */
+  jagged: boolean;
+}
+
+/** Beam colors by faction index (Holdout tracers, Halcyon cyan, Choir violet). */
+const FACTION_BEAM = [0xffd27a, 0x5cecff, 0xc58cff];
+
 interface Scorch {
   sprite: Sprite;
   age: number;
@@ -98,6 +114,9 @@ export class Effects {
   private readonly particles: Particle[] = [];
   private readonly free: Sprite[] = [];
   private readonly scorches: Scorch[] = [];
+  private readonly beams: Beam[] = [];
+  /** Beams, arcs and tracers, redrawn every frame (additive). */
+  private readonly beamGfx = new Graphics();
   private last = performance.now();
 
   constructor(
@@ -108,7 +127,10 @@ export class Effects {
     private readonly ground: Container,
     /** Is a sim point (Q10) worth drawing: on screen and visible to the player. */
     private readonly visible: (x: number, y: number) => boolean,
-  ) {}
+  ) {
+    this.beamGfx.blendMode = 'add';
+    this.layer.addChild(this.beamGfx);
+  }
 
   /** Number of live particles (perf overlay / tests). */
   get count(): number {
@@ -124,7 +146,7 @@ export class Effects {
       const y = events[i + 5]!;
       if (!this.visible(x, y)) continue;
       if (kind === FX_EVENT.fire) this.fire(a, b, x, y, events[i + 6]!, events[i + 7]!);
-      else if (kind === FX_EVENT.impact) this.impact(a, b, x, y);
+      else if (kind === FX_EVENT.impact) this.impact(a, b, x, y, events[i + 6]!, events[i + 7]!);
       else if (kind === FX_EVENT.death) this.death(a, b, x, y);
       else if (kind === FX_EVENT.ability) this.ability(a, x, y, events[i + 6]!, events[i + 7]!);
     }
@@ -155,14 +177,34 @@ export class Effects {
     const size = infantry ? 0.22 : big ? 0.55 : 0.36;
     const tint = weapon?.type === ENERGY ? 0x8fe8ff : 0xffd27a;
     this.spawn(this.hot, mx, my, z, { life: 0.07, scale0: size, scale1: size * 1.4, tint });
+    // Instant weapons draw their shot: energy as a beam in the faction's color, bullets as a tracer.
+    if (weapon && weapon.projectileSpeed === 0) {
+      const faction = unit ? unit.faction : kind === KIND.structure ? (this.rules.structures[type]?.faction ?? 0) : 0;
+      const tz = 8;
+      const ex = isoX(tx / FX, ty / FX);
+      const ey = isoY(tx / FX, ty / FX) - tz;
+      const sweep = unit?.abilities.some((a) => a.kind === 'sweep') ?? false;
+      if (weapon.type === ENERGY)
+        this.beam(mx, my - z, ex, ey, FACTION_BEAM[faction] ?? 0x5cecff, sweep ? 7 : infantry ? 1.6 : 2.6, sweep ? 0.45 : 0.12);
+      else if (weapon.type === KINETIC) {
+        // A short tracer most of the way to the target.
+        const t0 = 0.25 + Math.random() * 0.3;
+        this.beam(mx + (ex - mx) * t0, my - z + (ey - my + z) * t0, ex, ey, 0xfff0b8, 1.2, 0.06);
+      }
+      if (sweep) for (let k = 1; k < 7; k++) this.spawn(this.glow, mx + ((ex - mx) * k) / 7, my - z + ((ey - my + z) * k) / 7, 0, { life: 0.5, scale0: 0.35, scale1: 0.6, tint: 0xc58cff, alpha: 0.7 });
+    }
     if (big) {
       this.spawn(this.smoke, mx, my, z, { life: 1.1, scale0: 0.25, scale1: 0.7, tint: 0x9a9184, alpha: 0.45, vz: 14, add: false });
     }
   }
 
-  private impact(type: number, splash: number, x: number, y: number): void {
+  private impact(type: number, splash: number, x: number, y: number, fx = 0, fy = 0): void {
     const px = isoX(x / FX, y / FX);
     const py = isoY(x / FX, y / FX);
+    if (type === ENERGY && (fx !== 0 || fy !== 0)) {
+      // Chain hit: an arc jumps from the previous victim.
+      this.beam(isoX(fx / FX, fy / FX), isoY(fx / FX, fy / FX) - 8, px, py - 8, 0x7ff0ff, 2, 0.25, true);
+    }
     if (type === FLAK) {
       // Dark flak bursts up in the air.
       for (let i = 0; i < 2; i++)
@@ -206,12 +248,69 @@ export class Effects {
     const unit = this.rules.units[type];
     if (!unit) return;
     if (unit.tab === 'infantry') {
-      this.spawn(this.smoke, px, py, 2, { life: 0.7, scale0: 0.15, scale1: 0.4, tint: 0x9a8a72, alpha: 0.5, vz: 6, add: false });
+      if (unit.faction === 2) {
+        for (let i = 0; i < 5; i++) this.spark(px, py, 6, 0xc58cff, 70);
+        this.spawn(this.glow, px, py, 6, { life: 0.4, scale0: 0.25, scale1: 0.6, tint: 0x9a6bff, alpha: 0.7 });
+      } else this.spawn(this.smoke, px, py, 2, { life: 0.7, scale0: 0.15, scale1: 0.4, tint: 0x9a8a72, alpha: 0.5, vz: 6, add: false });
       return;
     }
     const air = unit.isAir;
-    this.explosion(px, py - (air ? AIR_ALTITUDE : 0), unit.tab === 'vehicles' ? 1.25 : 1.1, 1);
+    const z = air ? AIR_ALTITUDE : 0;
+    if (unit.faction === 2) {
+      // Choir machines shatter: a violet flash and crystal shards flung out, no fire.
+      this.spawn(this.hot, px, py - z, 8, { life: 0.2, scale0: 0.8, scale1: 1.3, tint: 0xe9d4ff });
+      this.spawn(this.glow, px, py - z, 6, { life: 0.7, scale0: 0.5, scale1: 1.6, tint: 0x9a6bff, alpha: 0.8 });
+      for (let i = 0; i < 12; i++) this.spark(px, py - z, 10, i % 3 ? 0xc58cff : 0xffc46b, 140);
+      return;
+    }
+    this.explosion(px, py - z, unit.tab === 'vehicles' ? 1.25 : 1.1, 1);
+    if (unit.faction === 1) {
+      // Halcyon drives short out: a cyan electrical burst inside the fireball.
+      this.spawn(this.hot, px, py - z, 12, { life: 0.25, scale0: 0.9, scale1: 0.3, tint: 0x9ff4ff });
+      for (let i = 0; i < 6; i++) this.spark(px, py - z, 12, 0x7ff0ff, 120);
+    }
     if (!air) this.scorch(px, py, 1);
+  }
+
+  /** A shield takes a hit: a quick violet bubble flash around the unit. */
+  shieldHit(px: number, py: number, scale: number): void {
+    this.spawn(this.glow, px, py, 0, { life: 0.28, scale0: 0.5 * scale, scale1: 0.75 * scale, tint: 0xb48cff, alpha: 0.55 });
+  }
+
+  private beam(x0: number, y0: number, x1: number, y1: number, color: number, width: number, life: number, jagged = false): void {
+    if (this.beams.length > 300) return;
+    this.beams.push({ x0, y0, x1, y1, color, width, age: 0, life, jagged });
+  }
+
+  private drawBeams(dt: number): void {
+    const g = this.beamGfx;
+    g.clear();
+    for (let i = this.beams.length - 1; i >= 0; i--) {
+      const b = this.beams[i]!;
+      b.age += dt;
+      if (b.age >= b.life) {
+        this.beams[i] = this.beams[this.beams.length - 1]!;
+        this.beams.pop();
+        continue;
+      }
+      const a = 1 - b.age / b.life;
+      if (b.jagged) {
+        const n = 6;
+        const nx = -(b.y1 - b.y0);
+        const ny = b.x1 - b.x0;
+        const len = Math.hypot(nx, ny) || 1;
+        g.moveTo(b.x0, b.y0);
+        for (let k = 1; k < n; k++) {
+          const off = (Math.random() - 0.5) * 10;
+          g.lineTo(b.x0 + ((b.x1 - b.x0) * k) / n + (nx / len) * off, b.y0 + ((b.y1 - b.y0) * k) / n + (ny / len) * off);
+        }
+        g.lineTo(b.x1, b.y1).stroke({ width: b.width, color: b.color, alpha: a });
+        continue;
+      }
+      // Glow halo, then a bright core.
+      g.moveTo(b.x0, b.y0).lineTo(b.x1, b.y1).stroke({ width: b.width * 2.6, color: b.color, alpha: a * 0.25 });
+      g.moveTo(b.x0, b.y0).lineTo(b.x1, b.y1).stroke({ width: b.width, color: 0xffffff, alpha: a * 0.9 });
+    }
   }
 
   /** Blink: flashes at both ends; phase: a shimmer; Override: a signal beam to the victim. */
@@ -334,6 +433,7 @@ export class Effects {
     const now = performance.now();
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
+    this.drawBeams(dt);
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]!;
       if (p.delay > 0) {
