@@ -1,8 +1,9 @@
 import type { Command } from '@signal-fall/sim';
+import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
 
 /** What the worker should set up. */
 export type ScenarioSpec =
-  | { kind: 'skirmish'; seed: number; factions: number[] }
+  | { kind: 'skirmish'; seed: number; factions: number[]; map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle } }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };
 
@@ -22,6 +23,10 @@ export type FromWorker =
       width: number;
       height: number;
       terrain: Uint8Array;
+      decoration: Uint8Array;
+      biome: Biome;
+      /** Seed that actually produced the map (after validation retries). */
+      mapSeed: number;
       players: PlayerInfo[];
       localPlayer: number;
     }

@@ -41,6 +41,9 @@ importers:
       '@signal-fall/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@signal-fall/mapgen':
+        specifier: workspace:*
+        version: link:../../packages/mapgen
       '@signal-fall/net':
         specifier: workspace:*
         version: link:../../packages/net
@@ -81,6 +84,16 @@ importers:
       zod:
         specifier: 4.6.5
         version: 4.6.5
+
+  packages/mapgen:
+    dependencies:
+      '@signal-fall/sim':
+        specifier: workspace:*
+        version: link:../sim
+    devDependencies:
+      '@signal-fall/data':
+        specifier: workspace:*
+        version: link:../data
 
   packages/net:
     dependencies:

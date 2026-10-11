@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
 import { defaultRules } from '@signal-fall/data';
 import { LockstepScheduler, NullTransport } from '@signal-fall/net';
-import { Sim, createMatch, grantBase, sandbox, testMap, type World } from '@signal-fall/sim';
+import { Sim, createMatch, grantBase, sandbox, type World } from '@signal-fall/sim';
+import { generateMap, type Biome } from '@signal-fall/mapgen';
 import {
   E,
   ENT_STRIDE,
@@ -34,11 +35,17 @@ function post(msg: FromWorker, transfer: Transferable[] = []): void {
   self.postMessage(msg, transfer);
 }
 
-function createSim(spec: ScenarioSpec): Sim {
+interface MapExtras {
+  decoration: Uint8Array;
+  biome: Biome;
+  mapSeed: number;
+}
+
+function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
   const rules = defaultRules();
   switch (spec.kind) {
     case 'skirmish': {
-      const map = testMap(96, spec.seed);
+      const map = generateMap({ seed: spec.seed, players: spec.factions.length, ...spec.map });
       const sim = createMatch({
         rules,
         seed: spec.seed,
@@ -47,11 +54,14 @@ function createSim(spec: ScenarioSpec): Sim {
       });
       // Until the AI exists (M5) the opponent is a passive base.
       for (let p = 1; p < spec.factions.length; p++) grantBase(sim, p, map.starts[p]!);
-      return sim;
+      return { sim, extras: { decoration: map.decoration, biome: map.biome, mapSeed: map.seedUsed } };
     }
     case 'sandbox':
-    case 'stress':
-      return sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
+    case 'stress': {
+      const sim = sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
+      const n = sim.world.map.width * sim.world.map.height;
+      return { sim, extras: { decoration: new Uint8Array(n), biome: 'wasteland', mapSeed: spec.seed } };
+    }
   }
 }
 
@@ -198,7 +208,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const msg = ev.data;
   switch (msg.type) {
     case 'start': {
-      sim = createSim(msg.scenario);
+      const created = createSim(msg.scenario);
+      sim = created.sim;
+      const extras = created.extras;
       localPlayer = msg.localPlayer;
       TICK_MS = 50 / Math.max(0.25, Math.min(8, msg.speed ?? 1));
       lockstep = new LockstepScheduler({ localPlayer, peers: [localPlayer], transport: new NullTransport(), delayTurns: 1 });
@@ -210,10 +222,13 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
           width: w.map.width,
           height: w.map.height,
           terrain,
+          decoration: extras.decoration,
+          biome: extras.biome,
+          mapSeed: extras.mapSeed,
           players: w.players.map((p) => ({ faction: p.faction, team: p.team })),
           localPlayer,
         },
-        [terrain.buffer],
+        [terrain.buffer, extras.decoration.buffer],
       );
       publish(false);
       return;

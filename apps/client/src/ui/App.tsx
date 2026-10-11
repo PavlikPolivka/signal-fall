@@ -4,7 +4,7 @@ import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E } from '../protocol';
 import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
-import type { Renderer } from '../render/renderer';
+import { BIOME_COLORS, type Renderer } from '../render/renderer';
 import { chordLabel } from '../input/keymap';
 import { EntityCard, ItemCard } from './InfoCard';
 import { isoX, isoY } from '../game/iso';
@@ -213,10 +213,10 @@ function Minimap({ state, renderer, radar }: { state: ClientState; renderer: Ren
         base.height = h;
         const bctx = base.getContext('2d')!;
         const img = bctx.createImageData(w, h);
-        const colors = [[61, 74, 51], [90, 82, 56], [94, 95, 99], [35, 70, 106], [71, 60, 56], [85, 80, 74]];
+        const palette = BIOME_COLORS[state.biome] ?? BIOME_COLORS.wasteland!;
         for (let i = 0; i < w * h; i++) {
-          const c = colors[state.terrain[i]!]!;
-          img.data.set([c[0]!, c[1]!, c[2]!, 255], i * 4);
+          const c = palette[state.terrain[i]!]!;
+          img.data.set([(c >> 16) & 255, (c >> 8) & 255, c & 255, 255], i * 4);
         }
         bctx.putImageData(img, 0, 0);
         baseReady = true;

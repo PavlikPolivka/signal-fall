@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@signal-fall/data": "workspace:*",
+    "@signal-fall/mapgen": "workspace:*",
     "@signal-fall/net": "workspace:*",
     "@signal-fall/sim": "workspace:*",
     "pixi.js": "8.22.0",

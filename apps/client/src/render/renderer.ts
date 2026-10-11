@@ -8,8 +8,12 @@ const FX = 1024;
 const CHUNK = 16;
 const AIR_ALTITUDE = 26;
 
-// Placeholder terrain palette per terrain kind (ground, rough, rock, water, cliff, ruins).
-const TERRAIN_COLORS = [0x3d4a33, 0x5a5238, 0x5e5f63, 0x23466a, 0x473c38, 0x55504a];
+// Placeholder terrain palettes per biome: ground, rough, rock, water, cliff, ruins.
+export const BIOME_COLORS: Record<string, number[]> = {
+  wasteland: [0x5e5238, 0x75653f, 0x6b625a, 0x2f5468, 0x56443a, 0x6b6157],
+  city: [0x45484c, 0x5b5850, 0x686b70, 0x284360, 0x524c46, 0x7a6e60],
+  crystal: [0x34463a, 0x485846, 0x535e68, 0x22505f, 0x4c3f66, 0x5a5a66],
+};
 
 interface UnitView {
   root: Container;
@@ -214,7 +218,7 @@ export class Renderer {
           for (let x = cx; x < Math.min(cx + CHUNK, s.width); x++) {
             const t = s.terrain[y * s.width + x]!;
             const shade = ((x * 7 + y * 13) % 5) * 0x030303;
-            const color = TERRAIN_COLORS[t]! + shade;
+            const color = (BIOME_COLORS[s.biome] ?? BIOME_COLORS.wasteland!)[t]! + shade;
             const px = isoX(x, y);
             const py = isoY(x, y);
             g.poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2]).fill(color);
@@ -222,6 +226,7 @@ export class Renderer {
               // Raised block for impassable tiles.
               g.poly([px, py - 10, px + 26, py + 3, px, py + 16, px - 26, py + 3]).fill(color + 0x161616);
             }
+            this.drawDecoration(g, s.decoration[y * s.width + x] ?? 0, px, py + TILE_H / 2, x * 31 + y * 17);
           }
         }
         g.cacheAsTexture(true);
@@ -238,6 +243,33 @@ export class Renderer {
     this.fogLayer.removeChildren();
     this.fogLayer.setFromMatrix(new Matrix(TILE_W / 2, TILE_H / 2, -TILE_W / 2, TILE_H / 2, 0, 0));
     this.fogLayer.addChild(sprite);
+  }
+
+  /** Cosmetic decoration (mapgen DECO ids) drawn into the static terrain. */
+  private drawDecoration(g: Graphics, deco: number, px: number, py: number, salt: number): void {
+    const ox = (salt % 17) - 8;
+    const oy = (salt % 7) - 3;
+    const x = px + ox;
+    const y = py + oy;
+    switch (deco) {
+      case 1: // rubble
+        g.poly([x - 6, y, x - 2, y - 4, x + 3, y - 3, x + 6, y + 1, x, y + 3]).fill(0x8a8178);
+        g.poly([x + 4, y - 6, x + 8, y - 7, x + 9, y - 4, x + 5, y - 3]).fill(0x6f675f);
+        break;
+      case 2: // burnt-out wreck
+        g.poly([x - 9, y, x, y - 5, x + 9, y, x, y + 5]).fill(0x2b2723);
+        g.rect(x - 2, y - 7, 4, 4).fill(0x3a342e);
+        break;
+      case 3: // crystal outcrop
+        g.poly([x - 4, y + 2, x - 1, y - 12, x + 2, y + 2]).fill(0x9a7bd8);
+        g.poly([x + 1, y + 2, x + 4, y - 7, x + 6, y + 2]).fill(0xc9b0ff);
+        break;
+      case 4: // dead tree
+        g.rect(x - 1, y - 12, 2, 12).fill(0x4a3a2a);
+        g.rect(x - 5, y - 9, 5, 1.5).fill(0x4a3a2a);
+        g.rect(x, y - 7, 5, 1.5).fill(0x4a3a2a);
+        break;
+    }
   }
 
   // --- per frame ---

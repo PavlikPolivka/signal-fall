@@ -12,7 +12,17 @@ const kind = params.get('scenario') ?? 'skirmish';
 const seed = Number(params.get('seed') ?? 7);
 const scenario: ScenarioSpec =
   kind === 'skirmish'
-    ? { kind, seed, factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)] }
+    ? {
+        kind,
+        seed,
+        factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)],
+        map: {
+          size: (params.get('size') ?? 'M') as 'S' | 'M' | 'L',
+          biome: (params.get('biome') ?? 'wasteland') as 'city' | 'wasteland' | 'crystal',
+          resources: (params.get('resources') ?? 'normal') as 'low' | 'normal' | 'rich',
+          terrain: (params.get('terrain') ?? 'normal') as 'open' | 'normal' | 'choke',
+        },
+      }
     : { kind: kind === 'stress' ? 'stress' : 'sandbox', seed, unitsPerSide: Number(params.get('units') ?? (kind === 'stress' ? 200 : 24)) };
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
@@ -51,6 +61,9 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.width = msg.width;
       state.height = msg.height;
       state.terrain = msg.terrain;
+      state.decoration = msg.decoration;
+      state.biome = msg.biome;
+      state.mapSeed = msg.mapSeed;
       state.players = msg.players;
       state.localPlayer = msg.localPlayer;
       renderer.buildMap();
