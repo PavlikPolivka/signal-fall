@@ -3,10 +3,7 @@ import { expect, test } from '@playwright/test';
 // M2 acceptance: 400 placeholder units at 60 FPS. Needs a real GPU; on GPU-less
 // machines (CI runners use SwiftShader) only the main-thread frame cost is checked.
 
-test.use({ launchOptions: { args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] } });
-
-test('400 units render at 60 FPS', async ({ page, browserName }) => {
-  test.skip(browserName !== 'chromium', 'FPS is measured in Chromium');
+test('400 units render at 60 FPS', async ({ page }) => {
   await page.goto('/?scenario=stress&units=200');
   await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: { entityCount: number } | null } } }).__signalFall.state.cur?.entityCount);
   await page.waitForTimeout(2000);
