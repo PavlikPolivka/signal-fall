@@ -112,6 +112,41 @@ Resulting triangle: anti-infantry beats infantry, AT infantry beats tanks, tanks
 - Pacing targets: first harvester running by 0:20, first combat around 2:00, tier 3 reachable around 5:00, typical match 8–12 minutes (target 10). Build times are tuned to match: structures 8–25 s, units 4–20 s.
 - Unit cap: no supply mechanic; a hard limit of 200 units per player for performance.
 
+### Unit behavior and feel (owner interview, 2026-10-11)
+
+These rules make groups behave sensibly without micro. They apply to every faction.
+
+**Orders**
+- Right-click (or left-click with units selected) on ground is **attack-move**: units fight what they meet. **M + click** is a pure move that ignores enemies (retreats, repositioning).
+- Shift queues orders as before. While Shift is held, selected units show their queued waypoints as a path.
+
+**Group movement**
+- A group moves **together by default**: everyone travels at the slowest member's speed. Stragglers behind the group may use their full speed to catch up.
+- Groups take a **role-based formation** facing the direction of travel: heavies in front; anti-infantry and anti-armor behind them; AA, repair units and engineers in the middle; artillery at the back. Each unit gets its own slot, so arrival is a tidy cluster instead of a scrum.
+- On long attack-moves the group **regroups near the fight**: when the vanguard first sees enemies and the group is strung out, the front holds until stragglers close up, unless someone is already under fire.
+
+**Target priority** (no explicit target)
+- A score per candidate combines: weapon effectiveness against the target's armor (damage matrix), whether the target can hurt this unit (threats first), low HP (finish kills), distance, and a stickiness bonus for the current target.
+- **Overkill avoidance:** damage already in flight counts; a target that incoming shots will kill is skipped for a fresh one.
+- Buildings rank below units: defenses, then production and power, then other buildings, with walls last. Siege weapons prefer buildings and clumps (more enemies inside the splash).
+- **Clear the area:** an attack-move doesn't end on arrival while enemies are visible near the destination. Units keep clearing by priority, then guard.
+
+**Stances** (command card, cycled with V)
+- **Aggressive:** chase anything in sight.
+- **Guard area** (default): chase a little, then return.
+- **Hold ground:** never move, shoot what's in range. H sets it.
+- **Hold fire:** shoot only at explicit targets.
+
+**Automatic behaviors**
+- **Harvesters flee:** a harvester under fire heads for its refinery, raises "Harvester under attack", and resumes once it's been safe for a few seconds.
+- **Auto-kite:** a ranged unit that outranges and outpaces its attacker steps back between shots.
+- **Artillery** stops at max range behind the line, backs off when enemies get inside its minimum range, and prefers clumps.
+
+**Feedback**
+- Thin target lines from selected units to what they are shooting.
+- Hovering an enemy with units selected shows whether the selection is strong, even or weak against it.
+- Attacks on your units and buildings flash on the minimap.
+
 ## Units and tech tree
 
 Each faction has 3 tiers and about 10 combat units plus a harvester, an engineer and a construction unit. Roles mirror each other across factions so the counter matrix holds; stats and visuals differ. Costs are starting values for balance testing.
@@ -247,6 +282,7 @@ Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. 
 |---|---|
 | Build structure menu | B, then structure letter (P power, R refinery, B barracks, F factory, U radar, S faction special, A airfield, T tech center) |
 | Build defense menu | N, then letter (D basic defense, A anti-air, H heavy defense, W wall) |
+| Train units | I (infantry), V (vehicles), Y (air), then the unit letter; Shift+letter queues 5. Also: select a factory and press the letter |
 | Queue unit (production building selected) | Unit letter; Shift+letter queues 5 |
 | Rally point | Right-click with production building selected |
 | Repair / sell structure | Alt+R / Alt+S |

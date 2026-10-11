@@ -28,6 +28,9 @@
   "base": {
     "buildMenu": ["KeyB"],
     "defenseMenu": ["KeyN"],
+    "infantryMenu": ["KeyI"],
+    "vehicleMenu": ["KeyV"],
+    "airMenu": ["KeyY"],
     "repair": ["Alt+KeyR"],
     "sell": ["Alt+KeyS"]
   },

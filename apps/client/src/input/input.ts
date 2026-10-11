@@ -8,6 +8,10 @@ import { bindings, matches, type Binding, type Context } from './keymap';
 const FX = 1024;
 /** Edge-scroll zone in px from each side of the game view. */
 const EDGE = 48;
+/** Any cursor within this many px of the browser window's edge scrolls. */
+const WINDOW_EDGE = 4;
+/** View edges next to UI panels (right: sidebar, bottom: command bar) only scroll after this dwell, so crossing to buttons doesn't move the map. */
+const PANEL_DWELL_MS = 250;
 const PAN_SPEED = 900; // world px per second at zoom 1
 const DOUBLE_MS = 350;
 
@@ -53,6 +57,10 @@ export class Input {
   private readonly bindings: Binding[];
   private held = new Set<string>();
   private mouse = { x: -1, y: -1, inside: false };
+  /** Direction the cursor left the window through (keeps scrolling until it returns), or null. */
+  private exited: { dx: number; dy: number } | null = null;
+  /** Since when the cursor has been in a panel-side edge zone (for the dwell delay). */
+  private panelEdgeSince = 0;
   private drag: { x0: number; y0: number; x1: number; y1: number; button: number } | null = null;
   private lastClick = { time: 0, handle: -1 };
   private lastGroup = { digit: -1, time: 0 };
@@ -72,8 +80,17 @@ export class Input {
     window.addEventListener('pointerup', (e) => this.onPointerUp(e));
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
-    // Track the cursor anywhere in the window; stop edge scrolling when it leaves.
-    document.documentElement.addEventListener('mouseleave', () => (this.mouse.inside = false));
+    // Leaving the window through an edge keeps scrolling that way until the cursor comes back (like a fullscreen RTS).
+    document.documentElement.addEventListener('mouseleave', (e) => {
+      this.mouse.inside = false;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const dx = e.clientX <= 0 ? -1 : e.clientX >= w - 1 ? 1 : 0;
+      const dy = e.clientY <= 0 ? -1 : e.clientY >= h - 1 ? 1 : 0;
+      this.exited = dx || dy ? { dx, dy } : null;
+    });
+    document.documentElement.addEventListener('mouseenter', () => (this.exited = null));
+    window.addEventListener('blur', () => (this.exited = null));
   }
 
   // --- per-frame camera movement ---
@@ -89,22 +106,51 @@ export class Input {
     if (on('panRight')) dx += step;
     if (on('panUp')) dy -= step;
     if (on('panDown')) dy += step;
-    if (this.mouse.inside && !this.drag && !this.state.menuOpen) {
-      // Scroll when the cursor is near an edge of the game view; faster closer to the edge.
-      const r = this.canvas.getBoundingClientRect();
-      const mx = this.mouse.x;
-      const my = this.mouse.y;
-      if (mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom) {
-        const ramp = (d: number) => (d < EDGE ? 0.35 + 0.65 * (1 - d / EDGE) : 0);
-        dx += step * (ramp(mx - r.left) > 0 ? -ramp(mx - r.left) : ramp(r.right - mx));
-        dy += step * (ramp(my - r.top) > 0 ? -ramp(my - r.top) : ramp(r.bottom - my));
-      }
+    if (!this.drag && !this.state.menuOpen) {
+      const [ex, ey] = this.edgeScroll();
+      dx += step * ex;
+      dy += step * ey;
     }
     if (dx || dy) {
       cam.x += dx;
       cam.y += dy;
       this.renderer.clampCamera();
     }
+  }
+
+  /**
+   * Edge-scroll direction and strength (-1..1 per axis).
+   * - outside the window (left through an edge): full speed that way
+   * - within WINDOW_EDGE px of the window edge: full speed
+   * - inside the game view near its left/top edge: ramped, immediately
+   * - near its right/bottom edge (next to the sidebar / command bar): ramped, after a short dwell
+   */
+  private edgeScroll(): [number, number] {
+    if (this.exited) return [this.exited.dx, this.exited.dy];
+    if (!this.mouse.inside) return [0, 0];
+    const mx = this.mouse.x;
+    const my = this.mouse.y;
+    let x = mx <= WINDOW_EDGE ? -1 : mx >= window.innerWidth - 1 - WINDOW_EDGE ? 1 : 0;
+    let y = my <= WINDOW_EDGE ? -1 : my >= window.innerHeight - 1 - WINDOW_EDGE ? 1 : 0;
+    if (x || y) return [x, y];
+    const r = this.canvas.getBoundingClientRect();
+    if (mx < r.left || mx > r.right || my < r.top || my > r.bottom) {
+      this.panelEdgeSince = 0;
+      return [0, 0];
+    }
+    const ramp = (d: number) => (d < EDGE ? 0.35 + 0.65 * (1 - d / EDGE) : 0);
+    x = -ramp(mx - r.left);
+    y = -ramp(my - r.top);
+    const toPanel = [ramp(r.right - mx), ramp(r.bottom - my)];
+    if (toPanel[0]! > 0 || toPanel[1]! > 0) {
+      const now = performance.now();
+      if (this.panelEdgeSince === 0) this.panelEdgeSince = now;
+      if (now - this.panelEdgeSince >= PANEL_DWELL_MS) {
+        if (x === 0) x = toPanel[0]!;
+        if (y === 0) y = toPanel[1]!;
+      }
+    } else this.panelEdgeSince = 0;
+    return [x, y];
   }
 
   // --- keyboard ---
@@ -129,6 +175,16 @@ export class Input {
       this.setMode('normal');
       if (item) this.activateStructure(item);
       else s.warn(`No ${category === 'structures' ? 'structure' : 'defense'} on ${letter}`);
+      return;
+    }
+    // I / V / Y menus: the next letter trains a unit from that tab (Shift queues five).
+    const menuTab = s.mode === 'infantryMenu' ? 'infantry' : s.mode === 'vehicleMenu' ? 'vehicles' : s.mode === 'airMenu' ? 'air' : null;
+    if (menuTab && letter && plain) {
+      e.preventDefault();
+      const unit = this.factionUnits().find((u) => u.tab === menuTab && u.key === letter);
+      this.setMode('normal');
+      if (unit) this.activateUnit(unit, e.shiftKey ? 5 : 1);
+      else s.warn(`No ${menuTab === 'air' ? 'aircraft' : menuTab === 'vehicles' ? 'vehicle' : 'infantry'} on ${letter}`);
       return;
     }
     // A selected factory takes unit letters (Shift queues five).
@@ -241,6 +297,12 @@ export class Input {
       case 'defenseMenu':
         s.sidebarTab = 'defenses';
         this.setMode('defenseMenu');
+        return;
+      case 'infantryMenu':
+      case 'vehicleMenu':
+      case 'airMenu':
+        s.sidebarTab = action === 'infantryMenu' ? 'infantry' : action === 'vehicleMenu' ? 'vehicles' : 'air';
+        this.setMode(action);
         return;
       case 'repair':
       case 'sell':
@@ -443,6 +505,28 @@ export class Input {
       s.send({ type: 'move', units, x: p.x, y: p.y, queue: shift });
       this.renderer.ping(sx, sy, 0x6dff8a);
     }
+  }
+
+  /**
+   * Order the selection to a sim position given from the minimap (tile coordinates):
+   * a target mode (A/P/M/G) applies there, otherwise it's the same as a ground right-click.
+   */
+  minimapOrder(u: number, v: number, shift: boolean): boolean {
+    const s = this.state;
+    const units = s.selectedUnits();
+    const factory = this.selectedFactory();
+    const x = Math.round(Math.max(0, Math.min(s.width - 0.01, u)) * FX);
+    const y = Math.round(Math.max(0, Math.min(s.height - 0.01, v)) * FX);
+    if (units.length === 0) {
+      if (!factory) return false;
+      s.send({ type: 'rally', target: s.selection[0]!, x, y });
+      return true;
+    }
+    const mode = s.mode;
+    if (mode === 'attackMove' || mode === 'patrol') s.send({ type: mode, units, x, y, queue: shift });
+    else s.send({ type: 'move', units, x, y, queue: shift });
+    if (TARGET_MODES.includes(mode) && !shift) this.setMode('normal');
+    return true;
   }
 
   targetClick(sx: number, sy: number, shift: boolean): void {

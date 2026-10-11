@@ -12,7 +12,10 @@ export type Mode =
   | 'repair'
   | 'sell'
   | 'buildMenu'
-  | 'defenseMenu';
+  | 'defenseMenu'
+  | 'infantryMenu'
+  | 'vehicleMenu'
+  | 'airMenu';
 
 export type SidebarTab = 'structures' | 'defenses' | Tab;
 

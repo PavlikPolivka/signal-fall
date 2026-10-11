@@ -58,13 +58,14 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
   );
 }
 
-const TABS: { id: SidebarTab; label: string }[] = [
-  { id: 'structures', label: 'Build' },
-  { id: 'defenses', label: 'Defense' },
-  { id: 'infantry', label: 'Infantry' },
-  { id: 'vehicles', label: 'Vehicles' },
-  { id: 'air', label: 'Air' },
+const TABS: { id: SidebarTab; label: string; key: string }[] = [
+  { id: 'structures', label: 'Build', key: 'B' },
+  { id: 'defenses', label: 'Defense', key: 'N' },
+  { id: 'infantry', label: 'Infantry', key: 'I' },
+  { id: 'vehicles', label: 'Vehicles', key: 'V' },
+  { id: 'air', label: 'Air', key: 'Y' },
 ];
+const MENU_MODES = ['buildMenu', 'defenseMenu', 'infantryMenu', 'vehicleMenu', 'airMenu'];
 
 const ROLE_NAMES: Record<string, string> = {
   conyard: 'Construction Yard',
@@ -95,7 +96,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   const hasProducer = structureTab ? (roles.get('conyard') ?? 0) > 0 : (roles.get(tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield') ?? 0) > 0;
   return (
     <aside class="sidebar" data-faction={faction.id}>
-      <Minimap state={state} renderer={renderer} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
+      <Minimap state={state} renderer={renderer} input={input} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
       <div class="economy">
         <div class="credits" data-testid="credits">
           ${credits.toLocaleString('en-US')}
@@ -109,12 +110,18 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       </div>
       <nav class="tabs" data-testid="sidebar-tabs">
         {TABS.map((t) => (
-          <button class={state.sidebarTab === t.id ? 'active' : ''} data-tab={t.id} onClick={() => ((state.sidebarTab = t.id), state.changed())}>
-            {t.label}
+          <button
+            class={state.sidebarTab === t.id ? 'active' : ''}
+            data-tab={t.id}
+            title={`${t.label} (${t.key}, then the item's letter)`}
+            onClick={() => ((state.sidebarTab = t.id), state.changed())}
+          >
+            <span>{t.label}</span>
+            <kbd>{t.key}</kbd>
           </button>
         ))}
       </nav>
-      {(state.mode === 'buildMenu' || state.mode === 'defenseMenu') && (
+      {MENU_MODES.includes(state.mode) && (
         <div class="hint" data-testid="menu-hint">
           Press a letter · Esc cancels
         </div>
@@ -127,7 +134,12 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       {!hasProducer && (
         <div class="hint muted">{structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${ROLE_NAMES[tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield']}.`}</div>
       )}
-      <div class={`grid ${state.mode === 'buildMenu' || state.mode === 'defenseMenu' ? 'keys' : ''}`} data-testid="build-grid">
+      {hasProducer && !MENU_MODES.includes(state.mode) && !state.placing && (
+        <div class="hint muted" data-testid="tab-hint">
+          Press {TABS.find((t) => t.id === state.sidebarTab)!.key}, then a letter
+        </div>
+      )}
+      <div class={`grid ${MENU_MODES.includes(state.mode) ? 'keys' : ''}`} data-testid="build-grid">
         {items.map((it) => {
           const missing = state.missing(it.requires, roles);
           let progress = 0;
@@ -190,7 +202,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   );
 }
 
-function Minimap({ state, renderer, radar }: { state: ClientState; renderer: Renderer; radar: boolean }) {
+function Minimap({ state, renderer, input, radar }: { state: ClientState; renderer: Renderer; input: Input; radar: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const radarRef = useRef(radar);
   radarRef.current = radar;
@@ -273,27 +285,54 @@ function Minimap({ state, renderer, radar }: { state: ClientState; renderer: Ren
       ctx.stroke();
     };
     const id = setInterval(draw, 200);
-    const click = (e: PointerEvent) => {
-      if (!state.ready) return;
+    // Minimap px -> tile coordinates (inverse of the diamond transform).
+    const toTile = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect();
       const px = ((e.clientX - r.left) / r.width) * SIZE;
       const py = ((e.clientY - r.top) / r.height) * SIZE;
       const scale = SIZE / (state.width + state.height);
-      // Invert the diamond transform.
       const a = (px - state.height * scale) / scale;
       const b = (py - SIZE * 0.25) / (scale * 0.5);
-      const u = (a + b) / 2;
-      const v = (b - a) / 2;
+      return { u: (a + b) / 2, v: (b - a) / 2 };
+    };
+    let panning = false;
+    const pan = (e: PointerEvent) => {
+      const { u, v } = toTile(e);
       renderer.camera.x = isoX(u, v);
       renderer.camera.y = isoY(u, v);
       renderer.clampCamera();
     };
-    canvas.addEventListener('pointerdown', click);
+    const down = (e: PointerEvent) => {
+      if (!state.ready) return;
+      e.preventDefault();
+      if (e.button === 2) {
+        // Right-click: order the selection there (or set a factory's rally point).
+        const { u, v } = toTile(e);
+        input.minimapOrder(u, v, e.shiftKey);
+        return;
+      }
+      if (e.button !== 0) return;
+      panning = true;
+      canvas.setPointerCapture(e.pointerId);
+      pan(e);
+    };
+    const move = (e: PointerEvent) => {
+      if (panning) pan(e);
+    };
+    const up = () => (panning = false);
+    const noMenu = (e: Event) => e.preventDefault();
+    canvas.addEventListener('pointerdown', down);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('contextmenu', noMenu);
     return () => {
       clearInterval(id);
-      canvas.removeEventListener('pointerdown', click);
+      canvas.removeEventListener('pointerdown', down);
+      canvas.removeEventListener('pointermove', move);
+      canvas.removeEventListener('pointerup', up);
+      canvas.removeEventListener('contextmenu', noMenu);
     };
-  }, [state, renderer]);
+  }, [state, renderer, input]);
   return <canvas class="minimap" ref={ref} width={220} height={220} data-testid="minimap" data-radar={radar ? 'on' : 'off'} />;
 }
 

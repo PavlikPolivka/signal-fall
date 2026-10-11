@@ -64,6 +64,15 @@ const sends = (type: string): Check => async (page, chord) => {
   expect((await state(page)).lastSent).toBe(type);
 };
 
+const unitMenu = (mode: string, tab: string): Check => async (page, chord) => {
+  await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
+  await page.keyboard.press(toKey(chord));
+  const st = await state(page);
+  expect(st.mode).toBe(mode);
+  expect(st.sidebarTab).toBe(tab);
+  await page.keyboard.press('Escape');
+};
+
 const checks: Record<string, Check> = {
   panUp: pan(0, -1),
   panDown: pan(0, 1),
@@ -156,6 +165,9 @@ const checks: Record<string, Check> = {
     expect(st.sidebarTab).toBe('defenses');
     await page.keyboard.press('Escape');
   },
+  infantryMenu: unitMenu('infantryMenu', 'infantry'),
+  vehicleMenu: unitMenu('vehicleMenu', 'vehicles'),
+  airMenu: unitMenu('airMenu', 'air'),
   repair: async (page, chord) => {
     await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
     await page.keyboard.press(toKey(chord));
