@@ -32,7 +32,7 @@ body,
 .layout {
   display: grid;
   height: 100%;
-  grid-template-columns: 1fr 248px;
+  grid-template-columns: 1fr 276px;
   grid-template-rows: 34px 1fr 176px;
 }
 
@@ -184,6 +184,8 @@ kbd {
 }
 
 .sidebar {
+  overflow: hidden;
+  min-width: 0;
   grid-column: 2;
   grid-row: 1 / 4;
   display: flex;
@@ -195,8 +197,9 @@ kbd {
   min-height: 0;
 }
 .minimap {
-  width: 228px;
-  height: 228px;
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
   border: 1px solid var(--line);
   background: #05070a;
   cursor: pointer;
@@ -236,12 +239,16 @@ kbd {
 }
 .tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2px;
 }
 .tabs button {
   padding: 4px 0;
-  font-size: 11px;
+  font-size: 10.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hint {
   color: var(--accent);
@@ -249,15 +256,18 @@ kbd {
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .item.off {
   opacity: 0.45;
   cursor: default;
 }
 .item {
+  min-width: 0;
+  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -269,11 +279,12 @@ kbd {
 .item .name {
   font-size: 11px;
   font-weight: 600;
-  padding-right: 14px;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
 }
 .grid.keys .item .key {
   font-size: 13px;
@@ -290,7 +301,7 @@ kbd {
 .item .key {
   position: absolute;
   right: 4px;
-  top: 3px;
+  bottom: 4px;
 }
 .mode {
   margin-top: auto;
@@ -361,7 +372,7 @@ kbd {
 .item .count {
   position: absolute;
   right: 4px;
-  bottom: 3px;
+  top: 3px;
   font: 700 12px var(--mono);
   color: var(--accent);
 }
@@ -381,7 +392,7 @@ kbd {
   pointer-events: none;
 }
 .card-anchor.side {
-  right: 258px;
+  right: 286px;
 }
 .card {
   width: 300px;
