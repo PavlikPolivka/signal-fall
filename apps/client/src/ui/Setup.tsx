@@ -4,6 +4,7 @@ import type { Difficulty } from '@signal-fall/ai';
 import { generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
 import { BIOME_COLORS } from '../render/renderer';
 import { TEAM_COLORS } from '../game/state';
+import { Codex } from './Codex';
 
 export interface SkirmishSettings {
   faction: number;
@@ -56,6 +57,12 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
     ...loadSaved(),
   }));
   const set = (patch: Partial<SkirmishSettings>) => setS((prev) => ({ ...prev, ...patch }));
+  const [codex, setCodex] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setCodex(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   const factions: [number, string][] = rules.factions.map((f) => [f.index, f.name]);
 
   const map = useMemo(
@@ -159,6 +166,9 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
         <button class="start" onClick={start} data-testid="start">
           Start
         </button>
+        <button class="codex-btn" onClick={() => setCodex(true)} data-testid="open-codex">
+          Codex — story, factions, units and how to play
+        </button>
         {(s.faction !== 0 || s.enemyFaction !== 0) && (
           <p class="muted small">Halcyon and Choir play with shared rules for now; their special mechanics arrive in a later update.</p>
         )}
@@ -169,6 +179,7 @@ export function Setup({ rules, onStart }: { rules: Rules; onStart: (s: SkirmishS
           {map.width}×{map.height} · seed {map.seedUsed} · {map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')}
         </p>
       </div>
+      {codex && <Codex rules={rules} onClose={() => setCodex(false)} />}
     </div>
   );
 }

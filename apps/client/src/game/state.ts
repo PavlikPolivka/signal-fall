@@ -75,6 +75,7 @@ export class ClientState {
   mode: Mode = 'normal';
   sidebarTab: SidebarTab = 'structures';
   menuOpen = false;
+  codexOpen = false;
   alerts: Alert[] = [];
   /** Every command sent, newest last (for UI feedback and tests). */
   sent: Command[] = [];

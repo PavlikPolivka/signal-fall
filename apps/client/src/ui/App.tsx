@@ -8,6 +8,7 @@ import { BIOME_COLORS, type Renderer } from '../render/renderer';
 import { chordLabel } from '../input/keymap';
 import { STANCE_NAMES } from '../input/input';
 import { EntityCard, ItemCard } from './InfoCard';
+import { Codex } from './Codex';
 import { isoX, isoY } from '../game/iso';
 
 const FX = 1024;
@@ -34,6 +35,15 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <Sidebar state={state} input={props.input} renderer={props.renderer} />
       <HoverCards state={state} />
       {state.menuOpen && <Menu state={state} input={props.input} />}
+      {state.codexOpen && (
+        <Codex
+          rules={state.rules}
+          onClose={() => {
+            state.codexOpen = false;
+            state.changed();
+          }}
+        />
+      )}
       <EndScreen state={state} />
     </div>
   );
@@ -558,6 +568,15 @@ function Menu({ state, input }: { state: ClientState; input: Input }) {
       <div class="menu">
         <h2>Paused</h2>
         <button onClick={() => input.toggleMenu()}>Resume</button>
+        <button
+          data-testid="menu-codex"
+          onClick={() => {
+            state.codexOpen = true;
+            state.changed();
+          }}
+        >
+          Codex
+        </button>
         <button onClick={fullscreen}>Fullscreen</button>
         <button
           onClick={() => {
