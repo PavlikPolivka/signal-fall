@@ -44,6 +44,8 @@ export class ClientState {
   surface: Uint8Array = new Uint8Array(0);
   landmark: Uint8Array = new Uint8Array(0);
   biome: 'city' | 'wasteland' | 'crystal' = 'wasteland';
+  /** Factions whose rendered art (sprites and icons) has loaded. */
+  art = new Set<string>();
   mapSeed = 0;
   players: PlayerInfo[] = [];
   localPlayer = 0;

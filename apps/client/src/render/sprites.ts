@@ -27,6 +27,7 @@ export class SpriteLibrary {
   private sprites = new Map<string, SpriteInfo>();
   private textures = new Map<string, Texture>();
   private loading = new Map<string, Promise<void>>();
+  private loaded = new Set<string>();
 
   /** Base URL for assets (Vite serves /public at the root). */
   constructor(private readonly base = import.meta.env.BASE_URL) {}
@@ -55,6 +56,12 @@ export class SpriteLibrary {
       for (const [name, tex] of Object.entries(sheet.textures)) this.textures.set(name, tex);
     }
     for (const [id, info] of Object.entries(catalog.sprites)) this.sprites.set(id, info);
+    this.loaded.add(faction);
+  }
+
+  /** Whether rendered art (and icons) exist for a faction. */
+  has(faction: string): boolean {
+    return this.loaded.has(faction);
   }
 
   info(id: string): SpriteInfo | undefined {

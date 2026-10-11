@@ -10,6 +10,16 @@
   --bad: #ef4444;
   --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* Faction skins override these (see the end of the file). */
+  --panel-bg: var(--panel);
+  --btn-bg: var(--panel-2);
+  --btn-line: var(--line);
+  --display: var(--font);
+  --readout: var(--mono);
+  --accent-ink: #111;
+  --strip-bg: linear-gradient(transparent, rgba(0, 0, 0, 0.82) 45%);
+  --strip-ink: #f2f2ee;
+  --well: #05070a;
   color-scheme: dark;
 }
 
@@ -42,11 +52,14 @@ body,
   align-items: center;
   gap: 16px;
   padding: 0 12px;
-  background: var(--panel);
+  background: var(--panel-bg);
   border-bottom: 1px solid var(--line);
+  position: relative;
+  color: var(--text);
 }
 .timer {
-  font: 600 14px var(--mono);
+  font: 600 15px var(--readout);
+  color: var(--accent);
 }
 .alert {
   flex: 1;
@@ -72,8 +85,8 @@ body,
 button {
   font: inherit;
   color: var(--text);
-  background: var(--panel-2);
-  border: 1px solid var(--line);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-line);
   border-radius: 4px;
   padding: 4px 8px;
   cursor: pointer;
@@ -114,9 +127,10 @@ kbd {
   grid-template-rows: auto 1fr;
   gap: 10px;
   padding: 8px 10px;
-  background: var(--panel);
+  background: var(--panel-bg);
   border-top: 1px solid var(--line);
   min-height: 0;
+  color: var(--text);
 }
 .selection {
   min-width: 0;
@@ -131,15 +145,22 @@ kbd {
   align-items: flex-start;
 }
 .portrait {
-  width: 72px;
-  height: 72px;
+  flex: none;
+  width: 104px;
+  height: 104px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  box-shadow: inset 0 0 0 6px rgba(0, 0, 0, 0.35);
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--team, #444) 38%, transparent), var(--well) 72%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 0 2px color-mix(in srgb, var(--team, #444) 55%, transparent);
+  padding: 6px;
+}
+.portrait .icon {
+  width: 100%;
+  height: 100%;
 }
 .title {
-  font-size: 15px;
-  font-weight: 600;
+  font: 15px var(--display);
+  letter-spacing: 0.04em;
   margin-bottom: 4px;
 }
 .mono {
@@ -165,9 +186,17 @@ kbd {
 }
 .group-grid .cell {
   position: relative;
-  height: 34px;
-  padding: 0;
+  height: 38px;
+  padding: 1px;
   font-size: 10px;
+  overflow: hidden;
+}
+.group-grid .cell .icon {
+  width: 100%;
+  height: 100%;
+}
+.group-grid .cell.active {
+  border-color: var(--accent);
 }
 .group-grid .cell i {
   position: absolute;
@@ -192,16 +221,18 @@ kbd {
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  background: var(--panel);
+  background: var(--panel-bg);
   border-left: 1px solid var(--line);
   min-height: 0;
+  color: var(--text);
+  position: relative;
 }
 .minimap {
   width: 100%;
   aspect-ratio: 1;
   height: auto;
   border: 1px solid var(--line);
-  background: #05070a;
+  background: var(--well);
   cursor: pointer;
 }
 .economy {
@@ -210,15 +241,22 @@ kbd {
   gap: 8px;
 }
 .credits {
-  font: 600 16px var(--mono);
+  font: 18px var(--readout);
   color: var(--accent);
   flex: 1;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--well);
+  border: 1px solid var(--line);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent);
+  letter-spacing: 0.05em;
 }
 .power {
   position: relative;
   width: 96px;
   height: 14px;
-  background: #222;
+  color: #e8ecef;
+  background: var(--well);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -247,6 +285,7 @@ kbd {
   gap: 2px;
 }
 .tabs button {
+  font-family: var(--display);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -329,15 +368,18 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-width: 220px;
+  min-width: 240px;
   padding: 20px;
-  background: var(--panel);
+  background: var(--panel-bg);
+  color: var(--text);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
 .menu h2 {
   margin: 0 0 8px;
-  font-size: 18px;
+  font: 24px var(--display);
+  letter-spacing: 0.06em;
+  color: var(--accent);
 }
 
 .groups {
@@ -363,10 +405,9 @@ kbd {
 }
 .item .progress {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  background: rgba(232, 195, 90, 0.25);
+  inset: 0;
+  /* Clock wipe: the part still to build stays dark. */
+  background: conic-gradient(transparent var(--p), rgba(0, 0, 0, 0.62) 0);
   pointer-events: none;
 }
 .item.ready {
@@ -768,4 +809,278 @@ table.matrix td.lo {
   padding: 1px 5px;
   border: 1px solid var(--line);
   border-radius: 3px;
+}
+
+/* --- Icons: rendered image with the team-colored areas tinted --- */
+.icon {
+  position: relative;
+  display: block;
+  pointer-events: none;
+}
+.icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.icon .tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* Build tiles with art: picture fills the tile, name on a strip, cost and key in the corners. */
+.grid.art {
+  gap: 5px;
+}
+.grid.art .item {
+  height: auto;
+  aspect-ratio: 1;
+  padding: 0;
+  background: radial-gradient(circle at 50% 58%, rgba(255, 255, 255, 0.07), transparent 70%), var(--well);
+}
+.grid.art .item .icon {
+  position: absolute;
+  inset: 6px 6px 14px;
+}
+.grid.art .item .name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 4px 2px;
+  font-size: 10px;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--strip-ink);
+  background: var(--strip-bg);
+  -webkit-line-clamp: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+}
+.grid.art .item .cost {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  margin: 0;
+  font: 10px var(--readout);
+  color: var(--accent);
+  text-shadow: 0 1px 2px #000;
+}
+.grid.art .item .key {
+  top: 3px;
+  left: 4px;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+}
+.grid.art .item .count {
+  top: auto;
+  bottom: 18px;
+  right: 5px;
+  font-size: 15px;
+  text-shadow: 0 1px 3px #000;
+}
+.grid.art .item.off {
+  opacity: 1;
+}
+.grid.art .item.off .icon {
+  filter: grayscale(1) brightness(0.45);
+}
+.grid.art .item.off .name,
+.grid.art .item.off .cost {
+  opacity: 0.55;
+}
+.grid.art .item:hover:not(.off) .icon {
+  filter: brightness(1.18);
+}
+.item.ready {
+  animation: ready-pulse 1.1s ease-in-out infinite alternate;
+}
+@keyframes ready-pulse {
+  from {
+    box-shadow: inset 0 0 0 1px var(--good), 0 0 0 0 transparent;
+  }
+  to {
+    box-shadow: inset 0 0 0 2px var(--good), 0 0 10px 1px color-mix(in srgb, var(--good) 60%, transparent);
+  }
+}
+.card-art {
+  float: right;
+  width: 92px;
+  height: 92px;
+  margin: -4px -4px 4px 10px;
+}
+.card-art:empty {
+  display: none;
+}
+.card-art .icon {
+  width: 100%;
+  height: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .item.ready {
+    animation: none;
+    box-shadow: inset 0 0 0 2px var(--good);
+  }
+}
+
+/* --- Faction skins --- */
+
+/* Holdout: riveted gunmetal, stencil type, amber readouts. */
+.layout[data-faction='holdout'] {
+  --panel: #222522;
+  --panel-2: #2c302c;
+  --line: #474d47;
+  --text: #e4e1d4;
+  --muted: #9b9a8b;
+  --accent: #f0a43a;
+  --display: 'Saira Stencil One', var(--font);
+  --readout: 'Share Tech Mono', var(--mono);
+  --well: #0e0f0d;
+  --panel-bg: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 4px), linear-gradient(180deg, #2b2e2a 0%, #1c1e1b 100%);
+  --btn-bg: linear-gradient(180deg, #383d37 0%, #282c27 100%);
+  --btn-line: #545b53;
+}
+.layout[data-faction='holdout'] button {
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+.layout[data-faction='holdout'] button.active {
+  background: linear-gradient(180deg, #4a3a1c, #2e2412);
+}
+.layout[data-faction='holdout'] .topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 3px;
+  background: repeating-linear-gradient(-45deg, #f0a43a 0 7px, #161616 7px 14px);
+  opacity: 0.8;
+  z-index: 2;
+  pointer-events: none;
+}
+.layout[data-faction='holdout'] .sidebar::before,
+.layout[data-faction='holdout'] .bottom::before {
+  /* Rivets in the corners. */
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  --rivet: radial-gradient(circle, #8a9086 0 1.6px, #20231f 2.2px, transparent 2.8px);
+  background:
+    var(--rivet) top left / 8px 8px no-repeat,
+    var(--rivet) top right / 8px 8px no-repeat,
+    var(--rivet) bottom left / 8px 8px no-repeat,
+    var(--rivet) bottom right / 8px 8px no-repeat;
+}
+.layout[data-faction='holdout'] .bottom {
+  position: relative;
+}
+.layout[data-faction='holdout'] .tabs button {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+/* Halcyon: white glass and cyan light. */
+.layout[data-faction='halcyon'] {
+  --panel: #e6eef3;
+  --panel-2: #f4f8fb;
+  --line: rgba(14, 120, 160, 0.3);
+  --text: #0d2835;
+  --muted: #4d6978;
+  --accent: #0aa8dc;
+  --accent-ink: #f4fbff;
+  --good: #0f9f6e;
+  --bad: #d1343a;
+  --display: 'Rajdhani', var(--font);
+  --readout: 'Rajdhani', var(--font);
+  --well: #0b1a22;
+  --panel-bg: linear-gradient(165deg, rgba(244, 249, 252, 0.97) 0%, rgba(206, 222, 232, 0.96) 100%);
+  --btn-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(226, 238, 245, 0.95));
+  --btn-line: rgba(14, 120, 160, 0.28);
+  --strip-bg: linear-gradient(transparent, rgba(240, 248, 252, 0.92) 45%);
+  --strip-ink: #0d2835;
+  color-scheme: light;
+}
+.layout[data-faction='halcyon'] button {
+  border-radius: 8px;
+}
+.layout[data-faction='halcyon'] button.active {
+  background: linear-gradient(180deg, #d9f4ff, #b8e6f7);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(10, 168, 220, 0.35);
+}
+.layout[data-faction='halcyon'] .title,
+.layout[data-faction='halcyon'] .menu h2 {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.layout[data-faction='halcyon'] .credits {
+  font-weight: 700;
+  color: #6fe0ff;
+}
+.layout[data-faction='halcyon'] .card,
+.layout[data-faction='halcyon'] .menu {
+  backdrop-filter: blur(14px);
+}
+
+/* Choir: violet crystal facets. */
+.layout[data-faction='choir'] {
+  --panel: #18112a;
+  --panel-2: #22183a;
+  --line: #4d3a7d;
+  --text: #ece4ff;
+  --muted: #a598c8;
+  --accent: #c58cff;
+  --display: 'Cinzel', serif;
+  --readout: 'Cinzel', serif;
+  --well: #0b0714;
+  --panel-bg: linear-gradient(115deg, rgba(197, 140, 255, 0.07) 0 22%, transparent 22% 48%, rgba(197, 140, 255, 0.045) 48% 61%, transparent 61%),
+    linear-gradient(240deg, rgba(140, 90, 230, 0.08) 0 35%, transparent 35% 72%, rgba(140, 90, 230, 0.05) 72%), linear-gradient(180deg, #1f1636, #130d22);
+  --btn-bg: linear-gradient(160deg, #2c2049 0%, #1a1230 60%, #24183e 100%);
+  --btn-line: #5b4593;
+}
+.layout[data-faction='choir'] button {
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+.layout[data-faction='choir'] button.active {
+  background: linear-gradient(160deg, #4a2f7e, #2a1a4a);
+  box-shadow: inset 0 0 12px rgba(197, 140, 255, 0.45);
+}
+.layout[data-faction='choir'] .credits {
+  text-shadow: 0 0 10px rgba(197, 140, 255, 0.8);
+}
+.card header b {
+  font-family: var(--display);
+  letter-spacing: 0.04em;
+}
+.layout[data-faction='halcyon'] .card {
+  background: rgba(238, 246, 250, 0.9);
+  color: var(--text);
+  border-color: var(--line);
+}
+.layout[data-faction='choir'] .card {
+  background: rgba(22, 15, 38, 0.95);
+  border-color: var(--line);
+}
+.layout[data-faction='halcyon'] .tabs button {
+  font-weight: 700;
+  font-size: 11.5px;
+}
+.layout[data-faction='choir'] .tabs button {
+  font-size: 9.5px;
+}
+.layout[data-faction='halcyon'] .card .desc,
+.layout[data-faction='halcyon'] .card dt {
+  color: var(--muted);
 }

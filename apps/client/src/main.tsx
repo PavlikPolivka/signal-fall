@@ -8,6 +8,11 @@ import { App } from './ui/App';
 import { Setup, type SkirmishSettings } from './ui/Setup';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
+import '@fontsource/saira-stencil-one/latin-400.css';
+import '@fontsource/rajdhani/latin-500.css';
+import '@fontsource/rajdhani/latin-700.css';
+import '@fontsource/cinzel/latin-600.css';
+import '@fontsource/share-tech-mono/latin-400.css';
 import './ui/styles.css';
 
 const params = new URLSearchParams(location.search);
@@ -96,7 +101,14 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.localPlayer = msg.localPlayer;
       renderer.buildMap();
       // Load rendered art for the factions in this match (placeholders draw until it arrives).
-      for (const p of msg.players) void renderer.lib.loadFaction(state.rules.factions[p.faction]!.id);
+      for (const p of msg.players) {
+        const id = state.rules.factions[p.faction]!.id;
+        void renderer.lib.loadFaction(id).then(() => {
+          if (!renderer.lib.has(id)) return;
+          state.art.add(id);
+          state.changed();
+        });
+      }
       state.ready = true;
     } else {
       const first = state.cur === null;

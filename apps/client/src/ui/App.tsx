@@ -10,6 +10,7 @@ import { STANCE_NAMES } from '../input/input';
 import { EntityCard, ItemCard } from './InfoCard';
 import { Codex } from './Codex';
 import { isoX, isoY } from '../game/iso';
+import { Icon } from './Icon';
 
 const FX = 1024;
 
@@ -27,8 +28,9 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
   useEffect(() => {
     if (hostRef.current) props.gameHost(hostRef.current);
   }, []);
+  const factionId = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]?.id ?? 'holdout';
   return (
-    <div class="layout">
+    <div class="layout" data-faction={factionId}>
       <TopBar state={state} input={props.input} />
       <div class="game" ref={hostRef} data-testid="game" />
       <BottomPanel state={state} input={props.input} />
@@ -104,6 +106,8 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   const tabIndex = state.sidebarTab === 'infantry' ? 0 : state.sidebarTab === 'vehicles' ? 1 : 2;
   const bq = cur && structureTab ? cur.buildQueue(state.localPlayer, state.sidebarTab === 'structures' ? 0 : 1) : null;
   const pq = cur && !structureTab ? cur.productionQueue(state.localPlayer, tabIndex) : null;
+  const teamColor = TEAM_COLORS[state.localPlayer % TEAM_COLORS.length]!;
+  const art = state.art.has(faction.id);
   const hasProducer = structureTab ? (roles.get('conyard') ?? 0) > 0 : (roles.get(tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield') ?? 0) > 0;
   return (
     <aside class="sidebar" data-faction={faction.id}>
@@ -150,7 +154,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
           Press {TABS.find((t) => t.id === state.sidebarTab)!.key}, then a letter
         </div>
       )}
-      <div class={`grid ${MENU_MODES.includes(state.mode) ? 'keys' : ''}`} data-testid="build-grid">
+      <div class={`grid ${MENU_MODES.includes(state.mode) ? 'keys' : ''} ${art ? 'art' : ''}`} data-testid="build-grid">
         {items.map((it) => {
           const missing = state.missing(it.requires, roles);
           let progress = 0;
@@ -197,7 +201,8 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
                 else input.cancelUnit(it);
               }}
             >
-              {progress > 0 && !ready && <i class="progress" style={{ height: `${progress / 10}%` }} />}
+              <Icon state={state} faction={faction.id} id={it.id} color={teamColor} />
+              {progress > 0 && !ready && <i class="progress" style={{ '--p': `${progress / 10}%` }} />}
               <span class={`name ${faction.monospaceNames ? 'mono' : ''}`}>{it.name}</span>
               <span class="cost">{ready ? 'READY' : `$${it.cost}`}</span>
               {it.key && <kbd class="key">{it.key}</kbd>}
@@ -392,7 +397,8 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
                   title={state.ruleOf(h).name}
                   onClick={() => state.select([h])}
                 >
-                  <span>{state.ruleOf(h).name.slice(0, 3)}</span>
+                  <Icon state={state} faction={state.rules.factions[state.ruleOf(h).faction]!.id} id={state.ruleOf(h).id} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
+                  {!state.art.has(state.rules.factions[state.ruleOf(h).faction]!.id) && <span>{state.ruleOf(h).name.slice(0, 3)}</span>}
                   <i style={{ width: `${hp * 100}%` }} />
                 </button>
               );
@@ -481,7 +487,9 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
   const faction = state.rules.factions[rule.faction]!;
   return (
     <div class="one">
-      <div class="portrait" style={{ background: hex(TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!) }} />
+      <div class="portrait" style={{ '--team': hex(TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!) }}>
+        <Icon state={state} faction={faction.id} id={rule.id} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
+      </div>
       <div>
         <div class={`title ${faction.monospaceNames ? 'mono' : ''}`}>
           {rule.name} {'★'.repeat(rank)}

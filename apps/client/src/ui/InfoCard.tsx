@@ -1,5 +1,6 @@
 import { ARMOR, DAMAGE, type Rules, type StructureRule, type UnitRule, type WeaponRule } from '@signal-fall/data';
-import type { ClientState } from '../game/state';
+import { TEAM_COLORS, type ClientState } from '../game/state';
+import { Icon } from './Icon';
 
 const FX = 1024;
 const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
@@ -61,6 +62,9 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
   const used = state.cur?.player(state.localPlayer, 3) ?? 0;
   return (
     <div class="card" data-testid="info-card">
+      <div class="card-art">
+        <Icon state={state} faction={faction.id} id={rule.id} color={TEAM_COLORS[state.localPlayer % TEAM_COLORS.length]!} />
+      </div>
       <header>
         <b class={faction.monospaceNames ? 'mono' : ''}>{rule.name}</b>
         {rule.key && <kbd>{rule.key}</kbd>}

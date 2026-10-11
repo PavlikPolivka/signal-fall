@@ -38,6 +38,18 @@ importers:
 
   apps/client:
     dependencies:
+      '@fontsource/cinzel':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/rajdhani':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/saira-stencil-one':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/share-tech-mono':
+        specifier: 5.3.0
+        version: 5.3.0
       '@signal-fall/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -346,6 +358,18 @@ packages:
   '@eslint/plugin-kit@0.7.3':
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@fontsource/cinzel@5.3.0':
+    resolution: {integrity: sha512-KEOYTsrRppW0uRIPWBDPrQgunCS6f8u4nzZxYRBfo9SCknKojLYjK7B0ZoVmJhyVLefz271ZQRF9EOpHZlfhRw==}
+
+  '@fontsource/rajdhani@5.3.0':
+    resolution: {integrity: sha512-oBJgSIibWJvVBKseme1JczqPLoDHN97LHti4uh0LjfcJqQoVmnQQlRKIpEjTJV559rmVQ6qbVZZwKwk2wkBTtw==}
+
+  '@fontsource/saira-stencil-one@5.3.0':
+    resolution: {integrity: sha512-b7ILM7KrAWTIUSWKuzV29lTQZV5QOGhlmXXEt3Dsg/rJ4lo1kjUjuo6dBG9Iq+pR7wRZCVXftinVHDof+i9nSA==}
+
+  '@fontsource/share-tech-mono@5.3.0':
+    resolution: {integrity: sha512-hVEzVCzEid/fBfhggMyvkfDzn9ODrMihxC0EiOeQK3BuQNvdjmith2ERnoDNUkbW8zhufbKNuCgaSoT8LUNpuQ==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -1465,6 +1489,14 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
+
+  '@fontsource/cinzel@5.3.0': {}
+
+  '@fontsource/rajdhani@5.3.0': {}
+
+  '@fontsource/saira-stencil-one@5.3.0': {}
+
+  '@fontsource/share-tech-mono@5.3.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

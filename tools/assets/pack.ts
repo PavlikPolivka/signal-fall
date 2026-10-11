@@ -7,9 +7,9 @@
  * to 1x, trims transparent borders, packs into 2048x2048 pages and writes:
  *   apps/client/public/assets/sprites/<faction>/atlas-<n>.png + atlas-<n>.json
  *   apps/client/public/assets/sprites/<faction>/catalog.json  (sprite metadata)
- *   apps/client/public/assets/icons/<faction>/<id>.png        (sidebar icons / portraits)
+ *   apps/client/public/assets/icons/<faction>/<id>.png        (sidebar icons / portraits; <id>.mask.png team areas)
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MaxRectsPacker } from 'maxrects-packer';
@@ -22,7 +22,7 @@ const OUT = join(ROOT, 'apps/client/public/assets/sprites', faction);
 const ICONS = join(ROOT, 'apps/client/public/assets/icons', faction);
 const PASSES = ['color', 'mask', 'shadow'] as const;
 const PAGE = 2048;
-const ICON_PX = 128;
+const ICON_PX = 192;
 /** Direction used for icons: facing the viewer (straight down the screen = sim 45 degrees). */
 const ICON_DIR = { 8: 1, 16: 2 } as Record<number, number>;
 
@@ -53,6 +53,19 @@ interface Packed {
 }
 
 const manifest: Manifest = JSON.parse(readFileSync(join(RAW, 'manifest.json'), 'utf8'));
+
+/** A rendered mask pass as white RGB with alpha = team-color amount (same convention as the atlas). */
+async function teamMask(file: string): Promise<Buffer> {
+  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += 4) {
+    const a = Math.round((data[i]! * data[i + 3]!) / 255);
+    data[i] = 255;
+    data[i + 1] = 255;
+    data[i + 2] = 255;
+    data[i + 3] = a;
+  }
+  return sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+}
 
 async function load(frame: string, pass: string, size: number): Promise<Packed | null> {
   const file = join(RAW, `${frame.replaceAll('/', '_')}.${pass}.png`);
@@ -157,20 +170,33 @@ async function main(): Promise<void> {
   };
   writeFileSync(join(OUT, 'catalog.json'), JSON.stringify(catalog, null, 1));
 
-  // Icons: hull/body (+ turret) composited, facing the viewer, trimmed and fit to ICON_PX.
+  // Icons: dedicated 3/4 renders (render_icons.py) when present, else the sprite facing the viewer.
+  // Color and team mask are trimmed by the same box so the UI can tint the mask over the color.
   for (const [id, e] of Object.entries(manifest.sprites)) {
     if ((e.kind as string) === 'prop') continue;
-    const dir = e.kind === 'building' ? 0 : (ICON_DIR[e.dirs ?? 16] ?? 0);
-    const base = e.kind === 'building' ? `${id}/body/built/00/0` : `${id}/hull/${Object.keys(e.anims ?? { idle: 1 })[0]}/${String(dir).padStart(2, '0')}/0`;
-    const layers = [base];
-    if (e.turret) layers.push(`${id}/turret/idle/${String(e.kind === 'building' ? 2 : dir).padStart(2, '0')}/0`);
-    const size = e.frame * 2;
-    const comps = layers.map((l) => ({ input: join(RAW, `${l.replaceAll('/', '_')}.color.png`) }));
-    const composed = await sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-      .composite(comps)
-      .png()
-      .toBuffer();
-    await sharp(composed).trim({ threshold: 1 }).resize(ICON_PX, ICON_PX, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(join(ICONS, `${id}.png`));
+    const dedicated = join(RAW, 'icons', `${id}.color.png`);
+    let color: Buffer;
+    let mask: Buffer | null = null;
+    if (existsSync(dedicated)) {
+      color = readFileSync(dedicated);
+      mask = await teamMask(join(RAW, 'icons', `${id}.mask.png`));
+    } else {
+      const dir = e.kind === 'building' ? 0 : (ICON_DIR[e.dirs ?? 16] ?? 0);
+      const base = e.kind === 'building' ? `${id}/body/built/00/0` : `${id}/hull/${Object.keys(e.anims ?? { idle: 1 })[0]}/${String(dir).padStart(2, '0')}/0`;
+      const layers = [base];
+      if (e.turret) layers.push(`${id}/turret/idle/${String(e.kind === 'building' ? 2 : dir).padStart(2, '0')}/0`);
+      const size = e.frame * 2;
+      color = await sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+        .composite(layers.map((l) => ({ input: join(RAW, `${l.replaceAll('/', '_')}.color.png`) })))
+        .png()
+        .toBuffer();
+    }
+    const { info } = await sharp(color).trim({ threshold: 1 }).toBuffer({ resolveWithObject: true });
+    const box = { left: -(info.trimOffsetLeft ?? 0), top: -(info.trimOffsetTop ?? 0), width: info.width, height: info.height };
+    const fit = (img: Buffer) =>
+      sharp(img).extract(box).resize(ICON_PX, ICON_PX, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ compressionLevel: 9 });
+    await fit(color).toFile(join(ICONS, `${id}.png`));
+    if (mask) await fit(mask).toFile(join(ICONS, `${id}.mask.png`));
   }
   console.log(`packed ${items.length} frames into ${page} page(s); icons for ${Object.keys(manifest.sprites).length} sprites`);
 }

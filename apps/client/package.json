@@ -10,6 +10,10 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@fontsource/cinzel": "5.3.0",
+    "@fontsource/rajdhani": "5.3.0",
+    "@fontsource/saira-stencil-one": "5.3.0",
+    "@fontsource/share-tech-mono": "5.3.0",
     "@signal-fall/ai": "workspace:*",
     "@signal-fall/data": "workspace:*",
     "@signal-fall/mapgen": "workspace:*",
