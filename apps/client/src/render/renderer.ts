@@ -4,7 +4,7 @@ import { E, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
 import { SpriteLibrary } from './sprites';
-import { TerrainLayer } from './terrain';
+import { CLIFF_H, TerrainLayer } from './terrain';
 import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
 
 const FX = 1024;
@@ -227,7 +227,7 @@ export class Renderer {
     // Textured terrain (shader); the flat-colour tiles below stay as the instant fallback until it loads.
     this.drawFlatTerrain();
     void this.terrain
-      .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain)
+      .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain, s.surface)
       .then(() => this.drawProps())
       .catch((err) => console.warn('terrain shader unavailable, using flat tiles', err));
     this.buildFog();
@@ -238,28 +238,68 @@ export class Renderer {
     const s = this.state;
     await this.lib.loadFaction('props');
     if (!this.lib.info('rock_wasteland_0')) return;
-    this.terrainLayer.children.filter((c) => c !== this.terrainLayer.children[0]).forEach((c) => c.destroy());
+    const ground = this.terrain.groundDecor;
+    const top = this.terrain.topDecor;
+    ground.removeChildren();
+    top.removeChildren();
     const hash = (x: number, y: number, k: number) => {
       let h = Math.imul(x + 1, 374761393) + Math.imul(y + 1, 668265263) + Math.imul(k, 982451653);
       h = Math.imul(h ^ (h >>> 13), 1274126177);
       return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
     };
+    const at = (x: number, y: number) => (x >= 0 && y >= 0 && x < s.width && y < s.height ? s.terrain[y * s.width + x]! : -1);
+    const mesa = (x: number, y: number) => TerrainLayer.isMesa(at(x, y));
     const obstacle = (t: number): string | null => {
       if (t === TERRAIN.ruins) return 'rock_city';
-      if (t === TERRAIN.cliff) return s.biome === 'crystal' ? 'rock_crystal' : 'rock_wasteland';
       if (t === TERRAIN.rock) return s.biome === 'crystal' ? 'rock_crystal' : 'rock_wasteland';
       return null;
     };
-    const DECO_IDS = ['', 'deco_rubble', 'deco_wreck', 'deco_outcrop', 'deco_tree'];
+    const place = (id: string, layer: Container, px: number, py: number, scale: number, flip: number, shadow: boolean) => {
+      const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color');
+      if (!tex) return;
+      const sh = shadow ? this.lib.texture(id, 'body', 'idle', 0, 0, 'shadow') : null;
+      if (sh) {
+        const sp = new Sprite(sh);
+        sp.anchor.set(0.5);
+        sp.position.set(px, py);
+        sp.scale.set(scale * flip, scale);
+        (layer === this.ground ? this.shadows : layer).addChild(sp);
+      }
+      const sp = new Sprite(tex);
+      sp.anchor.set(0.5);
+      sp.position.set(px, py);
+      sp.scale.set(scale * flip, scale);
+      sp.zIndex = py;
+      layer.addChild(sp);
+    };
+    this.drawLandmarks(place);
+    const DECO_IDS = ['', 'deco_rubble', 'deco_wreck', 'deco_outcrop', 'deco_tree', 'deco_crater'];
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
         const i = y * s.width + x;
+        if (s.landmark[i]) continue;
+        const cx = isoX(x + 0.5, y + 0.5);
+        const cy = isoY(x + 0.5, y + 0.5);
+        if (mesa(x, y)) {
+          // Mesa tops: crystal spires or the odd boulder; scree at the foot of exposed faces.
+          const r = hash(x, y, 7);
+          if (s.biome === 'crystal' ? r < 0.3 : r < 0.1) {
+            const id = s.biome === 'crystal' ? `deco_outcrop_${Math.floor(hash(x, y, 2) * 3)}` : `rock_wasteland_${Math.floor(hash(x, y, 2) * 6)}`;
+            place(id, top, cx, cy - CLIFF_H, s.biome === 'crystal' ? 1.3 : 0.55, hash(x, y, 6) < 0.5 ? -1 : 1, false);
+          }
+          continue;
+        }
+        if ((mesa(x - 1, y) || mesa(x, y - 1)) && hash(x, y, 8) < 0.3) {
+          place(`deco_rubble_${Math.floor(hash(x, y, 9) * 3)}`, this.ground, cx - 6 + hash(x, y, 10) * 12, cy - 4, 0.9, 1, false);
+        }
         const ob = obstacle(s.terrain[i]!);
         const deco = DECO_IDS[s.decoration[i] ?? 0] ?? '';
         const id = ob ? `${ob}_${Math.floor(hash(x, y, 1) * 6)}` : deco ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}` : null;
         if (!id) continue;
-        const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color');
-        if (!tex) continue;
+        if (deco === 'deco_crater') {
+          place(id, ground, cx, cy, 0.9 + hash(x, y, 5) * 0.5, 1, false);
+          continue;
+        }
         // Jitter inside the tile, random size and mirroring so formations don't repeat.
         const jx = (hash(x, y, 3) - 0.5) * (ob ? 0.3 : 0.6);
         const jy = (hash(x, y, 4) - 0.5) * (ob ? 0.3 : 0.6);
@@ -267,24 +307,48 @@ export class Renderer {
         const py = isoY(x + 0.5 + jx, y + 0.5 + jy);
         const scale = ob ? 1.05 + hash(x, y, 5) * 0.35 : 0.85 + hash(x, y, 5) * 0.3;
         const flip = hash(x, y, 6) < 0.5 ? -1 : 1;
-        const sh = this.lib.texture(id, 'body', 'idle', 0, 0, 'shadow');
-        if (sh) {
-          const shadow = new Sprite(sh);
-          shadow.anchor.set(0.5);
-          shadow.position.set(px, py);
-          shadow.scale.set(scale * flip, scale);
-          this.shadows.addChild(shadow);
-        }
-        const sp = new Sprite(tex);
-        sp.anchor.set(0.5);
-        sp.position.set(px, py);
-        sp.scale.set(scale * flip, scale);
-        sp.zIndex = py;
-        this.ground.addChild(sp);
+        place(id, this.ground, px, py, scale, flip, true);
       }
     }
     this.propsReady = true;
     this.echoVersion = -1;
+  }
+
+  /** One big sprite per landmark, at the center of its footprint. */
+  private drawLandmarks(place: (id: string, layer: Container, px: number, py: number, scale: number, flip: number, shadow: boolean) => void): void {
+    const s = this.state;
+    const NAMES = ['', 'lm_tower', 'lm_building', 'lm_crashed', 'lm_monolith'];
+    const seen = new Uint8Array(s.width * s.height);
+    for (let i = 0; i < s.width * s.height; i++) {
+      const kind = s.landmark[i] ?? 0;
+      if (!kind || seen[i]) continue;
+      // Flood the footprint to find its bounds.
+      let x0 = s.width;
+      let y0 = s.height;
+      let x1 = 0;
+      let y1 = 0;
+      const stack = [i];
+      seen[i] = 1;
+      while (stack.length) {
+        const j = stack.pop()!;
+        const x = j % s.width;
+        const y = Math.floor(j / s.width);
+        x0 = Math.min(x0, x);
+        y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x);
+        y1 = Math.max(y1, y);
+        for (const k of [j - 1, j + 1, j - s.width, j + s.width]) {
+          if (k < 0 || k >= s.width * s.height || seen[k] || s.landmark[k] !== kind) continue;
+          if (Math.abs((k % s.width) - x) > 1) continue;
+          seen[k] = 1;
+          stack.push(k);
+        }
+      }
+      const u = (x0 + x1 + 1) / 2;
+      const v = (y0 + y1 + 1) / 2;
+      // Mirrored copies on mirror-symmetric maps look less like clones.
+      place(NAMES[kind]!, this.ground, isoX(u, v), isoY(u, v), 1.35, (x0 + y0) % 2 ? -1 : 1, true);
+    }
   }
 
   private drawFlatTerrain(): void {

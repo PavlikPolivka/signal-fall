@@ -62,6 +62,6 @@ describe('big battle determinism', () => {
 
   it('golden hash is stable (update deliberately when sim rules change)', async () => {
     const { goldenHash } = await import('../src/scenarios');
-    expect(goldenHash(defaultRules()).toString(16)).toMatchInlineSnapshot(`"eb03cf71"`);
+    expect(goldenHash(defaultRules()).toString(16)).toMatchInlineSnapshot(`"ba6a5220"`);
   });
 });

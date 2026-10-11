@@ -32,6 +32,9 @@ export type FromWorker =
       height: number;
       terrain: Uint8Array;
       decoration: Uint8Array;
+      /** Cosmetic ground surface (mapgen SURFACE) and landmark kind (mapgen LANDMARK) per tile. */
+      surface: Uint8Array;
+      landmark: Uint8Array;
       biome: Biome;
       /** Seed that actually produced the map (after validation retries). */
       mapSeed: number;

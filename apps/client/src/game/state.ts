@@ -41,6 +41,8 @@ export class ClientState {
   height = 0;
   terrain: Uint8Array = new Uint8Array(0);
   decoration: Uint8Array = new Uint8Array(0);
+  surface: Uint8Array = new Uint8Array(0);
+  landmark: Uint8Array = new Uint8Array(0);
   biome: 'city' | 'wasteland' | 'crystal' = 'wasteland';
   mapSeed = 0;
   players: PlayerInfo[] = [];

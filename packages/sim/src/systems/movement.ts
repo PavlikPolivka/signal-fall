@@ -58,6 +58,7 @@ export function movementSystem(world: World): void {
     let px = 0;
     let py = 0;
     const r = e.radius[s]!;
+    const moving = e.hasGoal[s] === 1;
     world.spatial.query(x, y, r + NEIGHBOR_RANGE, (n) => {
       if (n === s || e.kind[n] !== KIND.unit) return;
       if (world.rules.units[e.type[n]!]!.isAir !== air) return;
@@ -67,12 +68,24 @@ export function movementSystem(world: World): void {
       if (dx >= minD || dx <= -minD || dy >= minD || dy <= -minD) return;
       const dist = ilength(dx, dy);
       if (dist >= minD) return;
-      const overlap = minD - dist;
+      let overlap = minD - dist;
+      // Idle units make way: a moving unit barely yields to them, and they take the whole shove.
+      const other = e.hasGoal[n] === 1;
+      if (moving && !other) overlap >>= 2;
+      else if (!moving && other) overlap <<= 1;
       if (dist === 0) {
         px += s < n ? -(overlap >> 1) : overlap >> 1;
       } else {
         px += idiv(dx * overlap, dist * 2);
         py += idiv(dy * overlap, dist * 2);
+      }
+      // Two movers meeting head-on both keep right, so they slide past instead of stalling.
+      if (moving && other && -(dx * vx + dy * vy) > 0) {
+        const vl = ilength(vx, vy);
+        if (vl > 0) {
+          px += idiv(-vy * overlap, vl * 2);
+          py += idiv(vx * overlap, vl * 2);
+        }
       }
     });
     const pmax = rule.speed;

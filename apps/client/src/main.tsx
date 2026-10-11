@@ -88,6 +88,8 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.height = msg.height;
       state.terrain = msg.terrain;
       state.decoration = msg.decoration;
+      state.surface = msg.surface;
+      state.landmark = msg.landmark;
       state.biome = msg.biome;
       state.mapSeed = msg.mapSeed;
       state.players = msg.players;

@@ -39,6 +39,8 @@ function post(msg: FromWorker, transfer: Transferable[] = []): void {
 
 interface MapExtras {
   decoration: Uint8Array;
+  surface: Uint8Array;
+  landmark: Uint8Array;
   biome: Biome;
   mapSeed: number;
 }
@@ -59,13 +61,13 @@ function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         if (difficulty) attachAi(sim, p, difficulty, map.starts);
         else if (p !== 0) grantBase(sim, p, map.starts[p]!);
       });
-      return { sim, extras: { decoration: map.decoration, biome: map.biome, mapSeed: map.seedUsed } };
+      return { sim, extras: { decoration: map.decoration, surface: map.surface, landmark: map.landmark, biome: map.biome, mapSeed: map.seedUsed } };
     }
     case 'sandbox':
     case 'stress': {
       const sim = sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
       const n = sim.world.map.width * sim.world.map.height;
-      return { sim, extras: { decoration: new Uint8Array(n), biome: 'wasteland', mapSeed: spec.seed } };
+      return { sim, extras: { decoration: new Uint8Array(n), surface: new Uint8Array(n), landmark: new Uint8Array(n), biome: 'wasteland', mapSeed: spec.seed } };
     }
   }
 }
@@ -234,12 +236,14 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
           height: w.map.height,
           terrain,
           decoration: extras.decoration,
+          surface: extras.surface,
+          landmark: extras.landmark,
           biome: extras.biome,
           mapSeed: extras.mapSeed,
           players: w.players.map((p) => ({ faction: p.faction, team: p.team })),
           localPlayer,
         },
-        [terrain.buffer, extras.decoration.buffer],
+        [terrain.buffer, extras.decoration.buffer, extras.surface.buffer, extras.landmark.buffer],
       );
       publish(false);
       return;

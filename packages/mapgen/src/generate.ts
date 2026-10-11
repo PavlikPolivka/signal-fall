@@ -20,7 +20,13 @@ export const SIZES: Record<MapSize, number> = { S: 96, M: 128, L: 160 };
 export const BUILD_AREA = 24;
 
 /** Cosmetic decoration per tile (renderer only). */
-export const DECO = { none: 0, rubble: 1, wreck: 2, outcrop: 3, deadTree: 4 } as const;
+export const DECO = { none: 0, rubble: 1, wreck: 2, outcrop: 3, deadTree: 4, crater: 5 } as const;
+/** Cosmetic ground surface per tile (renderer only; terrain decides movement). */
+export const SURFACE = { none: 0, road: 1, ford: 2, plaza: 3 } as const;
+/** Landmark kind per footprint tile; footprint tiles are impassable rock. */
+export const LANDMARK = { none: 0, tower: 1, building: 2, crashed: 3, monolith: 4 } as const;
+/** Square footprint side per landmark kind. */
+export const LANDMARK_SIZE: readonly number[] = [0, 2, 3, 3, 2];
 
 export interface GeneratedMap extends MapData {
   params: MapParams;
@@ -29,13 +35,15 @@ export interface GeneratedMap extends MapData {
   symmetry: SymmetryKind;
   biome: Biome;
   decoration: Uint8Array;
+  surface: Uint8Array;
+  landmark: Uint8Array;
   hash: number;
 }
 
 const BIOME_OBSTACLE: Record<Biome, [number, number]> = {
   // [primary, secondary] impassable terrain
   city: [TERRAIN.ruins, TERRAIN.rock],
-  wasteland: [TERRAIN.rock, TERRAIN.cliff],
+  wasteland: [TERRAIN.cliff, TERRAIN.rock],
   crystal: [TERRAIN.cliff, TERRAIN.rock],
 };
 /** Height above which tiles become impassable, out of 1024. */
@@ -45,6 +53,14 @@ const WATER_THRESHOLD: Record<Biome, number> = { city: 330, wasteland: 300, crys
 /** [field radius, crystals at the center] per resource level. */
 const FIELD: Record<Resources, [number, number]> = { low: [3, 9], normal: [3, 12], rich: [4, 14] };
 const DECO_PCT: Record<Biome, number> = { city: 9, wasteland: 5, crystal: 6 };
+/** Chance of a river (2- and 4-player maps). */
+const RIVER_PCT: Record<Biome, number> = { city: 45, wasteland: 35, crystal: 45 };
+/** Landmarks flanking the routes, per biome. */
+const FLANK_LANDMARKS: Record<Biome, number[]> = {
+  city: [LANDMARK.building, LANDMARK.tower],
+  wasteland: [LANDMARK.crashed, LANDMARK.tower],
+  crystal: [LANDMARK.monolith, LANDMARK.tower],
+};
 
 /** Generate a valid map: tries params.seed, then seed+1, ... until validation passes. */
 export function generateMap(params: MapParams, maxAttempts = 64): GeneratedMap {
@@ -141,6 +157,47 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     y: clampIn(sy + ((toC.y * dist + perp.y * side) >> 10), n, 5),
   });
 
+  // Raw (unclamped) point relative to start 0, for features that run off the map.
+  const rawAlong = (dist: number, side: number) => ({
+    x: sx + ((toC.x * dist + perp.x * side) >> 10),
+    y: sy + ((toC.y * dist + perp.y * side) >> 10),
+  });
+  const dC = ilength(c - sx, c - sy);
+
+  // 2b. A river between the players: across the center on 2-player maps, a cross on 4-player maps.
+  const river = symKind !== 'radial' && rng.chance(RIVER_PCT[params.biome]);
+  const crossings: [{ x: number; y: number }, { x: number; y: number }][] = [];
+  if (river) {
+    const wobble = rng.nextU32();
+    if (symKind === 'quad') {
+      g.river([{ x: c, y: -2 }, { x: c, y: c }], wobble, 1);
+      g.river([{ x: -2, y: c }, { x: c, y: c }], wobble + 1, 1);
+      const q = c >> 1;
+      crossings.push([{ x: c - 6, y: q }, { x: c + 5, y: q }], [{ x: q, y: c - 6 }, { x: q, y: c + 5 }]);
+    } else {
+      // Along the mirror axis (rotations: any line through the center), so the river is its own image.
+      const [a, b] =
+        symKind === 'mirrorH'
+          ? [{ x: c, y: -2 }, { x: c, y: n + 1 }]
+          : symKind === 'mirrorV'
+            ? [{ x: -2, y: c }, { x: n + 1, y: c }]
+            : symKind === 'mirrorD'
+              ? [{ x: -2, y: -2 }, { x: n + 1, y: n + 1 }]
+              : [rawAlong(dC, -n), rawAlong(dC, n)];
+      const pts = [];
+      for (let k = 0; k <= 8; k++) pts.push({ x: a.x + idiv((b.x - a.x) * k, 8), y: a.y + idiv((b.y - a.y) * k, 8) });
+      g.river(pts, wobble, 1);
+      // Two flank crossings, a quarter of the way out from the center, square across the river.
+      const nrm = unit(a.y - b.y, b.x - a.x);
+      for (const k of [2, 6]) {
+        const p = pts[k]!;
+        const off = (d: number) => ({ x: clampIn(p.x + ((nrm.x * d) >> 10), n, 3), y: clampIn(p.y + ((nrm.y * d) >> 10), n, 3) });
+        crossings.push([off(-6), off(6)]);
+      }
+    }
+  }
+  const wasWater = g.terrain.map((t) => (t === TERRAIN.water ? 1 : 0));
+
   // 3. Echo fields: main next to the base, a natural expansion, contested toward the center.
   const [radius, amount] = FIELD[params.resources];
   const half = BUILD_AREA >> 1;
@@ -155,16 +212,26 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
   const fields = symKind === 'radial' ? [main, expansion] : [main, expansion, contested];
   if (symKind !== 'radial' && rng.chance(50)) fields.push(along(contestedDist + 10, lateral * rng.range(8, 14)));
 
-  // 4. Routes: two corridors from the base to the center, plus one to the expansion.
+  // 4. Routes: two roads from the base to the center, plus one to the expansion.
   const width = params.terrain === 'choke' ? 1 : 2;
-  const mid = idiv(ilength(c - sx, c - sy), 2);
+  const mid = idiv(dC, 2);
   const spread = idiv(n, 6);
-  g.carve(sx, sy, along(mid, spread).x, along(mid, spread).y, width);
-  g.carve(along(mid, spread).x, along(mid, spread).y, c, c, width);
-  g.carve(sx, sy, along(mid, -spread).x, along(mid, -spread).y, width);
-  g.carve(along(mid, -spread).x, along(mid, -spread).y, c, c, width);
-  g.carve(sx, sy, expansion.x, expansion.y, width);
+  g.carve(sx, sy, along(mid, spread).x, along(mid, spread).y, width, 1);
+  g.carve(along(mid, spread).x, along(mid, spread).y, c, c, width, 1);
+  g.carve(sx, sy, along(mid, -spread).x, along(mid, -spread).y, width, 1);
+  g.carve(along(mid, -spread).x, along(mid, -spread).y, c, c, width, 1);
+  g.carve(sx, sy, expansion.x, expansion.y, width, 0);
   for (const f of fields) g.carve(f.x, f.y, along(mid, 0).x, along(mid, 0).y, 1);
+  for (const [a, b] of crossings) g.carve(a.x, a.y, b.x, b.y, 1, 1);
+
+  // Center plaza with the old relay tower, when no river runs through the middle.
+  if (!river && symKind !== 'radial') g.plaza(c, c, 5, true);
+
+  // A paved apron beside the natural expansion, room for a refinery.
+  if (symKind !== 'radial') {
+    const pad = along(half + 6, lateral * (half + 9 - radius));
+    g.plaza(pad.x, pad.y, 3, false);
+  }
 
   // Fields go in after carving so corridors don't erase them; build areas last so nothing intrudes.
   for (const f of fields) g.field(f.x, f.y, radius, amount, rng);
@@ -173,14 +240,30 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
   // Every start gets its own axis-aligned build area (radial images of a square are rotated).
   for (const s of starts) g.clearSquare(s.x, s.y, half + 1, false);
 
+  // 5. Landmarks: the relay tower at the center plaza, biome landmarks flanking the routes.
+  if (!river && symKind !== 'radial') g.placeLandmark(c - 1, c - 1, LANDMARK.tower, starts, half);
+  const flank = FLANK_LANDMARKS[params.biome];
+  for (let k = 0; k < 2; k++) {
+    const kind = flank[(k + rng.int(2)) % 2]!;
+    const p = along(mid + rng.range(2, 8), (k === 0 ? 1 : -1) * (spread + rng.range(7, 12)));
+    g.placeLandmark(p.x, p.y, kind, starts, half);
+  }
+
+  // Crossings: tiles that were water and are now passable read as fords (bridges in the city).
+  for (let i = 0; i < n * n; i++) if (wasWater[i] && g.terrain[i] === TERRAIN.ground && g.echo[i] === 0) g.surface[i] = SURFACE.ford;
+
   // 6. Decoration on open ground away from bases and fields.
   const decoSeed = rng.nextU32();
   const decoTypes: number[] =
-    params.biome === 'city' ? [DECO.rubble, DECO.wreck] : params.biome === 'crystal' ? [DECO.outcrop, DECO.rubble] : [DECO.deadTree, DECO.wreck, DECO.rubble];
+    params.biome === 'city'
+      ? [DECO.rubble, DECO.wreck, DECO.crater]
+      : params.biome === 'crystal'
+        ? [DECO.outcrop, DECO.rubble, DECO.crater]
+        : [DECO.deadTree, DECO.wreck, DECO.rubble, DECO.crater];
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       const i = y * n + x;
-      if (g.terrain[i] !== TERRAIN.ground || g.echo[i]! > 0) continue;
+      if (g.terrain[i] !== TERRAIN.ground || g.echo[i]! > 0 || g.surface[i] === SURFACE.plaza || g.surface[i] === SURFACE.ford) continue;
       if (starts.some((s) => Math.abs(s.x - x) <= half + 1 && Math.abs(s.y - y) <= half + 1)) continue;
       const r = g.symmetricHash(decoSeed, x, y);
       if (r % 100 < DECO_PCT[params.biome]) g.deco[i] = decoTypes[idiv(r, 100) % decoTypes.length]!;
@@ -207,6 +290,8 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     symmetry: symKind,
     biome: params.biome,
     decoration: g.deco,
+    surface: g.surface,
+    landmark: g.landmark,
     hash: xxh32Words(words),
   };
 }
@@ -225,6 +310,8 @@ class Grid {
   readonly terrain: Uint8Array;
   readonly echo: Uint8Array;
   readonly deco: Uint8Array;
+  readonly surface: Uint8Array;
+  readonly landmark: Uint8Array;
   /** orbits[i * K .. i * K + K) = tile indices equivalent to tile i, padded with -1. */
   private readonly orbits: Int32Array;
   private readonly K: number;
@@ -236,6 +323,8 @@ class Grid {
     this.terrain = new Uint8Array(n * n);
     this.echo = new Uint8Array(n * n);
     this.deco = new Uint8Array(n * n);
+    this.surface = new Uint8Array(n * n);
+    this.landmark = new Uint8Array(n * n);
     this.K = sym.players;
     this.orbits = new Int32Array(n * n * this.K).fill(-1);
     for (let y = 0; y < n; y++)
@@ -307,21 +396,126 @@ class Grid {
   }
 
   /** Clear a corridor of passable ground between two points (and all their images). */
-  carve(x0: number, y0: number, x1: number, y1: number, width: number): void {
+  carve(x0: number, y0: number, x1: number, y1: number, width: number, road = -1): void {
     if (this.sym.kind === 'radial') {
       for (let k = 0; k < this.sym.players; k++) {
         const [ax, ay] = this.sym.image(x0, y0, k);
         const [bx, by] = this.sym.image(x1, y1, k);
-        this.line(ax, ay, bx, by, width, false);
+        this.line(ax, ay, bx, by, width, false, road);
       }
       return;
     }
-    this.line(x0, y0, x1, y1, width, true);
+    this.line(x0, y0, x1, y1, width, true, road);
   }
 
-  private line(x0: number, y0: number, x1: number, y1: number, width: number, symmetric: boolean): void {
+  /** A river through the given points (sector 0 coordinates, may run off the map), wobbling sideways. */
+  river(pts: { x: number; y: number }[], seed: number, width: number): void {
+    const water = (i: number) => {
+      this.terrain[i] = TERRAIN.water;
+    };
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const a = pts[k]!;
+      const b = pts[k + 1]!;
+      // Interior vertices wobble by up to 2 tiles; the ends stay put so segments join.
+      const wob = (p: { x: number; y: number }, j: number, end: boolean) =>
+        end ? p : { x: p.x + ((hash2(seed, j, 1) % 5) - 2), y: p.y + ((hash2(seed, j, 2) % 5) - 2) };
+      const p = wob(a, k, k === 0);
+      const q = wob(b, k + 1, k + 1 === pts.length - 1);
+      this.stroke(p.x, p.y, q.x, q.y, width, water);
+    }
+  }
+
+  /** Paint `fn` along a thick line, symmetric images included. */
+  private stroke(x0: number, y0: number, x1: number, y1: number, width: number, fn: (i: number) => void): void {
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+    const stepX = x1 > x0 ? 1 : -1;
+    const stepY = y1 > y0 ? 1 : -1;
+    let err = dx - dy;
+    let x = x0;
+    let y = y0;
+    for (;;) {
+      for (let oy = -width; oy <= width; oy++) for (let ox = -width; ox <= width; ox++) this.paintAll(x + ox, y + oy, fn);
+      if (x === x1 && y === y1) return;
+      const e2 = 2 * err;
+      if (e2 > -dy) {
+        err -= dy;
+        x += stepX;
+      }
+      if (e2 < dx) {
+        err += dx;
+        y += stepY;
+      }
+    }
+  }
+
+  /** paint() for orbit symmetries; per-sector images for radial. */
+  private paintAll(x: number, y: number, fn: (i: number) => void): void {
+    if (this.sym.kind !== 'radial') return this.paint(x, y, fn);
+    for (let k = 0; k < this.sym.players; k++) {
+      const [ix, iy] = this.sym.image(x, y, k);
+      if (this.inside(ix, iy)) fn(iy * this.n + ix);
+    }
+  }
+
+  /** A round paved, cleared area. */
+  plaza(cx: number, cy: number, r: number, symmetric: boolean): void {
+    const pave = (i: number) => {
+      this.terrain[i] = TERRAIN.ground;
+      this.echo[i] = 0;
+      this.surface[i] = SURFACE.plaza;
+    };
+    for (let y = -r; y <= r; y++)
+      for (let x = -r; x <= r; x++) {
+        if (x * x + y * y > r * r + 1) continue;
+        if (symmetric) this.paint(cx + x, cy + y, pave);
+        else this.paintAll(cx + x, cy + y, pave);
+      }
+  }
+
+  /**
+   * A landmark with its top-left corner at (x, y), if its footprint and a one-tile ring
+   * around it are open ground away from bases, fields and roads. All images or none.
+   */
+  placeLandmark(x: number, y: number, kind: number, starts: { x: number; y: number }[], half: number): boolean {
+    const size = LANDMARK_SIZE[kind]!;
+    const n = this.n;
+    const images: [number, number][] =
+      this.sym.kind === 'radial' ? Array.from({ length: this.sym.players }, (_, k) => this.sym.image(x, y, k)) : [[x, y]];
+    for (const [ix, iy] of images)
+      for (let ty = iy - 1; ty <= iy + size; ty++)
+        for (let tx = ix - 1; tx <= ix + size; tx++) {
+          if (tx < 2 || ty < 2 || tx >= n - 2 || ty >= n - 2) return false;
+          const i = ty * n + tx;
+          if (this.terrain[i] !== TERRAIN.ground || this.echo[i] !== 0 || this.landmark[i] !== 0) return false;
+          const inside = tx >= ix && ty >= iy && tx < ix + size && ty < iy + size;
+          if (this.surface[i] === SURFACE.road && inside) return false;
+          if (starts.some((s) => Math.abs(s.x - tx) <= half + 3 && Math.abs(s.y - ty) <= half + 3)) return false;
+        }
+    const put = (i: number) => {
+      this.terrain[i] = TERRAIN.rock;
+      this.landmark[i] = kind;
+      this.deco[i] = 0;
+      this.surface[i] = SURFACE.none;
+    };
+    for (const [ix, iy] of images)
+      for (let ty = iy; ty < iy + size; ty++)
+        for (let tx = ix; tx < ix + size; tx++) {
+          if (this.sym.kind === 'radial') put(ty * n + tx);
+          else this.paint(tx, ty, put);
+        }
+    return true;
+  }
+
+  private line(x0: number, y0: number, x1: number, y1: number, width: number, symmetric: boolean, road: number): void {
+    let onRoad = false;
     const open = (i: number) => {
       if (TERRAIN_SPEED_PCT[this.terrain[i]!] === 0) this.terrain[i] = TERRAIN.ground;
+      if (onRoad && this.landmark[i] === 0) {
+        // Roads are graded: rough ground on the road becomes ground.
+        if (this.terrain[i] === TERRAIN.rough) this.terrain[i] = TERRAIN.ground;
+        this.surface[i] = SURFACE.road;
+      }
     };
     const dx = Math.abs(x1 - x0);
     const dy = Math.abs(y1 - y0);
@@ -333,6 +527,7 @@ class Grid {
     for (;;) {
       for (let oy = -width; oy <= width; oy++)
         for (let ox = -width; ox <= width; ox++) {
+          onRoad = Math.abs(ox) <= road && Math.abs(oy) <= road;
           if (symmetric) this.paint(x + ox, y + oy, open);
           else if (this.inside(x + ox, y + oy)) open((y + oy) * this.n + x + ox);
         }
@@ -399,6 +594,7 @@ class Grid {
       this.terrain[i] = TERRAIN.ground;
       this.echo[i] = 0;
       this.deco[i] = 0;
+      this.landmark[i] = 0;
     };
     for (let y = cy - h; y <= cy + h; y++)
       for (let x = cx - h; x <= cx + h; x++) {

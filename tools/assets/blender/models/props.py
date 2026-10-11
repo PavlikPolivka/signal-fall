@@ -7,8 +7,8 @@ import math
 import random
 
 import bpy
-from kit import box, cylinder, material, strut, wedge
-from mathutils import Vector
+from kit import box, cylinder, lattice_tower, material, strut, wedge
+from mathutils import Euler, Vector
 
 
 def _rock(rnd, loc, scale, mat, flat=0.7):
@@ -163,6 +163,137 @@ def echo_cluster(style, size):
     return out
 
 
+def deco_crater(style, seed):
+    """Shell crater: scorched bowl with a raised, broken rim."""
+    rnd = random.Random(seed)
+    scorch = material("scorch", "1e1b18", rough=1.0, style=style)
+    dirt = material("crater_rim", "5a4c3a", rough=1.0, style=style)
+    r = 0.36 + seed * 0.04
+    bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=0.01, location=(0, 0, 0.005), vertices=16)
+    bowl = bpy.context.active_object
+    bowl.data.materials.append(scorch)
+    out = [bowl]
+    for k in range(12):
+        a = k / 12 * 6.28 + rnd.uniform(-0.1, 0.1)
+        s = rnd.uniform(0.06, 0.11)
+        out.append(_rock(rnd, (math.cos(a) * r, math.sin(a) * r, 0.02), s, dirt, flat=0.5))
+    return out
+
+
+# --- landmarks: big impassable set pieces; footprint side in tiles, centered at the origin ---
+
+
+def lm_tower(style, seed):
+    """The old relay tower: a lattice mast snapped halfway, its top and dish fallen beside it."""
+    rnd = random.Random(seed)
+    steel = material("mast_steel", "6a625a", rough=0.6, metal=0.5, style=style)
+    rust = material("mast_rust", "7a4a30", rough=0.9, metal=0.2, style=style)
+    conc = material("pad_concrete", "8a867e", rough=1.0, style=style)
+    dish = material("dish", "b8b4aa", rough=0.5, metal=0.3, style=style)
+    out = [box("pad", (1.7, 1.7, 0.12), (0, 0, 0.06), conc, bevel=0.03)]
+    out += lattice_tower(0, 0, 1.9, 1.1, steel, levels=6)
+    # Snapped top section lying across the pad, rusted.
+    top = lattice_tower(0, 0, 1.2, 0.33, rust, levels=4)
+    for o in top:
+        o.location.rotate(Euler((0, math.radians(84), 0.6)))
+        o.rotation_euler.rotate(Euler((0, math.radians(84), 0.6)))
+        o.location += Vector((0.35, -0.55, 0.2))
+    out += top
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.45, location=(-0.55, 0.5, 0.18), segments=16, ring_count=8)
+    d = bpy.context.active_object
+    d.scale = (1, 1, 0.35)
+    d.rotation_euler = (0.9, 0.3, 0)
+    d.data.materials.append(dish)
+    out.append(d)
+    for k in range(3):
+        p0 = Vector((0.15, 0.1, 1.85))
+        out.append(strut(p0, Vector((rnd.uniform(-0.8, 0.8), rnd.uniform(-0.8, 0.8), 0.02)), 0.01, steel))
+    out.append(box("hut", (0.45, 0.35, 0.32), (0.55, 0.55, 0.28), conc, bevel=0.02))
+    return out
+
+
+def lm_building(style, seed):
+    """Collapsed three-storey block: slabs on pillars, one corner fallen in."""
+    rnd = random.Random(seed)
+    conc = material("block_concrete", "86827a", rough=1.0, style=style)
+    dark = material("block_dark", "4a4743", rough=1.0, style=style)
+    brick = material("block_brick", "7a4a36", rough=1.0, style=style)
+    out = []
+    w = 2.5
+    for floor in range(3):
+        z = floor * 0.6
+        # Slabs: the +x,+y corner is missing on upper floors.
+        if floor == 0:
+            out.append(box("slab", (w, w, 0.08), (0, 0, z + 0.04), conc))
+        else:
+            out.append(box("slab", (w, w * 0.55, 0.08), (0, -w * 0.225, z + 0.04), conc, rot=(rnd.uniform(-0.03, 0.03), 0, 0)))
+            out.append(box("slab", (w * 0.5, w * 0.45, 0.08), (-w * 0.25, w * 0.275, z + 0.04), conc))
+        for px in (-1, 0, 1):
+            for py in (-1, 0, 1):
+                if floor > 0 and px >= 0 and py == 1:
+                    continue
+                out.append(box("pillar", (0.12, 0.12, 0.6), (px * (w / 2 - 0.08), py * (w / 2 - 0.08), z + 0.38), dark))
+        # Brick infill walls with window gaps on the back sides.
+        for k in range(4):
+            if rnd.random() < 0.7:
+                out.append(box("wall", (0.5, 0.08, 0.36), (-w / 2 + 0.35 + k * 0.6, -w / 2 + 0.04, z + 0.26), brick))
+            if rnd.random() < 0.7:
+                out.append(box("wall", (0.08, 0.5, 0.36), (-w / 2 + 0.04, -w / 2 + 0.35 + k * 0.6, z + 0.26), brick))
+    # The fallen corner: a tilted slab and rubble.
+    out.append(box("fallen", (1.2, 1.0, 0.08), (0.6, 0.75, 0.35), conc, rot=(0.5, -0.3, 0.2)))
+    for _ in range(14):
+        s = rnd.uniform(0.08, 0.2)
+        out.append(_rock(rnd, (rnd.uniform(0, 1.2), rnd.uniform(0.3, 1.25), 0.05), s, dark if rnd.random() < 0.5 else conc, flat=0.6))
+    return out
+
+
+def lm_crashed(style, seed):
+    """A downed dropship, nose buried, one wing torn off."""
+    rnd = random.Random(seed)
+    hull = material("dropship_hull", "6d6e66", rough=0.6, metal=0.4, style=style)
+    burnt = material("dropship_burnt", "2a2622", rough=1.0, style=style)
+    stripe = material("dropship_stripe", "a08a3a", rough=0.6, style=style)
+    dirt = material("plough_dirt", "5a4a34", rough=1.0, style=style)
+    glass = material("dropship_glass", "1d2a30", rough=0.2, metal=0.3, style=style)
+    tilt = (0, 0.14, 0)
+    out = [box("fuselage", (2.2, 0.8, 0.55), (0.1, 0, 0.36), hull, rot=tilt, bevel=0.08)]
+    out.append(wedge("nose", (0.6, 0.7, 0.45), (-1.2, 0, 0.18), burnt, rot=(0, 0.3, math.pi), taper=0.4))
+    out.append(wedge("cockpit", (0.5, 0.6, 0.18), (-0.75, 0, 0.66), glass, rot=(0, 0.14, math.pi), taper=0.5))
+    out.append(box("stripe", (0.3, 0.82, 0.04), (0.35, 0, 0.66), stripe, rot=tilt))
+    for y in (-0.5, 0.5):
+        out.append(cylinder("engine", 0.18, 0.7, (1.0, y, 0.55), burnt if y > 0 else hull, rot=(0, math.pi / 2 + 0.14, 0), verts=10))
+    out.append(wedge("tail", (0.6, 0.08, 0.55), (1.0, 0, 0.95), hull, rot=tilt))
+    out.append(box("wing", (0.8, 0.9, 0.06), (0.35, 0.8, 0.4), hull, rot=(0.25, 0.14, 0)))
+    out.append(box("torn_wing", (0.8, 0.8, 0.05), (0.7, -1.15, 0.04), burnt, rot=(0.05, 0.1, 2.6)))
+    # Ploughed earth piled at the nose.
+    for _ in range(9):
+        out.append(_rock(rnd, (rnd.uniform(-1.4, -0.9), rnd.uniform(-0.5, 0.5), 0.05), rnd.uniform(0.12, 0.22), dirt, flat=0.5))
+    for _ in range(6):
+        out.append(box("debris", (0.15, 0.1, 0.03), (rnd.uniform(-1, 1.3), rnd.uniform(-1.2, 1.2), 0.02), burnt, rot=(0, 0, rnd.random() * 3)))
+    for o in out:
+        o.location.rotate(Euler((0, 0, 0.35)))
+        o.rotation_euler.z += 0.35
+    return out
+
+
+def lm_monolith(style, seed):
+    """A towering Echo-violet crystal monolith over a cracked rock base."""
+    rnd = random.Random(seed)
+    stone = material("monolith_stone", "3d3a4a", rough=1.0, style=style)
+    violet = material("monolith_crystal", "a07ae8", rough=0.2, emission="6a40c8", style=style)
+    out = [_rock(rnd, (0, 0, 0.2), 0.8, stone, flat=0.5)]
+    for k in range(5):
+        out.append(_rock(rnd, (rnd.uniform(-0.7, 0.7), rnd.uniform(-0.7, 0.7), 0.1), rnd.uniform(0.2, 0.35), stone))
+    spires = [(0, 0, 2.6, 0.32), (0.35, -0.2, 1.6, 0.2), (-0.3, 0.3, 1.3, 0.18), (0.2, 0.45, 0.9, 0.14), (-0.45, -0.35, 0.8, 0.13)]
+    for (x, y, h, r) in spires:
+        bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=r, radius2=r * 0.15, depth=h, location=(x, y, h / 2 + 0.15))
+        o = bpy.context.active_object
+        o.rotation_euler = (rnd.uniform(-0.12, 0.12) + x * 0.25, rnd.uniform(-0.12, 0.12) - y * 0.25, rnd.random())
+        o.data.materials.append(violet)
+        out.append(o)
+    return out
+
+
 VARIANTS = 6
 
 # id -> (builder, frame px, variants)
@@ -174,5 +305,14 @@ PROPS = {
     "deco_wreck": (deco_wreck, 80, 3),
     "deco_outcrop": (deco_outcrop, 64, 3),
     "deco_tree": (deco_tree, 96, 3),
+    "deco_crater": (deco_crater, 80, 3),
+}
+
+# id -> (builder, frame px); one variant each.
+LANDMARKS = {
+    "lm_tower": (lm_tower, 256),
+    "lm_building": (lm_building, 288),
+    "lm_crashed": (lm_crashed, 256),
+    "lm_monolith": (lm_monolith, 256),
 }
 ECHO_SIZES = 4

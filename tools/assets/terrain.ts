@@ -3,8 +3,8 @@
  *
  *   pnpm --filter @signal-fall/assets terrain
  *
- * Writes apps/client/public/assets/terrain/<biome>/{ground,ground2,rough,water}.png
- * (512x512, tileable) plus a shared blend-noise texture. Gritty look: layered
+ * Writes apps/client/public/assets/terrain/<biome>/{ground,ground2,rough,water,road,plaza,cliff}.png
+ * (512x512, tileable; cliff is 512x256, tileable horizontally) plus a shared blend-noise texture. Gritty look: layered
  * periodic noise, pebbles, cracks and stains.
  */
 import { mkdirSync } from 'node:fs';
@@ -70,6 +70,32 @@ interface Look {
   pebbles: number;
   cracks: number;
 }
+
+interface Extra {
+  road: Look;
+  /** Paving: [joint, slab dark, slab light]. */
+  plaza: [string, string, string];
+  /** Cliff face strata: [dark, base, light, vein]. */
+  cliff: [string, string, string, string];
+}
+
+const EXTRA: Record<string, Extra> = {
+  wasteland: {
+    road: { dark: '7a6748', base: '8a7652', light: '98835e', stain: '6a5a40', pebble: 'a08c68', pebbles: 6, cracks: 0.2 },
+    plaza: ['3a352c', '6a655a', '868072'],
+    cliff: ['4a3826', '6e5638', '94784e', '3a2c1e'],
+  },
+  city: {
+    road: { dark: '232427', base: '2b2c30', light: '35363a', stain: '1a1b1d', pebble: '45464a', pebbles: 3, cracks: 1.2 },
+    plaza: ['2e2e2e', '6b6862', '85827a'],
+    cliff: ['3e3c39', '57544f', '737069', '2e2c2a'],
+  },
+  crystal: {
+    road: { dark: '55555f', base: '63636e', light: '72727e', stain: '4a4a54', pebble: '84849a', pebbles: 8, cracks: 0.2 },
+    plaza: ['26252e', '4c4a58', '625f70'],
+    cliff: ['28252f', '3a3546', '544c66', '9a72e0'],
+  },
+};
 
 const BIOMES: Record<string, Record<'ground' | 'ground2' | 'rough', Look> & { water: [string, string] }> = {
   wasteland: {
@@ -169,6 +195,70 @@ async function water(colors: [string, string], seed: number, file: string): Prom
   await sharp(px, { raw: { width: N, height: N, channels: 3 } }).png({ compressionLevel: 9 }).toFile(file);
 }
 
+/** Paving slabs on a 4x4 grid (one texture = 4x4 tiles when sampled in tile space, so 1 slab per tile). */
+async function plaza(cols: [string, string, string], seed: number, file: string): Promise<void> {
+  const px = Buffer.alloc(N * N * 3);
+  const [joint, dark, light] = cols.map(hex) as [RGB, RGB, RGB];
+  const cell = N / 4;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const cx = Math.floor(x / cell);
+      const cy = Math.floor(y / cell);
+      // Each slab has its own tone; some are cracked or stained.
+      const tone = hash(cx, cy, seed);
+      let c = mix(dark, light, 0.25 + tone * 0.5);
+      const n = fbm(x, y, 8, 4, seed + 5);
+      c = mix(c, dark, smooth(0.55, 0.8, n) * 0.5);
+      const g = hash(x, y, seed + 9) - 0.5;
+      c = [c[0] + g * 10, c[1] + g * 10, c[2] + g * 10];
+      const r = Math.abs(fbm(x, y, 6, 4, seed + 31) - 0.5);
+      if (tone > 0.7 && r < 0.01) c = mix(c, joint, 0.6);
+      const jx = x % cell;
+      const jy = y % cell;
+      if (jx < 3 || jy < 3) c = mix(c, joint, jx < 2 || jy < 2 ? 0.8 : 0.4);
+      else if (jx < 6 || jy < 6) c = mix(c, [255, 250, 240], 0.06);
+      const i = (y * N + x) * 3;
+      px[i] = c[0];
+      px[i + 1] = c[1];
+      px[i + 2] = c[2];
+    }
+  }
+  await sharp(px, { raw: { width: N, height: N, channels: 3 } }).png({ compressionLevel: 9 }).toFile(file);
+}
+
+/** Cliff face: horizontal strata, vertical fractures, a lit lip on top and a dark foot. Tiles horizontally. */
+async function cliff(cols: [string, string, string, string], seed: number, file: string): Promise<void> {
+  const H = N / 2;
+  const px = Buffer.alloc(N * H * 3);
+  const [dark, base, light, vein] = cols.map(hex) as [RGB, RGB, RGB, RGB];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < N; x++) {
+      const v = y / H;
+      // Strata: banding by height, warped sideways by noise.
+      const warp = fbm(x, y, 4, 3, seed) * 0.25;
+      const band = fbm(0, (v + warp) * N * 0.5, 16, 3, seed + 7);
+      let c = band < 0.5 ? mix(dark, base, smooth(0.2, 0.5, band)) : mix(base, light, smooth(0.5, 0.85, band));
+      // Vertical fractures.
+      const f = Math.abs(fbm(x, y * 0.25, 12, 3, seed + 13) - 0.5);
+      if (f < 0.02) c = mix(c, dark, 0.7);
+      else if (f < 0.035) c = mix(c, light, 0.2);
+      // Mineral veins (crystal biome glows).
+      const vn = Math.abs(fbm(x, y, 5, 4, seed + 21) - 0.5);
+      if (vn < 0.008) c = mix(c, vein, 0.8);
+      const g = hash(x, y, seed + 3) - 0.5;
+      c = [c[0] + g * 16, c[1] + g * 14, c[2] + g * 12];
+      // Lit lip at the top, shadowed foot.
+      if (v < 0.07) c = mix(c, light, 0.55 * (1 - v / 0.07));
+      c = mix(c, [0, 0, 0], smooth(0.6, 1, v) * 0.45);
+      const i = (y * N + x) * 3;
+      px[i] = Math.max(0, Math.min(255, c[0]));
+      px[i + 1] = Math.max(0, Math.min(255, c[1]));
+      px[i + 2] = Math.max(0, Math.min(255, c[2]));
+    }
+  }
+  await sharp(px, { raw: { width: N, height: H, channels: 3 } }).png({ compressionLevel: 9 }).toFile(file);
+}
+
 /** Grey noise used by the terrain shader to break up blend edges. */
 async function blendNoise(file: string): Promise<void> {
   const px = Buffer.alloc(N * N);
@@ -184,6 +274,10 @@ for (const [biome, looks] of Object.entries(BIOMES)) {
   await ground(looks.ground2, seed++, join(dir, 'ground2.png'));
   await ground(looks.rough, seed++, join(dir, 'rough.png'));
   await water(looks.water, seed++, join(dir, 'water.png'));
+  const extra = EXTRA[biome]!;
+  await ground(extra.road, seed++, join(dir, 'road.png'));
+  await plaza(extra.plaza, seed++, join(dir, 'plaza.png'));
+  await cliff(extra.cliff, seed++, join(dir, 'cliff.png'));
   console.log('terrain', biome);
 }
 await blendNoise(join(OUT, 'noise.png'));

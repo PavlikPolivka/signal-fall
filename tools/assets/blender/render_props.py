@@ -25,7 +25,7 @@ def render(sid, frame_px, builder):
     kit.reset()
     kit._materials.clear()
     kit.setup_sprite_camera(frame_px)
-    catcher = kit.shadow_catcher(size=6)
+    catcher = kit.shadow_catcher(size=10)
     objs = builder()
     name = f"{sid}/body/idle/00/0"
     kit.render_passes(objs, catcher, os.path.join(out_dir, name.replace("/", "_")), frame_px, samples=32)
@@ -36,6 +36,9 @@ for pid, (builder, frame, variants) in props.PROPS.items():
     for v in range(variants):
         render(f"{pid}_{v}", frame, lambda b=builder, s=v: b(STYLE, s))
     print("RENDERED", pid)
+for lid, (builder, frame) in props.LANDMARKS.items():
+    render(lid, frame, lambda b=builder: b(STYLE, 0))
+    print("RENDERED", lid)
 for size in range(1, props.ECHO_SIZES + 1):
     render(f"echo_{size}", 80, lambda s=size: props.echo_cluster(STYLE, s))
 print("RENDERED echo")

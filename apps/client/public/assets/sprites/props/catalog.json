@@ -212,6 +212,55 @@
    "anims": {},
    "turret": false
   },
+  "deco_crater_0": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_crater_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "deco_crater_2": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "lm_tower": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "lm_building": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "lm_crashed": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "lm_monolith": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
   "echo_1": {
    "kind": "prop",
    "frame": 80,

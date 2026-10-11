@@ -170,12 +170,26 @@ function harvestCapacity(rule: UnitRule): number {
 /** Crystals are worth this many tiles of extra travel each when choosing the richest tile. */
 const RICH_WEIGHT = 2;
 
+/** A tile another harvester already works counts as this many tiles farther away (per harvester). */
+const CLAIM_PENALTY = 4;
+/** Stuck ticks after which a harvester near its tile starts harvesting anyway. */
+const STUCK_SETTLE = 40;
+
 /**
  * Best Echo tile within `radius` tiles of (tx, ty). `nearest` picks the closest
  * tile; `richest` trades distance for crystal count (each crystal is worth
- * RICH_WEIGHT tiles of travel). Ties go to the lowest tile index.
+ * RICH_WEIGHT tiles of travel). Tiles other harvesters have claimed are
+ * penalized so harvesters spread out instead of shoving over one tile.
+ * Ties go to the lowest tile index.
  */
-export function findEcho(world: World, tx: number, ty: number, radius: number, mode: number = HARVEST_MODE.nearest): number {
+export function findEcho(
+  world: World,
+  tx: number,
+  ty: number,
+  radius: number,
+  mode: number = HARVEST_MODE.nearest,
+  claimed: Map<number, number> | null = null,
+): number {
   const m = world.map;
   let best = -1;
   let bestScore = 0x7fffffff;
@@ -190,7 +204,9 @@ export function findEcho(world: World, tx: number, ty: number, radius: number, m
       if (n === 0) continue;
       const d2 = (x - tx) * (x - tx) + (y - ty) * (y - ty);
       // Scores are compared in quarter-tiles so the richest mode stays integral.
-      const score = mode === HARVEST_MODE.richest ? isqrt(d2 * 16) - n * RICH_WEIGHT * 4 : d2;
+      let score = mode === HARVEST_MODE.richest ? isqrt(d2 * 16) - n * RICH_WEIGHT * 4 : d2;
+      const k = claimed ? (claimed.get(i) ?? 0) : 0;
+      if (k > 0) score += mode === HARVEST_MODE.richest ? k * CLAIM_PENALTY * 4 : k * CLAIM_PENALTY * CLAIM_PENALTY;
       if (score < bestScore) {
         bestScore = score;
         best = i;
@@ -251,6 +267,15 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
     }
   }
 
+  // Tiles being worked or headed for, by how many harvesters (insertion order is deterministic).
+  const claimed = new Map<number, number>();
+  for (let s = 0; s < e.high; s++) {
+    if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit) continue;
+    if (e.hstate[s] !== HARVEST.toField && e.hstate[s] !== HARVEST.harvesting) continue;
+    const t = e.htile[s]!;
+    if (t >= 0) claimed.set(t, (claimed.get(t) ?? 0) + 1);
+  }
+
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit || e.hstate[s] === HARVEST.off) continue;
     if (e.orders[s]!.length > 0) continue;
@@ -287,13 +312,14 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
         }
         let tile = e.htile[s]!;
         if (tile < 0 || m.echo[tile] === 0) {
-          tile = findEcho(world, tx, ty, LOCAL_SEARCH, e.hmode[s]);
+          tile = findEcho(world, tx, ty, LOCAL_SEARCH, e.hmode[s], claimed);
           if (tile < 0 && e.htimer[s]!-- <= 0) {
             // Expensive full-map search, at most twice a second.
-            tile = findEcho(world, tx, ty, Math.max(m.width, m.height), e.hmode[s]);
+            tile = findEcho(world, tx, ty, Math.max(m.width, m.height), e.hmode[s], claimed);
             e.htimer[s] = 10;
           }
           e.htile[s] = tile;
+          if (tile >= 0) claimed.set(tile, (claimed.get(tile) ?? 0) + 1);
         }
         if (tile < 0) {
           if (e.cargo[s]! > 0) e.hstate[s] = HARVEST.toRefinery;
@@ -301,7 +327,9 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
         }
         const gx = ((tile % m.width) << FX_SHIFT) + FX_HALF;
         const gy = (idiv(tile, m.width) << FX_SHIFT) + FX_HALF;
-        if (ilength(gx - e.x[s]!, gy - e.y[s]!) <= (FX_ONE * 2) >> 2) {
+        // Harvest from the tile or right next to it; a jostled harvester settles for two tiles.
+        const dist = ilength(gx - e.x[s]!, gy - e.y[s]!);
+        if (dist <= FX_ONE || (e.stuck[s]! > STUCK_SETTLE && dist <= 2 * FX_ONE)) {
           e.hstate[s] = HARVEST.harvesting;
           e.htimer[s] = HARVEST_TICKS;
         } else goal(world, s, gx, gy);
@@ -317,7 +345,7 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
         }
         if (e.cargo[s]! >= cap) e.hstate[s] = HARVEST.toRefinery;
         else if (tile < 0 || m.echo[tile] === 0) {
-          e.htile[s] = findEcho(world, tx, ty, 3, e.hmode[s]);
+          e.htile[s] = findEcho(world, tx, ty, 3, e.hmode[s], claimed);
           e.hstate[s] = HARVEST.toField;
         }
         break;
