@@ -11,3 +11,4 @@ out/
 *.local
 supabase/.temp/
 balance-*.csv
+media/

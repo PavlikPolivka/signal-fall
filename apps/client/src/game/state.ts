@@ -54,6 +54,8 @@ export class ClientState {
   fogVersion = 0;
   echo: Uint8Array = new Uint8Array(0);
   echoVersion = 0;
+  /** Watching an AI vs AI match: everything visible, no fog. */
+  spectator = false;
   /** Shift is down: show queued waypoints of selected units. */
   shiftHeld = false;
   /** Recent hits on own units/buildings, for minimap pings. */
@@ -119,7 +121,7 @@ export class ClientState {
     this.cur = s;
     this.curAt = performance.now();
     if (fog) {
-      this.fog = fog;
+      this.fog = this.spectator ? fog.fill(3) : fog;
       this.fogVersion++;
     }
     if (echo) {

@@ -12,7 +12,9 @@ import './ui/styles.css';
 
 const params = new URLSearchParams(location.search);
 // Any game parameter in the URL skips the setup screen (tests, shared links).
-const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy'];
+const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy', 'spectate'];
+/** Spectator mode: both sides are AI at this difficulty, no fog. Great for watching and recording. */
+const spectate = params.get('spectate') as Difficulty | null;
 const autostart = AUTOSTART_KEYS.some((k) => params.has(k));
 
 function scenarioFromUrl(): ScenarioSpec {
@@ -26,7 +28,7 @@ function scenarioFromUrl(): ScenarioSpec {
     kind,
     seed,
     factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)],
-    ai: [null, ai === 'none' ? null : (ai as Difficulty)],
+    ai: [spectate, spectate ?? (ai === 'none' ? null : (ai as Difficulty))],
     map: {
       size: (params.get('size') ?? 'M') as MapSize,
       biome: (params.get('biome') ?? 'wasteland') as Biome,
@@ -51,6 +53,7 @@ let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : null;
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
 const state = new ClientState(defaultRules(), post);
+state.spectator = spectate !== null;
 const renderer = new Renderer(state);
 let input: Input | null = null;
 
