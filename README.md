@@ -29,7 +29,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 | `packages/sim` | Deterministic headless simulation: map grid, SoA entity store, A* and flow fields, steering, combat with the damage matrix, veterancy, shields, fog of war, victory. Integer/fixed-point only; see the determinism rules below |
 | `packages/mapgen` | Seeded, symmetric procedural maps (2–8 players, 3 sizes, 3 biomes, resource and terrain styles) with validation and seed+1 retry |
 | `packages/ai` | Deterministic AI player (economy, base planning, counter-production, waves, harassment, defense) at Easy/Normal/Hard/Brutal; profiles in `packages/data/json/ai` |
-| `packages/net` | Lockstep scheduler and transports (loopback now, WebRTC in M8) |
+| `packages/net` | Lockstep scheduler, reliable delivery over lossy datagrams, transports (loopback; WebRTC and Supabase signaling live in the client) |
 | `apps/client` | Browser client: Vite + PixiJS + Preact, sim in a Web Worker. URL params: `seed`, `size` (S/M/L), `biome` (city/wasteland/crystal), `resources`, `terrain`, `speed`, `scenario` (skirmish/sandbox/stress) |
 | `apps/headless` | CLI: `run` matches headless and print state hashes, `bench` the 400-unit battle |
 | `e2e` | Playwright tests, including the cross-browser golden hash |
