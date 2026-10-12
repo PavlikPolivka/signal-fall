@@ -36,9 +36,12 @@ async function play(page: Page, round: number): Promise<void> {
 test('two clients play a networked match over a lossy link without desync', async ({ browser, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
   test.setTimeout(120_000);
-  const context = await browser.newContext();
-  const host = await context.newPage();
-  const guest = await context.newPage();
+  // Online (Supabase signaling): two separate browser profiles, like two players. Offline: two tabs of one profile.
+  const online = !!process.env.SUPABASE_URL;
+  const hostContext = await browser.newContext();
+  const guestContext = online ? await browser.newContext() : hostContext;
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
   for (const p of [host, guest]) p.on('pageerror', (e) => console.error(e.message));
 
   await host.goto(`/?netsim=${NETSIM}`);
@@ -76,5 +79,6 @@ test('two clients play a networked match over a lossy link without desync', asyn
   // Each client controls a different side.
   const slots = await Promise.all([host, guest].map((p) => p.evaluate(() => (window as unknown as { __signalFall: { state: { localPlayer: number } } }).__signalFall.state.localPlayer)));
   expect(slots).toEqual([0, 1]);
-  await context.close();
+  await hostContext.close();
+  if (online) await guestContext.close();
 });

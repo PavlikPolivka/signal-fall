@@ -19,6 +19,7 @@
     "@signal-fall/mapgen": "workspace:*",
     "@signal-fall/net": "workspace:*",
     "@signal-fall/sim": "workspace:*",
+    "@supabase/supabase-js": "2.117.3",
     "pixi.js": "8.22.0",
     "preact": "10.29.8"
   },

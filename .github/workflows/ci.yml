@@ -44,3 +44,38 @@ jobs:
             test-results/
             balance-*.csv
           retention-days: 7
+
+  backend:
+    # Supabase stack in Docker: migrations, row level security, the TURN function, and
+    # two separate browser profiles playing over Realtime signaling.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: pnpm install --frozen-lockfile
+      - run: supabase start
+      - name: Serve edge functions
+        run: supabase functions serve > functions.log 2>&1 &
+      - name: Backend tests and online multiplayer
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
+          export SUPABASE_URL=$API_URL SUPABASE_ANON_KEY=$ANON_KEY SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          sleep 5
+          pnpm exec vitest run tools/backend-tests
+          pnpm exec playwright install --with-deps chromium
+          pnpm e2e --project=chromium e2e/multiplayer.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: backend
+          path: |
+            functions.log
+            test-results/
+          retention-days: 7

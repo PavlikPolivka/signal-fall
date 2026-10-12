@@ -10,6 +10,7 @@ import { Setup, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, markIntroSeen } from './ui/Video';
 import { NetSession, degrade } from './net/session';
+import { backend, fileDesyncReport } from './net/backend';
 import type { PeerLink } from './net/webrtc';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
@@ -126,6 +127,9 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.desync = { tick: msg.tick, report: msg.report };
       state.changed();
       console.error(`desync at tick ${msg.tick}: local ${msg.local} vs player ${msg.player} ${msg.remote}`);
+      // File it with the backend (when there is one) so it can be replayed and fixed.
+      const sb = backend();
+      if (sb) void fileDesyncReport(sb, null, msg.tick, msg.local, msg.remote, msg.report);
       return;
     }
     if (msg.type === 'ready') {

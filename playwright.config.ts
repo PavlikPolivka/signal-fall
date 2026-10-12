@@ -16,6 +16,9 @@ export default defineConfig({
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // With a Supabase stack (SUPABASE_URL / SUPABASE_ANON_KEY), the client is built against it and
+    // multiplayer runs over Realtime signaling between separate browser profiles.
+    env: { VITE_SUPABASE_URL: process.env.SUPABASE_URL ?? '', VITE_SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? '' },
   },
   projects: [
     { name: 'chromium', testIgnore: /perf\.spec/, use: { ...devices['Desktop Chrome'], viewport } },

@@ -1,0 +1,11 @@
+{
+  "name": "@signal-fall/backend-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.117.3"
+  }
+}

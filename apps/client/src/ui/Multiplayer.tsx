@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from 'preact/hooks';
 import type { Rules } from '@signal-fall/data';
 import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
-import { makeSignaling, signalingKind } from '../net/connect';
+import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
 import type { PeerLink } from '../net/webrtc';
 import { Logo } from './Logo';
 import { MenuVideo } from './Video';
@@ -31,26 +31,48 @@ export function Multiplayer({
   const [code, setCode] = useState('');
   const [faction, setFaction] = useState(0);
   const [lobby, setLobby] = useState<Lobby | null>(null);
+  const [room, setRoom] = useState<RoomConnection | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [, refresh] = useReducer((n: number, _: undefined) => n + 1, 0);
   // Join links: ?room=ABCD opens the join form prefilled.
   useEffect(() => {
     const room = new URLSearchParams(location.search).get('room');
     if (room) setCode(room.toUpperCase());
   }, []);
-  useEffect(() => () => lobby?.close(), [lobby]);
+  useEffect(
+    () => () => {
+      lobby?.close();
+      room?.close();
+    },
+    [lobby],
+  );
 
-  const enter = (host: boolean) => {
+  const enter = async (host: boolean) => {
     const c = host ? roomCode() : code.trim().toUpperCase();
-    if (c.length !== 4) return;
+    if (c.length !== 4 || busy) return;
     try {
       localStorage.setItem(NAME_KEY, name);
     } catch {
       // Not saved; fine.
     }
-    const l = new Lobby(makeSignaling(c), host, { name, faction }, c);
-    l.onChange = () => refresh(undefined);
-    l.onStart = (scenario, slot, link) => onStart(scenario, slot, link);
-    setLobby(l);
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await openRoom(host, c, roomCode);
+      const l = new Lobby(r.signaling, host, { name, faction }, r.code, { iceServers: r.iceServers });
+      l.onChange = () => refresh(undefined);
+      l.onStart = (scenario, slot, link) => {
+        if (host) r.started();
+        onStart(scenario, slot, link);
+      };
+      setRoom(r);
+      setLobby(l);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!lobby) {
@@ -65,18 +87,23 @@ export function Multiplayer({
             <span class="label">Your name</span>
             <input value={name} maxLength={20} data-testid="mp-name" onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
           </label>
-          <button class="start" data-testid="mp-create" onClick={() => enter(true)}>
-            Create a room
+          <button class="start" data-testid="mp-create" disabled={busy} onClick={() => void enter(true)}>
+            {busy ? 'Connecting…' : 'Create a room'}
           </button>
           <div class="choice">
             <span class="label">Join with a code</span>
             <div class="seed">
               <input value={code} maxLength={4} placeholder="ABCD" data-testid="mp-code" onInput={(e) => setCode((e.currentTarget as HTMLInputElement).value.toUpperCase())} />
-              <button data-testid="mp-join" disabled={code.trim().length !== 4} onClick={() => enter(false)}>
+              <button data-testid="mp-join" disabled={code.trim().length !== 4 || busy} onClick={() => void enter(false)}>
                 Join
               </button>
             </div>
           </div>
+          {error && (
+            <p class="mp-status" data-testid="mp-error">
+              {error}
+            </p>
+          )}
           <button class="codex-btn" onClick={onBack}>
             Back
           </button>
@@ -149,7 +176,9 @@ export function Multiplayer({
           class="codex-btn"
           onClick={() => {
             lobby.close();
+            room?.close();
             setLobby(null);
+            setRoom(null);
           }}
         >
           Leave room
