@@ -407,8 +407,9 @@ function Controls({ rules }: { rules: Rules }) {
         <h3>Mouse</h3>
         <ul>
           <li>Left-click: select; drag a box to select many; double-click: all of that type on screen.</li>
-          <li>With units selected: click the ground to attack-move there, click an enemy to attack it; right-click works the same.</li>
-          <li>Right-click your own unit: guard it. Right-click with a factory selected: set its rally point.</li>
+          <li>With units selected: click the ground to attack-move there, click an enemy to attack it.</li>
+          <li>With a factory or barracks selected: click the ground to set its rally point.</li>
+          <li>Right-click anywhere: deselect (or cancel placing a building / a targeting mode).</li>
           <li>Minimap: drag to pan, right-click to send the selection.</li>
           <li>Hold Shift to queue orders and see the queued path. Mouse at the window edge scrolls; wheel zooms.</li>
         </ul>

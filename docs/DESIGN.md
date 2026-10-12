@@ -117,7 +117,7 @@ Resulting triangle: anti-infantry beats infantry, AT infantry beats tanks, tanks
 These rules make groups behave sensibly without micro. They apply to every faction.
 
 **Orders**
-- Right-click (or left-click with units selected) on ground is **attack-move**: units fight what they meet. **M + click** is a pure move that ignores enemies (retreats, repositioning).
+- Left-click with units selected on ground is **attack-move**: units fight what they meet. **M + click** is a pure move that ignores enemies (retreats, repositioning).
 - Shift queues orders as before. While Shift is held, selected units show their queued waypoints as a path.
 
 **Group movement**
@@ -265,7 +265,7 @@ Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. 
 
 | Action | Key |
 |---|---|
-| Move | Left-click ground with units selected, or right-click (M + click) |
+| Move | Left-click ground with units selected (M + click for a pure move) |
 | Attack-move | A + click |
 | Stop | S |
 | Hold position | H |
@@ -285,7 +285,8 @@ Hotkeys are mnemonic (C&C / StarCraft style) and every button shows its letter. 
 | Build defense menu | N, then letter (D basic defense, A anti-air, H heavy defense, W wall) |
 | Train units | I (infantry), V (vehicles), Y (air), then the unit letter; Shift+letter queues 5. Also: select a factory and press the letter |
 | Queue unit (production building selected) | Unit letter; Shift+letter queues 5 |
-| Rally point | Right-click with production building selected |
+| Rally point | Left-click ground with production building selected |
+| Deselect | Right-click (also cancels placement and targeting modes) |
 | Repair / sell structure | Alt+R / Alt+S |
 | Place structure | Left-click; Shift+click to place repeatedly |
 

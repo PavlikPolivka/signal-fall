@@ -438,6 +438,13 @@ export class Input {
     const s = this.state;
     const intent = this.intentAt(sx, sy);
     const units = s.selectedUnits();
+    // A production building selected and the ground clicked: that's its new rally point.
+    if (units.length === 0 && intent.kind !== 'select' && this.selectedFactory()) {
+      const p = this.simPoint(sx, sy);
+      s.send({ type: 'rally', target: s.selection[0]!, x: p.x, y: p.y });
+      this.renderer.ping(sx, sy, 0xe8c35a);
+      return;
+    }
     if (intent.kind !== 'select' && this.economyClick(sx, sy, intent.target, units, shift, false)) return;
     if (intent.kind === 'attack') {
       s.send({ type: 'attack', units, target: intent.target, queue: shift });
@@ -470,7 +477,8 @@ export class Input {
     else if (mode === 'repair' || mode === 'sell') cursor = CURSORS.tool;
     else {
       const k = this.intentAt(sx, sy).kind;
-      cursor = k === 'attack' ? CURSORS.attack : k === 'move' ? CURSORS.move : k === 'select' ? CURSORS.select : 'default';
+      const rally = k !== 'select' && this.state.selectedUnits().length === 0 && this.selectedFactory() !== null;
+      cursor = k === 'attack' ? CURSORS.attack : k === 'move' || rally ? CURSORS.move : k === 'select' ? CURSORS.select : 'default';
     }
     if (this.canvas.style.cursor !== cursor) this.canvas.style.cursor = cursor;
   }
@@ -496,7 +504,8 @@ export class Input {
     };
   }
 
-  rightClick(sx: number, sy: number, shift: boolean): void {
+  /** Right click backs out: cancels placement or a targeting mode, otherwise clears the selection. */
+  rightClick(_sx: number, _sy: number, _shift: boolean): void {
     const s = this.state;
     if (s.placing) {
       this.stopPlacing();
@@ -506,31 +515,7 @@ export class Input {
       this.setMode('normal');
       return;
     }
-    const units = s.selectedUnits();
-    const factory = this.selectedFactory();
-    if (units.length === 0 && factory) {
-      const p = this.simPoint(sx, sy);
-      s.send({ type: 'rally', target: s.selection[0]!, x: p.x, y: p.y });
-      this.renderer.ping(sx, sy, 0xe8c35a);
-      return;
-    }
-    if (units.length === 0) {
-      s.select([]);
-      return;
-    }
-    const h = this.renderer.pick(sx, sy);
-    if (this.economyClick(sx, sy, h, units, shift, true)) return;
-    if (h >= 0 && this.isEnemy(h)) {
-      s.send({ type: 'attack', units, target: h, queue: shift });
-      this.renderer.ping(sx, sy, 0xff5a5a);
-    } else if (h >= 0 && s.isOwn(h) && !units.includes(h)) {
-      s.send({ type: 'guard', units, target: h, queue: shift });
-      this.renderer.ping(sx, sy, 0x6db8ff);
-    } else {
-      const p = this.simPoint(sx, sy);
-      s.send({ type: 'attackMove', units, x: p.x, y: p.y, queue: shift });
-      this.renderer.ping(sx, sy, 0xffb46d);
-    }
+    if (s.selection.length > 0) s.select([]);
   }
 
   /**
