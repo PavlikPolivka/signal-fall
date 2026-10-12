@@ -144,9 +144,11 @@ export class Music {
       }
     this.padVoices.push({
       stop: (at: number) => {
-        g.gain.cancelScheduledValues(at - 1.5);
-        g.gain.setTargetAtTime(0.0001, at - 1.5, 0.5);
-        for (const o of oscs) o.stop(at + 0.5);
+        // Never schedule into the past: Firefox and WebKit reject negative times (Chrome clamps).
+        const from = Math.max(this.ctx.currentTime, at - 1.5);
+        g.gain.cancelScheduledValues(from);
+        g.gain.setTargetAtTime(0.0001, from, 0.5);
+        for (const o of oscs) o.stop(Math.max(this.ctx.currentTime, at) + 0.5);
       },
     });
   }
