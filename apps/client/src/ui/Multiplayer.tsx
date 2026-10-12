@@ -60,7 +60,9 @@ export function Multiplayer({
     setError(null);
     try {
       const r = await openRoom(host, c, roomCode);
-      const l = new Lobby(r.signaling, host, { name, faction }, r.code, { iceServers: r.iceServers });
+      // ?relay=1 forces every packet through the TURN relay (testing strict networks).
+      const relayOnly = new URLSearchParams(location.search).get('relay') === '1';
+      const l = new Lobby(r.signaling, host, { name, faction }, r.code, { iceServers: r.iceServers, relayOnly });
       l.onChange = () => refresh(undefined);
       l.onStart = (scenario, slot, link) => {
         if (host) r.started();

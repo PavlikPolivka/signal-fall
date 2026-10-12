@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Two clients in one browser: BroadcastChannel signaling, a real WebRTC data channel,
 // and both sides' outgoing traffic degraded to 150 ms one-way latency, 40 ms jitter and 5% loss.
-const NETSIM = '150,40,5';
+const NETSIM = `150,40,5${process.env.MP_RELAY ? '&relay=1' : ''}`;
 
 async function tick(page: Page): Promise<number> {
   return page.evaluate(() => (window as unknown as { __signalFall: { state: { cur: { tick: number } | null } } }).__signalFall.state.cur?.tick ?? 0);
