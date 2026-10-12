@@ -78,6 +78,11 @@ const audio = new GameAudio(
   state.rules,
   cameraListener(() => ({ ...renderer.camera, w: renderer.width || window.innerWidth, h: renderer.height || window.innerHeight })),
 );
+state.muted = audio.settings.muted;
+state.toggleMute = () => {
+  state.muted = audio.toggleMute();
+  state.changed();
+};
 // Browsers only allow audio after a user gesture.
 const unlockAudio = () => {
   void audio.unlock();

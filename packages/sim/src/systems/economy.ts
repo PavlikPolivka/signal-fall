@@ -3,6 +3,7 @@ import { FX_HALF, FX_ONE, FX_SHIFT, idiv, ilength, isqrt, pct } from '../fx';
 import { HARVEST, HARVEST_MODE, KIND, NO_ENTITY } from '../entities';
 import { removeEntity, spawnUnit } from '../spawn';
 import { distToBody } from '../query';
+import { tileAt } from '../map';
 import { upgradePct } from './faction';
 import type { PlayerState, World } from '../world';
 
@@ -150,10 +151,57 @@ function emitUnit(world: World, owner: number, factory: number, rule: UnitRule):
   const s = h & 0xffff;
   if (rule.abilities.some((a) => a.kind === 'harvest')) {
     e.hstate[s] = HARVEST.toField;
-  } else if (e.rallyX[factory]! >= 0) {
-    e.orders[s] = [{ type: 'move', x: e.rallyX[factory]!, y: e.rallyY[factory]!, flow: false, cx: e.rallyX[factory]!, cy: e.rallyY[factory]!, group: 0, speed: 0 }];
+    return h;
   }
+  // Each new unit walks to its own free spot near the rally point (or just clear of the door),
+  // so a stream of reinforcements fans out instead of piling up on one point.
+  const rally = e.rallyX[factory]! >= 0;
+  const tx = rally ? e.rallyX[factory]! : x;
+  const ty = rally ? e.rallyY[factory]! : y + (EXIT_CLEARANCE << FX_SHIFT);
+  const spot = rule.isAir ? { x: tx, y: ty } : freeSpotNear(world, owner, s, tx, ty);
+  if (rally || spot.x !== x || spot.y !== y)
+    e.orders[s] = [{ type: 'move', x: spot.x, y: spot.y, flow: false, cx: spot.x, cy: spot.y, group: 0, speed: 0 }];
   return h;
+}
+
+/** Tiles in front of a factory door that new units clear before stopping. */
+const EXIT_CLEARANCE = 2;
+/** How far (tiles) to look for a free spot around a rally point. */
+const SPOT_SEARCH = 6;
+
+/**
+ * The nearest walkable tile center to (x, y) that no unit stands on and no own
+ * unit is already walking to. Searched ring by ring in a fixed order (deterministic).
+ */
+function freeSpotNear(world: World, owner: number, self: number, x: number, y: number): { x: number; y: number } {
+  const e = world.entities;
+  const m = world.map;
+  // Where own units are already headed (their move orders), so two arrivals don't pick one spot.
+  const claimed: number[] = [];
+  for (let u = 0; u < e.high; u++) {
+    if (u === self || e.alive[u] !== 1 || e.kind[u] !== KIND.unit || e.owner[u] !== owner) continue;
+    const o = e.orders[u]![0];
+    if (o && o.type === 'move') claimed.push(tileAt(m, o.x, o.y));
+  }
+  const cx = x >> FX_SHIFT;
+  const cy = y >> FX_SHIFT;
+  for (let r = 0; r <= SPOT_SEARCH; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const t = tileAt(m, ((cx + dx) << FX_SHIFT) + FX_HALF, ((cy + dy) << FX_SHIFT) + FX_HALF);
+        if (t < 0 || m.nav[t] !== 1 || claimed.includes(t)) continue;
+        const px = ((t % m.width) << FX_SHIFT) + FX_HALF;
+        const py = (idiv(t, m.width) << FX_SHIFT) + FX_HALF;
+        let taken = false;
+        world.spatial.query(px, py, FX_HALF, (n) => {
+          if (n !== self && e.kind[n] === KIND.unit && e.hasGoal[n] === 0 && ilength(e.x[n]! - px, e.y[n]! - py) < FX_HALF) taken = true;
+        });
+        if (!taken) return { x: px, y: py };
+      }
+    }
+  }
+  return { x, y };
 }
 
 /** Spawn a refinery's free harvester at its dock. */

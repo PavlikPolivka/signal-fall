@@ -176,17 +176,29 @@ export class Renderer {
       }
     }
     if (best >= 0) return best;
-    // Structures: point in footprint.
-    const { u, v } = this.screenToTile(sx, sy);
-    for (const h of this.structures.keys()) {
+    // Structures (placeholder or sprite): the footprint, or the building standing on it,
+    // so a click on a tall building's roof counts too (front-most building wins).
+    let found = -1;
+    let foundDepth = -Infinity;
+    for (const h of [...this.structures.keys(), ...this.spriteStructures.keys()]) {
       if (!this.visibleEntity(h)) continue;
       const rule = s.ruleOf(h);
       if (rule.kind !== 'structure') continue;
       const cx = s.field(h, E.x) / FX;
       const cy = s.field(h, E.y) / FX;
-      if (Math.abs(u - cx) <= rule.footprintW / 2 && Math.abs(v - cy) <= rule.footprintH / 2) return h;
+      for (const lift of [0, 16, 32, 48]) {
+        const { u, v } = this.screenToTile(sx, sy + lift * this.camera.zoom);
+        if (Math.abs(u - cx) > rule.footprintW / 2 || Math.abs(v - cy) > rule.footprintH / 2) continue;
+        // Taller lifts only for buildings big enough to stand that high.
+        if (lift > 16 * Math.min(rule.footprintW, rule.footprintH)) continue;
+        if (cx + cy > foundDepth) {
+          found = h;
+          foundDepth = cx + cy;
+        }
+        break;
+      }
     }
-    return -1;
+    return found;
   }
 
   /** Is the entity visible to the local player (own, or in a visible fog tile)? */

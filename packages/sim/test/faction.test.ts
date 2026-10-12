@@ -39,7 +39,7 @@ describe('Halcyon network coverage', () => {
     expect(inCoverage(s.world, far)).toBe(false);
   });
 
-  it('units inside coverage fire 15% faster and slowly self-repair', () => {
+  it('units inside coverage fire faster and slowly self-repair', () => {
     const fireTimes = (covered: boolean) => {
       const s = sim(HALCYON, HOLDOUT);
       if (covered) spawnStructure(s.world, structure('relay'), 0, 10, 12);
@@ -53,7 +53,7 @@ describe('Halcyon network coverage', () => {
     };
     const inside = fireTimes(true);
     const outside = fireTimes(false);
-    expect(inside.dealt).toBeGreaterThan(outside.dealt * 1.1);
+    expect(inside.dealt).toBeGreaterThan(outside.dealt * 1.06);
     expect(inside.healed).toBe(true);
     expect(outside.healed).toBe(false);
   });

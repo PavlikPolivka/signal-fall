@@ -15,7 +15,7 @@ test('codex opens from setup and the in-game menu, and lists data-driven units',
 
   await page.goto('/?ai=none');
   await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { ready: boolean } } }).__signalFall.state.ready);
-  await page.keyboard.press('Escape'); // nothing selected -> menu
+  await page.keyboard.press('Backquote'); // the menu key
   await page.click('[data-testid=menu-codex]');
   await expect(page.locator('[data-testid=codex]')).toBeVisible();
   await page.keyboard.press('Escape');

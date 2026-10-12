@@ -5,9 +5,9 @@ CI re-runs this and fails outside 45–55%.
 
 | Pairing | Result | A wins |
 |---|---|---|
-| Holdout vs Halcyon | 148–147, 5 draws | 49.3% |
-| Holdout vs Choir | 149–151 | 49.7% |
-| Halcyon vs Choir | 158–140, 2 draws | 52.7% |
+| Holdout vs Halcyon | 137–160, 3 draws | 45.7% |
+| Holdout vs Choir | 148–151, 1 draw | 49.3% |
+| Halcyon vs Choir | 155–142, 3 draws | 51.7% |
 
 Hard beats Easy 98.5% (Holdout), 99.5% (Halcyon), 97% (Choir) over 200 matches each.
 
@@ -25,3 +25,5 @@ Tools: `apps/headless/src/trace.ts` (per-minute economy/army trace), `trace2.ts`
 - Halcyon `vector` 50 damage / 720 HP (was 40 / 640), `lance` 110 HP, `sentry` 15 damage; Holdout Pillbox 19 damage.
 - New rule `shieldDamagePct`: energy hits shields at 180%, kinetic at 70%. Halcyon's energy weapons disrupt Choir
   resonance and bullets glance off it; this tunes Halcyon–Choir and Holdout–Choir without touching Holdout–Halcyon.
+- Reinforcements now fan out to free spots around the rally point; that favored Halcyon's network (Holdout
+  fell to 42%), so network self-repair is 2 HP/s (was 3) and the in-network fire-rate bonus 12% (was 15%).

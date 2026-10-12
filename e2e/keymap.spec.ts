@@ -138,10 +138,23 @@ const checks: Record<string, Check> = {
     expect((await state(page)).mode).toBe('normal');
     await page.keyboard.press(toKey(chord));
     expect((await state(page)).selection).toBe(0);
-    await page.keyboard.press(toKey(chord));
-    expect((await state(page)).menuOpen).toBe(true);
+    // Esc never opens the menu (browsers use it to leave fullscreen).
     await page.keyboard.press(toKey(chord));
     expect((await state(page)).menuOpen).toBe(false);
+  },
+  menu: async (page, chord) => {
+    await page.keyboard.press(toKey(chord));
+    expect((await state(page)).menuOpen).toBe(true);
+    await page.keyboard.press('Escape');
+    expect((await state(page)).menuOpen).toBe(false);
+  },
+  mute: async (page, chord) => {
+    const muted = () => page.evaluate(() => (window as unknown as Win).__signalFall.state.muted as boolean);
+    const before = await muted();
+    await page.keyboard.press(toKey(chord));
+    expect(await muted()).toBe(!before);
+    await page.keyboard.press(toKey(chord));
+    expect(await muted()).toBe(before);
   },
   move: setsMode('move'),
   attackMove: setsMode('attackMove'),

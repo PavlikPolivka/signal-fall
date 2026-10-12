@@ -312,3 +312,29 @@ describe('harvester tile preference', () => {
     expect(richest).toBeGreaterThan(nearest);
   });
 });
+
+describe('reinforcements', () => {
+  it('units from one barracks spread out around the rally point instead of stacking', () => {
+    const sim = makeSim({ size: 40, victoryRules: false });
+    const w = sim.world;
+    spawnStructure(w, structure('holdfast'), 0, 2, 2);
+    spawnStructure(w, structure('dynamo'), 0, 6, 2);
+    const barracks = spawnStructure(w, structure('bunkhouse'), 0, 10, 2);
+    w.players[0]!.credits = 5000;
+    cmd(sim, 0, { type: 'rally', target: barracks, x: at(20), y: at(20) });
+    cmd(sim, 0, { type: 'train', item: unit('grunt'), count: 8 });
+    sim.run(20 * 60);
+    const e = w.entities;
+    const grunts: number[] = [];
+    for (let s = 0; s < e.high; s++) if (e.alive[s] === 1 && e.kind[s] === KIND.unit && e.type[s] === unit('grunt')) grunts.push(s);
+    expect(grunts).toHaveLength(8);
+    for (let i = 0; i < grunts.length; i++)
+      for (let j = i + 1; j < grunts.length; j++) {
+        const a = grunts[i]!;
+        const b = grunts[j]!;
+        expect(Math.hypot(e.x[a]! - e.x[b]!, e.y[a]! - e.y[b]!)).toBeGreaterThan(FX_ONE * 0.5);
+      }
+    // All gathered near the rally point.
+    for (const g of grunts) expect(Math.hypot(e.x[g]! - at(20), e.y[g]! - at(20))).toBeLessThan(FX_ONE * 4);
+  });
+});

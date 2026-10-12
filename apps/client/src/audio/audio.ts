@@ -17,6 +17,8 @@ export interface AudioSettings {
   /** 0..1 each. */
   music: number;
   sfx: number;
+  /** Everything silent, volumes kept for unmuting. */
+  muted: boolean;
 }
 
 /** Minimum ms between two plays of the same sound, and how many may overlap. */
@@ -52,7 +54,7 @@ export class GameAudio {
   private sentSeen = 0;
   /** Times (ms) of recent shots near the player, for music intensity. */
   private combat: number[] = [];
-  settings: AudioSettings = { music: 0.5, sfx: 0.8 };
+  settings: AudioSettings = { music: 0.5, sfx: 0.8, muted: false };
 
   constructor(
     private readonly state: ClientState,
@@ -92,22 +94,36 @@ export class GameAudio {
     this.buffers = await renderSfx(ctx.sampleRate);
   }
 
-  set(kind: keyof AudioSettings, value: number): void {
+  set(kind: 'music' | 'sfx', value: number): void {
     this.settings[kind] = Math.max(0, Math.min(1, value));
+    this.settings.muted = false;
+    this.save();
+    this.apply();
+  }
+
+  /** Toggle silence; volumes are kept for when sound comes back. */
+  toggleMute(): boolean {
+    this.settings.muted = !this.settings.muted;
+    this.save();
+    this.apply();
+    return this.settings.muted;
+  }
+
+  private save(): void {
     try {
       localStorage.setItem(KEY, JSON.stringify(this.settings));
     } catch {
       // Not persisted; still applies for this session.
     }
-    this.apply();
   }
 
   private apply(): void {
     if (!this.ctx || !this.sfxGain || !this.music) return;
     const t = this.ctx.currentTime;
-    this.sfxGain.gain.setTargetAtTime(this.settings.sfx, t, 0.05);
-    this.music.out.gain.setTargetAtTime(this.settings.music * 0.9, t, 0.1);
-    if (this.settings.music > 0) this.music.start();
+    const on = this.settings.muted ? 0 : 1;
+    this.sfxGain.gain.setTargetAtTime(this.settings.sfx * on, t, 0.05);
+    this.music.out.gain.setTargetAtTime(this.settings.music * 0.9 * on, t, 0.1);
+    if (this.settings.music > 0 && !this.settings.muted) this.music.start();
     else this.music.stop();
   }
 

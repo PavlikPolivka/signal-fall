@@ -12,7 +12,9 @@
     "controlGroupAdd": ["Shift+Digit#"],
     "controlGroupSelect": ["Digit#"],
     "cycleSubgroup": ["Tab"],
-    "cancel": ["Escape"]
+    "cancel": ["Escape"],
+    "menu": ["Backquote"],
+    "mute": ["Ctrl+KeyM"]
   },
   "units": {
     "move": ["KeyM"],

@@ -281,7 +281,13 @@ export class Input {
         else if (s.placing) this.stopPlacing();
         else if (s.mode !== 'normal') this.setMode('normal');
         else if (s.selection.length > 0) s.select([]);
-        else this.toggleMenu();
+        // Esc never opens the menu: browsers use it to leave fullscreen. The menu is on ` (and the button).
+        return;
+      case 'menu':
+        this.toggleMenu();
+        return;
+      case 'mute':
+        s.toggleMute();
         return;
       // unit commands
       case 'move':

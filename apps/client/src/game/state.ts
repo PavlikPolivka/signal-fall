@@ -47,6 +47,9 @@ export class ClientState {
   /** Factions whose rendered art (sprites and icons) has loaded. */
   art = new Set<string>();
   creditsOpen = false;
+  /** Sound muted (mirrors the audio engine; set up by main). */
+  muted = false;
+  toggleMute: () => void = () => undefined;
   /** Networked match state (null in single player). */
   multiplayer = false;
   net: { delayTurns: number; rtt: number; waitingOn: number[] } | null = null;

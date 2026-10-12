@@ -8,8 +8,8 @@
   "engineer": "fork",
   "mechanics": {
     "placement": "coverage",
-    "coverageFireRatePct": 15,
-    "coverageRegenHpPerSecond": 3,
+    "coverageFireRatePct": 12,
+    "coverageRegenHpPerSecond": 2,
     "recompileRefundPct": 25
   },
   "structures": [

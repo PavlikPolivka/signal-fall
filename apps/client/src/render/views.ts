@@ -2,6 +2,7 @@ import { Container, Sprite, type Texture } from 'pixi.js';
 import { SpriteLibrary, type SpriteInfo } from './sprites';
 
 const WRECK_TINT = 0x4a4744;
+let nextTie = 0;
 
 function sprite(layer: Container): Sprite {
   const s = new Sprite();
@@ -31,6 +32,7 @@ export class UnitSpriteView {
   private readonly turret: Sprite | null;
   private readonly turretTeam: Sprite | null;
   private hullAngle: number;
+  private readonly tie = (nextTie++ % 997) / 1000;
   private animStart = performance.now();
   private lastAnim = '';
 
@@ -82,7 +84,9 @@ export class UnitSpriteView {
 
     this.root.visible = o.visible;
     this.root.position.set(o.px, o.py);
-    this.root.zIndex = o.py;
+    // Rounded depth plus a fixed per-view tie-break: units at nearly the same depth keep a stable
+    // order instead of trading places every frame as they jostle (the flicker in crowds).
+    this.root.zIndex = Math.round(o.py) + this.tie;
     this.body.texture = tex('color') ?? this.body.texture;
     this.body.tint = o.wreck ? WRECK_TINT : 0xffffff;
     const mask = o.wreck ? null : tex('mask');

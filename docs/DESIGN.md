@@ -47,7 +47,7 @@ The survivors abandoned anything networked, because networked meant hijacked. Th
 Drones, printed walkers and hover platforms, all clean geometry and light. Every structure is a network node.
 
 - **Look:** white and graphite, cyan light lines, hexagonal panels.
-- **Twist 1, Coverage:** buildings and relay nodes project network coverage. Units inside it get +15% fire rate and slow self-repair. Buildings can only be placed inside coverage.
+- **Twist 1, Coverage:** buildings and relay nodes project network coverage. Units inside it get +12% fire rate and slow self-repair (tuned in M7; originally +15%). Buildings can only be placed inside coverage.
 - **Twist 2, Recompile:** a unit destroyed inside coverage refunds 25% of its cost.
 - **Twist 3, Override:** a tier-3 ability briefly takes control of an enemy mechanical unit (Choir units are partially resistant; Holdout units are immune).
 - **Play style:** fast, fragile units; strong when fighting on its own network, weaker when pushing out.

@@ -80,8 +80,11 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
         </span>
       )}
       <span class="fps" data-testid="fps">{state.fps} fps</span>
-      <button class="menu-btn" onClick={() => input.toggleMenu()} title="Menu (Esc)">
-        Menu <kbd>Esc</kbd>
+      <button class="mute-btn" data-testid="mute" onClick={() => state.toggleMute()} title={state.muted ? 'Sound off: click to unmute (Ctrl+M)' : 'Sound on: click to mute (Ctrl+M)'}>
+        {state.muted ? '🔇' : '🔊'}
+      </button>
+      <button class="menu-btn" onClick={() => input.toggleMenu()} title="Menu (`)">
+        Menu <kbd>`</kbd>
       </button>
     </header>
   );
