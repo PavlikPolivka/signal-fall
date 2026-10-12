@@ -1,0 +1,14 @@
+# Upload only what the client build needs.
+node_modules
+**/node_modules
+.git
+media
+tools/assets/build
+tools/video
+apps/client/dist
+test-results
+playwright-report
+supabase/.temp
+supabase/.branches
+**/__pycache__
+*.csv

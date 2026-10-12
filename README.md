@@ -2,6 +2,8 @@
 
 A fast, C&C-style sci-fi RTS for the browser: three asymmetric factions (Holdout, Halcyon, Choir), procedural isometric maps, skirmish vs AI and 1v1 peer-to-peer multiplayer. Built end to end by Claude Code, assets included.
 
+**Play: https://signal-fall.vercel.app**
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 
 ## Status
@@ -50,6 +52,17 @@ pnpm headless bench        # 400-unit battle, fails above 4 ms/tick
 pnpm headless balance --a holdout:hard --b holdout:easy --matches 200 --out out.csv   # AI vs AI
 pnpm e2e                   # Playwright (golden hash in every browser)
 pnpm build && pnpm size    # client build and the initial-load budget
+```
+
+### Deploy
+
+Static site on Vercel (`vercel.json`: client build, long cache for hashed files, a day for art and video).
+Multiplayer backend: Supabase project in Frankfurt (`supabase/`: migrations, the TURN-credentials function;
+Cloudflare TURN key in the function secrets).
+
+```sh
+vercel deploy --prod --archive=tgz      # one archive upload; the free plan limits file counts
+supabase db push && supabase functions deploy turn-credentials --no-verify-jwt
 ```
 
 ### Art
