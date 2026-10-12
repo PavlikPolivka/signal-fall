@@ -15,3 +15,4 @@ media/
 tools/assets/build/
 __pycache__/
 !.env.example
+!.env.production
