@@ -53,6 +53,12 @@ export function Cutscene({ src, onDone }: { src: string; onDone: () => void }) {
   );
 }
 
+/** The intro cutscene's URL if there is one, seen or not (for the replay button). */
+export async function introUrl(): Promise<string | null> {
+  for (const f of ['assets/video/intro.webm', 'assets/video/intro.mp4']) if (await exists(f)) return `${BASE}${f}`;
+  return null;
+}
+
 /** The intro cutscene, if there is one and the player has not seen it yet. */
 export async function introToPlay(): Promise<string | null> {
   try {

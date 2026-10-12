@@ -47,7 +47,18 @@ function Choice<T extends string | number>(props: { label: string; value: T; opt
   );
 }
 
-export function Setup({ rules, onStart, onMultiplayer }: { rules: Rules; onStart: (s: SkirmishSettings) => void; onMultiplayer: () => void }) {
+export function Setup({
+  rules,
+  onStart,
+  onMultiplayer,
+  onIntro,
+}: {
+  rules: Rules;
+  onStart: (s: SkirmishSettings) => void;
+  onMultiplayer: () => void;
+  /** Play the intro cutscene (absent when there is no intro video). */
+  onIntro?: () => void;
+}) {
   const [s, setS] = useState<SkirmishSettings>(() => ({
     faction: 0,
     enemyFaction: 1,
@@ -181,6 +192,11 @@ export function Setup({ rules, onStart, onMultiplayer }: { rules: Rules; onStart
         <button class="codex-btn" onClick={() => setCodex(true)} data-testid="open-codex">
           Codex — story, factions, units and how to play
         </button>
+        {onIntro && (
+          <button class="codex-btn" onClick={onIntro} data-testid="watch-intro">
+            Watch intro
+          </button>
+        )}
         <button class="codex-btn" onClick={() => setCredits(true)} data-testid="open-credits">
           Credits
         </button>

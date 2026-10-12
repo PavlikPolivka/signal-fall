@@ -8,7 +8,7 @@ import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
 import { Setup, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
-import { Cutscene, introToPlay, markIntroSeen } from './ui/Video';
+import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import { NetSession, degrade } from './net/session';
 import { backend, fileDesyncReport } from './net/backend';
 import type { PeerLink } from './net/webrtc';
@@ -184,6 +184,12 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
 }
 
 const root = document.getElementById('app')!;
+/** Intro cutscene URL once known (enables the replay button on the setup screen). */
+let intro: string | null = null;
+void introUrl().then((u) => {
+  intro = u;
+  if (u && !scenario) renderUi();
+});
 let mounted = false;
 function renderUi(): void {
   if (!scenario && multiplayerScreen) {
@@ -208,6 +214,21 @@ function renderUi(): void {
   if (!scenario) {
     render(
       <Setup
+        onIntro={
+          intro
+            ? () =>
+                render(
+                  <Cutscene
+                    src={intro!}
+                    onDone={() => {
+                      markIntroSeen();
+                      renderUi();
+                    }}
+                  />,
+                  root,
+                )
+            : undefined
+        }
         onMultiplayer={() => {
           multiplayerScreen = true;
           renderUi();
