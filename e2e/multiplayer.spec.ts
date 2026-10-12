@@ -35,7 +35,7 @@ async function play(page: Page, round: number): Promise<void> {
 
 test('two clients play a networked match over a lossy link without desync', async ({ browser, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   // Online (Supabase signaling): two separate browser profiles, like two players. Offline: two tabs of one profile.
   const online = !!process.env.SUPABASE_URL;
   const hostContext = await browser.newContext();
@@ -66,9 +66,13 @@ test('two clients play a networked match over a lossy link without desync', asyn
     await play(guest, round + 100);
     await host.waitForTimeout(1500);
   }
-  // Both advanced well past several hash exchanges (every 100 ticks), and agree.
+  // Both advance past several hash exchanges (every 100 ticks) however slow the machine renders, and agree.
+  for (const p of [host, guest])
+    await p.waitForFunction(() => ((window as unknown as { __signalFall: { state: { cur: { tick: number } | null } } }).__signalFall.state.cur?.tick ?? 0) > 400, null, {
+      timeout: 90_000,
+    });
   const [a, b] = [await tick(host), await tick(guest)];
-  expect(Math.min(a, b)).toBeGreaterThan(300);
+  expect(Math.min(a, b)).toBeGreaterThan(400);
   for (const p of [host, guest]) {
     await expect(p.getByTestId('desync')).toHaveCount(0);
     await expect(p.getByTestId('net-badge')).toContainText('ping');
