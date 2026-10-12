@@ -118,6 +118,8 @@ export class Effects {
   /** Beams, arcs and tracers, redrawn every frame (additive). */
   private readonly beamGfx = new Graphics();
   private last = performance.now();
+  /** Fewer smoke and spark particles (settings). */
+  reduced = false;
 
   constructor(
     private readonly rules: Rules,
@@ -378,7 +380,7 @@ export class Effects {
       gravity: 260,
       delay,
     });
-    p.sprite.rotation = Math.atan2(p.vy - p.vz, p.vx);
+    if (p) p.sprite.rotation = Math.atan2(p.vy - p.vz, p.vx);
   }
 
   private scorch(px: number, py: number, scale: number): void {
@@ -398,7 +400,9 @@ export class Effects {
     y: number,
     z: number,
     o: { life: number; scale0: number; scale1: number; tint: number; alpha?: number; vx?: number; vy?: number; vz?: number; gravity?: number; add?: boolean; delay?: number },
-  ): Particle {
+  ): Particle | null {
+    // Reduced effects: drop half of the smoke and sparks (flashes and fire stay).
+    if (this.reduced && (tex === this.smoke || tex === this.streak) && Math.random() < 0.5) return null;
     const sprite = this.free.pop() ?? new Sprite();
     sprite.texture = tex;
     sprite.anchor.set(0.5);

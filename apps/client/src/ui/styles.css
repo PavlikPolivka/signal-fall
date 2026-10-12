@@ -1340,3 +1340,37 @@ table.matrix td.lo {
   opacity: 0;
   cursor: pointer;
 }
+
+.menu .seg-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 1fr;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+.hints {
+  position: absolute;
+  left: 12px;
+  top: 44px;
+  z-index: 12;
+  max-width: 380px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 10px;
+  background: rgba(10, 12, 16, 0.85);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: #eee;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.hints b {
+  color: var(--accent);
+  white-space: nowrap;
+}
+.hints button {
+  padding: 0 6px;
+  line-height: 1.2;
+}

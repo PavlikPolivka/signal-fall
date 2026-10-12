@@ -18,8 +18,8 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 | M5 AI, first playable | ✅ (human playtest pending) |
 | M6 Art and audio (Holdout) | ✅ |
 | M7 Halcyon and Choir | ✅ |
-| M8 Multiplayer | |
-| M9 Polish and release | |
+| M8 Multiplayer | ✅ (live cross-network 20-minute match pending) |
+| M9 Polish and release | ✅ |
 
 ## Layout
 

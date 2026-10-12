@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { defaultRules } from '@signal-fall/data';
-import { ClientState } from './game/state';
+import { ClientState, saveSettings } from './game/state';
 import { Input } from './input/input';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import { Renderer } from './render/renderer';
@@ -75,6 +75,11 @@ const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { 
 const post = (msg: ToWorker) => worker.postMessage(msg);
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
+state.applySettings = () => {
+  saveSettings(state.settings);
+  renderer.effects.reduced = state.settings.effects === 'reduced';
+  state.changed();
+};
 state.saveReplay = () => post({ type: 'saveReplay' });
 state.replaySpeed = (speed) => {
   if (!state.replay) return;
@@ -83,6 +88,7 @@ state.replaySpeed = (speed) => {
   state.changed();
 };
 const renderer = new Renderer(state);
+renderer.effects.reduced = state.settings.effects === 'reduced';
 const audio = new GameAudio(
   state,
   state.rules,

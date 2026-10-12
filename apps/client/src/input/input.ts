@@ -102,7 +102,7 @@ export class Input {
 
   update(dt: number): void {
     const cam = this.renderer.camera;
-    const step = (PAN_SPEED * dt) / cam.zoom;
+    const step = (PAN_SPEED * this.state.settings.scrollSpeed * dt) / cam.zoom;
     let dx = 0;
     let dy = 0;
     const on = (action: string) =>

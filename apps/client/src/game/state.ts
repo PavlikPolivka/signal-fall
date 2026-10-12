@@ -47,6 +47,10 @@ export class ClientState {
   /** Factions whose rendered art (sprites and icons) has loaded. */
   art = new Set<string>();
   creditsOpen = false;
+  /** Player preferences, kept in local storage. */
+  settings: Settings = loadSettings();
+  /** Persist settings and push them to the renderer (set up by main). */
+  applySettings: () => void = () => saveSettings(this.settings);
   /** Sound muted (mirrors the audio engine; set up by main). */
   muted = false;
   toggleMute: () => void = () => undefined;
@@ -334,5 +338,33 @@ export class ClientState {
         this.hits = this.hits.filter((h) => now - h.time < 3000);
       }
     }
+  }
+}
+
+export interface Settings {
+  /** Camera pan speed multiplier (keys and screen edges). */
+  scrollSpeed: number;
+  /** Reduced: fewer smoke and spark particles (slower machines, calmer screen). */
+  effects: 'full' | 'reduced';
+  /** First-match tips in the corner. */
+  hints: boolean;
+}
+
+const SETTINGS_KEY = 'signalfall.settings';
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', hints: true };
+
+export function loadSettings(): Settings {
+  try {
+    return { ...DEFAULT_SETTINGS, ...(JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}') as Partial<Settings>) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+export function saveSettings(s: Settings): void {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch {
+    // Not persisted; applies for this session.
   }
 }

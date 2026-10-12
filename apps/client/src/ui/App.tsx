@@ -59,6 +59,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
       {state.replay && <ReplayBar state={state} />}
+      {!state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
     </div>
   );
 }
@@ -664,6 +665,46 @@ function StructureActions({ state, h }: { state: ClientState; h: number }) {
   );
 }
 
+/** First-match guide: the next useful step, read from what the player has built so far. */
+function Hints({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur) return null;
+  const roles = state.roles();
+  const has = (r: string) => (roles.get(r as never) ?? 0) > 0;
+  let army = 0;
+  for (let i = 0; i < cur.entityCount; i++) {
+    const h = cur.get(cur.ent(i), 0);
+    if (state.isOwn(h) && state.isUnit(h) && state.ruleOf(h).kind === 'unit' && (state.ruleOf(h) as { weapon: unknown }).weapon) army++;
+  }
+  const steps: [boolean, string][] = [
+    [has('conyard'), 'Select your construction vehicle and press D to deploy your base.'],
+    [has('power'), 'Press B, then P to build power. When it is READY, click the map to place it.'],
+    [has('refinery'), 'Press B, then R for a refinery: it comes with a harvester that turns Echo into credits.'],
+    [has('barracks') || has('factory'), 'Build a barracks (B, B) or a vehicle factory (B, F) to make an army.'],
+    [army >= 5, 'Train units: I for infantry, V for vehicles. Shift+click queues five.'],
+    [false, 'Select your army (drag a box or Ctrl+A) and click an enemy or the ground to attack. Destroy every enemy building to win.'],
+  ];
+  const next = steps.findIndex(([done]) => !done);
+  const [, text] = steps[next]!;
+  return (
+    <div class="hints" data-testid="hints">
+      <b>
+        Tip {next + 1}/{steps.length}
+      </b>
+      <span>{text}</span>
+      <button
+        title="Hide tips (turn them back on in the menu)"
+        onClick={() => {
+          state.settings.hints = false;
+          state.applySettings();
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 /** Replay playback: speed, pause, progress and the verification result. */
 function ReplayBar({ state }: { state: ClientState }) {
   const r = state.replay!;
@@ -808,6 +849,51 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
         )}
         {slider('Music', 'music')}
         {slider('Effects', 'sfx')}
+        <label class="slider">
+          Scroll
+          <input
+            type="range"
+            min={50}
+            max={200}
+            step={10}
+            value={Math.round(state.settings.scrollSpeed * 100)}
+            data-testid="setting-scroll"
+            onInput={(e) => {
+              state.settings.scrollSpeed = Number((e.currentTarget as HTMLInputElement).value) / 100;
+              state.applySettings();
+            }}
+          />
+          <span>{Math.round(state.settings.scrollSpeed * 100)}%</span>
+        </label>
+        <div class="seg-row">
+          <span>Visual effects</span>
+          {(['full', 'reduced'] as const).map((v) => (
+            <button
+              class={state.settings.effects === v ? 'active' : ''}
+              data-testid={`setting-effects-${v}`}
+              onClick={() => {
+                state.settings.effects = v;
+                state.applySettings();
+              }}
+            >
+              {v === 'full' ? 'Full' : 'Reduced'}
+            </button>
+          ))}
+        </div>
+        <div class="seg-row">
+          <span>Hints</span>
+          {[true, false].map((v) => (
+            <button
+              class={state.settings.hints === v ? 'active' : ''}
+              onClick={() => {
+                state.settings.hints = v;
+                state.applySettings();
+              }}
+            >
+              {v ? 'On' : 'Off'}
+            </button>
+          ))}
+        </div>
         <button
           data-testid="menu-credits"
           onClick={() => {
