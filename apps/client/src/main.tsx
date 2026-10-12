@@ -9,6 +9,7 @@ import { App } from './ui/App';
 import { Setup, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
+import type { Replay } from './game/scenario';
 import { NetSession, degrade } from './net/session';
 import { backend, fileDesyncReport } from './net/backend';
 import type { PeerLink } from './net/webrtc';
@@ -64,6 +65,8 @@ let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : null;
 let localSlot = 0;
 /** Multiplayer: the connection to the opponent, until the worker is running. */
 let peerLink: PeerLink | null = null;
+/** Watching a recorded match. */
+let replay: Replay | null = null;
 let netSession: NetSession | null = null;
 /** Lobby screen showing instead of the skirmish setup. */
 let multiplayerScreen = new URLSearchParams(location.search).has('room');
@@ -72,6 +75,13 @@ const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { 
 const post = (msg: ToWorker) => worker.postMessage(msg);
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
+state.saveReplay = () => post({ type: 'saveReplay' });
+state.replaySpeed = (speed) => {
+  if (!state.replay) return;
+  state.replay.speed = speed;
+  post({ type: 'speed', speed });
+  state.changed();
+};
 const renderer = new Renderer(state);
 const audio = new GameAudio(
   state,
@@ -122,6 +132,18 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     const msg = ev.data;
     if (msg.type === 'net') {
       netSession?.send(msg.msg);
+      return;
+    }
+    if (msg.type === 'replay') {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([msg.json], { type: 'application/json' }));
+      a.download = `signal-fall-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.sfreplay.json`;
+      a.click();
+      return;
+    }
+    if (msg.type === 'replayEnd') {
+      if (state.replay) state.replay.verified = msg.ok;
+      state.changed();
       return;
     }
     if (msg.type === 'netStatus') {
@@ -185,6 +207,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         state.changed();
       };
     });
+  } else if (replay) {
+    state.spectator = true;
+    state.replay = { endTick: replay.endTick, verified: null, speed: 1, paused: false };
+    post({ type: 'start', scenario: replay.scenario, localPlayer: replay.localPlayer, replay });
   } else post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
 }
 
@@ -219,6 +245,11 @@ function renderUi(): void {
   if (!scenario) {
     render(
       <Setup
+        onReplay={(r) => {
+          replay = r;
+          scenario = r.scenario;
+          renderUi();
+        }}
         onIntro={
           intro
             ? () =>

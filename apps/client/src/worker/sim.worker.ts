@@ -1,9 +1,7 @@
 /// <reference lib="webworker" />
-import { defaultRules } from '@signal-fall/data';
 import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
-import { KIND, Sim, createMatch, grantBase, inCoverage, sandbox, type World } from '@signal-fall/sim';
-import { generateMap, type Biome } from '@signal-fall/mapgen';
-import { attachAi } from '@signal-fall/ai';
+import { KIND, Sim, inCoverage, type ScheduledCommand, type World } from '@signal-fall/sim';
+import { commandsByTick, createSim, type Replay } from '../game/scenario';
 import {
   E,
   ENT_FLAG,
@@ -36,41 +34,6 @@ let lastFogTick = -1;
 
 function post(msg: FromWorker, transfer: Transferable[] = []): void {
   self.postMessage(msg, transfer);
-}
-
-interface MapExtras {
-  decoration: Uint8Array;
-  surface: Uint8Array;
-  landmark: Uint8Array;
-  biome: Biome;
-  mapSeed: number;
-}
-
-function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
-  const rules = defaultRules();
-  switch (spec.kind) {
-    case 'skirmish': {
-      const map = generateMap({ seed: spec.seed, players: spec.factions.length, ...spec.map });
-      const sim = createMatch({
-        rules,
-        seed: spec.seed,
-        map,
-        players: spec.factions.map((faction, team) => ({ faction, team })),
-      });
-      spec.ai.forEach((difficulty, p) => {
-        // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.
-        if (difficulty) attachAi(sim, p, difficulty, map.starts);
-        else if (p !== 0 && !spec.humans?.includes(p)) grantBase(sim, p, map.starts[p]!);
-      });
-      return { sim, extras: { decoration: map.decoration, surface: map.surface, landmark: map.landmark, biome: map.biome, mapSeed: map.seedUsed } };
-    }
-    case 'sandbox':
-    case 'stress': {
-      const sim = sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
-      const n = sim.world.map.width * sim.world.map.height;
-      return { sim, extras: { decoration: new Uint8Array(n), surface: new Uint8Array(n), landmark: new Uint8Array(n), biome: 'wasteland', mapSeed: spec.seed } };
-    }
-  }
 }
 
 function encode(world: World, stalled: boolean): ArrayBuffer {
@@ -223,7 +186,10 @@ let port: PortTransport | null = null;
 let earlyNet: NetMessage[] = [];
 let scenario: ScenarioSpec | null = null;
 /** Every command applied, for desync reports. */
-let commandLog: { tick: number; player: number; cmd: unknown }[] = [];
+let commandLog: ScheduledCommand[] = [];
+/** Replay playback: commands by tick, and where/what the recording ended. */
+let replayCmds: Map<number, ScheduledCommand[]> | null = null;
+let replayEnd: { tick: number; hash: number } | null = null;
 let desynced = false;
 /** Multiplayer housekeeping: ping, adapt the input delay, exchange state hashes. */
 const HASH_EVERY = 100;
@@ -252,13 +218,25 @@ function loop(): void {
     let steps = 0;
     let stalled = false;
     while (acc >= TICK_MS && steps < MAX_CATCH_UP) {
-      if (!lockstep.ready(sim.tick)) {
-        stalled = true;
-        break;
-      }
-      for (const c of lockstep.take(sim.tick)) {
-        sim.schedule(c);
-        if (port) commandLog.push(c);
+      if (replayCmds) {
+        // Replay: the recorded commands drive the match; stop and verify at the recorded end.
+        if (replayEnd && sim.tick >= replayEnd.tick) {
+          const hash = sim.hash();
+          post({ type: 'replayEnd', tick: sim.tick, ok: hash === replayEnd.hash });
+          replayEnd = null;
+          paused = true;
+          break;
+        }
+        for (const c of replayCmds.get(sim.tick) ?? []) sim.schedule(c);
+      } else {
+        if (!lockstep.ready(sim.tick)) {
+          stalled = true;
+          break;
+        }
+        for (const c of lockstep.take(sim.tick)) {
+          sim.schedule(c);
+          commandLog.push(c);
+        }
       }
       sim.step();
       if (port && sim.tick % HASH_EVERY === 0) lockstep.reportHash(sim.tick, sim.hash());
@@ -284,6 +262,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       port = msg.net ? new PortTransport() : null;
       commandLog = [];
       desynced = false;
+      paused = false;
+      replayCmds = msg.replay ? commandsByTick(msg.replay.commands) : null;
+      replayEnd = msg.replay ? { tick: msg.replay.endTick, hash: msg.replay.hash } : null;
       lockstep = new LockstepScheduler({
         localPlayer,
         peers: msg.net ? msg.net.peers : [localPlayer],
@@ -326,6 +307,15 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       // Nobody pauses a networked match on their own.
       if (!port) paused = msg.paused;
       return;
+    case 'speed':
+      TICK_MS = 50 / Math.max(0.25, Math.min(16, msg.speed));
+      return;
+    case 'saveReplay': {
+      if (!sim || !scenario) return;
+      const replay: Replay = { format: 'signal-fall-replay', version: 1, scenario, localPlayer, commands: commandLog, endTick: sim.tick, hash: sim.hash() };
+      post({ type: 'replay', json: JSON.stringify(replay) });
+      return;
+    }
     case 'net':
       if (port) port.deliver(msg.msg);
       else earlyNet.push(msg.msg);

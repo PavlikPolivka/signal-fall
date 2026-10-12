@@ -7,6 +7,7 @@ import { TEAM_COLORS } from '../game/state';
 import { Codex } from './Codex';
 import { Logo } from './Logo';
 import { MenuVideo } from './Video';
+import { parseReplay, type Replay } from '../game/scenario';
 import { Credits } from './Credits';
 
 export interface SkirmishSettings {
@@ -52,13 +53,25 @@ export function Setup({
   onStart,
   onMultiplayer,
   onIntro,
+  onReplay,
 }: {
   rules: Rules;
   onStart: (s: SkirmishSettings) => void;
   onMultiplayer: () => void;
   /** Play the intro cutscene (absent when there is no intro video). */
   onIntro?: () => void;
+  /** Watch a replay file. */
+  onReplay: (r: Replay) => void;
 }) {
+  const [replayError, setReplayError] = useState<string | null>(null);
+  const openReplay = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      onReplay(parseReplay(await file.text()));
+    } catch (e) {
+      setReplayError(e instanceof Error ? e.message : String(e));
+    }
+  };
   const [s, setS] = useState<SkirmishSettings>(() => ({
     faction: 0,
     enemyFaction: 1,
@@ -192,6 +205,11 @@ export function Setup({
         <button class="codex-btn" onClick={() => setCodex(true)} data-testid="open-codex">
           Codex — story, factions, units and how to play
         </button>
+        <label class="codex-btn file-btn" data-testid="watch-replay">
+          Watch a replay
+          <input type="file" accept=".json,application/json" onChange={(e) => void openReplay((e.currentTarget as HTMLInputElement).files?.[0])} />
+        </label>
+        {replayError && <p class="mp-status">{replayError}</p>}
         {onIntro && (
           <button class="codex-btn" onClick={onIntro} data-testid="watch-intro">
             Watch intro

@@ -2,6 +2,7 @@ import type { Command } from '@signal-fall/sim';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
 import type { Difficulty } from '@signal-fall/ai';
 import type { NetMessage } from '@signal-fall/net';
+import type { Replay } from './game/scenario';
 
 /** What the worker should set up. */
 export type ScenarioSpec =
@@ -27,7 +28,12 @@ export type ToWorker =
       speed?: number;
       /** Multiplayer: the human peers' player slots; lockstep messages travel through 'net' messages. */
       net?: { peers: number[] };
+      /** Watch a recorded match instead of playing. */
+      replay?: Replay;
     }
+  | { type: 'speed'; speed: number }
+  /** Ask for the match so far as a replay file. */
+  | { type: 'saveReplay' }
   | { type: 'command'; cmd: Command }
   | { type: 'pause'; paused: boolean }
   /** A lockstep message from a remote peer. */
@@ -64,6 +70,9 @@ export type FromWorker =
     }
   /** A lockstep message for the remote peers. */
   | { type: 'net'; msg: NetMessage }
+  | { type: 'replay'; json: string }
+  /** Replay reached its recorded end: did the state hash match the recording? */
+  | { type: 'replayEnd'; tick: number; ok: boolean }
   /** Multiplayer status: input delay, round trip, who we are waiting on. */
   | { type: 'netStatus'; delayTurns: number; rtt: number; waitingOn: number[] }
   /** State hashes disagreed: the match has diverged. `report` is a JSON replay for the bug report. */

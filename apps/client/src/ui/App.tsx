@@ -58,6 +58,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       )}
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
+      {state.replay && <ReplayBar state={state} />}
     </div>
   );
 }
@@ -663,6 +664,39 @@ function StructureActions({ state, h }: { state: ClientState; h: number }) {
   );
 }
 
+/** Replay playback: speed, pause, progress and the verification result. */
+function ReplayBar({ state }: { state: ClientState }) {
+  const r = state.replay!;
+  const tick = state.cur?.tick ?? 0;
+  const time = (t: number) => `${Math.floor(t / 1200)}:${String(Math.floor(t / 20) % 60).padStart(2, '0')}`;
+  return (
+    <div class="replay-bar" data-testid="replay-bar">
+      <b>Replay</b>
+      <span class="mono">
+        {time(tick)} / {time(r.endTick)}
+      </span>
+      <i class="replay-progress">
+        <i style={{ width: `${Math.min(100, (tick / Math.max(1, r.endTick)) * 100)}%` }} />
+      </i>
+      {[0.5, 1, 2, 4, 8].map((sp) => (
+        <button class={r.speed === sp ? 'active' : ''} onClick={() => state.replaySpeed(sp)}>
+          {sp}×
+        </button>
+      ))}
+      {r.verified === true && (
+        <span class="good" data-testid="replay-verified" title="Playback reached exactly the recorded final state">
+          ✓ verified
+        </span>
+      )}
+      {r.verified === false && (
+        <span class="bad" data-testid="replay-mismatch">
+          ✗ did not reproduce
+        </span>
+      )}
+    </div>
+  );
+}
+
 let stalledSince = 0;
 
 /** Multiplayer: waiting-for-opponent, desync and disconnect notices. */
@@ -714,7 +748,12 @@ function EndScreen({ state }: { state: ClientState }) {
     <div class="menu-overlay" data-testid="end-screen">
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
-        {!state.multiplayer && <button onClick={() => location.reload()}>Play again</button>}
+        {!state.multiplayer && !state.replay && <button onClick={() => location.reload()}>Play again</button>}
+        {!state.replay && (
+          <button onClick={() => state.saveReplay()} data-testid="end-save-replay">
+            Save replay
+          </button>
+        )}
         <button onClick={() => (location.href = location.pathname)}>New skirmish</button>
       </div>
     </div>
@@ -762,6 +801,11 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
           Codex
         </button>
         <button onClick={fullscreen}>Fullscreen</button>
+        {!state.replay && (
+          <button data-testid="menu-save-replay" onClick={() => state.saveReplay()}>
+            Save replay
+          </button>
+        )}
         {slider('Music', 'music')}
         {slider('Effects', 'sfx')}
         <button

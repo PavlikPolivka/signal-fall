@@ -55,6 +55,10 @@ export class ClientState {
   net: { delayTurns: number; rtt: number; waitingOn: number[] } | null = null;
   desync: { tick: number; report: string } | null = null;
   peerLost = false;
+  /** Watching a replay: its end tick, and whether playback reproduced the recording (null until the end). */
+  replay: { endTick: number; verified: boolean | null; speed: number; paused: boolean } | null = null;
+  saveReplay: () => void = () => undefined;
+  replaySpeed: (speed: number) => void = () => undefined;
   mapSeed = 0;
   players: PlayerInfo[] = [];
   localPlayer = 0;
