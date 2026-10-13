@@ -600,8 +600,14 @@ kbd {
   border-radius: 10px;
 }
 .setup-preview canvas {
-  width: 460px;
-  height: 460px;
+  width: 300px;
+  height: 300px;
+}
+/* The preview sits low and to the side, so the menu video's centre stays visible. */
+.setup > .setup-preview {
+  align-self: flex-end;
+  margin-bottom: 24px;
+  opacity: 0.92;
 }
 @media (max-width: 1000px) {
   .setup {

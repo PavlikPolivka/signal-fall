@@ -60,6 +60,8 @@ Static site on Vercel (`vercel.json`: client build, long cache for hashed files,
 Multiplayer backend: Supabase project in Frankfurt (`supabase/`: migrations, the TURN-credentials function;
 Cloudflare TURN key in the function secrets).
 
+Pushes to `main` deploy automatically (the GitHub repo is connected to the Vercel project). Manual deploy:
+
 ```sh
 vercel deploy --prod --archive=tgz      # one archive upload; the free plan limits file counts
 supabase db push && supabase functions deploy turn-credentials --no-verify-jwt
