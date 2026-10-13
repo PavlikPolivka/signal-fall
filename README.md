@@ -67,6 +67,10 @@ name and history stay; other devices sign in with an emailed link. Auth URLs: si
 Supabase's built-in mailer, which only delivers to the project team's addresses (2 emails/hour):
 real players need custom SMTP (e.g. Resend) set in the dashboard.
 
+Multiplayer is 1v1 or 2v2: the lobby has a seat per player (open, a person, or an AI the host
+adds); every pair of people opens its own WebRTC data channel (full mesh, the lower signaling id
+offers), and lockstep runs over all of them. AI seats run identically inside every client.
+
 Stats: each player records their own row in `matches` when a match ends (skirmish: personal
 history and records). A multiplayer match is rated when both players' rows agree (room, final
 state hash, opposite results); a trigger then updates both Elo ratings (`ratings`, K = 32). The

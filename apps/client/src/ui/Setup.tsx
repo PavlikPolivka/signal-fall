@@ -12,10 +12,23 @@ import { Stats } from './Stats';
 import { account, backend, type Account as AccountInfo } from '../net/backend';
 
 export interface SkirmishSettings extends MapChoice {
+  /** 1v1, or 2v2: you and an AI ally against two AIs. */
+  mode: '1v1' | '2v2';
   faction: number;
   enemyFaction: number;
+  /** Enemy AI difficulty. */
   difficulty: Difficulty;
+  allyFaction: number;
+  allyDifficulty: Difficulty;
+  enemy2Faction: number;
 }
+
+const DIFFICULTY_OPTIONS: [Difficulty, string][] = [
+  ['easy', 'Easy'],
+  ['normal', 'Normal'],
+  ['hard', 'Hard'],
+  ['brutal', 'Brutal'],
+];
 
 const STORAGE_KEY = 'signal-fall.setup';
 
@@ -149,9 +162,13 @@ export function Setup({
 /** Skirmish setup: sides and difficulty on the left, the map on the right. Remembered between visits. */
 function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: SkirmishSettings) => void; onBack: () => void }) {
   const [s, setS] = useState<SkirmishSettings>(() => ({
+    mode: '1v1',
     faction: 0,
     enemyFaction: 1,
     difficulty: 'normal',
+    allyFaction: 2,
+    allyDifficulty: 'normal',
+    enemy2Faction: 0,
     seed: randomSeed(),
     size: 'M',
     biome: 'wasteland',
@@ -185,24 +202,30 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
         <div class="setup-cols">
           <section>
             <h2>Sides</h2>
-            <Choice label="You play" value={s.faction} options={factions} onChange={(v) => set({ faction: v })} testid="faction" />
-            <Choice label="Opponent" value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
             <Choice
-              label="Difficulty"
-              value={s.difficulty}
+              label="Mode"
+              value={s.mode}
               options={[
-                ['easy', 'Easy'],
-                ['normal', 'Normal'],
-                ['hard', 'Hard'],
-                ['brutal', 'Brutal'],
+                ['1v1', '1 vs 1'],
+                ['2v2', '2 vs 2'],
               ]}
-              onChange={(v) => set({ difficulty: v })}
-              testid="difficulty"
+              onChange={(v) => set({ mode: v })}
+              testid="mode"
             />
+            <Choice label="You play" value={s.faction} options={factions} onChange={(v) => set({ faction: v })} testid="faction" />
+            {s.mode === '2v2' && (
+              <>
+                <Choice label="Ally" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="ally" />
+                <Choice label="Ally skill" value={s.allyDifficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ allyDifficulty: v })} testid="ally-difficulty" />
+              </>
+            )}
+            <Choice label={s.mode === '2v2' ? 'Enemy 1' : 'Opponent'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
+            {s.mode === '2v2' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
+            <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
           </section>
           <section>
             <h2>Map</h2>
-            <MapSettings value={s} onChange={set} />
+            <MapSettings value={s} onChange={set} players={s.mode === '2v2' ? 4 : 2} />
           </section>
         </div>
         <div class="setup-foot">

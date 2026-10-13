@@ -1,24 +1,25 @@
 import { ReliableLink, ReliableTransport, lossyPair, type Datagram, type NetMessage } from '@signal-fall/net';
 
-/** No word from the opponent for this long means they are gone. */
+/** No word from a peer for this long means they are gone. */
 export const PEER_TIMEOUT_MS = 10_000;
 
 /**
  * The main thread's side of a networked match: reliable lockstep messages over
- * the peer's datagram channel, relayed to and from the sim worker.
+ * each peer's datagram channel (one per other person), relayed to and from the
+ * sim worker. Everything we send goes to every peer.
  */
 export class NetSession {
   private readonly transport: ReliableTransport;
   private timer: number;
   private lost = false;
-  /** Called when the opponent goes silent for PEER_TIMEOUT_MS. */
+  /** Called when any peer goes silent for PEER_TIMEOUT_MS. */
   onPeerLost: () => void = () => undefined;
 
   constructor(
-    dgram: Datagram,
+    dgrams: Datagram[],
     private readonly toWorker: (msg: NetMessage) => void,
   ) {
-    this.transport = new ReliableTransport([new ReliableLink(dgram, { now: () => performance.now() })]);
+    this.transport = new ReliableTransport(dgrams.map((d) => new ReliableLink(d, { now: () => performance.now() })));
     this.transport.onMessage((m) => this.toWorker(m));
     this.timer = window.setInterval(() => {
       this.transport.tick();
@@ -29,7 +30,7 @@ export class NetSession {
     }, 20);
   }
 
-  /** A lockstep message from our worker for the opponent. */
+  /** A lockstep message from our worker for the other peers. */
   send(msg: NetMessage): void {
     this.transport.send(msg);
   }

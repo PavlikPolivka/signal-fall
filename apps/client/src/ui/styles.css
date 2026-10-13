@@ -1153,12 +1153,75 @@ table.matrix td.lo {
   gap: 6px;
 }
 .lobby-players li {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-height: 34px;
   padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
+}
+.lobby-players li > b {
+  flex: 1;
+}
+.lobby-players .swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+.lobby-players li.open .swatch {
+  opacity: 0.35;
+}
+.lobby-players li.open {
+  border-style: dashed;
+}
+.lobby-players li.open > .muted {
+  flex: 1;
+}
+.lobby-players li.me {
+  border-color: var(--accent);
+}
+.lobby-players li .seg {
+  display: flex;
+  gap: 3px;
+}
+.lobby-players li .seg button {
+  padding: 2px 6px;
+  font-size: 12px;
+}
+.lobby-players select {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.lobby-players button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.lobby-players button.link:hover {
+  text-decoration: underline;
+}
+.lobby-team .lobby-players {
+  margin: 4px 0;
+}
+.lobby-vs {
+  margin: 2px 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 .mp-status {
   color: var(--accent);

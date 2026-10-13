@@ -22,7 +22,7 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         rules,
         seed: spec.seed,
         map,
-        players: spec.factions.map((faction, team) => ({ faction, team })),
+        players: spec.factions.map((faction, k) => ({ faction, team: spec.teams?.[k] ?? k })),
       });
       spec.ai.forEach((difficulty, p) => {
         // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.

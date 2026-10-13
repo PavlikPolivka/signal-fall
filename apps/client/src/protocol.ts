@@ -14,6 +14,8 @@ export type ScenarioSpec =
       ai: (Difficulty | null)[];
       /** Player slots controlled by people (multiplayer); others without AI get a passive base. */
       humans?: number[];
+      /** Team per slot (2v2: [0, 0, 1, 1]); default: everyone on their own team. */
+      teams?: number[];
       map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
     }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }

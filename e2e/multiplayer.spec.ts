@@ -104,3 +104,57 @@ test('two clients play a networked match over a lossy link without desync', asyn
   await hostContext.close();
   if (online) await guestContext.close();
 });
+
+test('2v2: three people and an AI over a full mesh stay in sync', async ({ browser }) => {
+  test.skip(!!process.env.SUPABASE_URL, 'offline mesh test (one browser profile)');
+  test.setTimeout(240_000);
+  const ctx = await browser.newContext();
+  const [host, a, b] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
+  for (const p of [host, a, b]) p.on('pageerror', (e) => console.error(e.message));
+
+  await host.goto(`/?netsim=${NETSIM}`);
+  await host.click('[data-testid=open-multiplayer]');
+  await host.click('[data-testid=mp-create]');
+  await host.click('[data-testid=mp-mode] [data-value="2v2"]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  for (const p of [a, b]) {
+    await p.goto(`/?netsim=${NETSIM}`);
+    await p.click('[data-testid=open-multiplayer]');
+    await p.fill('[data-testid=mp-code]', code);
+    await p.click('[data-testid=mp-join]');
+    await expect(p.getByTestId('lobby')).toBeVisible();
+  }
+  // Seats fill in order: Bob next to the host, Cat on the other team; Cat moves to the last seat.
+  await expect(host.getByTestId('seat-2')).not.toHaveClass(/open/, { timeout: 15_000 });
+  await b.click('[data-testid=seat-3-take]');
+  await expect(host.getByTestId('seat-2')).toHaveClass(/open/);
+  await host.click('[data-testid=seat-2-ai]');
+  await host.selectOption('[data-testid=seat-2-difficulty]', 'easy');
+  await b.click('[data-testid=mp-faction] [data-value=halcyon]');
+  await expect(a.getByTestId('seat-2')).toContainText('easy');
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
+  await host.click('[data-testid=mp-start]');
+
+  type W = { __signalFall: { state: { cur: { tick: number } | null; localPlayer: number; players: { team: number; faction: number }[] } } };
+  for (const p of [host, a, b]) await p.waitForFunction(() => (window as unknown as W).__signalFall.state.cur !== null, null, { timeout: 30_000 });
+  for (let round = 0; round < 4; round++) {
+    for (const [i, p] of [host, a, b].entries()) await play(p, round + i * 100);
+    await host.waitForTimeout(1500);
+  }
+  for (const p of [host, a, b]) await p.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 300, null, { timeout: 120_000 });
+  const views = await Promise.all(
+    [host, a, b].map((p) =>
+      p.evaluate(() => {
+        const s = (window as unknown as W).__signalFall.state;
+        return { slot: s.localPlayer, teams: s.players.map((x) => x.team), factions: s.players.map((x) => x.faction) };
+      }),
+    ),
+  );
+  expect(views.map((v) => v.slot)).toEqual([0, 1, 3]);
+  for (const v of views) {
+    expect(v.teams).toEqual([0, 0, 1, 1]);
+    expect(v.factions[3]).toBe(1); // Cat picked Halcyon
+  }
+  for (const p of [host, a, b]) await expect(p.getByTestId('desync')).toHaveCount(0);
+  await ctx.close();
+});

@@ -13,7 +13,7 @@ import type { Replay } from './game/scenario';
 import { NetSession, degrade } from './net/session';
 import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
 import { recordMatch, type NetMatch } from './net/history';
-import type { PeerLink } from './net/webrtc';
+import type { LinkLike } from './net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
 import '@fontsource/saira-stencil-one/latin-400.css';
@@ -25,7 +25,7 @@ import './ui/styles.css';
 
 const params = new URLSearchParams(location.search);
 // Any game parameter in the URL skips the setup screen (tests, shared links).
-const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy', 'spectate'];
+const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy', 'spectate', 'mode'];
 /** Spectator mode: both sides are AI at this difficulty, no fog. Great for watching and recording. */
 const spectate = params.get('spectate') as Difficulty | null;
 const autostart = AUTOSTART_KEYS.some((k) => params.has(k));
@@ -37,35 +37,47 @@ function scenarioFromUrl(): ScenarioSpec {
     return { kind: kind === 'stress' ? 'stress' : 'sandbox', seed, unitsPerSide: Number(params.get('units') ?? (kind === 'stress' ? 200 : 24)) };
   }
   const ai = params.get('ai') ?? 'normal';
+  const map = {
+    size: (params.get('size') ?? 'M') as MapSize,
+    biome: (params.get('biome') ?? 'wasteland') as Biome,
+    resources: (params.get('resources') ?? 'normal') as Resources,
+    terrain: (params.get('terrain') ?? 'normal') as TerrainStyle,
+  };
+  // ?mode=2v2[&factions=0,2,1,0]: slots 0+1 against 2+3; every slot but ours is AI (all of them when spectating).
+  if (params.get('mode') === '2v2') {
+    const factions = (params.get('factions') ?? '0,2,1,0').split(',').map(Number);
+    const level = spectate ?? (ai as Difficulty);
+    return { kind, seed, factions, ai: [spectate, level, level, level], teams: [0, 0, 1, 1], map };
+  }
   return {
     kind,
     seed,
     factions: [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1)],
     ai: [spectate, spectate ?? (ai === 'none' ? null : (ai as Difficulty))],
-    map: {
-      size: (params.get('size') ?? 'M') as MapSize,
-      biome: (params.get('biome') ?? 'wasteland') as Biome,
-      resources: (params.get('resources') ?? 'normal') as Resources,
-      terrain: (params.get('terrain') ?? 'normal') as TerrainStyle,
-    },
+    map,
   };
 }
 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
-  return {
-    kind: 'skirmish',
-    seed: s.seed,
-    factions: [s.faction, s.enemyFaction],
-    ai: [null, s.difficulty],
-    map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain },
-  };
+  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain };
+  // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
+  if (s.mode === '2v2')
+    return {
+      kind: 'skirmish',
+      seed: s.seed,
+      factions: [s.faction, s.allyFaction, s.enemyFaction, s.enemy2Faction],
+      ai: [null, s.allyDifficulty, s.difficulty, s.difficulty],
+      teams: [0, 0, 1, 1],
+      map,
+    };
+  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map };
 }
 
 let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : null;
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
-/** Multiplayer: the connection to the opponent, until the worker is running. */
-let peerLink: PeerLink | null = null;
+/** Multiplayer: connections to the other people by slot, until the worker is running. */
+let peerLinks: Map<number, LinkLike> | null = null;
 /** Watching a recorded match. */
 let replay: Replay | null = null;
 let netSession: NetSession | null = null;
@@ -213,21 +225,22 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       if (first) input?.run('jumpToBase');
     }
   };
-  if (peerLink) {
-    const link = peerLink;
+  if (peerLinks && scenario?.kind === 'skirmish') {
+    const links = [...peerLinks.values()];
     state.multiplayer = true;
-    post({ type: 'start', scenario: scenario!, localPlayer: localSlot, net: { peers: [0, 1] } });
-    void link.ready.then((d) => {
+    post({ type: 'start', scenario, localPlayer: localSlot, net: { peers: scenario.humans ?? [0, 1] } });
+    const lost = () => {
+      state.peerLost = true;
+      state.changed();
+    };
+    for (const l of links) l.onFailed = lost;
+    void Promise.all(links.map((l) => l.ready)).then((dgrams) => {
       const netsim = params.get('netsim');
-      netSession = new NetSession(netsim ? degrade(d, netsim) : d, (m) => post({ type: 'net', msg: m }));
-      netSession.onPeerLost = () => {
-        state.peerLost = true;
-        state.changed();
-      };
-      link.onFailed = () => {
-        state.peerLost = true;
-        state.changed();
-      };
+      netSession = new NetSession(
+        dgrams.map((d) => (netsim ? degrade(d, netsim) : d)),
+        (m) => post({ type: 'net', msg: m }),
+      );
+      netSession.onPeerLost = lost;
     });
   } else if (replay) {
     state.spectator = true;
@@ -255,11 +268,11 @@ function renderUi(): void {
           multiplayerScreen = false;
           renderUi();
         }}
-        onStart={(sc, slot, link, room) => {
+        onStart={(sc, slot, links, room) => {
           scenario = sc;
           localSlot = slot;
-          peerLink = link;
-          netMatch = { room: room.code, uids: [...room.players].sort((a, b) => a.slot - b.slot).map((p) => p.uid ?? null) };
+          peerLinks = links;
+          netMatch = { room: room.code, uids: room.slots.map((x) => x.player?.uid ?? null) };
           renderUi();
         }}
       />,

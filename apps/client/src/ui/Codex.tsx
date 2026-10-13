@@ -359,6 +359,17 @@ function HowTo({ rules }: { rules: Rules }) {
       <p class="muted">
         <kbd>Z</kbd> cycles stances. Groups move together in formation; clicking the ground attack-moves, <kbd>M</kbd> + click moves without fighting.
       </p>
+      <h3>Game modes</h3>
+      <ul>
+        <li>
+          <b>Skirmish vs AI</b> — 1 vs 1, or 2 vs 2 with an AI ally against two AIs. Pick factions, difficulty and the map.
+        </li>
+        <li>
+          <b>Multiplayer</b> — create a room and send its four-letter code. 1 vs 1 or 2 vs 2; the host fills any seat with an AI, so two friends can
+          take on two AIs together, or three people can share a match with one AI. Everyone connects directly to everyone else.
+        </li>
+      </ul>
+      <p class="muted">Teammates share vision, cannot hurt each other, and win or lose together.</p>
       <h3>After the match</h3>
       <p>
         <b>Match report</b> on the end screen compares both sides: Echo harvested, units built, kills and losses, and the value destroyed. Charts show
