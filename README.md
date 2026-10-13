@@ -60,6 +60,13 @@ Static site on Vercel (`vercel.json`: client build, long cache for hashed files,
 Multiplayer backend: Supabase project in Frankfurt (`supabase/`: migrations, the TURN-credentials function;
 Cloudflare TURN key in the function secrets).
 
+Accounts: everyone starts as an anonymous guest with a `profiles` row (display name). Confirming an
+email (Account → Send link) turns the guest into a permanent account with the same user id, so the
+name and history stay; other devices sign in with an emailed link. Auth URLs: site
+`https://signal-fall.vercel.app`, redirects allowed for it and localhost. The hosted project uses
+Supabase's built-in mailer, which only delivers to the project team's addresses (2 emails/hour):
+real players need custom SMTP (e.g. Resend) set in the dashboard.
+
 Pushes to `main` deploy automatically (the GitHub repo is connected to the Vercel project). Manual deploy:
 
 ```sh

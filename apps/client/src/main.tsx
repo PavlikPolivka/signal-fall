@@ -11,7 +11,7 @@ import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
 import { NetSession, degrade } from './net/session';
-import { backend, fileDesyncReport } from './net/backend';
+import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
 import type { PeerLink } from './net/webrtc';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
@@ -233,6 +233,8 @@ void introUrl().then((u) => {
   intro = u;
   if (u && !scenario) renderUi();
 });
+/** Message after returning from an account email link, shown on the main menu once. */
+let accountNotice: string | null = null;
 let mounted = false;
 function renderUi(): void {
   if (!scenario && multiplayerScreen) {
@@ -257,6 +259,7 @@ function renderUi(): void {
   if (!scenario) {
     render(
       <Setup
+        notice={accountNotice}
         onReplay={(r) => {
           replay = r;
           scenario = r.scenario;
@@ -327,6 +330,14 @@ function renderUi(): void {
 // Before the canvas exists, UI buttons are inert.
 const placeholderInput = { run: () => undefined, toggleMenu: () => undefined } as unknown as Input;
 renderUi();
+// Back from an account email link (confirm / sign in): take the session, then say so on the menu.
+const sbAtStart = backend();
+if (sbAtStart && !scenario)
+  void finishEmailLink(sbAtStart).then((msg) => {
+    if (!msg || scenario) return;
+    accountNotice = msg;
+    renderUi();
+  });
 
 // Test and debugging hook.
 Object.assign(window, { __signalFall: { state, renderer, audio, get input() { return input; } } });

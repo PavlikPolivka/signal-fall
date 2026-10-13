@@ -7,6 +7,8 @@ import { MenuVideo } from './Video';
 import { parseReplay, type Replay } from '../game/scenario';
 import { Credits } from './Credits';
 import { Choice, MapSettings, randomSeed, type MapChoice } from './MapSettings';
+import { Account } from './Account';
+import { account, backend, type Account as AccountInfo } from '../net/backend';
 
 export interface SkirmishSettings extends MapChoice {
   faction: number;
@@ -44,10 +46,13 @@ export function Setup({
   onMultiplayer,
   onIntro,
   onReplay,
+  notice,
 }: {
   rules: Rules;
   onStart: (s: SkirmishSettings) => void;
   onMultiplayer: () => void;
+  /** One-line message to show on the menu (e.g. after returning from an email link). */
+  notice?: string | null;
   /** Play the intro cutscene (absent when there is no intro video). */
   onIntro?: () => void;
   /** Watch a replay file. */
@@ -57,11 +62,21 @@ export function Setup({
   const [replayError, setReplayError] = useState<string | null>(null);
   const [codex, setCodex] = useState(false);
   const [credits, setCredits] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(!!notice);
+  useEffect(() => {
+    if (notice) setAccountOpen(true);
+  }, [notice]);
+  const [me, setMe] = useState<AccountInfo | null>(null);
+  useEffect(() => {
+    const sb = backend();
+    if (sb) void account(sb).then(setMe, () => undefined);
+  }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setCodex(false);
       setCredits(false);
+      setAccountOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -80,6 +95,13 @@ export function Setup({
   return (
     <MenuScreen testid="home">
       <div class="home">
+        {me && (
+          <button class="home-me" onClick={() => setAccountOpen(true)} data-testid="home-me">
+            Playing as <b>{me.name}</b>
+            <span class={me.guest ? 'tag' : 'tag good'}>{me.guest ? 'guest' : 'account'}</span>
+          </button>
+        )}
+        {notice && <p class="home-notice">{notice}</p>}
         <div class="home-actions">
           <button class="start" onClick={() => setSkirmish(true)} data-testid="open-skirmish">
             Skirmish vs AI
@@ -101,6 +123,9 @@ export function Setup({
               Intro
             </button>
           )}
+          <button onClick={() => setAccountOpen(true)} data-testid="open-account">
+            Account
+          </button>
           <button onClick={() => setCredits(true)} data-testid="open-credits">
             Credits
           </button>
@@ -109,6 +134,7 @@ export function Setup({
       </div>
       {codex && <Codex rules={rules} onClose={() => setCodex(false)} />}
       {credits && <Credits onClose={() => setCredits(false)} />}
+      {accountOpen && <Account onClose={() => setAccountOpen(false)} onChange={setMe} />}
     </MenuScreen>
   );
 }

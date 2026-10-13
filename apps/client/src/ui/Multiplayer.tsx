@@ -3,6 +3,7 @@ import type { Rules } from '@signal-fall/data';
 import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
 import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
+import { account, backend, rename } from '../net/backend';
 import type { PeerLink } from '../net/webrtc';
 import { MenuScreen } from './Setup';
 import { MapSettings } from './MapSettings';
@@ -35,6 +36,19 @@ export function Multiplayer({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, refresh] = useReducer((n: number, _: undefined) => n + 1, 0);
+  // Online, the name is the account's display name (renaming here renames the account).
+  const [profileName, setProfileName] = useState<string | null>(null);
+  useEffect(() => {
+    const sb = backend();
+    if (sb)
+      void account(sb).then(
+        (a) => {
+          setProfileName(a.name);
+          setName(a.name);
+        },
+        () => undefined,
+      );
+  }, []);
   // Join links: ?room=ABCD opens the join form prefilled.
   useEffect(() => {
     const room = new URLSearchParams(location.search).get('room');
@@ -59,6 +73,11 @@ export function Multiplayer({
     setBusy(true);
     setError(null);
     try {
+      const sb = backend();
+      if (sb && profileName !== null && name.trim() !== profileName) {
+        await rename(sb, name);
+        setProfileName(name.trim());
+      }
       const r = await openRoom(host, c, roomCode);
       // ?relay=1 forces every packet through the TURN relay (testing strict networks).
       const relayOnly = new URLSearchParams(location.search).get('relay') === '1';

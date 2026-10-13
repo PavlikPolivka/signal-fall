@@ -1478,6 +1478,64 @@ table.matrix td.lo {
   background: rgba(10, 12, 18, 0.6);
   backdrop-filter: blur(6px);
 }
+.home-me {
+  justify-self: start;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(10, 12, 18, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.home-me .tag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.home-me .tag.good,
+.account .good {
+  color: var(--good);
+}
+.home-notice {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: rgba(10, 12, 18, 0.75);
+  border-left: 3px solid var(--accent);
+}
+.account {
+  width: min(560px, 100%);
+}
+.account section {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.account .seed {
+  display: flex;
+  gap: 6px;
+}
+.account input {
+  flex: 1;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+.account button.start {
+  font-weight: 700;
+  color: #111;
+  background: var(--accent);
+  border-color: var(--accent);
+}
 .home .setup-links {
   justify-content: flex-start;
 }

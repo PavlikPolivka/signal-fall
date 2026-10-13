@@ -22,6 +22,89 @@ export async function signIn(sb: SupabaseClient): Promise<string> {
   return signed.user.id;
 }
 
+export interface Account {
+  id: string;
+  name: string;
+  /** Anonymous: lives only in this browser until an email is confirmed. */
+  guest: boolean;
+  email: string | null;
+  /** An email waiting for confirmation (guest saving their account). */
+  pendingEmail: string | null;
+}
+
+/** Where email links return to: this page, without query or hash. */
+const returnUrl = () => `${location.origin}${location.pathname}`;
+
+/** The signed-in player's account (signing in as a guest first if needed). */
+export async function account(sb: SupabaseClient): Promise<Account> {
+  const id = await signIn(sb);
+  const [{ data: user }, { data: profile }] = await Promise.all([sb.auth.getUser(), sb.from('profiles').select('display_name, guest').eq('id', id).maybeSingle()]);
+  const u = user.user;
+  return {
+    id,
+    name: (profile?.display_name as string | undefined) ?? 'Commander',
+    guest: u?.is_anonymous ?? (profile?.guest as boolean | undefined) ?? true,
+    email: u?.email || null,
+    pendingEmail: (u?.new_email as string | undefined) || null,
+  };
+}
+
+/** Readable messages for the errors players can cause. */
+function friendly(message: string): string {
+  if (/duplicate key|profiles_display_name_key/i.test(message)) return 'That name is taken.';
+  if (/check constraint/i.test(message)) return 'Names are 3–20 letters, digits, spaces, dots, dashes or underscores.';
+  if (/already been registered|already registered|email_exists/i.test(message)) return 'That email already has an account. Use “Sign in” instead.';
+  if (/rate limit/i.test(message)) return 'Too many emails for now. Try again in a while.';
+  return message;
+}
+
+export async function rename(sb: SupabaseClient, name: string): Promise<void> {
+  const id = await signIn(sb);
+  const { error } = await sb.from('profiles').update({ display_name: name.trim() }).eq('id', id);
+  if (error) throw new Error(friendly(error.message));
+}
+
+/**
+ * Guest → permanent: confirm an email address. Same user, so name and history stay.
+ * Returns true when a confirmation email is on its way, false if the change applied
+ * at once (a backend without email confirmation).
+ */
+export async function saveAccount(sb: SupabaseClient, email: string): Promise<boolean> {
+  await signIn(sb);
+  const { data, error } = await sb.auth.updateUser({ email: email.trim() }, { emailRedirectTo: returnUrl() });
+  if (error) throw new Error(friendly(error.message));
+  return !!data.user?.new_email;
+}
+
+/** Sign in to an existing account with an email link (replaces the guest in this browser). */
+export async function signInWithEmail(sb: SupabaseClient, email: string): Promise<void> {
+  const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: false, emailRedirectTo: returnUrl() } });
+  if (error) throw new Error(/signups not allowed|not found/i.test(error.message) ? 'No account with that email. Save your guest account first.' : friendly(error.message));
+}
+
+/** Sign out; the next online action starts a fresh guest. */
+export async function signOut(sb: SupabaseClient): Promise<void> {
+  await sb.auth.signOut();
+}
+
+/**
+ * Coming back from an email link: let the client take the session from the URL,
+ * then clean the address bar. Returns what happened, for a one-line notice.
+ */
+export async function finishEmailLink(sb: SupabaseClient): Promise<string | null> {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const query = new URLSearchParams(location.search);
+  const error = hash.get('error_description') ?? query.get('error_description');
+  const message = hash.get('message');
+  const type = hash.get('type');
+  if (!error && !message && !hash.has('access_token') && !query.has('code')) return null;
+  await sb.auth.getSession();
+  history.replaceState(null, '', returnUrl());
+  if (error) return `Sign-in link failed: ${error}`;
+  if (message) return message; // e.g. "confirm the link sent to the other email" during a change
+  return type === 'email_change' || type === 'signup' ? 'Account saved. You can now sign in with your email on any device.' : 'Signed in.';
+}
+
 /** Register a new room; retries with a fresh code if one is taken. */
 export async function createRoom(sb: SupabaseClient, makeCode: () => string): Promise<string> {
   for (let i = 0; i < 5; i++) {

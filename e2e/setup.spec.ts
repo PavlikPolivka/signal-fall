@@ -35,18 +35,17 @@ test('the menu backdrop video keeps playing across menu screens', async ({ page 
   // The loop video is optional (the key art stays without it).
   await video.first().waitFor({ timeout: 5000 }).catch(() => undefined);
   test.skip((await video.count()) === 0, 'no menu video in this build');
-  await page.evaluate(() => ((document.querySelector('.menu-backdrop video.on') as HTMLVideoElement & { tag?: number }).tag = 1));
-  const before = await video.evaluate((v: HTMLVideoElement) => v.currentTime);
+  // Tag both video elements; a remount would replace them.
+  await page.evaluate(() => document.querySelectorAll<HTMLVideoElement & { tag?: number }>('.menu-backdrop video').forEach((v) => (v.tag = 1)));
   await page.click('[data-testid=open-skirmish]');
   await page.click('[data-testid=back]');
   await page.click('[data-testid=open-multiplayer]');
-  // Same element, still running: no restart, no blink.
+  // Same elements, and one of them is playing (the loop may have crossfaded to the other meanwhile).
   expect(await page.locator('.menu-backdrop').count()).toBe(1);
-  expect(await page.locator('.menu-backdrop video').count()).toBe(2);
   const after = await page.evaluate(() => {
-    const v = Array.from(document.querySelectorAll<HTMLVideoElement & { tag?: number }>('.menu-backdrop video')).find((x) => x.tag === 1)!;
-    return { t: v.currentTime, paused: v.paused };
+    const vs = Array.from(document.querySelectorAll<HTMLVideoElement & { tag?: number }>('.menu-backdrop video'));
+    return { count: vs.length, tagged: vs.filter((v) => v.tag === 1).length, playing: vs.filter((v) => !v.paused).length };
   });
-  expect(after.paused).toBe(false);
-  expect(after.t).toBeGreaterThan(before);
+  expect(after).toMatchObject({ count: 2, tagged: 2 });
+  expect(after.playing).toBeGreaterThan(0);
 });

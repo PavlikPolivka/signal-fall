@@ -365,6 +365,12 @@ function HowTo({ rules }: { rules: Rules }) {
         income, army value, and the value destroyed and lost over time. <b>Save replay</b> downloads the match. Open it with <b>Watch a replay</b> in the
         main menu to watch it again at up to 8× speed. The replay is checked against the original result.
       </p>
+      <h3>Your account</h3>
+      <p>
+        You start as a <b>guest</b>: the account lives in this browser. Open <b>Account</b> in the main menu to pick your name (opponents see it in
+        multiplayer). Add your email and open the link we send to keep the account for good, with the same name and history, and sign in to it on any
+        device.
+      </p>
     </article>
   );
 }
