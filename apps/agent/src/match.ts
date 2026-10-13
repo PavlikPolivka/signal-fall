@@ -63,6 +63,8 @@ export class AgentMatch {
   private waitingForJoin: (() => void)[] = [];
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
   readonly memory: Map<number, Sighting>[];
+  /** Spectators: called after every turn with the commands it applied and the tick reached. */
+  private readonly watchers = new Set<(turn: { commands: ScheduledCommand[]; until: number; over: boolean; hash?: number }) => void>();
   /** Ticks at which each seat last observed (for "what changed" summaries). */
   readonly lastObserved: number[];
 
@@ -158,6 +160,7 @@ export class AgentMatch {
     if (this.turnTimer) clearTimeout(this.turnTimer);
     this.turnTimer = null;
     const tick = this.sim.tick;
+    const applied = this.log.length;
     for (const [player, cmds] of [...this.pending].sort((a, b) => a[0] - b[0])) {
       for (const cmd of cmds) {
         const c: ScheduledCommand = { tick, player, cmd };
@@ -169,6 +172,8 @@ export class AgentMatch {
     const end = Math.min(MAX_TICKS, tick + this.turnTicks);
     while (this.sim.tick < end && !this.sim.world.ended) this.sim.step();
     this.remember();
+    const turn = { commands: this.log.slice(applied), until: this.sim.tick, over: this.over, ...(this.over ? { hash: this.sim.hash() } : {}) };
+    for (const w of this.watchers) w(turn);
     const done = [...this.ended.values()];
     this.ended = new Map();
     for (const r of done) r();
@@ -200,6 +205,17 @@ export class AgentMatch {
         mem.set(h, { id: h, owner, type: e.type[s]!, x: tx + rule.footprintW / 2, y: ty + rule.footprintH / 2, tick: this.sim.tick });
       }
     }
+  }
+
+  /** Follow the match turn by turn (live spectating); returns an unsubscribe function. */
+  watch(fn: (turn: { commands: ScheduledCommand[]; until: number; over: boolean; hash?: number }) => void): () => void {
+    this.watchers.add(fn);
+    return () => this.watchers.delete(fn);
+  }
+
+  /** Everything so far, for a spectator who joins now. */
+  get commandsSoFar(): ScheduledCommand[] {
+    return [...this.log];
   }
 
   /** The match so far as a replay file (watch it in the browser: main menu → Watch a replay). */

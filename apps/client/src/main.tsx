@@ -3,10 +3,11 @@ import { defaultRules } from '@signal-fall/data';
 import { ClientState, seatLabels, saveSettings } from './game/state';
 import { Input } from './input/input';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
+import type { ScheduledCommand } from '@signal-fall/sim';
 import { Renderer } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
-import { Setup, type SkirmishSettings } from './ui/Setup';
+import { MenuScreen, Setup, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
@@ -81,6 +82,16 @@ let peerLinks: Map<number, LinkLike> | null = null;
 /** Watching a recorded match. */
 let replay: Replay | null = null;
 let netSession: NetSession | null = null;
+/** Live spectating: ?watch=<stream URL> of an agent server (docs/AGENTS.md). */
+const watchStream = params.get('watch');
+/** Live chunks that arrived before the worker started. */
+let liveBuffer: Extract<ToWorker, { type: 'live' }>[] | null = watchStream ? [] : null;
+function sendLive(msg: Extract<ToWorker, { type: 'live' }>): void {
+  if (state.replay) state.replay.endTick = msg.until;
+  if (liveBuffer) liveBuffer.push(msg);
+  else post(msg);
+  state.changed();
+}
 /** Multiplayer: room code and account ids per slot, for the match record. */
 let netMatch: NetMatch | null = null;
 /** Lobby screen showing instead of the skirmish setup. */
@@ -244,8 +255,13 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     });
   } else if (replay) {
     state.spectator = true;
-    state.replay = { endTick: replay.endTick, verified: null, speed: 1, paused: false };
-    post({ type: 'start', scenario: replay.scenario, localPlayer: replay.localPlayer, replay });
+    const live = !!watchStream;
+    state.replay = { endTick: replay.endTick, verified: null, speed: 1, paused: false, live };
+    post({ type: 'start', scenario: replay.scenario, localPlayer: replay.localPlayer, replay, live });
+    if (live) {
+      for (const m of liveBuffer ?? []) post(m);
+      liveBuffer = null;
+    }
   } else post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
   const shown = replay ? replay.scenario : scenario;
   if (shown) state.seats = seatLabels(shown, replay ? replay.localPlayer : localSlot, state.spectator);
@@ -262,6 +278,22 @@ void introUrl().then((u) => {
 let accountNotice: string | null = null;
 let mounted = false;
 function renderUi(): void {
+  if (!scenario && watchStream) {
+    render(
+      <MenuScreen testid="watch-connecting">
+        <div class="setup-panel">
+          <h1>Live match</h1>
+          <p class="mp-status">{state.liveStatus === 'lost' ? 'Could not reach the match stream.' : 'Connecting to the match…'}</p>
+          <p class="muted small">{watchStream}</p>
+          <a class="codex-btn" href={location.pathname}>
+            Back to the menu
+          </a>
+        </div>
+      </MenuScreen>,
+      root,
+    );
+    return;
+  }
   if (!scenario && multiplayerScreen) {
     render(
       <Multiplayer
@@ -356,6 +388,41 @@ function renderUi(): void {
 // Before the canvas exists, UI buttons are inert.
 const placeholderInput = { run: () => undefined, toggleMenu: () => undefined } as unknown as Input;
 renderUi();
+// Live spectating: follow an agent server's match stream (docs/AGENTS.md).
+if (watchStream) {
+  state.liveStatus = 'connecting';
+  let knownUntil = 0;
+  const es = new EventSource(watchStream);
+  type Turn = { commands: ScheduledCommand[]; until: number; hash?: number; over?: boolean };
+  const turn = (d: Turn) => {
+    // After a reconnect the stream starts over: only take what is new.
+    sendLive({ type: 'live', commands: d.commands.filter((c) => c.tick >= knownUntil), until: d.until, hash: d.over ? d.hash : undefined });
+    knownUntil = d.until;
+    if (d.over) {
+      state.liveStatus = 'ended';
+      es.close();
+    }
+  };
+  es.addEventListener('start', (ev) => {
+    const d = JSON.parse((ev as MessageEvent<string>).data) as Turn & { scenario: ScenarioSpec };
+    if (!replay) {
+      replay = { format: 'signal-fall-replay', version: 1, scenario: d.scenario, localPlayer: 0, commands: [], endTick: d.until, hash: 0 };
+      scenario = d.scenario;
+      renderUi();
+    }
+    state.liveStatus = 'live';
+    turn(d);
+  });
+  es.addEventListener('turn', (ev) => turn(JSON.parse((ev as MessageEvent<string>).data) as Turn));
+  es.addEventListener('end', (ev) => turn({ ...(JSON.parse((ev as MessageEvent<string>).data) as Turn), over: true }));
+  es.onerror = () => {
+    if (state.liveStatus === 'ended') return;
+    state.liveStatus = 'lost';
+    state.changed();
+    if (!scenario) renderUi();
+  };
+}
+
 // Back from an account email link (confirm / sign in): take the session, then say so on the menu.
 const sbAtStart = backend();
 if (sbAtStart && !scenario)

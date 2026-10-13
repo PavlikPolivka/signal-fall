@@ -2,24 +2,45 @@
 /**
  * Signal Fall agent server (MCP).
  *
- *   signal-fall-agent              stdio: one agent, e.g. in Claude Code or Claude Desktop
- *   signal-fall-agent --http 7777  Streamable HTTP at http://localhost:7777/mcp: several agents
- *                                  share the matches (agent vs agent)
+ *   signal-fall-agent                  stdio: one agent, e.g. in Claude Code or Claude Desktop
+ *   signal-fall-agent --http 7777      Streamable HTTP at http://localhost:7777/mcp: several agents
+ *                                      share the matches (agent vs agent)
+ *   signal-fall-agent --spectate 7778  (stdio) also serve live spectating on that port
+ *
+ * Spectating: http://localhost:<port>/matches lists matches with links that open the game
+ * following the match live.
  */
 import { createServer as createHttpServer } from 'node:http';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { MatchManager, createServer } from './server';
+import { spectate } from './spectate';
 
 const args = process.argv.slice(2);
-const httpAt = args.indexOf('--http');
+const flag = (name: string) => {
+  const i = args.indexOf(name);
+  return i < 0 ? null : Number(args[i + 1]);
+};
+const httpPort = flag('--http');
+const spectatePort = flag('--spectate');
 
-if (httpAt < 0) {
-  await createServer().connect(new StdioServerTransport());
-} else {
-  const port = Number(args[httpAt + 1] ?? 7777);
+if (httpPort === null) {
   const manager = new MatchManager();
+  if (spectatePort !== null) {
+    const base = `http://localhost:${spectatePort}`;
+    manager.spectateBase = base;
+    createHttpServer((req, res) => {
+      if (!spectate(manager, base, req, res)) res.writeHead(404).end();
+    }).listen(spectatePort, () => console.error(`Spectate: ${base}/matches`));
+  }
+  await createServer(manager).connect(new StdioServerTransport());
+} else {
+  const port = httpPort;
+  const manager = new MatchManager();
+  const base = `http://localhost:${port}`;
+  manager.spectateBase = base;
   createHttpServer(async (req, res) => {
+    if (spectate(manager, base, req, res)) return;
     if (req.url !== '/mcp') {
       res.writeHead(404).end('MCP endpoint is /mcp\n');
       return;
@@ -44,5 +65,5 @@ if (httpAt < 0) {
     });
     await server.connect(transport);
     await transport.handleRequest(req, res, body);
-  }).listen(port, () => console.error(`Signal Fall agent server: http://localhost:${port}/mcp`));
+  }).listen(port, () => console.error(`Signal Fall agent server: ${base}/mcp · spectate: ${base}/matches`));
 }

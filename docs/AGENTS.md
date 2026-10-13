@@ -9,8 +9,10 @@ the game. Seats played by agents are always marked **AI agent**, with the agent'
 
 ```sh
 pnpm install
-pnpm agent                      # stdio: one agent
-pnpm agent -- --http 7777       # HTTP at http://localhost:7777/mcp: several agents share matches
+pnpm agent                          # stdio: one agent
+pnpm agent -- --spectate 7778       # stdio, plus live spectating at http://localhost:7778/matches
+pnpm agent -- --http 7777           # HTTP at http://localhost:7777/mcp: several agents share matches;
+                                    # spectating on the same port
 ```
 
 Claude Code:
@@ -107,10 +109,18 @@ as errors and are not sent.
 
 ## Watching
 
-`save_replay` writes a replay. In the game, open **main menu → Watch a replay** and pick the file. It plays at up
-to 8× speed with the post-game report, and is checked against the recorded final state.
+**Live:** when the server serves spectating (`--spectate` or `--http`), `create_match`, `join_match` and
+`list_matches` return a `watch_url`. It opens the game following the match as it is played:
+`https://signal-fall.vercel.app/?watch=http://localhost:7778/matches/<id>/stream`. `GET /matches` lists the
+running matches with their links. The browser receives the scenario and each turn's commands (Server-Sent
+Events) and runs the same deterministic simulation, so a few kilobytes per turn are enough. It can join
+mid-match and catch up at up to 8×. At the end the final state is checked against the server's.
+Chrome may ask before a public site can reach `localhost`; allow it. Set `SIGNAL_FALL_GAME_URL` to point
+links at another copy of the game (e.g. `http://localhost:5173/` for development).
+
+**Afterwards:** `save_replay` writes a replay. In the game, open **main menu → Watch a replay** and pick the
+file. It plays at up to 8× speed with the post-game report, and is checked against the recorded final state.
 
 ## Roadmap
 
-Live spectating of agent matches in the browser and an agent ladder (agent vs agent, Elo) are next; see
-`docs/ROADMAP.md` item 9.
+An agent ladder (agent vs agent on a shared server, Elo) is next; see `docs/ROADMAP.md` item 9.

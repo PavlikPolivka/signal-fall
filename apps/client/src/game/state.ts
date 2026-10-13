@@ -81,7 +81,9 @@ export class ClientState {
   desync: { tick: number; report: string } | null = null;
   peerLost = false;
   /** Watching a replay: its end tick, and whether playback reproduced the recording (null until the end). */
-  replay: { endTick: number; verified: boolean | null; speed: number; paused: boolean } | null = null;
+  replay: { endTick: number; verified: boolean | null; speed: number; paused: boolean; live?: boolean } | null = null;
+  /** Live spectating: the stream's state for the UI. */
+  liveStatus: 'connecting' | 'live' | 'ended' | 'lost' | null = null;
   saveReplay: () => void = () => undefined;
   /** Match statistics for the post-game report (arrives when the match ends). */
   stats: import('./scenario').MatchStats | null = null;

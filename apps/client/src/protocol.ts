@@ -1,4 +1,4 @@
-import type { Command } from '@signal-fall/sim';
+import type { Command, ScheduledCommand } from '@signal-fall/sim';
 import type { Biome } from '@signal-fall/mapgen';
 import type { NetMessage } from '@signal-fall/net';
 import type { MatchStats, Replay, ScenarioSpec } from './game/scenario';
@@ -16,8 +16,16 @@ export type ToWorker =
       net?: { peers: number[] };
       /** Watch a recorded match instead of playing. */
       replay?: Replay;
+      /** The replay is a match still being played: more arrives in 'live' messages. */
+      live?: boolean;
     }
   | { type: 'speed'; speed: number }
+  /**
+   * Live spectating: more of a match being played elsewhere (an agent server).
+   * The worker plays recorded commands up to `until` and waits there for more;
+   * `hash` arrives with the end, to verify the final state like a replay.
+   */
+  | { type: 'live'; commands: ScheduledCommand[]; until: number; hash?: number }
   /** Ask for the match so far as a replay file. */
   | { type: 'saveReplay' }
   /** Ask for the statistics so far (match report mid-game or after a replay). */

@@ -8,6 +8,7 @@ import { translate, type Action } from './act';
 import { AgentMatch, type Seat } from './match';
 import { observe } from './observe';
 import { GUIDE, rulesDigest } from './rules';
+import { watchUrl } from './spectate';
 
 const rules = defaultRules();
 const FACTION_IDS = rules.factions.map((f) => f.id) as [string, ...string[]];
@@ -15,6 +16,12 @@ const FACTION_IDS = rules.factions.map((f) => f.id) as [string, ...string[]];
 /** Matches live in memory for the life of the server process. */
 export class MatchManager {
   readonly matches = new Map<string, AgentMatch>();
+  /** Base URL of the spectator endpoints, when served: matches then come with a watch link. */
+  spectateBase: string | null = null;
+
+  watch(match: AgentMatch): { watch_url: string } | Record<string, never> {
+    return this.spectateBase ? { watch_url: watchUrl(this.spectateBase, match.id) } : {};
+  }
 
   get(id: string): AgentMatch {
     const m = this.matches.get(id);
@@ -106,6 +113,7 @@ export function createServer(manager = new MatchManager()): McpServer {
           match_id: match.id,
           seat,
           token,
+          ...manager.watch(match),
           ...(a.opponent === 'agent' ? { join_code: match.joinCode, note: 'Share join_code with the other agent; turns wait for both.' } : {}),
           observation: observe(match, seat),
         });
@@ -126,7 +134,7 @@ export function createServer(manager = new MatchManager()): McpServer {
       try {
         const match = manager.byJoinCode(join_code);
         const { seat, token } = match.claim(undefined, { name: agent_name, model });
-        return json({ match_id: match.id, seat, token, observation: observe(match, seat) });
+        return json({ match_id: match.id, seat, token, ...manager.watch(match), observation: observe(match, seat) });
       } catch (e) {
         return fail(e);
       }
@@ -219,6 +227,7 @@ export function createServer(manager = new MatchManager()): McpServer {
         over: m.over,
         seats: m.options.seats.map((s, k) => ({ seat: k, faction: rules.factions[m.scenario.factions[k]!]!.id, player: s.kind === 'ai' ? `AI ${s.difficulty}` : `agent ${s.agent.name}` })),
         ...(m.openSeats.length ? { join_code: m.joinCode } : {}),
+        ...manager.watch(m),
       })),
     ),
   );

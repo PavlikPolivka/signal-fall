@@ -714,7 +714,13 @@ function ReplayBar({ state }: { state: ClientState }) {
   const time = (t: number) => `${Math.floor(t / 1200)}:${String(Math.floor(t / 20) % 60).padStart(2, '0')}`;
   return (
     <div class="replay-bar" data-testid="replay-bar">
-      <b>Replay</b>
+      {r.live ? (
+        <b class={`live-badge ${state.liveStatus ?? ''}`} data-testid="live-badge" title={state.liveStatus === 'lost' ? 'Connection to the match lost' : undefined}>
+          {state.liveStatus === 'ended' ? 'Ended' : state.liveStatus === 'lost' ? 'Disconnected' : '● Live'}
+        </b>
+      ) : (
+        <b>Replay</b>
+      )}
       <span class="mono">
         {time(tick)} / {time(r.endTick)}
       </span>

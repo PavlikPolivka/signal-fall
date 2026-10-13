@@ -1794,3 +1794,17 @@ table.matrix td.lo {
   color: #111;
   background: #a78bfa;
 }
+.live-badge {
+  padding: 1px 7px;
+  border-radius: 3px;
+  color: #fff;
+  background: #e5484d;
+  letter-spacing: 0.04em;
+}
+.live-badge.ended {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.live-badge.lost {
+  background: #7a3b00;
+}
