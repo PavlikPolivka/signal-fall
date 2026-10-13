@@ -23,6 +23,7 @@ def mats(style, team=None):
         "stone_dark": material("ch_stone_dark", "1f1d26", rough=1.0, style=style),
         "fire": material("ch_fire", "f4e0ff", emission="d9a8ff", style=style),
         "hum": material("ch_hum", "4a3478", emission="2e1a5c", style=style),
+        "pool": material("ch_pool", "6a4ab0", emission="4d2f9a", style=style),
         "team": material("team", team or TEAM_GREY, rough=0.3, style=style),
     }
 
@@ -288,176 +289,241 @@ def overture(style, team=None):
     return {"hull": hull}
 
 
-# --- buildings: grown crystal on dark stone -----------------------------------------
+# --- buildings: floating crystal over a resonance bed, the same language as the vehicles ---
+#
+# Every structure is one or more faceted crystal masses (crown + keel + amber seam)
+# hovering over a thin dark bed with a glowing resonance ring, with small shards
+# orbiting it and team-colored shards marking the owner. Parts named glow_* go dark
+# when the building is damaged.
 
 
-def bed(w, d, m, h=0.08):
-    """Dark stone bed with crystal growth at the edges instead of a concrete pad."""
-    return [box("bed", (w - 0.08, d - 0.08, h), (0, 0, h / 2), m["stone_dark"], bevel=0.04)]
+def bed(w, d, m, h=0.06):
+    """Thin dark bed with a faint resonance ring: the footprint, without a heavy slab."""
+    out = [box("bed", (w - 0.1, d - 0.1, h), (0, 0, h / 2), m["stone_dark"], bevel=0.03)]
+    r = min(w, d) * 0.42
+    out.append(cylinder("glow_resonance", r, 0.012, (0, 0, h + 0.006), m["hum"], verts=24))
+    out.append(cylinder("bed_inner", r * 0.86, 0.014, (0, 0, h + 0.008), m["stone_dark"], verts=24))
+    return out
+
+
+def mass(m, r, loc, depth, verts=6, crown="violet_deep", body="violet", seam="core_amber"):
+    """A floating crystal mass at loc: deep crown above, long keel below, amber seam between (the vehicle hull)."""
+    x, y, z = loc
+    return [
+        cone("keel", r, 0.0, depth * 1.1, (x, y, z - depth * 0.55), m[body], rot=(math.pi, 0, 0), verts=verts),
+        cone("crown", r, r * 0.25, depth * 0.7, (x, y, z + depth * 0.35), m[crown], verts=verts),
+        cylinder("seam", r * 1.01, 0.014, (x, y, z + 0.004), m[seam], verts=verts),
+    ]
+
+
+def orbit(m, n, radius, z, r=0.06, h=0.26, mat="violet", center=(0, 0), phase=0.0, team_every=0):
+    """A ring of small shards around a mass; every team_every-th one in the team color."""
+    out = []
+    cx, cy = center
+    for k in range(n):
+        a = phase + k * 2 * math.pi / n
+        mt = m["team"] if team_every and k % team_every == 0 else m[mat]
+        out += shard("orbit", r, h, (cx + radius * math.cos(a), cy + radius * math.sin(a), z + 0.05 * math.sin(3 * a)), mt, rot=(0, 0.25 * math.cos(a), 0))
+    return out
+
+
+def ground_glow(m, r, loc=(0, 0)):
+    """Light pooled under a floating mass."""
+    return [cylinder("glow_under", r, 0.01, (loc[0], loc[1], 0.075), m["pool"], verts=12)]
 
 
 def opus(style, team=None):
-    """Construction yard: a cathedral of crystal spires around a glowing core."""
+    """Construction yard: a great floating crystal with a spire crown, three satellite crystals and a ring of shards."""
     m = mats(style, team)
-    rnd = random.Random(1)
     b = bed(3, 3, m)
-    b.append(cone("mound", 1.3, 0.6, 0.4, (0, 0, 0.28), m["stone"], verts=10))
-    b += shard("spire", 0.32, 2.2, (0, 0, 1.4), m["violet"])
-    b.append(cone("core", 0.2, 0, 0.6, (0, 0, 1.0), m["core"], verts=6))
-    b += cluster(m, rnd, 9, 1.0, 0.7, 0.14, 0.8, m["violet_deep"])
-    b += cluster(m, rnd, 5, 1.1, 0.5, 0.08, 0.4, m["amber"])
-    b.append(cylinder("team_ring", 1.0, 0.06, (0, 0, 0.5), m["team"], verts=10))
+    b += ground_glow(m, 0.5)
+    b += mass(m, 1.0, (0, 0, 1.3), 0.95, verts=8)
+    b += shard("spire", 0.26, 1.3, (0, 0, 2.4), m["violet"])
+    b.append(cone("glow_core", 0.2, 0, 0.5, (0, 0, 1.75), m["core"], verts=6))
+    for k in range(3):
+        a = math.radians(30) + k * 2 * math.pi / 3
+        b += mass(m, 0.36, (1.05 * math.cos(a), 1.05 * math.sin(a), 0.72), 0.45, crown="violet", body="violet_deep")
+    b += orbit(m, 10, 1.3, 1.4, r=0.08, h=0.34, team_every=2)
     return {"body": b}
 
 
 def bell(style, team=None):
-    """Power: a resonating crystal bell hanging in a stone arch."""
+    """Power: an inverted crystal bell hanging in the air, its amber clapper glowing, two resonance rings around it."""
     m = mats(style, team)
     b = bed(2, 2, m)
-    for y in (-0.55, 0.55):
-        b.append(cone("pillar", 0.16, 0.1, 1.1, (0, y, 0.6), m["stone"], verts=6))
-    b.append(box("lintel", (0.24, 1.3, 0.12), (0, 0, 1.15), m["stone"]))
-    b.append(cone("bell", 0.4, 0.12, 0.6, (0, 0, 0.72), m["violet"], verts=8))
-    b.append(cylinder("clapper", 0.08, 0.1, (0, 0, 0.42), m["core_amber"], verts=8))
-    b.append(cylinder("team_rim", 0.41, 0.05, (0, 0, 0.45), m["team"], verts=8))
+    b += ground_glow(m, 0.38)
+    b.append(cone("bell", 0.68, 0.18, 1.0, (0, 0, 1.15), m["violet"], verts=8))
+    b.append(cone("bell_cap", 0.18, 0.0, 0.32, (0, 0, 1.81), m["violet_deep"], verts=8))
+    b.append(cylinder("seam", 0.69, 0.025, (0, 0, 0.66), m["core_amber"], verts=8))
+    b.append(cone("glow_clapper", 0.17, 0, 0.32, (0, 0, 0.45), m["core_amber"], rot=(math.pi, 0, 0), verts=6))
+    for z, r in ((0.85, 0.86), (1.35, 0.66)):
+        b.append(cylinder("ring", r, 0.045, (0, 0, z), m["violet_deep"], verts=16))
+    b += orbit(m, 4, 0.86, 1.05, r=0.06, h=0.26, mat="team", phase=math.pi / 4)
     return {"body": b}
 
 
 def coda(style, team=None):
-    """Refinery: a crystal basin that sings Echo into credits; dock on the front (-y) side."""
+    """Refinery: a floating geode split open around an Echo pool; the dock glows on the front (-y) side."""
     m = mats(style, team)
     rnd = random.Random(2)
+    echo = material("ch_echo", "38d8ee", emission="1aa6c4", style=style)
     b = bed(3, 3, m)
-    b.append(cone("basin", 1.0, 0.7, 0.45, (-0.3, 0.4, 0.3), m["stone"], rot=(math.pi, 0, 0), verts=10))
-    b.append(cylinder("pool", 0.75, 0.04, (-0.3, 0.4, 0.5), material("ch_echo", "38d8ee", emission="1aa6c4", style=style), verts=10))
-    b += cluster(m, rnd, 6, 0.85, 0.75, 0.1, 0.6, m["violet"])
-    b.append(box("dock", (0.9, 0.5, 0.1), (0.3, -1.05, 0.1), m["stone_dark"]))
-    b.append(cone("dock_light", 0.08, 0, 0.3, (0.3, -0.8, 0.3), m["core_amber"]))
-    b.append(cylinder("team_ring", 1.01, 0.06, (-0.3, 0.4, 0.42), m["team"], verts=10))
+    cx, cy = -0.25, 0.35
+    b += ground_glow(m, 0.4, (cx, cy))
+    b.append(cone("geode", 1.05, 0.0, 1.15, (cx, cy, 0.78), m["violet"], rot=(math.pi, 0, 0), verts=10))
+    b.append(cylinder("geode_rim", 1.06, 0.12, (cx, cy, 1.4), m["violet_deep"], verts=10))
+    b.append(cylinder("seam", 1.07, 0.025, (cx, cy, 1.33), m["core_amber"], verts=10))
+    b.append(cylinder("glow_pool", 0.88, 0.03, (cx, cy, 1.45), echo, verts=10))
+    for k in range(8):
+        a = k * 2 * math.pi / 8 + rnd.uniform(-0.2, 0.2)
+        b += shard("rim_crystal", 0.12, rnd.uniform(0.5, 0.8), (cx + 0.92 * math.cos(a), cy + 0.92 * math.sin(a), 1.68), m["violet"], rot=(0.35 * math.sin(a), -0.35 * math.cos(a), 0))
+    # Dock: a floating amber plate where Refrains unload.
+    b.append(cylinder("dock", 0.42, 0.08, (0.45, -1.0, 0.24), m["violet_deep"], verts=6))
+    b.append(cylinder("glow_dock", 0.33, 0.02, (0.45, -1.0, 0.29), m["core_amber"], verts=6))
+    b += orbit(m, 6, 1.22, 1.05, r=0.07, h=0.3, center=(cx, cy), mat="amber", team_every=2, phase=0.3)
     return {"body": b}
 
 
 def loft(style, team=None):
-    """Barracks: a cluster of hollow spires where figures crystallize."""
+    """Barracks: three tall floating shards in a triangle; figures crystallize in the light between them."""
     m = mats(style, team)
-    rnd = random.Random(4)
     b = bed(2, 2, m)
-    b += shard("spire", 0.24, 1.3, (-0.1, 0.1, 0.8), m["violet"])
-    b += cluster(m, rnd, 5, 0.6, 0.45, 0.1, 0.6, m["violet_deep"])
-    b.append(cylinder("gate", 0.3, 0.04, (0.55, 0.1, 0.35), m["core"], rot=(0, math.pi / 2, 0), verts=12))
-    b.append(cylinder("team_ring", 0.3, 0.05, (-0.1, 0.1, 0.4), m["team"], verts=8))
+    b += ground_glow(m, 0.34)
+    for k, (h, tilt) in enumerate(((1.65, 0.12), (1.3, 0.18), (1.15, 0.2))):
+        a = math.radians(160) + k * 2 * math.pi / 3
+        x, y = 0.48 * math.cos(a), 0.48 * math.sin(a)
+        b += shard("pillar", 0.25, h, (x, y, 0.3 + h * 0.5), m["violet"] if k else m["violet_deep"], rot=(-tilt * math.sin(a), tilt * math.cos(a), 0))
+        b.append(cylinder("seam", 0.17, 0.025, (x, y, 0.3 + h * 0.5), m["core_amber"], verts=6))
+    b.append(cone("glow_heart", 0.15, 0, 0.36, (0, 0, 0.85), m["core"], verts=6))
+    b.append(cone("glow_heart_b", 0.15, 0, 0.22, (0, 0, 0.56), m["core"], rot=(math.pi, 0, 0), verts=6))
+    b += orbit(m, 6, 0.86, 0.75, r=0.055, h=0.24, team_every=2)
     return {"body": b}
 
 
 def pit(style, team=None):
-    """Vehicle factory: a sunken pit spanned by crystal arches."""
+    """Vehicle factory: a floating ring of crystal over a glowing birthing pool, two heavy crystals guarding the back."""
     m = mats(style, team)
-    rnd = random.Random(6)
     b = bed(3, 3, m)
-    b.append(cylinder("pit", 1.1, 0.04, (0, 0, 0.1), m["core"], verts=12))
-    for k in range(3):
-        a = k * math.pi / 3
-        b.append(cylinder("arch", 1.05, 0.12, (0, 0, 0.05), m["violet_deep"], rot=(math.pi / 2, 0, a), verts=16))
-    b += cluster(m, rnd, 8, 1.25, 0.35, 0.1, 0.5, m["violet"])
-    b.append(cylinder("team_ring", 1.15, 0.05, (0, 0, 0.12), m["team"], verts=12))
+    b.append(cylinder("glow_pool", 0.9, 0.02, (0.2, -0.2, 0.08), m["pool"], verts=16))
+    b.append(cylinder("ring", 1.05, 0.18, (0.2, -0.2, 1.1), m["violet_deep"], verts=16))
+    b.append(cylinder("ring_inner", 0.88, 0.19, (0.2, -0.2, 1.1), m["stone_dark"], verts=16))
+    b.append(cylinder("seam", 1.06, 0.025, (0.2, -0.2, 1.0), m["core_amber"], verts=16))
+    b += orbit(m, 12, 0.97, 1.32, r=0.08, h=0.36, center=(0.2, -0.2), team_every=3)
+    for x, y in ((-0.85, 0.85), (-1.0, -0.3), (0.3, 1.0)):
+        b += mass(m, 0.4, (x, y, 0.95), 0.62)
     return {"body": b}
 
 
 def antiphon(style, team=None):
-    """Radar: twin spires answering each other with a floating amber node between."""
+    """Radar: two floating spires answering each other across an amber node."""
     m = mats(style, team)
     b = bed(2, 2, m)
-    for y in (-0.4, 0.4):
-        b += shard("spire", 0.18, 1.8, (0, y, 1.0), m["violet"])
-    b += shard("node", 0.12, 0.3, (0, 0, 1.5), m["core_amber"])
-    b.append(cylinder("team_ring", 0.2, 0.05, (0, 0.4, 0.4), m["team"], verts=8))
-    b.append(cylinder("team_ring2", 0.2, 0.05, (0, -0.4, 0.4), m["team"], verts=8))
+    for y in (-0.42, 0.42):
+        b += ground_glow(m, 0.2, (0, y))
+        b += shard("spire", 0.27, 1.9, (0, y, 1.25), m["violet"])
+        b.append(cylinder("seam", 0.19, 0.025, (0, y, 1.25), m["core_amber"], verts=6))
+        b += orbit(m, 3, 0.34, 0.65, r=0.05, h=0.22, center=(0, y), mat="team")
+    b += shard("glow_node", 0.15, 0.38, (0, 0, 1.7), m["core_amber"])
+    for z in (1.45, 1.95):
+        b.append(box("glow_link", (0.025, 0.6, 0.025), (0, 0, z), m["core"]))
     return {"body": b}
 
 
 def chord(style, team=None):
-    """Faction special (1x1): a ring of crystals that regrows Echo around it."""
+    """Faction special (1x1): a small floating crystal over an Echo seed, ringed by shards that make it regrow."""
     m = mats(style, team)
+    echo = material("ch_echo2", "38d8ee", emission="1aa6c4", style=style)
     b = bed(1, 1, m)
-    for k in range(6):
-        a = k * math.pi / 3
-        b += shard("ring_crystal", 0.06, 0.45, (0.3 * math.cos(a), 0.3 * math.sin(a), 0.3), m["violet"] if k % 2 else m["amber"])
-    b.append(cylinder("seed", 0.12, 0.16, (0, 0, 0.16), material("ch_echo2", "38d8ee", emission="1aa6c4", style=style), verts=6))
-    b.append(cylinder("team_ring", 0.38, 0.04, (0, 0, 0.1), m["team"], verts=12))
+    b.append(cylinder("glow_seed", 0.13, 0.12, (0, 0, 0.12), echo, verts=6))
+    b += mass(m, 0.2, (0, 0, 0.75), 0.32)
+    b += orbit(m, 6, 0.34, 0.42, r=0.05, h=0.26, mat="amber", team_every=2)
     return {"body": b}
 
 
 def belfry(style, team=None):
-    """Airfield: a floating landing disc tethered by crystal arches."""
+    """Airfield: a floating landing disc held up by three hovering crystals."""
     m = mats(style, team)
-    rnd = random.Random(7)
     b = bed(3, 3, m)
-    b.append(cylinder("disc", 0.95, 0.08, (0.3, -0.3, 0.45), m["violet_deep"], verts=12))
-    b.append(cylinder("disc_glow", 0.8, 0.02, (0.3, -0.3, 0.5), m["core"], verts=12))
+    cx, cy = 0.25, -0.25
+    b += ground_glow(m, 0.5, (cx, cy))
+    b.append(cylinder("disc", 1.0, 0.12, (cx, cy, 0.8), m["violet_deep"], verts=12))
+    b.append(cylinder("glow_disc", 0.82, 0.02, (cx, cy, 0.87), m["pool"], verts=12))
+    b.append(cylinder("seam", 1.01, 0.025, (cx, cy, 0.75), m["core_amber"], verts=12))
+    b.append(cone("disc_keel", 0.75, 0.0, 0.6, (cx, cy, 0.44), m["violet"], rot=(math.pi, 0, 0), verts=12))
     for k in range(3):
-        a = k * 2 * math.pi / 3
-        b.append(cone("tether", 0.06, 0.03, 0.45, (0.3 + 0.8 * math.cos(a), -0.3 + 0.8 * math.sin(a), 0.22), m["stone"], verts=6))
-    b += cluster(m, rnd, 4, 0.5, 0.5, 0.1, 0.6, m["violet"])
-    b.append(cylinder("team_ring", 0.96, 0.03, (0.3, -0.3, 0.4), m["team"], verts=12))
+        a = math.radians(100) + k * 2 * math.pi / 3
+        x, y = cx + 1.12 * math.cos(a), cy + 1.12 * math.sin(a)
+        b += mass(m, 0.3, (x, y, 1.0), 0.5)
+        b += orbit(m, 2, 0.4, 1.05, r=0.045, h=0.2, center=(x, y), mat="team", phase=a)
     return {"body": b}
 
 
 def conservatory(style, team=None):
-    """Tech center: a faceted crystal dome over a glowing core."""
+    """Tech center: a huge geode floating open, its glowing core between two halves, rings turning around it."""
     m = mats(style, team)
-    rnd = random.Random(8)
     b = bed(3, 3, m)
-    b.append(cone("dome", 1.1, 0.4, 0.9, (0, 0, 0.55), m["violet"], verts=8))
-    b.append(cone("dome_top", 0.4, 0.0, 0.5, (0, 0, 1.25), m["violet_deep"], verts=8))
-    b.append(cylinder("core", 0.25, 0.3, (0, 0, 1.0), m["core"], verts=8))
-    b += cluster(m, rnd, 4, 1.25, 0.4, 0.1, 0.5, m["amber"])
-    b.append(cylinder("team_ring", 1.05, 0.06, (0, 0, 0.3), m["team"], verts=8))
+    b += ground_glow(m, 0.45)
+    b.append(cone("lower", 1.0, 0.0, 1.0, (0, 0, 0.72), m["violet"], rot=(math.pi, 0, 0), verts=8))
+    b.append(cylinder("seam_lower", 1.01, 0.025, (0, 0, 1.22), m["core_amber"], verts=8))
+    b.append(cone("glow_core", 0.42, 0.0, 0.4, (0, 0, 1.45), m["core"], verts=8))
+    b.append(cone("glow_core_b", 0.42, 0.0, 0.2, (0, 0, 1.35), m["core"], rot=(math.pi, 0, 0), verts=8))
+    b.append(cone("upper", 0.85, 0.0, 1.25, (0, 0, 2.25), m["violet_deep"], verts=8))
+    b.append(cylinder("seam_upper", 0.86, 0.025, (0, 0, 1.63), m["core_amber"], verts=8))
+    b += orbit(m, 8, 1.25, 1.42, r=0.08, h=0.32, mat="amber", team_every=2)
     return {"body": b}
 
 
 def discord(style, team=None):
-    """Basic defense (1x1): a dissonance spire whose head crystal turns to aim."""
+    """Basic defense (1x1): a small floating crystal whose head shard turns to aim."""
     m = mats(style, team)
-    b = [cone("base", 0.4, 0.2, 0.3, (0, 0, 0.15), m["stone"], verts=6)]
-    b.append(cylinder("team_ring", 0.3, 0.04, (0, 0, 0.22), m["team"], verts=8))
-    turret = shard("head", 0.1, 0.5, (0.08, 0, 0.5), m["violet"], rot=(0, math.radians(70), 0))
-    turret.append(cone("eye", 0.06, 0, 0.12, (0.25, 0, 0.52), m["core"], rot=(0, math.pi / 2, 0)))
+    b = [cylinder("glow_resonance", 0.36, 0.012, (0, 0, 0.01), m["hum"], verts=16)]
+    b += ground_glow(m, 0.14)
+    b += mass(m, 0.26, (0, 0, 0.45), 0.34)
+    b += orbit(m, 3, 0.36, 0.42, r=0.03, h=0.14, mat="team")
+    turret = shard("head", 0.1, 0.5, (0.08, 0, 0.72), m["violet"], rot=(0, math.radians(70), 0))
+    turret.append(cone("eye", 0.06, 0, 0.12, (0.25, 0, 0.74), m["core"], rot=(0, math.pi / 2, 0)))
     return {"body": b, "turret": turret}
 
 
 def descant(style, team=None):
-    """AA defense (2x2): high crystal spikes that sing at aircraft."""
+    """AA defense (2x2): a floating crystal crowned with high spikes that sing at aircraft."""
     m = mats(style, team)
     b = bed(2, 2, m)
-    b.append(cone("base", 0.7, 0.45, 0.3, (0, 0, 0.23), m["stone"], verts=8))
-    b.append(cylinder("team_ring", 0.6, 0.05, (0, 0, 0.32), m["team"], verts=8))
+    b += ground_glow(m, 0.3)
+    b += mass(m, 0.62, (0, 0, 0.68), 0.6, verts=8)
+    b += orbit(m, 6, 0.8, 0.68, r=0.06, h=0.26, team_every=2)
     turret = []
     for k in range(3):
         a = k * 2 * math.pi / 3
-        turret += shard("spike", 0.06, 0.8, (0.15 * math.cos(a) + 0.1, 0.15 * math.sin(a), 0.8), m["violet"], rot=(0, math.radians(-25), 0))
-    turret.append(cylinder("node", 0.12, 0.1, (0, 0, 0.45), m["core_amber"], verts=8))
+        turret += shard("spike", 0.08, 1.0, (0.18 * math.cos(a) + 0.1, 0.18 * math.sin(a), 1.45), m["violet"], rot=(0, math.radians(-25), 0))
+    turret.append(cylinder("node", 0.15, 0.12, (0, 0, 1.08), m["core_amber"], verts=8))
     return {"body": b, "turret": turret}
 
 
 def fortissimo(style, team=None):
-    """Heavy defense (2x2): a massive resonating cannon crystal."""
+    """Heavy defense (2x2): a heavy floating crystal carrying a massive resonating cannon."""
     m = mats(style, team)
     b = bed(2, 2, m)
-    b.append(cone("plinth", 0.85, 0.55, 0.45, (0, 0, 0.3), m["stone"], verts=8))
-    b.append(cylinder("team_ring", 0.75, 0.06, (0, 0, 0.42), m["team"], verts=8))
-    turret = shard("cannon", 0.2, 1.4, (0.45, 0, 0.85), m["violet"], rot=(0, math.radians(80), 0))
-    turret.append(cone("core", 0.14, 0, 0.4, (0.1, 0, 0.85), m["core"], rot=(0, math.pi / 2, 0)))
-    turret += shard("crest", 0.08, 0.4, (-0.1, 0, 1.1), m["amber"])
+    b += ground_glow(m, 0.32)
+    b += mass(m, 0.7, (0, 0, 0.7), 0.65, verts=8)
+    for k in range(4):
+        a = k * math.pi / 2 + math.pi / 4
+        b += shard("armor_shard", 0.11, 0.42, (0.85 * math.cos(a), 0.85 * math.sin(a), 0.7), m["violet"] if k % 2 else m["team"], rot=(0, 0, a))
+    turret = shard("cannon", 0.24, 1.55, (0.45, 0, 1.38), m["violet"], rot=(0, math.radians(80), 0))
+    turret.append(cone("core", 0.17, 0, 0.45, (0.05, 0, 1.38), m["core"], rot=(0, math.pi / 2, 0)))
+    turret += shard("crest", 0.1, 0.48, (-0.15, 0, 1.68), m["amber"])
     return {"body": b, "turret": turret}
 
 
 def fermata(style, team=None):
-    """Wall: a short wall of fused crystals."""
+    """Wall: fused crystals hovering just above a low stone ridge, joined by an amber seam."""
     m = mats(style, team)
     rnd = random.Random(10)
-    b = [box("ridge", (0.9, 0.36, 0.2), (0, 0, 0.1), m["stone"], bevel=0.05)]
-    b += cluster(m, rnd, 4, 0.35, 0.35, 0.09, 0.45, m["violet_deep"])
-    b.append(box("team_stripe", (0.6, 0.37, 0.04), (0, 0, 0.18), m["team"]))
+    b = [box("ridge", (0.86, 0.34, 0.12), (0, 0, 0.06), m["stone_dark"], bevel=0.04)]
+    b.append(box("glow_seam", (0.8, 0.06, 0.02), (0, 0, 0.13), m["core_amber"]))
+    for k, x in enumerate((-0.28, 0, 0.28)):
+        b += shard("block", 0.17, rnd.uniform(0.6, 0.75), (x, 0, 0.5), m["violet_deep"] if k % 2 else m["violet"], rot=(rnd.uniform(-0.15, 0.15), rnd.uniform(-0.15, 0.15), 0))
+    b.append(box("team_band", (0.7, 0.2, 0.05), (0, 0, 0.47), m["team"]))
     return {"body": b}
 
 
@@ -478,18 +544,44 @@ UNITS = {
     "overture": dict(kind="vehicle", frame=160, dirs=16, build=overture),
 }
 
+def grown(build, k):
+    """Scale everything standing on the bed by k about the ground origin; the bed keeps the footprint."""
+
+    def make(style, team=None):
+        model = build(style, team)
+        for o in model["body"] + model.get("turret", []):
+            if o.name.startswith(("bed", "glow_resonance")):
+                continue
+            o.location = o.location * k
+            o.scale = o.scale * k
+        return model
+
+    return make
+
+
+def construction(body, turret):
+    """Half-grown: no scaffolding; the crystals are seedlings, a third of their size, low over the bed."""
+    for o in turret:
+        o.hide_render = True
+    for o in body:
+        if o.name.startswith(("bed", "glow_resonance")):
+            continue
+        o.location = o.location * 0.4
+        o.scale = o.scale * 0.4
+
+
 BUILDINGS = {
-    "opus": dict(footprint=(3, 3), frame=288, build=opus),
-    "bell": dict(footprint=(2, 2), frame=176, build=bell),
-    "coda": dict(footprint=(3, 3), frame=256, build=coda),
-    "loft": dict(footprint=(2, 2), frame=192, build=loft),
-    "pit": dict(footprint=(3, 3), frame=256, build=pit),
-    "antiphon": dict(footprint=(2, 2), frame=224, build=antiphon),
-    "chord": dict(footprint=(1, 1), frame=112, build=chord),
-    "belfry": dict(footprint=(3, 3), frame=256, build=belfry),
-    "conservatory": dict(footprint=(3, 3), frame=256, build=conservatory),
-    "discord": dict(footprint=(1, 1), frame=96, build=discord),
-    "descant": dict(footprint=(2, 2), frame=176, build=descant),
-    "fortissimo": dict(footprint=(2, 2), frame=192, build=fortissimo),
-    "fermata": dict(footprint=(1, 1), frame=80, build=fermata),
+    "opus": dict(footprint=(3, 3), frame=320, build=grown(opus, 1.25)),
+    "bell": dict(footprint=(2, 2), frame=224, build=grown(bell, 1.2)),
+    "coda": dict(footprint=(3, 3), frame=288, build=grown(coda, 1.25)),
+    "loft": dict(footprint=(2, 2), frame=224, build=grown(loft, 1.2)),
+    "pit": dict(footprint=(3, 3), frame=288, build=grown(pit, 1.2)),
+    "antiphon": dict(footprint=(2, 2), frame=256, build=grown(antiphon, 1.2)),
+    "chord": dict(footprint=(1, 1), frame=128, build=grown(chord, 1.2)),
+    "belfry": dict(footprint=(3, 3), frame=288, build=grown(belfry, 1.25)),
+    "conservatory": dict(footprint=(3, 3), frame=320, build=grown(conservatory, 1.2)),
+    "discord": dict(footprint=(1, 1), frame=112, build=grown(discord, 1.2)),
+    "descant": dict(footprint=(2, 2), frame=224, build=grown(descant, 1.2)),
+    "fortissimo": dict(footprint=(2, 2), frame=224, build=grown(fortissimo, 1.2)),
+    "fermata": dict(footprint=(1, 1), frame=96, build=fermata),
 }

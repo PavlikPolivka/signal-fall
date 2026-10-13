@@ -112,7 +112,7 @@
   },
   "opus": {
    "kind": "building",
-   "frame": 288,
+   "frame": 320,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -123,7 +123,7 @@
   },
   "bell": {
    "kind": "building",
-   "frame": 176,
+   "frame": 224,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -134,7 +134,7 @@
   },
   "coda": {
    "kind": "building",
-   "frame": 256,
+   "frame": 288,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -145,7 +145,7 @@
   },
   "loft": {
    "kind": "building",
-   "frame": 192,
+   "frame": 224,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -156,7 +156,7 @@
   },
   "pit": {
    "kind": "building",
-   "frame": 256,
+   "frame": 288,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -167,7 +167,7 @@
   },
   "antiphon": {
    "kind": "building",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -178,7 +178,7 @@
   },
   "chord": {
    "kind": "building",
-   "frame": 112,
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -189,7 +189,7 @@
   },
   "belfry": {
    "kind": "building",
-   "frame": 256,
+   "frame": 288,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -200,7 +200,7 @@
   },
   "conservatory": {
    "kind": "building",
-   "frame": 256,
+   "frame": 320,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -211,7 +211,7 @@
   },
   "discord": {
    "kind": "building",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": true,
@@ -222,7 +222,7 @@
   },
   "descant": {
    "kind": "building",
-   "frame": 176,
+   "frame": 224,
    "dirs": 1,
    "anims": {},
    "turret": true,
@@ -233,7 +233,7 @@
   },
   "fortissimo": {
    "kind": "building",
-   "frame": 192,
+   "frame": 224,
    "dirs": 1,
    "anims": {},
    "turret": true,
@@ -244,7 +244,7 @@
   },
   "fermata": {
    "kind": "building",
-   "frame": 80,
+   "frame": 96,
    "dirs": 1,
    "anims": {},
    "turret": false,

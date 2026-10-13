@@ -118,7 +118,10 @@ def render_building(sid, spec):
             for o in body + turret:
                 if o.name.startswith(("light", "beacon", "glow", "pad_light")):
                     o.hide_render = True
-        if state == "construction":
+        if state == "construction" and hasattr(models, "construction"):
+            # The faction draws its own half-built look (Choir: crystals still growing).
+            models.construction(body, turret)
+        elif state == "construction":
             # Half-built: squash the body, hide the turret, add scaffolding.
             root.scale = (1, 1, 0.45)
             for o in turret:
