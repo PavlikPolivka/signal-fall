@@ -11,6 +11,7 @@ import { EntityCard, ItemCard } from './InfoCard';
 import { Codex } from './Codex';
 import { isoX, isoY } from '../game/iso';
 import { Icon } from './Icon';
+import { roleName, roleNames } from '../game/names';
 import { Credits } from './Credits';
 import type { GameAudio } from '../audio/audio';
 
@@ -101,17 +102,6 @@ const TABS: { id: SidebarTab; label: string; key: string }[] = [
 ];
 const MENU_MODES = ['buildMenu', 'defenseMenu', 'infantryMenu', 'vehicleMenu', 'airMenu'];
 
-const ROLE_NAMES: Record<string, string> = {
-  conyard: 'Construction Yard',
-  power: 'Power',
-  refinery: 'Refinery',
-  barracks: 'Barracks',
-  factory: 'Vehicle Factory',
-  radar: 'Radar',
-  special: 'Special',
-  airfield: 'Airfield',
-  tech: 'Tech Center',
-};
 
 function Sidebar({ state, input, renderer }: { state: ClientState; input: Input; renderer: Renderer }) {
   const faction = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]!;
@@ -168,7 +158,9 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
         </div>
       )}
       {!hasProducer && (
-        <div class="hint muted">{structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${ROLE_NAMES[tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield']}.`}</div>
+        <div class="hint muted">
+          {structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${roleName(state.rules, faction.index, tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield')}.`}
+        </div>
       )}
       {hasProducer && !MENU_MODES.includes(state.mode) && !state.placing && (
         <div class="hint muted" data-testid="tab-hint">
@@ -195,7 +187,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
           const disabled = !hasProducer || missing.length > 0 || busy;
           const title =
             missing.length > 0
-              ? `${it.name} — requires ${missing.map((r) => ROLE_NAMES[r] ?? r).join(', ')}`
+              ? `${it.name} — requires ${roleNames(state.rules, faction.index, missing)}`
               : `${it.name} — $${it.cost}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, right-click: cancel' : ready ? ' · click to place' : ' · right-click: cancel'}`;
           return (
             <button

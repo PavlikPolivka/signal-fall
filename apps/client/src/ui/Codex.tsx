@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { ARMOR, DAMAGE, type FactionRule, type Rules, type StructureRule, type UnitRule } from '@signal-fall/data';
 import { chordLabel } from '../input/keymap';
+import { roleNames } from '../game/names';
 
 const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
 const DAMAGE_LABEL = ['Kinetic', 'Explosive', 'Energy', 'Flak', 'Siege'];
@@ -263,7 +264,7 @@ function Buildings({ rules, faction }: { rules: Rules; faction: FactionRule }) {
             <dt>Power</dt>
             <dd class={s.power > 0 ? 'good' : ''}>{s.power > 0 ? `+${s.power}` : s.power === 0 ? '—' : s.power}</dd>
             <dt>Needs</dt>
-            <dd>{s.requires.length ? s.requires.map((r) => ROLE_LABEL[r]).join(', ') : '—'}</dd>
+            <dd>{s.requires.length ? roleNames(rules, faction.index, s.requires) : '—'}</dd>
           </dl>
         </article>
       ))}

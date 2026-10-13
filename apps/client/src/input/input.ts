@@ -4,6 +4,7 @@ import { E } from '../protocol';
 import type { ClientState, Mode } from '../game/state';
 import type { Renderer } from '../render/renderer';
 import { bindings, matches, type Binding, type Context } from './keymap';
+import { roleNames } from '../game/names';
 
 const FX = 1024;
 /** Edge-scroll zone in px from each side of the game view. */
@@ -32,18 +33,6 @@ const CURSORS = {
   tool: 'cell',
 };
 
-const ROLE_NAME: Record<string, string> = {
-  conyard: 'Construction Yard',
-  power: 'Power',
-  refinery: 'Refinery',
-  barracks: 'Barracks',
-  factory: 'Vehicle Factory',
-  radar: 'Radar',
-  special: 'faction special',
-  airfield: 'Airfield',
-  tech: 'Tech Center',
-};
-const roleName = (r: string) => ROLE_NAME[r] ?? r;
 
 export const STANCE_NAMES = ['Guard area', 'Hold ground', 'Aggressive', 'Hold fire'];
 
@@ -697,7 +686,7 @@ export class Input {
     } else if (q.item >= 0) {
       s.warn(`Already building ${s.rules.structures[q.item]!.name}${q.ready ? ' — place it first' : ''}`);
     } else if (missing.length > 0) {
-      s.warn(`${rule.name} requires ${missing.map(roleName).join(', ')}`);
+      s.warn(`${rule.name} requires ${roleNames(s.rules, rule.faction, missing)}`);
     } else {
       if (cur.credits(s.localPlayer) <= 0) s.warn('Not enough money');
       s.send({ type: 'build', category: rule.category, item: rule.index });
@@ -716,7 +705,7 @@ export class Input {
     const s = this.state;
     const missing = s.missing(rule.requires);
     if (missing.length > 0) {
-      s.warn(`${rule.name} requires ${missing.map(roleName).join(', ')}`);
+      s.warn(`${rule.name} requires ${roleNames(s.rules, rule.faction, missing)}`);
       return;
     }
     s.send({ type: 'train', item: rule.index, count });

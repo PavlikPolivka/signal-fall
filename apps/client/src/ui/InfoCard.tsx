@@ -1,21 +1,11 @@
 import { ARMOR, DAMAGE, type Rules, type StructureRule, type UnitRule, type WeaponRule } from '@signal-fall/data';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { Icon } from './Icon';
+import { roleNames } from '../game/names';
 
 const FX = 1024;
 const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
 const DAMAGE_LABEL = ['Kinetic', 'Explosive', 'Energy', 'Flak', 'Siege'];
-const ROLE_NAMES: Record<string, string> = {
-  conyard: 'Construction Yard',
-  power: 'Power',
-  refinery: 'Refinery',
-  barracks: 'Barracks',
-  factory: 'Vehicle Factory',
-  radar: 'Radar',
-  special: 'Faction special',
-  airfield: 'Airfield',
-  tech: 'Tech Center',
-};
 
 const secs = (ticks: number, rate: number) => `${Math.round((ticks / rate) * 10) / 10}s`;
 const tiles = (fx: number) => `${Math.round((fx / FX) * 10) / 10}`;
@@ -107,7 +97,7 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
         )}
         {rule.weapon && <WeaponRows rules={rules} w={rule.weapon} />}
       </dl>
-      {missing.length > 0 && <p class="req bad">Requires {missing.map((r) => ROLE_NAMES[r] ?? r).join(', ')}</p>}
+      {missing.length > 0 && <p class="req bad">Requires {roleNames(rules, rule.faction, missing)}</p>}
       <p class="hint muted">
         {rule.kind === 'unit' ? 'Click: queue 1 · Shift+click: 5 · Right-click: cancel' : 'Click: build, then click again to place · Right-click: cancel'}
       </p>
