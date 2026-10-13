@@ -1457,11 +1457,13 @@ table.matrix td.lo {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: 340px;
+  width: 420px;
   max-width: 100%;
 }
 .home-actions {
   display: grid;
+  width: 340px;
+  max-width: 100%;
   gap: 10px;
 }
 .home-actions button {
@@ -1511,6 +1513,8 @@ table.matrix td.lo {
 }
 .account {
   width: min(560px, 100%);
+  height: auto;
+  max-height: min(800px, 100%);
 }
 .account section {
   display: grid;
@@ -1531,13 +1535,56 @@ table.matrix td.lo {
   padding: 6px 8px;
 }
 .account button.start {
+  padding: 6px 14px;
+  font-size: 14px;
   font-weight: 700;
   color: #111;
   background: var(--accent);
   border-color: var(--accent);
 }
+.stats {
+  width: min(820px, 100%);
+  height: auto;
+  min-height: min(420px, 100%);
+  max-height: min(800px, 100%);
+}
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.stats-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding: 4px 8px;
+}
+.stats-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+}
+.stats-table tr.me td {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.stats-table .tag {
+  margin-left: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.stats-table .result.win {
+  color: var(--good);
+  font-weight: 700;
+}
+.stats-table .result.loss {
+  color: var(--bad, #e5484d);
+}
 .home .setup-links {
   justify-content: flex-start;
+  gap: 4px 16px;
 }
 .setup-map {
   overflow: hidden;

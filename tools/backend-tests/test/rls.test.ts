@@ -46,15 +46,6 @@ describe.skipIf(!URL || !ANON)('backend row level security', () => {
     expect((await a.sb.from('rooms').insert({ code: 'abc' })).error).not.toBeNull();
   });
 
-  it('players record and read only their own match results', async () => {
-    const row = { room_code: 'TEST', players: [a.id, b.id], factions: [0, 2], winner_slot: 1, seed: 7, map: { size: 'M' }, ticks: 1200 };
-    expect((await a.sb.from('match_results').insert(row)).error).toBeNull();
-    const c = await player();
-    expect((await c.sb.from('match_results').insert({ ...row, players: [a.id, b.id] })).error).not.toBeNull();
-    expect((await b.sb.from('match_results').select('id').eq('room_code', 'TEST')).data!.length).toBeGreaterThan(0);
-    expect((await c.sb.from('match_results').select('id').eq('room_code', 'TEST')).data).toHaveLength(0);
-  });
-
   it('desync reports are write-only for players', async () => {
     const r = await a.sb.from('desync_reports').insert({ tick: 100, local_hash: 1, remote_hash: 2, report: { commands: [] } });
     expect(r.error).toBeNull();

@@ -10,7 +10,7 @@ Ordered by benefit relative to effort. Every item updates the Codex and docs whe
 | 4 | Post-game breakdown: income, army value, losses/kills over time; per-player summary | M | done |
 | 5 | Choir buildings rework (floating crystal style, like the vehicles; growing seedlings while under construction) | M | done |
 | 6 | Permanent accounts: upgrade the anonymous account (email link), display name, sign in elsewhere. Open: custom SMTP for public email delivery; Google/GitHub sign-in needs OAuth apps | M | done (email) |
-| 7 | Stats: match history, per-faction records, leaderboard | M | |
+| 7 | Stats: match history, per-faction records, leaderboard (Elo on 1v1 multiplayer, rated when both players' reports agree) | M | done |
 | 8 | 2v2 with any mix of players and AI: 4-player lobby, mesh peer connections, teams | L | |
 | 9 | LLM play over MCP: (a) headless agent API + MCP server, AI players labelled as such; (b) live spectating; (c) agent-vs-agent matches and a ladder | XL | |
 | 10 | Landing page: what the game is, trailer (intro video), screenshots, faction overview, Play button | M | |

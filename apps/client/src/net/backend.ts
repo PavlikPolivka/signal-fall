@@ -13,13 +13,24 @@ export function backend(): SupabaseClient | null {
   return client;
 }
 
-/** Every player is an anonymous user; the session is kept in local storage. */
-export async function signIn(sb: SupabaseClient): Promise<string> {
-  const { data } = await sb.auth.getSession();
-  if (data.session) return data.session.user.id;
-  const { data: signed, error } = await sb.auth.signInAnonymously();
-  if (error || !signed.user) throw new Error(`could not sign in: ${error?.message ?? 'unknown'}`);
-  return signed.user.id;
+let signingIn: Promise<string> | null = null;
+
+/**
+ * The signed-in user's id; a new player becomes an anonymous guest. The session is
+ * kept in local storage. Concurrent callers share one sign-in, so a fresh browser
+ * never creates several guests at once.
+ */
+export function signIn(sb: SupabaseClient): Promise<string> {
+  signingIn ??= (async () => {
+    const { data } = await sb.auth.getSession();
+    if (data.session) return data.session.user.id;
+    const { data: signed, error } = await sb.auth.signInAnonymously();
+    if (error || !signed.user) throw new Error(`could not sign in: ${error?.message ?? 'unknown'}`);
+    return signed.user.id;
+  })().finally(() => {
+    signingIn = null;
+  });
+  return signingIn;
 }
 
 export interface Account {

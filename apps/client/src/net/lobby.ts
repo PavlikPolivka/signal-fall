@@ -5,6 +5,8 @@ import type { Signaling } from './signaling';
 
 export interface LobbyPlayer {
   id: string;
+  /** Account id (for the match record), when online. */
+  uid?: string;
   name: string;
   faction: number;
   slot: number;
@@ -48,19 +50,19 @@ export class Lobby {
   private readonly unsubscribe: () => void;
   /** Called on every state change (UI refresh). */
   onChange: () => void = () => undefined;
-  /** Called once when the match starts, with our slot and the connected link. */
-  onStart: (scenario: ScenarioSpec, slot: number, link: PeerLink) => void = () => undefined;
+  /** Called once when the match starts, with our slot, the connected link and the room. */
+  onStart: (scenario: ScenarioSpec, slot: number, link: PeerLink, room: LobbyState) => void = () => undefined;
 
   constructor(
     readonly signaling: Signaling,
     readonly isHost: boolean,
-    private me: { name: string; faction: number },
+    private me: { name: string; faction: number; uid?: string },
     code: string,
     private readonly rtc: { iceServers?: RTCIceServer[]; relayOnly?: boolean } = {},
   ) {
     this.unsubscribe = signaling.onMessage((m) => {
       if (this.isHost) {
-        if (m.type === 'hello') this.admit(m.from, m.data as { name: string; faction: number });
+        if (m.type === 'hello') this.admit(m.from, m.data as { name: string; faction: number; uid?: string });
         else if (m.type === 'choose') this.updatePlayer(m.from, m.data as { faction: number });
         else if (m.type === 'leave') this.drop(m.from);
       } else if (m.type === 'lobby') {
@@ -68,7 +70,7 @@ export class Lobby {
         if (!this.link && this.state.players.some((p) => p.id === this.signaling.id)) this.connect(this.state.host, false);
         this.onChange();
       } else if (m.type === 'start' && this.link) {
-        this.onStart((m.data as { scenario: ScenarioSpec }).scenario, this.mySlot(), this.link);
+        this.onStart((m.data as { scenario: ScenarioSpec }).scenario, this.mySlot(), this.link, this.state!);
       } else if (m.type === 'full') {
         this.error = 'That room is full';
         this.onChange();
@@ -78,7 +80,7 @@ export class Lobby {
       this.state = {
         code,
         host: signaling.id,
-        players: [{ id: signaling.id, name: me.name, faction: me.faction, slot: 0 }],
+        players: [{ id: signaling.id, uid: me.uid, name: me.name, faction: me.faction, slot: 0 }],
         map: { size: 'M', biome: 'wasteland', resources: 'normal', terrain: 'normal' },
         seed: Math.floor(Math.random() * 1_000_000),
       };
@@ -131,7 +133,7 @@ export class Lobby {
       map: s.map,
     };
     this.signaling.send('start', { scenario });
-    this.onStart(scenario, 0, this.link);
+    this.onStart(scenario, 0, this.link, s);
   }
 
   close(): void {
@@ -141,11 +143,11 @@ export class Lobby {
     this.signaling.close();
   }
 
-  private admit(id: string, who: { name: string; faction: number }): void {
+  private admit(id: string, who: { name: string; faction: number; uid?: string }): void {
     const s = this.state!;
     if (s.players.some((p) => p.id === id)) return this.broadcast();
     if (s.players.length >= ROOM_SIZE) return this.signaling.send('full', undefined, id);
-    s.players.push({ id, name: who.name, faction: who.faction, slot: 1 });
+    s.players.push({ id, uid: who.uid, name: who.name, faction: who.faction, slot: 1 });
     this.connect(id, true);
     this.broadcast();
   }

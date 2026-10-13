@@ -12,6 +12,7 @@ import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
 import { NetSession, degrade } from './net/session';
 import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
+import { recordMatch, type NetMatch } from './net/history';
 import type { PeerLink } from './net/webrtc';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
@@ -68,6 +69,8 @@ let peerLink: PeerLink | null = null;
 /** Watching a recorded match. */
 let replay: Replay | null = null;
 let netSession: NetSession | null = null;
+/** Multiplayer: room code and account ids per slot, for the match record. */
+let netMatch: NetMatch | null = null;
 /** Lobby screen showing instead of the skirmish setup. */
 let multiplayerScreen = new URLSearchParams(location.search).has('room');
 
@@ -146,6 +149,13 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       a.href = URL.createObjectURL(new Blob([msg.json], { type: 'application/json' }));
       a.download = `signal-fall-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.sfreplay.json`;
       a.click();
+      return;
+    }
+    if (msg.type === 'final') {
+      // Match history (online builds; not for spectating or replays).
+      const sb = backend();
+      if (sb && scenario?.kind === 'skirmish' && !replay && !state.spectator)
+        void recordMatch(sb, scenario, localSlot, msg, state.stats, netMatch).then((err) => err && console.warn('match not recorded:', err));
       return;
     }
     if (msg.type === 'stats') {
@@ -245,10 +255,11 @@ function renderUi(): void {
           multiplayerScreen = false;
           renderUi();
         }}
-        onStart={(sc, slot, link) => {
+        onStart={(sc, slot, link, room) => {
           scenario = sc;
           localSlot = slot;
           peerLink = link;
+          netMatch = { room: room.code, uids: [...room.players].sort((a, b) => a.slot - b.slot).map((p) => p.uid ?? null) };
           renderUi();
         }}
       />,

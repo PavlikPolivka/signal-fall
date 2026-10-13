@@ -67,6 +67,11 @@ name and history stay; other devices sign in with an emailed link. Auth URLs: si
 Supabase's built-in mailer, which only delivers to the project team's addresses (2 emails/hour):
 real players need custom SMTP (e.g. Resend) set in the dashboard.
 
+Stats: each player records their own row in `matches` when a match ends (skirmish: personal
+history and records). A multiplayer match is rated when both players' rows agree (room, final
+state hash, opposite results); a trigger then updates both Elo ratings (`ratings`, K = 32). The
+`leaderboard` view lists saved accounts; `my_records` aggregates the caller's results.
+
 Pushes to `main` deploy automatically (the GitHub repo is connected to the Vercel project). Manual deploy:
 
 ```sh

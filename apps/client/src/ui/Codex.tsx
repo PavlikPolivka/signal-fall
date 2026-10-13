@@ -371,6 +371,12 @@ function HowTo({ rules }: { rules: Rules }) {
         multiplayer). Add your email and open the link we send to keep the account for good, with the same name and history, and sign in to it on any
         device.
       </p>
+      <h3>Stats and the leaderboard</h3>
+      <p>
+        Every finished match is recorded when you are online: <b>Stats</b> in the main menu lists your history and your record per faction and AI
+        difficulty. Multiplayer 1v1 matches are <b>rated</b> (Elo, starting at 1200) once both players' games report the same result; the leaderboard
+        shows saved accounts.
+      </p>
     </article>
   );
 }

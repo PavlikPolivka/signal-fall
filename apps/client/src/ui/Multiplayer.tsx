@@ -3,7 +3,8 @@ import type { Rules } from '@signal-fall/data';
 import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
 import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
-import { account, backend, rename } from '../net/backend';
+import { account, backend, rename, signIn } from '../net/backend';
+import type { LobbyState } from '../net/lobby';
 import type { PeerLink } from '../net/webrtc';
 import { MenuScreen } from './Setup';
 import { MapSettings } from './MapSettings';
@@ -25,7 +26,7 @@ export function Multiplayer({
   onBack,
 }: {
   rules: Rules;
-  onStart: (scenario: ScenarioSpec, slot: number, link: PeerLink) => void;
+  onStart: (scenario: ScenarioSpec, slot: number, link: PeerLink, room: LobbyState) => void;
   onBack: () => void;
 }) {
   const [name, setName] = useState(savedName() || `Commander ${Math.floor(Math.random() * 90 + 10)}`);
@@ -78,14 +79,15 @@ export function Multiplayer({
         await rename(sb, name);
         setProfileName(name.trim());
       }
+      const uid = sb ? await signIn(sb) : undefined;
       const r = await openRoom(host, c, roomCode);
       // ?relay=1 forces every packet through the TURN relay (testing strict networks).
       const relayOnly = new URLSearchParams(location.search).get('relay') === '1';
-      const l = new Lobby(r.signaling, host, { name, faction }, r.code, { iceServers: r.iceServers, relayOnly });
+      const l = new Lobby(r.signaling, host, { name: name.trim(), faction, uid }, r.code, { iceServers: r.iceServers, relayOnly });
       l.onChange = () => refresh(undefined);
-      l.onStart = (scenario, slot, link) => {
+      l.onStart = (scenario, slot, link, room) => {
         if (host) r.started();
-        onStart(scenario, slot, link);
+        onStart(scenario, slot, link, room);
       };
       setRoom(r);
       setLobby(l);

@@ -8,6 +8,7 @@ import { parseReplay, type Replay } from '../game/scenario';
 import { Credits } from './Credits';
 import { Choice, MapSettings, randomSeed, type MapChoice } from './MapSettings';
 import { Account } from './Account';
+import { Stats } from './Stats';
 import { account, backend, type Account as AccountInfo } from '../net/backend';
 
 export interface SkirmishSettings extends MapChoice {
@@ -63,6 +64,7 @@ export function Setup({
   const [codex, setCodex] = useState(false);
   const [credits, setCredits] = useState(false);
   const [accountOpen, setAccountOpen] = useState(!!notice);
+  const [statsOpen, setStatsOpen] = useState(false);
   useEffect(() => {
     if (notice) setAccountOpen(true);
   }, [notice]);
@@ -77,6 +79,7 @@ export function Setup({
       setCodex(false);
       setCredits(false);
       setAccountOpen(false);
+      setStatsOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -123,6 +126,9 @@ export function Setup({
               Intro
             </button>
           )}
+          <button onClick={() => setStatsOpen(true)} data-testid="open-stats">
+            Stats
+          </button>
           <button onClick={() => setAccountOpen(true)} data-testid="open-account">
             Account
           </button>
@@ -135,6 +141,7 @@ export function Setup({
       {codex && <Codex rules={rules} onClose={() => setCodex(false)} />}
       {credits && <Credits onClose={() => setCredits(false)} />}
       {accountOpen && <Account onClose={() => setAccountOpen(false)} onChange={setMe} />}
+      {statsOpen && <Stats rules={rules} onClose={() => setStatsOpen(false)} />}
     </MenuScreen>
   );
 }

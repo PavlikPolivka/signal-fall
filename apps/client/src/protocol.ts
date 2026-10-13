@@ -75,6 +75,8 @@ export type FromWorker =
   | { type: 'replay'; json: string }
   /** The match's statistics (sent when it ends, or on request). */
   | { type: 'stats'; stats: MatchStats }
+  /** The match ended (live play, not replays): for the match record. */
+  | { type: 'final'; tick: number; hash: number; winnerTeam: number }
   /** Replay reached its recorded end: did the state hash match the recording? */
   | { type: 'replayEnd'; tick: number; ok: boolean }
   /** Multiplayer status: input delay, round trip, who we are waiting on. */

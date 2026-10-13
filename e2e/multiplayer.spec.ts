@@ -90,6 +90,17 @@ test('two clients play a networked match over a lossy link without desync', asyn
   // Each client controls a different side.
   const slots = await Promise.all([host, guest].map((p) => p.evaluate(() => (window as unknown as { __signalFall: { state: { localPlayer: number } } }).__signalFall.state.localPlayer)));
   expect(slots).toEqual([0, 1]);
+
+  // The guest gives up: both see the end, and online the match is recorded and rated.
+  await guest.evaluate(() => (window as unknown as { __signalFall: { state: { send: (c: unknown) => void } } }).__signalFall.state.send({ type: 'surrender' }));
+  for (const p of [host, guest]) await expect(p.getByTestId('end-screen')).toBeVisible({ timeout: 30_000 });
+  if (online) {
+    await host.waitForTimeout(2000);
+    await host.goto('/');
+    await host.click('[data-testid=open-stats]');
+    await expect(host.getByTestId('stats-history')).toContainText('Win');
+    await expect(host.getByTestId('stats-history')).toContainText('rated');
+  }
   await hostContext.close();
   if (online) await guestContext.close();
 });

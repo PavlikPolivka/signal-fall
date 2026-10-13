@@ -200,6 +200,7 @@ function recordStats(): void {
   if (sim.world.ended && !statsSent) {
     statsSent = true;
     post({ type: 'stats', stats });
+    if (!replayCmds) post({ type: 'final', tick: sim.tick, hash: sim.hash(), winnerTeam: sim.world.winnerTeam });
   }
 }
 let desynced = false;
