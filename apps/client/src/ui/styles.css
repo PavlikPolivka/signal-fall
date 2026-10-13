@@ -603,12 +603,7 @@ kbd {
   width: 300px;
   height: 300px;
 }
-/* The preview sits low and to the side, so the menu video's centre stays visible. */
-.setup > .setup-preview {
-  align-self: flex-end;
-  margin-bottom: 24px;
-  opacity: 0.92;
-}
+
 @media (max-width: 1000px) {
   .setup {
     flex-direction: column;
@@ -1379,4 +1374,77 @@ table.matrix td.lo {
 .hints button {
   padding: 0 6px;
   line-height: 1.2;
+}
+
+/* --- Setup screen: a left-anchored panel; the right of the screen belongs to the video / key art. --- */
+.setup:not(.mp) {
+  justify-content: flex-start;
+  padding-left: clamp(16px, 6vw, 96px);
+}
+.setup .setup-panel {
+  width: 460px;
+  max-width: 100%;
+}
+.setup-map {
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.setup-map canvas {
+  /* The iso map is a wide, flat diamond: crop the square canvas to it. */
+  width: 190px;
+  height: 190px;
+  margin: -44px 0;
+}
+.setup-map-info {
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+}
+.setup-actions {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+.setup-actions .start {
+  margin-top: 0;
+}
+.setup-actions .mp-btn {
+  font-size: 15px;
+  font-weight: 700;
+}
+.setup-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+  margin-top: 4px;
+}
+.setup-links button,
+.setup-links .file-btn {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.setup-links button:hover,
+.setup-links .file-btn:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+@media (max-width: 760px) {
+  .setup:not(.mp) {
+    justify-content: center;
+    padding-left: 16px;
+  }
 }

@@ -196,34 +196,43 @@ export function Setup({
             <button onClick={() => set({ seed: randomSeed() })}>Random</button>
           </div>
         </div>
-        <button class="start" onClick={start} data-testid="start">
-          Start
-        </button>
-        <button class="mp-btn" onClick={onMultiplayer} data-testid="open-multiplayer">
-          Multiplayer — 1v1 with a friend
-        </button>
-        <button class="codex-btn" onClick={() => setCodex(true)} data-testid="open-codex">
-          Codex — story, factions, units and how to play
-        </button>
-        <label class="codex-btn file-btn" data-testid="watch-replay">
-          Watch a replay
-          <input type="file" accept=".json,application/json" onChange={(e) => void openReplay((e.currentTarget as HTMLInputElement).files?.[0])} />
-        </label>
-        {replayError && <p class="mp-status">{replayError}</p>}
-        {onIntro && (
-          <button class="codex-btn" onClick={onIntro} data-testid="watch-intro">
-            Watch intro
+        <div class="setup-map">
+          <canvas ref={canvas} width={460} height={460} data-testid="map-preview" />
+          <div class="setup-map-info">
+            <b>
+              {map.width}×{map.height}
+            </b>
+            <span>{s.biome === 'city' ? 'Ruined city' : s.biome === 'crystal' ? 'Crystal fields' : 'Wasteland'}</span>
+            <span class="muted">{map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')} symmetry</span>
+            <span class="muted">seed {map.seedUsed}</span>
+          </div>
+        </div>
+        <div class="setup-actions">
+          <button class="start" onClick={start} data-testid="start">
+            Play vs AI
           </button>
-        )}
-        <button class="codex-btn" onClick={() => setCredits(true)} data-testid="open-credits">
-          Credits
-        </button>
-      </div>
-      <div class="setup-preview">
-        <canvas ref={canvas} width={460} height={460} data-testid="map-preview" />
-        <p class="muted">
-          {map.width}×{map.height} · seed {map.seedUsed} · {map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')}
-        </p>
+          <button class="mp-btn" onClick={onMultiplayer} data-testid="open-multiplayer">
+            Multiplayer
+          </button>
+        </div>
+        <nav class="setup-links">
+          <button onClick={() => setCodex(true)} data-testid="open-codex">
+            Codex
+          </button>
+          <label class="file-btn" data-testid="watch-replay">
+            Watch a replay
+            <input type="file" accept=".json,application/json" onChange={(e) => void openReplay((e.currentTarget as HTMLInputElement).files?.[0])} />
+          </label>
+          {onIntro && (
+            <button onClick={onIntro} data-testid="watch-intro">
+              Intro
+            </button>
+          )}
+          <button onClick={() => setCredits(true)} data-testid="open-credits">
+            Credits
+          </button>
+        </nav>
+        {replayError && <p class="mp-status">{replayError}</p>}
       </div>
       {codex && <Codex rules={rules} onClose={() => setCodex(false)} />}
       {credits && <Credits onClose={() => setCredits(false)} />}

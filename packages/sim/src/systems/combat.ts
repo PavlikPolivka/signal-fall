@@ -135,6 +135,8 @@ export function damage(world: World, victim: number, base: number, type: number,
   e.hp[victim]! -= absorbed === vsShields ? 0 : dmg - idiv(absorbed * 100, shieldPct);
   e.lastHitTick[victim] = world.tick;
   e.lastAttacker[victim] = attacker;
+  const a = e.resolve(attacker);
+  if (a >= 0) e.lastAttackerOwner[victim] = e.owner[a]!;
 }
 
 /** Remove dead entities, award veterancy to killers. */
@@ -146,6 +148,20 @@ export function deathSystem(world: World): void {
     if (killer >= 0 && e.kind[killer] === KIND.unit && teamOf(world, killer) !== teamOf(world, s)) {
       e.xp[killer]! += costOf(world, s);
       promote(world, killer);
+    }
+    // Match statistics: the loss for the owner, the kill for whoever hit it last (enemies only).
+    const value = costOf(world, s);
+    const structure = e.kind[s] === KIND.structure;
+    const loser = world.players[e.owner[s]!]!.stats;
+    if (structure) loser.structuresLost++;
+    else loser.unitsLost++;
+    loser.valueLost += value;
+    const by = e.lastAttackerOwner[s]!;
+    if (by >= 0 && world.players[by] && world.players[by]!.team !== world.players[e.owner[s]!]!.team) {
+      const winner = world.players[by]!.stats;
+      if (structure) winner.structuresKilled++;
+      else winner.unitsKilled++;
+      winner.valueKilled += value;
     }
     pushFx(world, FX_EVENT.death, e.kind[s]!, e.type[s]!, e.owner[s]!, e.x[s]!, e.y[s]!, 0, 0);
     recompileRefund(world, s);

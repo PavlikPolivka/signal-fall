@@ -169,3 +169,24 @@ describe('attack orders', () => {
     expect(e.hp[arty]! + e.shields[arty]!).toBeLessThan(240);
   });
 });
+
+describe('match statistics', () => {
+  it('count losses for the owner and kills for whoever hit last', async () => {
+    const { defaultRules } = await import('@signal-fall/data');
+    const { Sim } = await import('../src/sim');
+    const { spawnUnit } = await import('../src/spawn');
+    const rules = defaultRules();
+    const sim = new Sim({ rules, seed: 1, width: 32, height: 32, players: [{ faction: 0, team: 0 }, { faction: 0, team: 1 }], victoryRules: false });
+    const tank = rules.unitIndex.get('bulldog')!;
+    const grunt = rules.unitIndex.get('grunt')!;
+    spawnUnit(sim.world, tank, 0, 10 * 1024, 10 * 1024);
+    spawnUnit(sim.world, grunt, 1, 13 * 1024, 10 * 1024);
+    sim.run(400);
+    const [a, b] = sim.world.players;
+    expect(b!.stats.unitsLost).toBe(1);
+    expect(b!.stats.valueLost).toBe(rules.units[grunt]!.cost);
+    expect(a!.stats.unitsKilled).toBe(1);
+    expect(a!.stats.valueKilled).toBe(rules.units[grunt]!.cost);
+    expect(a!.stats.unitsLost).toBe(0);
+  });
+});

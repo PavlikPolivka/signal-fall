@@ -49,6 +49,8 @@ export interface PlayerState {
   incomeBonusPct: number;
   /** Stats. */
   harvested: number;
+  /** Units and structures lost / destroyed: counts and their cost (value). */
+  stats: { unitsLost: number; unitsKilled: number; structuresLost: number; structuresKilled: number; valueLost: number; valueKilled: number };
   /** Units completed per unit rule index. */
   trained: number[];
   /** 1 per researched upgrade (rules.upgrades index). */
@@ -196,6 +198,7 @@ export function createWorld(o: WorldOptions): World {
       production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
       incomeBonusPct: 0,
       harvested: 0,
+      stats: { unitsLost: 0, unitsKilled: 0, structuresLost: 0, structuresKilled: 0, valueLost: 0, valueKilled: 0 },
       trained: o.rules.units.map(() => 0),
       upgrades: o.rules.upgrades.map(() => 0),
       research: { item: -1, progress: 0, spent: 0 },
@@ -238,6 +241,13 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.lowPower ? 1 : 0);
     w.push(p.incomeBonusPct);
     w.push(p.harvested);
+    const st = p.stats;
+    w.push(st.unitsLost);
+    w.push(st.unitsKilled);
+    w.push(st.structuresLost);
+    w.push(st.structuresKilled);
+    w.push(st.valueLost);
+    w.push(st.valueKilled);
     w.pushArray(p.trained);
     w.pushArray(p.upgrades);
     w.push(p.research.item);

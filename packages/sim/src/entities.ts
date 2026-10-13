@@ -112,6 +112,8 @@ export class Entities {
   value!: Int32Array;
   /** Wrecks: tick at which it disappears. */
   expires!: Int32Array;
+  /** Owner of whoever hit this last (-1 none), so kills are credited even if the shooter died first. */
+  lastAttackerOwner!: Int8Array;
   /** Tick from which the unit's active ability (blink / phase / override) can be used again. */
   abilityReady!: Int32Array;
   /** Phased out (untargetable, cannot fire) until this tick. */
@@ -183,6 +185,7 @@ export class Entities {
     this.value = re(this.value, (n) => new Int32Array(n));
     this.expires = re(this.expires, (n) => new Int32Array(n));
     this.abilityReady = re(this.abilityReady, (n) => new Int32Array(n));
+    this.lastAttackerOwner = re(this.lastAttackerOwner, (n) => new Int8Array(n));
     this.phasedUntil = re(this.phasedUntil, (n) => new Int32Array(n));
     this.homeOwner = re(this.homeOwner, (n) => new Int8Array(n));
     this.overrideUntil = re(this.overrideUntil, (n) => new Int32Array(n));
@@ -230,6 +233,7 @@ export class Entities {
     this.value[slot] = 0;
     this.expires[slot] = 0;
     this.abilityReady[slot] = 0;
+    this.lastAttackerOwner[slot] = -1;
     this.phasedUntil[slot] = 0;
     this.homeOwner[slot] = -1;
     this.overrideUntil[slot] = 0;
@@ -309,6 +313,7 @@ export class Entities {
       w.push(this.value[s]!);
       w.push(this.expires[s]!);
       w.push(this.abilityReady[s]!);
+      w.push(this.lastAttackerOwner[s]!);
       w.push(this.phasedUntil[s]!);
       w.push(this.homeOwner[s]!);
       w.push(this.overrideUntil[s]!);
