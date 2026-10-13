@@ -1448,3 +1448,68 @@ table.matrix td.lo {
     padding-left: 16px;
   }
 }
+
+.report {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 18px 20px;
+  background: var(--panel-bg, var(--panel));
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.report header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.report header h2 {
+  margin: 0;
+  font: 22px var(--display);
+  color: var(--accent);
+}
+.report header .close {
+  margin-left: auto;
+}
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.report-table th,
+.report-table td {
+  padding: 4px 8px;
+  text-align: right;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.report-table th:first-child,
+.report-table td:first-child {
+  text-align: left;
+  color: var(--muted);
+}
+.report-table td.best {
+  color: var(--accent);
+  font-weight: 700;
+}
+.report-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.report-chart {
+  width: 100%;
+  height: auto;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+}
+.report-chart .grid {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+.report-chart .axis {
+  fill: var(--muted);
+  font-size: 10px;
+  font-family: var(--mono);
+}

@@ -13,6 +13,7 @@ import { isoX, isoY } from '../game/iso';
 import { Icon } from './Icon';
 import { roleName, roleNames } from '../game/names';
 import { Credits } from './Credits';
+import { MatchReport } from './MatchReport';
 import type { GameAudio } from '../audio/audio';
 
 const FX = 1024;
@@ -60,6 +61,15 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
       {state.replay && <ReplayBar state={state} />}
+      {state.reportOpen && (
+        <MatchReport
+          state={state}
+          onClose={() => {
+            state.reportOpen = false;
+            state.changed();
+          }}
+        />
+      )}
       {!state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
     </div>
   );
@@ -721,6 +731,17 @@ function ReplayBar({ state }: { state: ClientState }) {
           ✓ verified
         </span>
       )}
+      {r.verified !== null && (
+        <button
+          data-testid="replay-report"
+          onClick={() => {
+            state.reportOpen = true;
+            state.changed();
+          }}
+        >
+          Report
+        </button>
+      )}
       {r.verified === false && (
         <span class="bad" data-testid="replay-mismatch">
           ✗ did not reproduce
@@ -782,6 +803,15 @@ function EndScreen({ state }: { state: ClientState }) {
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
         {!state.multiplayer && !state.replay && <button onClick={() => location.reload()}>Play again</button>}
+        <button
+          data-testid="open-report"
+          onClick={() => {
+            state.reportOpen = true;
+            state.changed();
+          }}
+        >
+          Match report
+        </button>
         {!state.replay && (
           <button onClick={() => state.saveReplay()} data-testid="end-save-replay">
             Save replay

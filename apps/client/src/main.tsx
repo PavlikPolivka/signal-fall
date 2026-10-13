@@ -81,6 +81,7 @@ state.applySettings = () => {
   state.changed();
 };
 state.saveReplay = () => post({ type: 'saveReplay' });
+state.requestStats = () => post({ type: 'requestStats' });
 state.replaySpeed = (speed) => {
   if (!state.replay) return;
   state.replay.speed = speed;
@@ -145,6 +146,11 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       a.href = URL.createObjectURL(new Blob([msg.json], { type: 'application/json' }));
       a.download = `signal-fall-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.sfreplay.json`;
       a.click();
+      return;
+    }
+    if (msg.type === 'stats') {
+      state.stats = msg.stats;
+      state.changed();
       return;
     }
     if (msg.type === 'replayEnd') {

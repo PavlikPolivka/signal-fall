@@ -62,6 +62,10 @@ export class ClientState {
   /** Watching a replay: its end tick, and whether playback reproduced the recording (null until the end). */
   replay: { endTick: number; verified: boolean | null; speed: number; paused: boolean } | null = null;
   saveReplay: () => void = () => undefined;
+  /** Match statistics for the post-game report (arrives when the match ends). */
+  stats: import('./scenario').MatchStats | null = null;
+  reportOpen = false;
+  requestStats: () => void = () => undefined;
   replaySpeed: (speed: number) => void = () => undefined;
   mapSeed = 0;
   players: PlayerInfo[] = [];

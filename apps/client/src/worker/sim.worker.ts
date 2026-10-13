@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
 import { KIND, Sim, inCoverage, type ScheduledCommand, type World } from '@signal-fall/sim';
-import { commandsByTick, createSim, type Replay } from '../game/scenario';
+import { STATS_INTERVAL, commandsByTick, createSim, sampleStats, type MatchStats, type Replay } from '../game/scenario';
 import {
   E,
   ENT_FLAG,
@@ -190,6 +190,18 @@ let commandLog: ScheduledCommand[] = [];
 /** Replay playback: commands by tick, and where/what the recording ended. */
 let replayCmds: Map<number, ScheduledCommand[]> | null = null;
 let replayEnd: { tick: number; hash: number } | null = null;
+/** Statistics for the post-game report, sent once when the match ends. */
+let stats: MatchStats | null = null;
+let statsSent = false;
+
+function recordStats(): void {
+  if (!sim || !stats) return;
+  if (sim.tick % STATS_INTERVAL === 0 || sim.world.ended) stats.samples.push({ tick: sim.tick, players: sampleStats(sim.world) });
+  if (sim.world.ended && !statsSent) {
+    statsSent = true;
+    post({ type: 'stats', stats });
+  }
+}
 let desynced = false;
 /** Multiplayer housekeeping: ping, adapt the input delay, exchange state hashes. */
 const HASH_EVERY = 100;
@@ -223,6 +235,7 @@ function loop(): void {
         if (replayEnd && sim.tick >= replayEnd.tick) {
           const hash = sim.hash();
           post({ type: 'replayEnd', tick: sim.tick, ok: hash === replayEnd.hash });
+          if (stats) post({ type: 'stats', stats: { ...stats, samples: [...stats.samples, { tick: sim.tick, players: sampleStats(sim.world) }] } });
           replayEnd = null;
           paused = true;
           break;
@@ -239,6 +252,7 @@ function loop(): void {
         }
       }
       sim.step();
+      recordStats();
       if (port && sim.tick % HASH_EVERY === 0) lockstep.reportHash(sim.tick, sim.hash());
       acc -= TICK_MS;
       steps++;
@@ -265,6 +279,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       paused = false;
       replayCmds = msg.replay ? commandsByTick(msg.replay.commands) : null;
       replayEnd = msg.replay ? { tick: msg.replay.endTick, hash: msg.replay.hash } : null;
+      stats = { interval: STATS_INTERVAL, players: sim.world.players.map((p) => ({ faction: p.faction, team: p.team })), samples: [{ tick: 0, players: sampleStats(sim.world) }] };
+      statsSent = false;
       lockstep = new LockstepScheduler({
         localPlayer,
         peers: msg.net ? msg.net.peers : [localPlayer],
@@ -309,6 +325,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       return;
     case 'speed':
       TICK_MS = 50 / Math.max(0.25, Math.min(16, msg.speed));
+      return;
+    case 'requestStats':
+      if (sim && stats) post({ type: 'stats', stats: { ...stats, samples: [...stats.samples, { tick: sim.tick, players: sampleStats(sim.world) }] } });
       return;
     case 'saveReplay': {
       if (!sim || !scenario) return;

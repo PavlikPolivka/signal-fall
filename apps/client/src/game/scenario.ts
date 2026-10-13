@@ -82,3 +82,61 @@ export function runReplay(replay: Replay): number {
   }
   return sim.hash();
 }
+
+/** One sample of a player's match statistics. */
+export interface StatPoint {
+  /** Echo harvested so far (income). */
+  income: number;
+  credits: number;
+  /** Cost of armed units alive. */
+  army: number;
+  units: number;
+  structures: number;
+  built: number;
+  unitsLost: number;
+  unitsKilled: number;
+  structuresLost: number;
+  structuresKilled: number;
+  valueLost: number;
+  valueKilled: number;
+}
+
+/** Statistics over a match: one sample per player every `interval` ticks. */
+export interface MatchStats {
+  interval: number;
+  players: { faction: number; team: number }[];
+  samples: { tick: number; players: StatPoint[] }[];
+}
+
+export const STATS_INTERVAL = 200;
+
+/** Sample every player's statistics from the sim (read-only). */
+export function sampleStats(world: import('@signal-fall/sim').World): StatPoint[] {
+  const e = world.entities;
+  const out: StatPoint[] = world.players.map((p) => ({
+    income: p.harvested,
+    credits: p.credits,
+    army: 0,
+    units: 0,
+    structures: 0,
+    built: p.trained.reduce((a, b) => a + b, 0),
+    unitsLost: p.stats.unitsLost,
+    unitsKilled: p.stats.unitsKilled,
+    structuresLost: p.stats.structuresLost,
+    structuresKilled: p.stats.structuresKilled,
+    valueLost: p.stats.valueLost,
+    valueKilled: p.stats.valueKilled,
+  }));
+  for (let s = 0; s < e.high; s++) {
+    if (e.alive[s] !== 1) continue;
+    const o = out[e.owner[s]!];
+    if (!o) continue;
+    if (e.kind[s] === 2) o.structures++;
+    else if (e.kind[s] === 1) {
+      o.units++;
+      const rule = world.rules.units[e.type[s]!]!;
+      if (rule.weapon) o.army += rule.cost;
+    }
+  }
+  return out;
+}

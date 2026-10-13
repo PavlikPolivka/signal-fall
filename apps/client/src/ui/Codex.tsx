@@ -359,6 +359,12 @@ function HowTo({ rules }: { rules: Rules }) {
       <p class="muted">
         <kbd>Z</kbd> cycles stances. Groups move together in formation; clicking the ground attack-moves, <kbd>M</kbd> + click moves without fighting.
       </p>
+      <h3>After the match</h3>
+      <p>
+        <b>Match report</b> on the end screen compares both sides: Echo harvested, units built, kills and losses, and the value destroyed. Charts show
+        income, army value, and the value destroyed and lost over time. <b>Save replay</b> downloads the match. Open it with <b>Watch a replay</b> in the
+        main menu to watch it again at up to 8× speed. The replay is checked against the original result.
+      </p>
     </article>
   );
 }
