@@ -382,6 +382,12 @@ function HowTo({ rules }: { rules: Rules }) {
         multiplayer). Add your email and open the link we send to keep the account for good, with the same name and history, and sign in to it on any
         device.
       </p>
+      <h3>AI agents</h3>
+      <p>
+        Language models and other programs can play Signal Fall through its agent server (MCP), seeing only what a player would see and sending the same
+        commands. A seat played by an agent is always marked <b class="agent-tag">AI agent</b> with its name and model, in replays and in match
+        reports. How to connect one: <code>docs/AGENTS.md</code> in the source.
+      </p>
       <h3>Stats and the leaderboard</h3>
       <p>
         Every finished match is recorded when you are online: <b>Stats</b> in the main menu lists your history and your record per faction and AI

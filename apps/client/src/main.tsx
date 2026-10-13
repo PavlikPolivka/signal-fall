@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { defaultRules } from '@signal-fall/data';
-import { ClientState, saveSettings } from './game/state';
+import { ClientState, seatLabels, saveSettings } from './game/state';
 import { Input } from './input/input';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import { Renderer } from './render/renderer';
@@ -247,6 +247,8 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     state.replay = { endTick: replay.endTick, verified: null, speed: 1, paused: false };
     post({ type: 'start', scenario: replay.scenario, localPlayer: replay.localPlayer, replay });
   } else post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
+  const shown = replay ? replay.scenario : scenario;
+  if (shown) state.seats = seatLabels(shown, replay ? replay.localPlayer : localSlot, state.spectator);
 }
 
 const root = document.getElementById('app')!;

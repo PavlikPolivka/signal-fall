@@ -1,25 +1,9 @@
 import type { Command } from '@signal-fall/sim';
-import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
-import type { Difficulty } from '@signal-fall/ai';
+import type { Biome } from '@signal-fall/mapgen';
 import type { NetMessage } from '@signal-fall/net';
-import type { MatchStats, Replay } from './game/scenario';
+import type { MatchStats, Replay, ScenarioSpec } from './game/scenario';
 
-/** What the worker should set up. */
-export type ScenarioSpec =
-  | {
-      kind: 'skirmish';
-      seed: number;
-      factions: number[];
-      /** AI difficulty per player slot, null for the human. */
-      ai: (Difficulty | null)[];
-      /** Player slots controlled by people (multiplayer); others without AI get a passive base. */
-      humans?: number[];
-      /** Team per slot (2v2: [0, 0, 1, 1]); default: everyone on their own team. */
-      teams?: number[];
-      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
-    }
-  | { kind: 'sandbox'; unitsPerSide: number; seed: number }
-  | { kind: 'stress'; unitsPerSide: number; seed: number };
+export type { ScenarioSpec };
 
 export type ToWorker =
   | {

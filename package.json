@@ -15,7 +15,8 @@
     "headless": "pnpm --filter @signal-fall/headless start",
     "e2e": "playwright test",
     "build": "pnpm --filter @signal-fall/client build",
-    "size": "node tools/size/size.mjs"
+    "size": "node tools/size/size.mjs",
+    "agent": "pnpm --filter @signal-fall/agent start"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",

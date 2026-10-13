@@ -78,7 +78,8 @@ export function MatchReport({ state, onClose }: { state: ClientState; onClose: (
   const winner = state.cur && state.cur.a[1] === 1 ? (state.cur.a[2] ?? -1) : -1;
   const names = stats.players.map((p, i) => {
     const faction = state.rules.factions[p.faction]!.name;
-    const who = i === state.localPlayer && !state.spectator ? 'You' : `Player ${i + 1}`;
+    const seat = state.seats[i];
+    const who = seat ? (seat.kind === 'agent' ? `🤖 ${seat.label} (AI agent)` : seat.label) : i === state.localPlayer && !state.spectator ? 'You' : `Player ${i + 1}`;
     return `${who} · ${faction}`;
   });
   // [label, value, lower is better]

@@ -747,6 +747,18 @@ function ReplayBar({ state }: { state: ClientState }) {
           ✗ did not reproduce
         </span>
       )}
+      {state.seats.length > 0 && (
+        <span class="replay-seats" data-testid="replay-seats">
+          {state.seats.map((s, k) => (
+            <span class={`seat ${s.kind}`} title={s.kind === 'agent' ? `Played by an AI agent${s.model ? ` (${s.model})` : ''}` : undefined}>
+              <i class="swatch" style={{ background: `#${TEAM_COLORS[k]!.toString(16).padStart(6, '0')}` }} />
+              {s.kind === 'agent' && <b class="agent-tag">AI agent</b>}
+              {s.label}
+              <span class="muted"> · {state.rules.factions[state.players[k]?.faction ?? 0]?.name}</span>
+            </span>
+          ))}
+        </span>
+      )}
     </div>
   );
 }

@@ -1,0 +1,18 @@
+{
+  "name": "@signal-fall/scenario",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@signal-fall/ai": "workspace:*",
+    "@signal-fall/data": "workspace:*",
+    "@signal-fall/mapgen": "workspace:*",
+    "@signal-fall/sim": "workspace:*"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@signal-fall/agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server: let an AI agent (an LLM) play Signal Fall.",
+  "bin": {
+    "signal-fall-agent": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@signal-fall/ai": "workspace:*",
+    "@signal-fall/data": "workspace:*",
+    "@signal-fall/mapgen": "workspace:*",
+    "@signal-fall/scenario": "workspace:*",
+    "@signal-fall/sim": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "exports": {
+    "./src/*": "./src/*.ts"
+  }
+}

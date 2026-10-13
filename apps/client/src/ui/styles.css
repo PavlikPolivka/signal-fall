@@ -1767,3 +1767,30 @@ table.matrix td.lo {
   font-size: 10px;
   font-family: var(--mono);
 }
+
+/* Replay: who played each seat; AI agents are always marked. */
+.replay-seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+}
+.replay-seats .seat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.replay-seats .swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.agent-tag {
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #111;
+  background: #a78bfa;
+}

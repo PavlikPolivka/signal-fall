@@ -28,6 +28,27 @@ export interface Alert {
   time: number;
 }
 
+export interface SeatLabel {
+  kind: 'you' | 'person' | 'ai' | 'agent';
+  /** "You", "Player 2", "AI (Hard)", or the agent's name. */
+  label: string;
+  /** Agents: the model or program behind it, if given. */
+  model?: string;
+}
+
+/** Seat labels from the scenario: people, built-in AI at its difficulty, and AI agents by name. */
+export function seatLabels(scenario: import('./scenario').ScenarioSpec, localPlayer: number, spectator: boolean): SeatLabel[] {
+  if (scenario.kind !== 'skirmish') return [];
+  return scenario.factions.map((_, k) => {
+    const agent = scenario.agents?.[k];
+    if (agent) return { kind: 'agent', label: agent.name, model: agent.model };
+    const ai = scenario.ai[k];
+    if (ai) return { kind: 'ai', label: `AI (${ai[0]!.toUpperCase()}${ai.slice(1)})` };
+    if (k === localPlayer && !spectator) return { kind: 'you', label: 'You' };
+    return { kind: 'person', label: `Player ${k + 1}` };
+  });
+}
+
 export const TEAM_COLORS = [0x3d8bfd, 0xe5484d, 0x30a46c, 0xf5d90a, 0xa855f7, 0xf97316, 0x14b8a6, 0xec4899];
 
 /**
@@ -68,6 +89,8 @@ export class ClientState {
   requestStats: () => void = () => undefined;
   replaySpeed: (speed: number) => void = () => undefined;
   mapSeed = 0;
+  /** Who controls each seat, for labels (an AI agent is always marked as one). */
+  seats: SeatLabel[] = [];
   players: PlayerInfo[] = [];
   localPlayer = 0;
   ready = false;
