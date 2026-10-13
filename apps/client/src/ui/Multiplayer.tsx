@@ -4,8 +4,8 @@ import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
 import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
 import type { PeerLink } from '../net/webrtc';
-import { Logo } from './Logo';
-import { MenuVideo } from './Video';
+import { MenuScreen } from './Setup';
+import { MapSettings } from './MapSettings';
 
 const NAME_KEY = 'signalfall.name';
 
@@ -79,10 +79,8 @@ export function Multiplayer({
 
   if (!lobby) {
     return (
-      <div class="setup mp" data-testid="multiplayer">
-        <MenuVideo />
+      <MenuScreen testid="multiplayer">
         <div class="setup-panel">
-          <Logo size={30} />
           <h1>Multiplayer</h1>
           <p class="muted small">1v1 over a direct peer-to-peer connection. Signaling: {signalingKind()}.</p>
           <label class="choice">
@@ -106,11 +104,11 @@ export function Multiplayer({
               {error}
             </p>
           )}
-          <button class="codex-btn" onClick={onBack}>
+          <button class="codex-btn" onClick={onBack} data-testid="back">
             Back
           </button>
         </div>
-      </div>
+      </MenuScreen>
     );
   }
 
@@ -128,64 +126,70 @@ export function Multiplayer({
           : 'Connected. The host starts the match.'
         : 'Connecting…';
   return (
-    <div class="setup mp" data-testid="lobby">
-      <MenuVideo />
-      <div class="setup-panel">
+    <MenuScreen testid="lobby">
+      <div class="setup-panel wide">
         <h1>
           Room <span class="room-code" data-testid="room-code">{s?.code ?? code}</span>
         </h1>
         {lobby.isHost && <p class="muted small">Send this code to your opponent. They choose Multiplayer → Join.</p>}
-        <ul class="lobby-players">
-          {(s?.players ?? []).map((p) => (
-            <li>
-              <b>{p.name}</b>
-              <span>{rules.factions[p.faction]!.name}</span>
-              <span class="muted">{p.slot === 0 ? 'host' : 'guest'}</span>
-            </li>
-          ))}
-        </ul>
-        <div class="choice">
-          <span class="label">Your faction</span>
-          <div class="seg" data-testid="mp-faction">
-            {rules.factions.map((f) => (
-              <button
-                class={(s?.players.find((p) => p.slot === me)?.faction ?? faction) === f.index ? 'active' : ''}
-                data-value={f.id}
-                onClick={() => {
-                  setFaction(f.index);
-                  lobby.setFaction(f.index);
-                }}
-              >
-                {f.name}
-              </button>
-            ))}
-          </div>
+        <div class="setup-cols">
+          <section>
+            <h2>Players</h2>
+            <ul class="lobby-players">
+              {(s?.players ?? []).map((p) => (
+                <li>
+                  <b>{p.name}</b>
+                  <span>{rules.factions[p.faction]!.name}</span>
+                  <span class="muted">{p.slot === 0 ? 'host' : 'guest'}</span>
+                </li>
+              ))}
+            </ul>
+            <div class="choice">
+              <span class="label">Your faction</span>
+              <div class="seg" data-testid="mp-faction">
+                {rules.factions.map((f) => (
+                  <button
+                    class={(s?.players.find((p) => p.slot === me)?.faction ?? faction) === f.index ? 'active' : ''}
+                    data-value={f.id}
+                    onClick={() => {
+                      setFaction(f.index);
+                      lobby.setFaction(f.index);
+                    }}
+                  >
+                    {f.name}
+                  </button>
+                ))}
+              </div>
         </div>
-        {s && (
-          <p class="muted small" data-testid="mp-map">
-            Map: {s.map.size} · {s.map.biome} · seed {s.seed}
-          </p>
-        )}
-        <p class="mp-status" data-testid="mp-status">
-          {status}
-        </p>
-        {lobby.isHost && (
-          <button class="start" data-testid="mp-start" disabled={!lobby.canStart} onClick={() => lobby.start()}>
-            Start match
+            <p class="mp-status" data-testid="mp-status">
+              {status}
+            </p>
+          </section>
+          <section data-testid="mp-map">
+            <h2>Map{lobby.isHost ? '' : ' (the host chooses)'}</h2>
+            {s && <MapSettings value={{ ...s.map, seed: s.seed }} onChange={lobby.isHost ? (patch) => lobby.setMap(patch) : undefined} />}
+          </section>
+        </div>
+        <div class="setup-foot">
+          <button
+            class="codex-btn"
+            data-testid="mp-leave"
+            onClick={() => {
+              lobby.close();
+              room?.close();
+              setLobby(null);
+              setRoom(null);
+            }}
+          >
+            Leave room
           </button>
-        )}
-        <button
-          class="codex-btn"
-          onClick={() => {
-            lobby.close();
-            room?.close();
-            setLobby(null);
-            setRoom(null);
-          }}
-        >
-          Leave room
-        </button>
+          {lobby.isHost && (
+            <button class="start" data-testid="mp-start" disabled={!lobby.canStart} onClick={() => lobby.start()}>
+              Start match
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </MenuScreen>
   );
 }

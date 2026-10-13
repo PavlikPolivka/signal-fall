@@ -109,9 +109,11 @@ export class Lobby {
     else this.signaling.send('choose', { faction });
   }
 
-  setMap(map: Partial<LobbyMap>): void {
+  /** Host: change the map options or the seed; the guest sees them on the next broadcast. */
+  setMap({ seed, ...map }: Partial<LobbyMap> & { seed?: number }): void {
     if (!this.isHost || !this.state) return;
     this.state.map = { ...this.state.map, ...map };
+    if (seed !== undefined) this.state.seed = seed;
     this.broadcast();
   }
 

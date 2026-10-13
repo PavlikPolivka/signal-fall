@@ -58,6 +58,13 @@ test('two clients play a networked match over a lossy link without desync', asyn
 
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
   await expect(host.getByTestId('lobby')).toContainText('Choir');
+  // The host picks the map; the guest sees it (read-only).
+  await host.click('[data-testid=mp-map] [data-testid=size] [data-value=S]');
+  await host.fill('[data-testid=mp-map] [data-testid=seed]', '777');
+  await host.locator('[data-testid=mp-map] [data-testid=seed]').dispatchEvent('change');
+  await expect(guest.locator('[data-testid=mp-map] [data-testid=size] [data-value=S]')).toHaveClass(/active/);
+  await expect(guest.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('777');
+  await expect(guest.locator('[data-testid=mp-map] [data-testid=seed-random]')).toHaveCount(0);
   await host.click('[data-testid=mp-start]');
 
   for (const p of [host, guest]) await p.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall.state.cur !== null);

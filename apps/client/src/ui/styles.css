@@ -528,8 +528,8 @@ kbd {
   height: 100%;
   padding: 24px;
   overflow: auto;
-  /* Key art: the three factions over an Echo field at dusk, darkened toward the panel. */
-  background: url('/assets/ui/keyart.jpg') center / cover no-repeat, var(--bg);
+  /* The key art and menu video sit on the shared .menu-backdrop behind this. */
+  background: none;
 }
 .setup-panel {
   display: flex;
@@ -1251,13 +1251,27 @@ table.matrix td.lo {
   border-color: var(--line);
 }
 
-.menu-video {
+/* Shared menu backdrop (outside the UI tree): key art, then the crossfading loop video. */
+.menu-backdrop {
   position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url('/assets/ui/keyart.jpg') center / cover no-repeat, var(--bg);
+}
+.menu-backdrop.hidden {
+  display: none;
+}
+.menu-backdrop video {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: -2;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+.menu-backdrop video.on {
+  opacity: 1;
 }
 /* Dark vignette over the video (or the key art), under the panels. */
 .setup::before {
@@ -1266,10 +1280,11 @@ table.matrix td.lo {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(8, 9, 14, 0.85) 0%, rgba(8, 9, 14, 0.45) 45%, rgba(8, 9, 14, 0.1) 100%);
+  background: linear-gradient(180deg, rgba(8, 9, 14, 0.55) 0%, rgba(8, 9, 14, 0) 22%, rgba(8, 9, 14, 0) 45%, rgba(8, 9, 14, 0.85) 100%);
 }
 .setup {
   position: relative;
+  z-index: 1;
   isolation: isolate;
 }
 .cutscene {
@@ -1376,14 +1391,95 @@ table.matrix td.lo {
   line-height: 1.2;
 }
 
-/* --- Setup screen: a left-anchored panel; the right of the screen belongs to the video / key art. --- */
-.setup:not(.mp) {
+/* --- Menu screens: the logo on top, the panel anchored bottom-left; the middle belongs to the video / key art. --- */
+.setup {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 100%;
+  padding: clamp(20px, 5vh, 48px) clamp(16px, 5vw, 72px);
+}
+.setup-head {
+  display: flex;
+  justify-content: center;
+}
+.setup-head .logo {
+  font-size: clamp(36px, 6vw, 64px) !important;
+}
+.setup-body {
+  display: flex;
   justify-content: flex-start;
-  padding-left: clamp(16px, 6vw, 96px);
+  align-items: flex-end;
 }
 .setup .setup-panel {
   width: 460px;
   max-width: 100%;
+}
+.setup .setup-panel.wide {
+  width: 900px;
+}
+.setup h2 {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.setup-cols {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 28px;
+}
+.setup-cols section,
+.map-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.setup .seg button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.setup-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+.setup-foot .start {
+  margin-top: 0;
+  min-width: 220px;
+}
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 340px;
+  max-width: 100%;
+}
+.home-actions {
+  display: grid;
+  gap: 10px;
+}
+.home-actions button {
+  padding: 14px 18px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: left;
+}
+.home-actions .start {
+  margin-top: 0;
+}
+.home-actions .mp-btn {
+  background: rgba(10, 12, 18, 0.6);
+  backdrop-filter: blur(6px);
+}
+.home .setup-links {
+  justify-content: flex-start;
 }
 .setup-map {
   overflow: hidden;
@@ -1408,19 +1504,6 @@ table.matrix td.lo {
   gap: 3px;
   font-size: 13px;
 }
-.setup-actions {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 8px;
-  margin-top: 6px;
-}
-.setup-actions .start {
-  margin-top: 0;
-}
-.setup-actions .mp-btn {
-  font-size: 15px;
-  font-weight: 700;
-}
 .setup-links {
   display: flex;
   flex-wrap: wrap;
@@ -1436,16 +1519,19 @@ table.matrix td.lo {
   color: var(--muted);
   font-size: 13px;
   cursor: pointer;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 .setup-links button:hover,
 .setup-links .file-btn:hover {
   color: var(--text);
   text-decoration: underline;
 }
-@media (max-width: 760px) {
-  .setup:not(.mp) {
+@media (max-width: 860px) {
+  .setup-cols {
+    grid-template-columns: 1fr;
+  }
+  .setup-body {
     justify-content: center;
-    padding-left: 16px;
   }
 }
 
