@@ -103,12 +103,13 @@ export const P = {
   researchProgress: 6,
   /** Bit i set = upgrade i researched. */
   upgrades: 7,
-  /** Build queues: [structures, defenses] x (item, progress per mille, ready). */
+  /** Build queues: [structures, defenses] x (item, progress per mille, ready, planned tile x, y or -1). */
   build: 8,
   /** Production queues: [infantry, vehicles, air] x (progress per mille, then QUEUE_SLOTS items, -1 = empty). */
-  production: 14,
+  production: 18,
 } as const;
 export const QUEUE_SLOTS = 15;
+export const BUILD_STRIDE = 5;
 export const PROD_STRIDE = 1 + QUEUE_SLOTS;
 export const PLAYER_STRIDE = P.production + 3 * PROD_STRIDE;
 
@@ -193,9 +194,15 @@ export class Snapshot {
     return this.player(player, P.credits);
   }
   /** Build queue state for category 0 (structures) or 1 (defenses). */
-  buildQueue(player: number, cat: number): { item: number; progress: number; ready: boolean } {
-    const o = P.build + cat * 3;
-    return { item: this.player(player, o), progress: this.player(player, o + 1), ready: this.player(player, o + 2) === 1 };
+  buildQueue(player: number, cat: number): { item: number; progress: number; ready: boolean; at: { tx: number; ty: number } | null } {
+    const o = P.build + cat * BUILD_STRIDE;
+    const tx = this.player(player, o + 3);
+    return {
+      item: this.player(player, o),
+      progress: this.player(player, o + 1),
+      ready: this.player(player, o + 2) === 1,
+      at: tx >= 0 ? { tx, ty: this.player(player, o + 4) } : null,
+    };
   }
   /** Production queue for tab 0..2. progress is per mille of the first item. */
   productionQueue(player: number, tab: number): { progress: number; items: number[] } {

@@ -21,6 +21,11 @@ export interface BuildQueue {
   spent: number;
   /** Finished and waiting to be placed. */
   ready: boolean;
+  /** Place-first: where it goes when finished (footprint origin), -1 if not chosen yet. */
+  atX: number;
+  atY: number;
+  /** Ticks spent trying to place it there (units in the way); gives up after a while. */
+  atTries: number;
 }
 
 /** Factory queue for one tab (infantry, vehicles, air): items built in order. */
@@ -196,7 +201,7 @@ export function createWorld(o: WorldOptions): World {
       powerProduced: 0,
       powerUsed: 0,
       lowPower: false,
-      build: [0, 1].map(() => ({ item: -1, progress: 0, spent: 0, ready: false })),
+      build: [0, 1].map(() => ({ item: -1, progress: 0, spent: 0, ready: false, atX: -1, atY: -1, atTries: 0 })),
       production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
       incomeBonusPct: 0,
       directives: null,
@@ -261,6 +266,9 @@ export function serializeWorld(world: World, w: IntWriter): void {
       w.push(b.progress);
       w.push(b.spent);
       w.push(b.ready ? 1 : 0);
+      w.push(b.atX);
+      w.push(b.atY);
+      w.push(b.atTries);
     }
     for (const q of p.production) {
       w.push(q.items.length);

@@ -21,8 +21,11 @@ export type Command =
   | { type: 'scatter'; units: number[] }
   /** Deploy construction units into a construction yard where they stand. */
   | { type: 'deploy'; units: number[] }
-  /** Start building a structure at the construction yard (category queue). */
-  | { type: 'build'; category: 'structures' | 'defenses'; item: number }
+  /**
+   * Start building a structure at the construction yard (category queue). With a tile
+   * (place-first), it places itself there when finished; otherwise it waits for `place`.
+   */
+  | { type: 'build'; category: 'structures' | 'defenses'; item: number; tx?: number; ty?: number }
   | { type: 'cancelBuild'; category: 'structures' | 'defenses' }
   /** Place the finished structure of a category with its footprint origin at tile (tx, ty). */
   | { type: 'place'; category: 'structures' | 'defenses'; tx: number; ty: number }

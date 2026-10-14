@@ -783,7 +783,31 @@ export class Renderer {
     }
   }
 
+  /** Place-first: where our queued buildings will stand, as an outline filling with progress. */
+  private drawPlannedSites(): void {
+    const s = this.state;
+    const cur = s.cur;
+    if (!cur || s.spectator) return;
+    for (let cat = 0; cat < 2; cat++) {
+      const q = cur.buildQueue(s.localPlayer, cat);
+      if (q.item < 0 || !q.at) continue;
+      const rule = s.rules.structures[q.item]!;
+      const done = q.ready ? 1 : q.progress / 1000;
+      for (let y = q.at.ty; y < q.at.ty + rule.footprintH; y++) {
+        for (let x = q.at.tx; x < q.at.tx + rule.footprintW; x++) {
+          const px = isoX(x, y);
+          const py = isoY(x, y);
+          this.overlay
+            .poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2])
+            .fill({ color: 0x9fd7ff, alpha: 0.08 + 0.22 * done })
+            .stroke({ width: 1, color: 0x9fd7ff, alpha: 0.55 });
+        }
+      }
+    }
+  }
+
   private drawGhost(): void {
+    this.drawPlannedSites();
     const ghost = this.placementGhost();
     if (!ghost) return;
     this.drawBuildRange();

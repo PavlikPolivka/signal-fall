@@ -6,6 +6,9 @@ import type { Renderer } from '../render/renderer';
 import { bindings, matches, type Binding, type Context } from './keymap';
 import { roleNames } from '../game/names';
 
+/** Production tabs that stay open for several hotkeys in a row. */
+const UNIT_MENUS: string[] = ['infantryMenu', 'vehicleMenu', 'airMenu'];
+
 const FX = 1024;
 /** Edge-scroll zone in px from each side of the game view. */
 const EDGE = 48;
@@ -172,15 +175,17 @@ export class Input {
       else s.warn(`No ${category === 'structures' ? 'structure' : 'defense'} on ${letter}`);
       return;
     }
-    // I / V / Y menus: the next letter trains a unit from that tab (Shift queues five).
+    // I / V / Y tabs stay open: every letter on the tab queues one more (Shift: five), so I G G G queues three.
+    // A letter that is not on the tab closes it and does its usual job (A attack, S stop...).
     const menuTab = s.mode === 'infantryMenu' ? 'infantry' : s.mode === 'vehicleMenu' ? 'vehicles' : s.mode === 'airMenu' ? 'air' : null;
     if (menuTab && letter && plain) {
-      e.preventDefault();
       const unit = this.factionUnits().find((u) => u.tab === menuTab && u.key === letter);
+      if (unit) {
+        e.preventDefault();
+        this.activateUnit(unit, e.shiftKey ? 5 : 1);
+        return;
+      }
       this.setMode('normal');
-      if (unit) this.activateUnit(unit, e.shiftKey ? 5 : 1);
-      else s.warn(`No ${menuTab === 'air' ? 'aircraft' : menuTab === 'vehicles' ? 'vehicle' : 'infantry'} on ${letter}`);
-      return;
     }
     // A selected factory takes unit letters (Shift queues five).
     const factory = this.selectedFactory();
@@ -364,6 +369,8 @@ export class Input {
       return;
     }
     if (e.button !== 0) return;
+    // Clicking the battlefield closes an open production tab.
+    if (UNIT_MENUS.includes(this.state.mode)) this.setMode('normal');
     if (this.state.placing) {
       this.tryPlace(p.x, p.y, e.shiftKey);
       return;
@@ -668,7 +675,11 @@ export class Input {
     return rule.produces ? rule : null;
   }
 
-  /** Sidebar click on a structure: start building it, or pick it up for placement when ready. */
+  /**
+   * Sidebar click (or B/N + letter) on a structure. Place-first: pick a spot and it is built
+   * there, placing itself when done. Picking it again while choosing a spot starts it without
+   * one (place it later). A finished structure is picked up for placement.
+   */
   activateStructure(rule: StructureRule): void {
     const s = this.state;
     const cur = s.cur;
@@ -677,6 +688,14 @@ export class Input {
     const missing = s.missing(rule.requires);
     if (q.item === rule.index && q.ready) {
       s.placing = { category: rule.category, item: rule.index };
+      this.setMode('normal');
+      s.changed();
+    } else if (s.placing?.planned && s.placing.item === rule.index && q.item < 0) {
+      // Second pick: start now, choose the spot when it is done.
+      this.stopPlacing();
+      s.send({ type: 'build', category: rule.category, item: rule.index });
+    } else if (q.item < 0 && s.roles().get('conyard') && missing.length === 0) {
+      s.placing = { category: rule.category, item: rule.index, planned: true };
       this.setMode('normal');
       s.changed();
     } else if (!s.roles().get('conyard')) {
@@ -748,11 +767,18 @@ export class Input {
       s.notice(at.error);
       return;
     }
-    s.send({ type: 'place', category: s.placing.category, tx: at.tx, ty: at.ty });
     const rule = at.rule;
-    // Shift+click keeps placing walls: queue the next one right away.
-    if (shift && rule.role === 'wall') {
-      s.send({ type: 'build', category: s.placing.category, item: rule.index });
+    if (s.placing.planned) {
+      if (s.cur && s.cur.credits(s.localPlayer) <= 0) s.warn('Not enough money');
+      s.send({ type: 'build', category: s.placing.category, item: rule.index, tx: at.tx, ty: at.ty });
+    } else {
+      s.send({ type: 'place', category: s.placing.category, tx: at.tx, ty: at.ty });
+      // Shift+click keeps placing walls: plan the next one right away.
+      if (shift && rule.role === 'wall') {
+        s.placing = { category: s.placing.category, item: rule.index, planned: true };
+        s.changed();
+        return;
+      }
     }
     s.placing = null;
     s.changed();

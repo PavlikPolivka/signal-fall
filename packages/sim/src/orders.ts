@@ -164,7 +164,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       for (const s of ownedUnits(world, c.player, cmd.units)) deploy(world, c.player, s);
       return;
     case 'build':
-      startBuild(world, c.player, cmd.category, cmd.item);
+      startBuild(world, c.player, cmd.category, cmd.item, cmd.tx, cmd.ty);
       return;
     case 'cancelBuild': {
       const q = player.build[BUILD_CATEGORY_INDEX[cmd.category]]!;
@@ -173,6 +173,9 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       q.progress = 0;
       q.spent = 0;
       q.ready = false;
+      q.atX = -1;
+      q.atY = -1;
+      q.atTries = 0;
       return;
     }
     case 'place':
@@ -255,7 +258,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
 
 // --- economy commands ---
 
-function startBuild(world: World, player: number, category: 'structures' | 'defenses', item: number): void {
+function startBuild(world: World, player: number, category: 'structures' | 'defenses', item: number, tx?: number, ty?: number): void {
   const p = world.players[player]!;
   const rule = world.rules.structures[item];
   if (!rule || rule.category !== category || rule.faction !== p.faction) return;
@@ -266,22 +269,52 @@ function startBuild(world: World, player: number, category: 'structures' | 'defe
   q.progress = 0;
   q.spent = 0;
   q.ready = false;
+  const planned = typeof tx === 'number' && typeof ty === 'number' && tx >= 0 && ty >= 0 && tx < world.map.width && ty < world.map.height;
+  q.atX = planned ? tx | 0 : -1;
+  q.atY = planned ? ty | 0 : -1;
+  q.atTries = 0;
 }
 
-function place(world: World, player: number, category: 'structures' | 'defenses', tx: number, ty: number): void {
+/** How long a finished building keeps trying its planned spot (units may be in the way). */
+const AUTO_PLACE_TICKS = 100;
+
+/** Place-first: finished structures with a planned spot place themselves (each tick, until it works or times out). */
+export function autoPlaceSystem(world: World): void {
+  for (const p of world.players) {
+    if (p.defeated) continue;
+    for (let cat = 0; cat < 2; cat++) {
+      const q = p.build[cat]!;
+      if (!q.ready || q.atX < 0) continue;
+      if (place(world, p.index, cat === 0 ? 'structures' : 'defenses', q.atX, q.atY)) continue;
+      q.atTries++;
+      // Still blocked: let the player pick another spot.
+      if (q.atTries >= AUTO_PLACE_TICKS) {
+        q.atX = -1;
+        q.atY = -1;
+        q.atTries = 0;
+      }
+    }
+  }
+}
+
+function place(world: World, player: number, category: 'structures' | 'defenses', tx: number, ty: number): boolean {
   const p = world.players[player]!;
   const q = p.build[BUILD_CATEGORY_INDEX[category]]!;
-  if (q.item < 0 || !q.ready) return;
+  if (q.item < 0 || !q.ready) return false;
   const rule = world.rules.structures[q.item]!;
   const faction = world.rules.factions[p.faction]!;
-  if (placementError(worldPlacementView(world, player), player, faction, rule, tx, ty) !== null) return;
+  if (placementError(worldPlacementView(world, player), player, faction, rule, tx, ty) !== null) return false;
   const h = spawnStructure(world, rule.index, player, tx, ty);
-  if (h < 0) return;
+  if (h < 0) return false;
   q.item = -1;
   q.progress = 0;
   q.spent = 0;
   q.ready = false;
+  q.atX = -1;
+  q.atY = -1;
+  q.atTries = 0;
   if (rule.role === 'refinery') spawnFreeHarvester(world, player, h & 0xffff);
+  return true;
 }
 
 function train(world: World, player: number, item: number, count: number): void {

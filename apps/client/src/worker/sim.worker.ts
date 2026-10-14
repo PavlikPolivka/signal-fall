@@ -13,6 +13,7 @@ import {
   PLAYER_STRIDE,
   PROD_STRIDE,
   QUEUE_SLOTS,
+  BUILD_STRIDE,
   WAYPOINTS,
   PR,
   PROJ_STRIDE,
@@ -62,10 +63,12 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + P.researchProgress] = r.item >= 0 ? Math.floor((r.progress * 1000) / (world.rules.upgrades[r.item]!.researchTicks * 100)) : 0;
     a[off + P.upgrades] = p.upgrades.reduce((bits, v, i) => bits | (v << i), 0);
     p.build.forEach((q, i) => {
-      const o = off + P.build + i * 3;
+      const o = off + P.build + i * BUILD_STRIDE;
       a[o] = q.item;
       a[o + 1] = q.item >= 0 ? Math.floor((q.progress * 1000) / (world.rules.structures[q.item]!.buildTicks * 100)) : 0;
       a[o + 2] = q.ready ? 1 : 0;
+      a[o + 3] = q.atX;
+      a[o + 4] = q.atY;
     });
     p.production.forEach((q, i) => {
       const o = off + P.production + i * PROD_STRIDE;

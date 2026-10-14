@@ -9,8 +9,8 @@ type Win = { __signalFall: any };
 
 const sf = <T>(page: Page, fn: () => T) => page.evaluate(fn);
 
-async function placeReady(page: Page, id: string): Promise<void> {
-  await page.click(`[data-item=${id}]`);
+/** With a placement ghost up, click the first valid spot near the middle of the view. */
+async function clickValidSpot(page: Page, id: string): Promise<void> {
   const box = (await page.locator('[data-testid=game] canvas').boundingBox())!;
   for (let dy = -200; dy <= 200; dy += 16) {
     for (let dx = -260; dx <= 260; dx += 16) {
@@ -31,12 +31,25 @@ async function placeReady(page: Page, id: string): Promise<void> {
   throw new Error(`no valid spot for ${id}`);
 }
 
+const owned = (page: Page, id: string) =>
+  page.evaluate((rid) => {
+    const s = (window as unknown as Win).__signalFall.state;
+    let n = 0;
+    for (let i = 0; i < s.cur.entityCount; i++) {
+      const h = s.cur.get(s.cur.ent(i), 0);
+      if (s.isOwn(h) && s.ruleOf(h).id === rid) n++;
+    }
+    return n;
+  }, id);
+
+/** Place-first: B + key shows the ghost, one click picks the spot, and it places itself when built. */
 async function buildWithHotkey(page: Page, key: string, id: string): Promise<void> {
+  const before = await owned(page, id);
   await page.keyboard.press('KeyB');
   await page.keyboard.press(key);
-  await expect(page.locator(`[data-item=${id}]`)).toHaveClass(/ready/, { timeout: 30_000 });
-  await placeReady(page, id);
-  await expect(page.locator(`[data-item=${id}]`)).not.toHaveClass(/ready/);
+  await expect(page.getByTestId('placing-hint')).toContainText('Click where to build');
+  await clickValidSpot(page, id);
+  await expect.poll(() => owned(page, id), { timeout: 40_000 }).toBe(before + 1);
 }
 
 test('build a base and train a unit with hotkeys', async ({ page }) => {
@@ -81,6 +94,17 @@ test('build a base and train a unit with hotkeys', async ({ page }) => {
     undefined,
     { timeout: 30_000 },
   );
+  // Sticky tab: I once, then G G G queues three more (no I before each).
+  await sf(page, () => (window as unknown as Win).__signalFall.state.select([]));
+  await page.keyboard.press('KeyI');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('KeyG');
+  await expect(page.getByTestId('mode')).toContainText('Infantry');
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as Win).__signalFall.state.cur.productionQueue(0, 0).items.length), { timeout: 5000 })
+    .toBe(3);
+  // A letter that is not on the tab closes it.
+  await page.keyboard.press('KeyX');
+  await expect(page.getByTestId('mode')).not.toContainText('Infantry');
   // The refinery's harvester is earning money.
   await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.cur.player(0, 0) > 5400, undefined, { timeout: 60_000 });
 });

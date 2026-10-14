@@ -9,6 +9,7 @@ import { movementSystem } from './systems/movement';
 import { victorySystem } from './systems/victory';
 import { abilitySystem, chordRegrowSystem, coverageSystem, researchSystem, sustainSystem } from './systems/faction';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
+import { autoPlaceSystem } from './orders';
 
 export type SimSetup = WorldOptions;
 
@@ -62,6 +63,7 @@ export class Sim {
       w.spatial.rebuild(w.entities);
       const facts = computeFacts(w);
       buildSystem(w, facts);
+      autoPlaceSystem(w);
       productionSystem(w, facts);
       researchSystem(w, facts);
       abilitySystem(w);

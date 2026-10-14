@@ -116,7 +116,8 @@ export class ClientState {
   hoverEntity = -1;
   hoverPos = { x: 0, y: 0 };
   /** Structure waiting to be placed (placement mode). */
-  placing: { category: 'structures' | 'defenses'; item: number } | null = null;
+  /** Choosing a spot for a structure: a finished one, or (planned) one to build there. */
+  placing: { category: 'structures' | 'defenses'; item: number; planned?: boolean } | null = null;
 
   selection: number[] = [];
   /** Index into the selection's unit-type subgroups (Tab cycles). */

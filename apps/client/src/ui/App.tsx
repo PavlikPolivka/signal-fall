@@ -111,6 +111,7 @@ const TABS: { id: SidebarTab; label: string; key: string }[] = [
   { id: 'air', label: 'Air', key: 'Y' },
 ];
 const MENU_MODES = ['buildMenu', 'defenseMenu', 'infantryMenu', 'vehicleMenu', 'airMenu'];
+const UNIT_MENU_LABEL: Record<string, string> = { infantryMenu: 'Infantry', vehicleMenu: 'Vehicles', airMenu: 'Air' };
 
 
 function Sidebar({ state, input, renderer }: { state: ClientState; input: Input; renderer: Renderer }) {
@@ -164,7 +165,9 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       )}
       {state.placing && (
         <div class="hint" data-testid="placing-hint">
-          Click to place · right-click or Esc to cancel
+          {state.placing.planned
+            ? 'Click where to build it · click the icon again to start without a spot · Esc cancels'
+            : 'Click to place · right-click or Esc to cancel'}
         </div>
       )}
       {!hasProducer && (
@@ -235,7 +238,15 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
         })}
       </div>
       <div class="mode" data-testid="mode">
-        {state.mode === 'ability' ? 'Ability: click a point (blink) or an enemy vehicle (Override)' : state.mode !== 'normal' ? `Mode: ${state.mode}` : ''}
+        {state.mode === 'ability'
+          ? 'Ability: click a point (blink) or an enemy vehicle (Override)'
+          : UNIT_MENU_LABEL[state.mode]
+            ? `${UNIT_MENU_LABEL[state.mode]}: press a letter to queue (Shift: 5) · Esc to close`
+            : state.mode === 'buildMenu' || state.mode === 'defenseMenu'
+              ? 'Press a letter to build'
+              : state.mode !== 'normal'
+                ? `Mode: ${state.mode}`
+                : ''}
       </div>
     </aside>
   );
