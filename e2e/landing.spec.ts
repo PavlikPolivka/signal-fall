@@ -23,3 +23,10 @@ test('old links into the game still work (room codes, live matches)', async ({ p
   await expect(page).toHaveURL(/\/play\/\?room=ABCD$/);
   await expect(page.getByTestId('mp-code')).toHaveValue('ABCD');
 });
+
+test('the privacy page is linked and readable', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Privacy' }).click();
+  await expect(page.locator('h1')).toHaveText('Privacy');
+  await expect(page.locator('main')).toContainText('Supabase');
+});

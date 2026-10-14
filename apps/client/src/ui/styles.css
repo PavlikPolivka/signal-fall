@@ -1808,3 +1808,23 @@ table.matrix td.lo {
 .live-badge.lost {
   background: #7a3b00;
 }
+
+.account .oauth-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.account button.oauth {
+  font-weight: 700;
+}
+.account button.oauth.github {
+  background: #24292f;
+  border-color: #3d444d;
+  color: #fff;
+}
+.account button.oauth.google {
+  background: #fff;
+  border-color: #dadce0;
+  color: #1f1f1f;
+}

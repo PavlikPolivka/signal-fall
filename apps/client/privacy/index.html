@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Privacy — Signal Fall</title>
+    <style>
+      body { margin: 0; background: #0a0c10; color: #dfe4ea; font: 17px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      main { max-width: 720px; margin: 0 auto; padding: 48px 20px 64px; }
+      h1 { color: #e8c35a; margin-top: 0; }
+      h2 { margin-top: 32px; font-size: 20px; }
+      a { color: #3ee6ff; }
+      .muted { color: #8b95a3; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">← Signal Fall</a></p>
+      <h1>Privacy</h1>
+      <p class="muted">Last updated: 14 October 2026</p>
+
+      <p>Signal Fall is a free browser game. It collects as little as it can, and nothing for advertising.</p>
+
+      <h2>What is stored</h2>
+      <ul>
+        <li><b>A player account.</b> Everyone starts as an anonymous guest. The account has an id and a display name you can change.</li>
+        <li><b>Your email</b>, only if you choose to keep your account with an email link, or with Google or GitHub (we receive the email address and
+          name those services share; nothing else, and no access to your files or repositories).</li>
+        <li><b>Match records</b>: factions, opponent, result, length, map seed and a short score summary, for your history, records and the
+          leaderboard. Rated matches and your rating are visible to other players, with your display name.</li>
+        <li><b>Desync reports</b>: if an online match goes out of sync, the game sends the match's command log so we can fix the bug.</li>
+        <li><b>In your browser only</b>: your settings, last skirmish setup and the session that keeps you signed in.</li>
+      </ul>
+
+      <h2>What is not</h2>
+      <p>No ads, no analytics or tracking cookies, no selling or sharing of data. Online matches connect players directly to each other;
+        the game does not record your chat or voice (there is none) or your IP address beyond what the hosting services log for security.</p>
+
+      <h2>Who processes it</h2>
+      <ul>
+        <li><b>Supabase</b> (database and sign-in, hosted in Frankfurt, EU).</li>
+        <li><b>Vercel</b> (serves the website).</li>
+        <li><b>Resend</b> (sends the sign-in and confirmation emails).</li>
+        <li><b>Cloudflare</b> (relays online-match traffic when players cannot connect directly, and the domain's DNS).</li>
+      </ul>
+
+      <h2>Your choices</h2>
+      <p>You can play without an account (as a guest) and without giving an email. To see, export or delete your account and match records,
+        email <a href="mailto:privacy@signal-fall.app">privacy@signal-fall.app</a> from the address on your account, or write from any address with
+        your display name. Deletion removes your profile, email and match records.</p>
+
+      <h2>Changes</h2>
+      <p>If this policy changes, the date above changes with it.</p>
+    </main>
+  </body>
+</html>

@@ -1,7 +1,22 @@
 import { useEffect, useState } from 'preact/hooks';
-import { account, backend, rename, saveAccount, signInWithEmail, signOut, type Account as AccountInfo } from '../net/backend';
+import {
+  account,
+  backend,
+  linkProvider,
+  linkedProviders,
+  oauthProviders,
+  rename,
+  saveAccount,
+  signInWithEmail,
+  signInWithProvider,
+  signOut,
+  type Account as AccountInfo,
+  type OAuthProvider,
+} from '../net/backend';
 
-type Busy = null | 'name' | 'save' | 'signin' | 'signout';
+const PROVIDER_NAME: Record<OAuthProvider, string> = { google: 'Google', github: 'GitHub' };
+
+type Busy = null | 'name' | 'save' | 'signin' | 'signout' | 'oauth';
 
 /**
  * Account panel: display name, and turning the guest account into a permanent one.
@@ -16,6 +31,9 @@ export function Account({ onClose, onChange }: { onClose: () => void; onChange?:
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [providers, setProviders] = useState<OAuthProvider[]>([]);
+  const [linked, setLinked] = useState<string[]>([]);
+  useEffect(() => void oauthProviders().then(setProviders), []);
 
   const load = async () => {
     if (!sb) return;
@@ -23,6 +41,7 @@ export function Account({ onClose, onChange }: { onClose: () => void; onChange?:
       const a = await account(sb);
       setMe(a);
       setName(a.name);
+      setLinked(await linkedProviders(sb));
       onChange?.(a);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -115,17 +134,34 @@ export function Account({ onClose, onChange }: { onClose: () => void; onChange?:
                         {busy === 'save' ? 'Sending…' : 'Send link'}
                       </button>
                     </div>
+                    {providers.length > 0 && (
+                      <div class="oauth-row">
+                        <span class="muted small">or keep it with</span>
+                        {providers.map((p) => (
+                          <button class={`oauth ${p}`} data-testid={`account-link-${p}`} disabled={busy !== null} onClick={() => void run('oauth', () => linkProvider(sb, p), '')}>
+                            {PROVIDER_NAME[p]}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </section>
                   <section>
                     <h3>Already have an account?</h3>
-                    <p class="muted small">We email you a sign-in link. Signing in replaces this guest in this browser.</p>
-                    <button
-                      data-testid="account-signin"
-                      disabled={busy !== null || !validEmail}
-                      onClick={() => void run('signin', () => signInWithEmail(sb, email), 'Check your email for the sign-in link.')}
-                    >
-                      {busy === 'signin' ? 'Sending…' : 'Email me a sign-in link'}
-                    </button>
+                    <p class="muted small">Signing in replaces this guest in this browser.</p>
+                    <div class="oauth-row">
+                      <button
+                        data-testid="account-signin"
+                        disabled={busy !== null || !validEmail}
+                        onClick={() => void run('signin', () => signInWithEmail(sb, email), 'Check your email for the sign-in link.')}
+                      >
+                        {busy === 'signin' ? 'Sending…' : 'Email me a sign-in link'}
+                      </button>
+                      {providers.map((p) => (
+                        <button class={`oauth ${p}`} data-testid={`account-signin-${p}`} disabled={busy !== null} onClick={() => void run('oauth', () => signInWithProvider(sb, p), '')}>
+                          Sign in with {PROVIDER_NAME[p]}
+                        </button>
+                      ))}
+                    </div>
                   </section>
                 </>
               ) : (
@@ -135,11 +171,31 @@ export function Account({ onClose, onChange }: { onClose: () => void; onChange?:
                     {me.email}
                     {me.pendingEmail && <span class="muted"> (changing to {me.pendingEmail})</span>}
                   </p>
+                  {linked.length > 0 && <p class="muted small">Sign in with: {linked.map((p) => PROVIDER_NAME[p as OAuthProvider] ?? p).join(', ')}</p>}
+                  {providers.some((p) => !linked.includes(p)) && (
+                    <div class="oauth-row">
+                      <span class="muted small">Also sign in with</span>
+                      {providers
+                        .filter((p) => !linked.includes(p))
+                        .map((p) => (
+                          <button class={`oauth ${p}`} data-testid={`account-link-${p}`} disabled={busy !== null} onClick={() => void run('oauth', () => linkProvider(sb, p), '')}>
+                            {PROVIDER_NAME[p]}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                   <button data-testid="account-signout" disabled={busy !== null} onClick={() => void run('signout', () => signOut(sb), 'Signed out. You are a guest again.')}>
                     Sign out
                   </button>
                 </section>
               )}
+              <p class="muted small">
+                What we keep and why:{' '}
+                <a href="/privacy/" target="_blank" rel="noopener">
+                  privacy
+                </a>
+                .
+              </p>
               {notice && (
                 <p class="good" data-testid="account-notice">
                   {notice}

@@ -65,6 +65,8 @@ function friendly(message: string): string {
   if (/duplicate key|profiles_display_name_key/i.test(message)) return 'That name is taken.';
   if (/check constraint/i.test(message)) return 'Names are 3–20 letters, digits, spaces, dots, dashes or underscores.';
   if (/already been registered|already registered|email_exists/i.test(message)) return 'That email already has an account. Use “Sign in” instead.';
+  if (/identity.*already|already linked|identity_already_exists/i.test(message)) return 'That account is already used by another player. Use “Sign in” instead.';
+  if (/manual linking/i.test(message)) return 'Linking accounts is not enabled on the server yet.';
   if (/rate limit/i.test(message)) return 'Too many emails for now. Try again in a while.';
   return message;
 }
@@ -93,6 +95,42 @@ export async function signInWithEmail(sb: SupabaseClient, email: string): Promis
   if (error) throw new Error(/signups not allowed|not found/i.test(error.message) ? 'No account with that email. Save your guest account first.' : friendly(error.message));
 }
 
+export type OAuthProvider = 'github' | 'google';
+
+/** Sign-in providers switched on in the backend (only those get buttons). */
+export async function oauthProviders(): Promise<OAuthProvider[]> {
+  if (!URL || !KEY) return [];
+  try {
+    const res = await fetch(`${URL}/auth/v1/settings`, { headers: { apikey: KEY } });
+    const s = (await res.json()) as { external?: Record<string, boolean> };
+    return (['google', 'github'] as const).filter((p) => s.external?.[p]);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Guest → permanent with Google or GitHub: the provider's identity is linked to this
+ * guest, so the name and history stay. The browser goes to the provider and comes back.
+ */
+export async function linkProvider(sb: SupabaseClient, provider: OAuthProvider): Promise<void> {
+  await signIn(sb);
+  const { error } = await sb.auth.linkIdentity({ provider, options: { redirectTo: returnUrl() } });
+  if (error) throw new Error(friendly(error.message));
+}
+
+/** Sign in to an existing account with Google or GitHub (replaces the guest in this browser). */
+export async function signInWithProvider(sb: SupabaseClient, provider: OAuthProvider): Promise<void> {
+  const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: returnUrl() } });
+  if (error) throw new Error(friendly(error.message));
+}
+
+/** Providers already linked to the signed-in account. */
+export async function linkedProviders(sb: SupabaseClient): Promise<string[]> {
+  const { data } = await sb.auth.getUser();
+  return (data.user?.identities ?? []).map((i) => i.provider).filter((p) => p !== 'anonymous');
+}
+
 /** Sign out; the next online action starts a fresh guest. */
 export async function signOut(sb: SupabaseClient): Promise<void> {
   await sb.auth.signOut();
@@ -113,7 +151,10 @@ export async function finishEmailLink(sb: SupabaseClient): Promise<string | null
   history.replaceState(null, '', returnUrl());
   if (error) return `Sign-in link failed: ${error}`;
   if (message) return message; // e.g. "confirm the link sent to the other email" during a change
-  return type === 'email_change' || type === 'signup' ? 'Account saved. You can now sign in with your email on any device.' : 'Signed in.';
+  if (type === 'email_change' || type === 'signup') return 'Account saved. You can now sign in with your email on any device.';
+  // Back from Google / GitHub: a guest who linked it is now a saved account.
+  if (hash.has('provider_token') || query.has('code')) return 'Signed in. Your account is saved and works on any device.';
+  return 'Signed in.';
 }
 
 /** Register a new room; retries with a fresh code if one is taken. */

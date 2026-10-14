@@ -186,6 +186,7 @@ function Landing() {
         <a href={`${REPO}/blob/main/docs/AGENTS.md`} rel="noopener">
           AI agents (MCP)
         </a>
+        <a href={`${BASE}privacy/`}>Privacy</a>
         <span class="muted">MIT license</span>
       </footer>
 
