@@ -109,7 +109,8 @@ test('2v2: three people and an AI over a full mesh stay in sync', async ({ brows
   test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
   test.skip(!!process.env.SUPABASE_URL, 'offline mesh test (one browser profile)');
   test.setTimeout(240_000);
-  const ctx = await browser.newContext();
+  // Three software-rendered tabs starve a small CI runner: keep each one tiny (render cost follows pixels).
+  const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
   const [host, a, b] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
   for (const p of [host, a, b]) p.on('pageerror', (e) => console.error(e.message));
 
