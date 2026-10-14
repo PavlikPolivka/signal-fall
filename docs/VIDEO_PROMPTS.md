@@ -41,19 +41,26 @@ Fifteen clips, one per mission (story and missions in [CAMPAIGN.md](CAMPAIGN.md)
 single prompt that includes the full art direction and the recurring characters, so you can copy one block and paste it
 as is. Save as `apps/client/public/assets/video/campaign-NN.mp4` (1920×1080, H.264, ≤ 10 MB).
 
-**Shooting plan at two clips per day (8 days).** Missions 1 and 2 come first because they open the campaign. After that
-the order goes by how much a clip sets up the story:
+**Shooting plan at one clip per day (15 days).** Missions 1 and 2 come first because they open the campaign. After
+that the order goes by how much a clip sets up the story, so the most important ones exist early:
 
-| Day | Clips |
+| Day | Clip |
 |---|---|
-| 1 | 01, 02 |
-| 2 | 03, 04 |
-| 3 | 05, 06 |
-| 4 | 11, 08 |
-| 5 | 10, 14 |
-| 6 | 15, 07 |
-| 7 | 09, 12 |
-| 8 | 13 |
+| 1 | 01 |
+| 2 | 02 |
+| 3 | 03 |
+| 4 | 04 |
+| 5 | 05 |
+| 6 | 06 |
+| 7 | 11 |
+| 8 | 08 |
+| 9 | 10 |
+| 10 | 14 |
+| 11 | 15 |
+| 12 | 07 |
+| 13 | 09 |
+| 14 | 12 |
+| 15 | 13 |
 
 If a clip comes out with the wrong look, regenerate it with the same prompt before moving on: the characters only stay
 consistent across clips if their descriptions stay identical.
