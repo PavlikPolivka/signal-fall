@@ -2,7 +2,7 @@
 
 A fast, C&C-style sci-fi RTS for the browser: three asymmetric factions (Holdout, Halcyon, Choir), procedural isometric maps, skirmish vs AI and 1v1 peer-to-peer multiplayer. Built end to end by Claude Code, assets included.
 
-**https://signal-fall.vercel.app** (landing page) · **play: https://signal-fall.vercel.app/play/**
+**https://signal-fall.app** (landing page) · **play: https://signal-fall.app/play/**
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 
@@ -62,12 +62,15 @@ Static site on Vercel (`vercel.json`: client build, long cache for hashed files,
 Multiplayer backend: Supabase project in Frankfurt (`supabase/`: migrations, the TURN-credentials function;
 Cloudflare TURN key in the function secrets).
 
+Domain: `signal-fall.app` (DNS on Cloudflare, records "DNS only": `A @ 76.76.21.21`, `CNAME www
+cname.vercel-dns.com`, plus Resend's mail records). `www` and `signal-fall.vercel.app` redirect to it.
+
 Accounts: everyone starts as an anonymous guest with a `profiles` row (display name). Confirming an
 email (Account → Send link) turns the guest into a permanent account with the same user id, so the
-name and history stay; other devices sign in with an emailed link. Auth URLs: site
-`https://signal-fall.vercel.app`, redirects allowed for it and localhost. The hosted project uses
-Supabase's built-in mailer, which only delivers to the project team's addresses (2 emails/hour):
-real players need custom SMTP (e.g. Resend) set in the dashboard.
+name and history stay; other devices sign in with an emailed link. Auth URLs: site `https://signal-fall.app`, redirects allowed for it, the old
+`signal-fall.vercel.app` and localhost. Email goes through Resend (SMTP `smtp.resend.com`, sender
+`Signal Fall <noreply@signal-fall.app>`, 30 emails an hour; the API key lives only in the Supabase
+dashboard settings).
 
 Multiplayer is 1v1 or 2v2: the lobby has a seat per player (open, a person, or an AI the host
 adds); every pair of people opens its own WebRTC data channel (full mesh, the lower signaling id
