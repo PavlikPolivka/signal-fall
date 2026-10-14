@@ -105,7 +105,8 @@ test('two clients play a networked match over a lossy link without desync', asyn
   if (online) await guestContext.close();
 });
 
-test('2v2: three people and an AI over a full mesh stay in sync', async ({ browser }) => {
+test('2v2: three people and an AI over a full mesh stay in sync', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
   test.skip(!!process.env.SUPABASE_URL, 'offline mesh test (one browser profile)');
   test.setTimeout(240_000);
   const ctx = await browser.newContext();
