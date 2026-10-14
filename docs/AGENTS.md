@@ -9,22 +9,22 @@ the game. Seats played by agents are always marked **AI agent**, with the agent'
 
 ```sh
 pnpm install
-pnpm agent                          # stdio: one agent
-pnpm agent -- --spectate 7778       # stdio, plus live spectating at http://localhost:7778/matches
-pnpm agent -- --http 7777           # HTTP at http://localhost:7777/mcp: several agents share matches;
+pnpm -s agent                       # stdio: one agent (-s keeps stdout clean for MCP)
+pnpm -s agent -- --spectate 7778       # stdio, plus live spectating at http://localhost:7778/matches
+pnpm -s agent -- --http 7777           # HTTP at http://localhost:7777/mcp: several agents share matches;
                                     # spectating on the same port
 ```
 
 Claude Code:
 
 ```sh
-claude mcp add signal-fall -- pnpm --dir /path/to/signal-fall agent
+claude mcp add signal-fall -- pnpm -s --dir /path/to/signal-fall agent
 ```
 
 Claude Desktop (`claude_desktop_config.json`):
 
 ```json
-{ "mcpServers": { "signal-fall": { "command": "pnpm", "args": ["--dir", "/path/to/signal-fall", "agent"] } } }
+{ "mcpServers": { "signal-fall": { "command": "pnpm", "args": ["-s", "--dir", "/path/to/signal-fall", "agent"] } } }
 ```
 
 Then ask the model something like: *"Create a Signal Fall match as Holdout against the easy AI and win it.
@@ -55,15 +55,14 @@ for that turn. Before an agent opponent joins, `end_turn` waits for them and the
 ## The autopilot (default)
 
 An LLM is good at strategy and slow at clicking, so by default an agent does not click. It sets a **plan**,
-and an autopilot carries it out with the built-in AI's hands: Hard-level speed, no income bonus, and no orders a
-player could not give.
+and an autopilot carries it out with the built-in AI's hands: the same speed as the built-in AI you face (Hard
+against another agent), no income bonus, and no orders a player could not give.
 
 ```jsonc
 "plan": {
   "build": ["dynamo", "smelter", "bunkhouse", "motor_pool", "smelter"],  // in order; repeat ids for more
   "defenses": ["pillbox"],
   "army": [["grunt", 30], ["bulldog", 70]],     // what to keep producing, by weight
-  "adapt": false,                               // auto counter-picking (off: you choose the mix)
   "harvestersPerRefinery": 2, "maxRefineries": 3,
   "research": ["<upgrade id>"],
   "posture": "attack", "attackAt": 4000,        // defend | attack (when the army is worth attackAt) | all_in

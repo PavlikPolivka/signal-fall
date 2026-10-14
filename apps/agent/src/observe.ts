@@ -216,7 +216,16 @@ export function observe(match: AgentMatch, seat: number): Observation {
   const nowUnits = new Map(units.map((u) => [u.id, u.type]));
   const nowStructures = new Map(structures.map((st) => [st.id, st.type]));
   if (prev) {
-    const lostU = [...prev.units].filter(([id]) => !nowUnits.has(id)).map(([, t]) => t);
+    // A construction vehicle that became a construction yard was deployed, not lost.
+    const cv = rules.units[faction.constructionUnit]!.id;
+    const deployed = [...nowStructures.values()].filter((t) => rules.structures[rules.structureIndex.get(t)!]!.role === 'conyard').length > [...prev.structures.values()].filter((t) => rules.structures[rules.structureIndex.get(t)!]!.role === 'conyard').length;
+    const lostAll = [...prev.units].filter(([id]) => !nowUnits.has(id)).map(([, t]) => t);
+    const deployedIdx = deployed ? lostAll.indexOf(cv) : -1;
+    if (deployedIdx >= 0) {
+      lostAll.splice(deployedIdx, 1);
+      events.push(`Deployed: ${cv}`);
+    }
+    const lostU = lostAll;
     const lostS = [...prev.structures].filter(([id]) => !nowStructures.has(id)).map(([, t]) => t);
     const newS = [...nowStructures].filter(([id]) => !prev.structures.has(id)).map(([, t]) => t);
     if (lostU.length) events.push(`Lost units: ${counted(lostU)}`);

@@ -49,10 +49,10 @@ rally {building, to} · sell | repair {building} · surrender
 const action = z.looseObject({ do: z.string() });
 
 const PLAN_HELP = `"plan" (with the autopilot) is your standing orders; it replaces the previous plan:
-{ build: [structure ids in order, repeat for more], defenses: [ids], army: [[unit id, weight 0-100], ...], adapt: bool (auto counter-picking, default off),
+{ build: [structure ids in order, repeat for more], defenses: [ids], army: [[unit id, weight 0-100], ...],
   harvestersPerRefinery: 0-4, maxRefineries: 1-6, research: [upgrade ids], posture: "defend" | "attack" | "all_in", attackAt: army value in credits,
   target: [x, y] or null (nearest known enemy structure), rally: [x, y] or null, scout: bool, harass: bool }
-The autopilot builds, harvests, places, fills production queues with your mix and builds what that mix needs. It never retreats, defends or
+The autopilot (same speed as the built-in AI you face) builds, harvests, places, fills production queues with your mix and builds what that mix needs. It never retreats, defends or
 picks counters on its own: watch "events" and change the plan (or give unit orders) yourself.`;
 
 const plan = z.looseObject({}).describe('Standing orders for the autopilot (see the tool description)');
@@ -110,9 +110,11 @@ export function createServer(manager = new MatchManager()): McpServer {
     async (a) => {
       try {
         const autopilot = a.autopilot ?? true;
-        const me: Seat = { kind: 'agent', agent: { name: a.agent_name, model: a.model, autopilot } };
+        // The autopilot's hands match the built-in opponent's (same speed), so only decisions differ.
+        const hands = autopilot ? (a.opponent === 'agent' ? 'hard' : (a.opponent as Difficulty)) : false;
+        const me: Seat = { kind: 'agent', agent: { name: a.agent_name, model: a.model, autopilot: hands } };
         const them: Seat =
-          a.opponent === 'agent' ? { kind: 'agent', agent: { name: 'waiting for an agent', autopilot } } : { kind: 'ai', difficulty: a.opponent as Difficulty };
+          a.opponent === 'agent' ? { kind: 'agent', agent: { name: 'waiting for an agent', autopilot: hands } } : { kind: 'ai', difficulty: a.opponent as Difficulty };
         const match = new AgentMatch({
           factions: [FACTION_IDS.indexOf(a.faction), FACTION_IDS.indexOf(a.opponent_faction)],
           seats: [me, them],
@@ -212,6 +214,8 @@ export function createServer(manager = new MatchManager()): McpServer {
         let accepted: unknown;
         if (next) {
           accepted = sanitizeDirectives(match.sim.world, seat, next);
+          // Choosing counters is the agent's job: the autopilot's automatic counter-picking stays off.
+          delete (accepted as { adapt?: boolean }).adapt;
           match.queue(seat, [{ type: 'directives', directives: accepted as never }]);
         }
         const results = actions?.length ? apply(match, seat, actions as unknown as Action[]) : [];

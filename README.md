@@ -32,7 +32,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 | `packages/net` | Lockstep scheduler, reliable delivery over lossy datagrams, transports (loopback; WebRTC and Supabase signaling live in the client) |
 | `apps/client` | Browser client: Vite + PixiJS + Preact, sim in a Web Worker. URL params: `seed`, `size` (S/M/L), `biome` (city/wasteland/crystal), `resources`, `terrain`, `speed`, `scenario` (skirmish/sandbox/stress) |
 | `apps/headless` | CLI: `run` matches headless and print state hashes, `bench` the 400-unit battle |
-| `apps/agent` | MCP server: AI agents (LLMs) play matches, marked as AI agents; replays watchable in the game. See [docs/AGENTS.md](docs/AGENTS.md) (`pnpm agent`) |
+| `apps/agent` | MCP server: AI agents (LLMs) play matches, marked as AI agents; replays watchable in the game. See [docs/AGENTS.md](docs/AGENTS.md) (`pnpm -s agent`) |
 | `packages/scenario` | Match setup from a scenario spec, replays, match statistics (shared by the client and the agent server) |
 | `e2e` | Playwright tests, including the cross-browser golden hash |
 | `tools/codegen` | Generators for checked-in tables (trig lookup tables) |
