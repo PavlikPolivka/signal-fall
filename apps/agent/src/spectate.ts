@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { MatchManager } from './server';
 
 /** Where people watch: the hosted game, which follows a stream given in ?watch=. */
-export const GAME_URL = process.env.SIGNAL_FALL_GAME_URL ?? 'https://signal-fall.vercel.app/';
+export const GAME_URL = process.env.SIGNAL_FALL_GAME_URL ?? 'https://signal-fall.vercel.app/play/';
 
 export function watchUrl(base: string, matchId: string): string {
   return `${GAME_URL}?watch=${encodeURIComponent(`${base}/matches/${matchId}/stream`)}`;

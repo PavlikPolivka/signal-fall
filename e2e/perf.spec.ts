@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 // machines (CI runners use SwiftShader) only the main-thread frame cost is checked.
 
 test('400 units render at 60 FPS', async ({ page }) => {
-  await page.goto('/?scenario=stress&units=200');
+  await page.goto('/play/?scenario=stress&units=200');
   await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: { entityCount: number } | null } } }).__signalFall.state.cur?.entityCount);
   await page.waitForTimeout(2000);
   const r = await page.evaluate(

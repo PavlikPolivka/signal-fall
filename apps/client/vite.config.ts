@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -11,6 +12,8 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: true,
+    // Two pages: the landing page at / and the game at /play/.
+    rollupOptions: { input: { landing: resolve(import.meta.dirname, 'index.html'), play: resolve(import.meta.dirname, 'play/index.html') } },
   },
   preview: {
     port: 4173,

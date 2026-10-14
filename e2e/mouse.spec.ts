@@ -25,7 +25,7 @@ async function selectOwn(page: Page, id?: string): Promise<number> {
 
 test.describe('mouse', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/?scenario=sandbox');
+    await page.goto('/play/?scenario=sandbox');
     await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
     // Look at open ground away from both armies.
     await page.evaluate(() => (window as unknown as Win).__signalFall.renderer.centerOnSim(48 * 1024, 70 * 1024));

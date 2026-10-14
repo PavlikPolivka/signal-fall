@@ -40,7 +40,7 @@ async function buildWithHotkey(page: Page, key: string, id: string): Promise<voi
 }
 
 test('build a base and train a unit with hotkeys', async ({ page }) => {
-  await page.goto('/?speed=4&ai=none');
+  await page.goto('/play/?speed=4&ai=none');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   // Select the construction vehicle and deploy it.
   await sf(page, () => {

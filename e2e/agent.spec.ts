@@ -20,10 +20,10 @@ test('a replay of an AI agent match marks the agent', async ({ page }, info) => 
   const file = info.outputPath('agent-replay.json');
   writeFileSync(file, JSON.stringify(m.replay(0)));
 
-  await page.goto('/');
+  await page.goto('/play/');
   await page.setInputFiles('[data-testid=watch-replay] input', file);
   const seats = page.getByTestId('replay-seats');
-  await expect(seats).toContainText('AI agent');
+  await expect(seats).toContainText('AI agent', { timeout: 20_000 });
   await expect(seats).toContainText('Test Agent');
   await expect(seats).toContainText('AI (Easy)');
   await expect(seats.locator('.seat.agent')).toHaveAttribute('title', /scripted/);

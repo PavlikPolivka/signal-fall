@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 type Win = { __signalFall: { state: any } }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 test('the end screen opens a match report with a table and charts', async ({ page }) => {
-  await page.goto('/?seed=8&size=S&ai=easy&speed=8');
+  await page.goto('/play/?seed=8&size=S&ai=easy&speed=8');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await page.waitForTimeout(4000);
   // End the match: surrender.
@@ -18,7 +18,7 @@ test('the end screen opens a match report with a table and charts', async ({ pag
 });
 
 test('2v2: surrendering while the ally fights on shows "you are out", then the end', async ({ page }) => {
-  await page.goto('/?mode=2v2&seed=8&size=S&ai=easy&speed=8');
+  await page.goto('/play/?mode=2v2&seed=8&size=S&ai=easy&speed=8');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await page.waitForTimeout(2000);
   await page.evaluate(() => (window as unknown as Win).__signalFall.state.send({ type: 'surrender' }));

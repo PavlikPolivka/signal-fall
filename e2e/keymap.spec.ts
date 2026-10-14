@@ -213,7 +213,7 @@ for (const ctx of ['global', 'units', 'base'] as const) {
 
 test.describe('every keymap entry works', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/?scenario=sandbox');
+    await page.goto('/play/?scenario=sandbox');
     await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
     // Park the cursor mid-view (outside the edge-scroll zone) with the page focused.
     const box = (await page.locator('[data-testid=game] canvas').boundingBox())!;

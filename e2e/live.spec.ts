@@ -33,7 +33,7 @@ test('follow an agent match live, to the verified end', async ({ page }) => {
   for (let i = 0; i < 5; i++) await match.endTurn(seat);
 
   // The browser joins mid-match and catches up.
-  await page.goto(`/?watch=${encodeURIComponent(`${base}/matches/${match.id}/stream`)}`);
+  await page.goto(`/play/?watch=${encodeURIComponent(`${base}/matches/${match.id}/stream`)}`);
   await expect(page.getByTestId('live-badge')).toContainText('Live', { timeout: 20_000 });
   await expect(page.getByTestId('replay-seats')).toContainText('Live Agent');
   // Turns keep coming; the watcher follows.

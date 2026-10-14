@@ -4,10 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>Signal Fall</title>
+    <title>Signal Fall — a browser RTS</title>
+    <meta name="description" content="Signal Fall: a free real-time strategy game in your browser. Three factions, procedural maps, skirmish against the AI, 1v1 and 2v2 online, and AI agents that play over MCP." />
+    <meta property="og:title" content="Signal Fall" />
+    <meta property="og:description" content="A free real-time strategy game in your browser: humans, a planetary AI and an awakened alien chorus fight over one crystal." />
+    <meta property="og:image" content="/assets/ui/keyart.jpg" />
+    <script>
+      // Links into the game (rooms, live matches, account emails) used to point at /: send them on.
+      if (location.search || /access_token|error_description|type=/.test(location.hash)) location.replace('/play/' + location.search + location.hash);
+    </script>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="landing"></div>
+    <script type="module" src="/src/landing.tsx"></script>
   </body>
 </html>

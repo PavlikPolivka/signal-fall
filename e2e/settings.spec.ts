@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 type Win = { __signalFall: { state: any } }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 test('first-match tips follow progress and can be hidden', async ({ page }) => {
-  await page.goto('/?seed=3&size=S&ai=easy&speed=4');
+  await page.goto('/play/?seed=3&size=S&ai=easy&speed=4');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await expect(page.getByTestId('hints')).toContainText('deploy');
   await page.evaluate(() => {
@@ -22,7 +22,7 @@ test('first-match tips follow progress and can be hidden', async ({ page }) => {
 });
 
 test('settings persist across reloads', async ({ page }) => {
-  await page.goto('/?scenario=sandbox');
+  await page.goto('/play/?scenario=sandbox');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await page.keyboard.press('Backquote');
   await page.getByTestId('setting-effects-reduced').click();

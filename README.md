@@ -2,7 +2,7 @@
 
 A fast, C&C-style sci-fi RTS for the browser: three asymmetric factions (Holdout, Halcyon, Choir), procedural isometric maps, skirmish vs AI and 1v1 peer-to-peer multiplayer. Built end to end by Claude Code, assets included.
 
-**Play: https://signal-fall.vercel.app**
+**https://signal-fall.vercel.app** (landing page) · **play: https://signal-fall.vercel.app/play/**
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
 

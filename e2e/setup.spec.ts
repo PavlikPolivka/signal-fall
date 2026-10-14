@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 type Win = { __signalFall: any };
 
 test('skirmish setup starts a game with the chosen options', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/play/');
   await page.click('[data-testid=open-skirmish]');
   await expect(page.locator('[data-testid=setup]')).toBeVisible();
   await page.click('[data-testid=biome] [data-value=city]');
@@ -21,7 +21,7 @@ test('skirmish setup starts a game with the chosen options', async ({ page }) =>
   });
   expect(st).toEqual({ biome: 'city', width: 96, players: 2 });
   // Settings are remembered for next time.
-  await page.goto('/');
+  await page.goto('/play/');
   await page.click('[data-testid=open-skirmish]');
   await expect(page.locator('[data-testid=biome] [data-value=city]')).toHaveClass(/active/);
   // Back returns to the main menu.
@@ -30,7 +30,7 @@ test('skirmish setup starts a game with the chosen options', async ({ page }) =>
 });
 
 test('the menu backdrop video keeps playing across menu screens', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/play/');
   const video = page.locator('.menu-backdrop video.on');
   // The loop video is optional (the key art stays without it).
   await video.first().waitFor({ timeout: 5000 }).catch(() => undefined);

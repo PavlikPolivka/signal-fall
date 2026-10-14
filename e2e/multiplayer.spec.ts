@@ -44,13 +44,13 @@ test('two clients play a networked match over a lossy link without desync', asyn
   const guest = await guestContext.newPage();
   for (const p of [host, guest]) p.on('pageerror', (e) => console.error(e.message));
 
-  await host.goto(`/?netsim=${NETSIM}`);
+  await host.goto(`/play/?netsim=${NETSIM}`);
   await host.click('[data-testid=open-multiplayer]');
   await host.click('[data-testid=mp-create]');
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   expect(code).toMatch(/^[A-Z]{4}$/);
 
-  await guest.goto(`/?netsim=${NETSIM}`);
+  await guest.goto(`/play/?netsim=${NETSIM}`);
   await guest.click('[data-testid=open-multiplayer]');
   await guest.fill('[data-testid=mp-code]', code);
   await guest.click('[data-testid=mp-join]');
@@ -96,7 +96,7 @@ test('two clients play a networked match over a lossy link without desync', asyn
   for (const p of [host, guest]) await expect(p.getByTestId('end-screen')).toBeVisible({ timeout: 30_000 });
   if (online) {
     await host.waitForTimeout(2000);
-    await host.goto('/');
+    await host.goto('/play/');
     await host.click('[data-testid=open-stats]');
     await expect(host.getByTestId('stats-history')).toContainText('Win');
     await expect(host.getByTestId('stats-history')).toContainText('rated');
@@ -114,13 +114,13 @@ test('2v2: three people and an AI over a full mesh stay in sync', async ({ brows
   const [host, a, b] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
   for (const p of [host, a, b]) p.on('pageerror', (e) => console.error(e.message));
 
-  await host.goto(`/?netsim=${NETSIM}`);
+  await host.goto(`/play/?netsim=${NETSIM}`);
   await host.click('[data-testid=open-multiplayer]');
   await host.click('[data-testid=mp-create]');
   await host.click('[data-testid=mp-mode] [data-value="2v2"]');
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   for (const p of [a, b]) {
-    await p.goto(`/?netsim=${NETSIM}`);
+    await p.goto(`/play/?netsim=${NETSIM}`);
     await p.click('[data-testid=open-multiplayer]');
     await p.fill('[data-testid=mp-code]', code);
     await p.click('[data-testid=mp-join]');

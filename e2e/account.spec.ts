@@ -5,7 +5,7 @@ const MAILPIT = process.env.MAILPIT_URL ?? 'http://127.0.0.1:54324';
 
 test('the account panel explains itself without the online service', async ({ page }) => {
   test.skip(online, 'offline build only');
-  await page.goto('/');
+  await page.goto('/play/');
   await page.click('[data-testid=open-account]');
   await expect(page.getByTestId('account-offline')).toBeVisible();
   await page.keyboard.press('Escape');
@@ -14,7 +14,7 @@ test('the account panel explains itself without the online service', async ({ pa
 
 test('a guest renames, saves the account by email, and becomes permanent', async ({ page, request }) => {
   test.skip(!online, 'needs a Supabase stack (SUPABASE_URL)');
-  await page.goto('/');
+  await page.goto('/play/');
   await expect(page.getByTestId('home-me')).toContainText('guest');
   await page.click('[data-testid=open-account]');
   const name = `Tester${Math.floor(Math.random() * 1e6)}`;
