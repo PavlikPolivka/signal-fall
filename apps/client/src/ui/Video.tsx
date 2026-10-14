@@ -78,18 +78,35 @@ class MenuBackdrop {
     })();
   }
 
-  /** Near the end of the active video, start the other one from the top and crossfade. */
+  private switching = false;
+
+  /**
+   * Near the end of the active video, start the other one from the top and
+   * crossfade. Only once it really plays: if the browser refuses, the current
+   * video simply loops (a cut, but never a frozen frame).
+   */
   private watchLoop(): void {
     const cur = this.videos[this.active];
-    if (!cur || !cur.duration || cur.paused) return;
+    if (!cur || !cur.duration || cur.paused || cur.loop || this.switching) return;
     if (cur.duration - cur.currentTime > LOOP_FADE) return;
     const next = this.videos[1 - this.active]!;
     next.currentTime = 0;
-    void next.play().catch(() => undefined);
-    next.classList.add('on');
-    cur.classList.remove('on');
-    this.active = 1 - this.active;
-    window.setTimeout(() => cur.pause(), LOOP_FADE * 1000 + 100);
+    this.switching = true;
+    next.play().then(
+      () => {
+        next.classList.add('on');
+        cur.classList.remove('on');
+        this.active = 1 - this.active;
+        window.setTimeout(() => {
+          cur.pause();
+          this.switching = false;
+        }, LOOP_FADE * 1000 + 100);
+      },
+      () => {
+        cur.loop = true;
+        this.switching = false;
+      },
+    );
   }
 }
 

@@ -92,6 +92,8 @@ export class Lobby {
   /** Links to the other people, by their signaling id. */
   readonly links = new Map<string, LinkLike>();
   private readonly open = new Set<string>();
+  /** WebRTC signals from people we have no link to yet. */
+  private readonly early = new Map<string, unknown[]>();
   private timers: ReturnType<typeof setInterval>[] = [];
   private readonly unsubscribe: () => void;
   private readonly connect: LinkFactory;
@@ -107,8 +109,20 @@ export class Lobby {
     code: string,
     rtc: { iceServers?: RTCIceServer[]; relayOnly?: boolean } | LinkFactory = {},
   ) {
-    this.connect = typeof rtc === 'function' ? rtc : (remote, initiator) => new PeerLink(signaling, remote, initiator, rtc);
+    this.connect =
+      typeof rtc === 'function'
+        ? rtc
+        : (remote, initiator) => {
+            const early = this.early.get(remote) ?? [];
+            this.early.delete(remote);
+            return new PeerLink(signaling, remote, initiator, rtc, early);
+          };
     this.unsubscribe = signaling.onMessage((m) => {
+      // A peer may offer before we know it is in the room: keep its signals for the link.
+      if (m.type === 'rtc') {
+        if (!this.links.has(m.from)) this.early.set(m.from, [...(this.early.get(m.from) ?? []), m.data]);
+        return;
+      }
       if (this.isHost) {
         if (m.type === 'hello') this.admit(m.from, m.data as { name: string; faction: number; uid?: string });
         else if (m.type === 'choose') this.update(m.from, (slot) => (slot.faction = (m.data as { faction: number }).faction));

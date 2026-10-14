@@ -29,6 +29,8 @@ export class PeerLink {
     private readonly remote: string,
     initiator: boolean,
     o: { iceServers?: RTCIceServer[]; relayOnly?: boolean } = {},
+    /** Signals from the peer that arrived before this link existed, handled first. */
+    early: unknown[] = [],
   ) {
     this.ready = new Promise((r) => (this.resolveReady = r));
     this.pc = new RTCPeerConnection({ iceServers: o.iceServers ?? DEFAULT_ICE, iceTransportPolicy: o.relayOnly ? 'relay' : 'all' });
@@ -39,8 +41,12 @@ export class PeerLink {
       if (this.pc.connectionState === 'failed') this.onFailed();
     };
     this.pc.ondatachannel = (ev) => this.useChannel(ev.channel);
+    // Handle signals strictly in order (an answer must not overtake its offer).
+    let chain = Promise.resolve();
+    const handle = (s: RtcSignal) => (chain = chain.then(() => this.handle(s)).catch(() => undefined));
+    for (const s of early) void handle(s as RtcSignal);
     this.unsubscribe = signaling.onMessage((m) => {
-      if (m.type === 'rtc' && m.from === this.remote) void this.handle(m.data as RtcSignal);
+      if (m.type === 'rtc' && m.from === this.remote) void handle(m.data as RtcSignal);
     });
     if (initiator) {
       this.useChannel(this.pc.createDataChannel('lockstep', { ordered: false, maxRetransmits: 0 }));
