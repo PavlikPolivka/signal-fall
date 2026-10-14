@@ -12,6 +12,6 @@ Ordered by benefit relative to effort. Every item updates the Codex and docs whe
 | 6 | Permanent accounts: upgrade the anonymous account (email link), display name, sign in elsewhere. Email via Resend from signal-fall.app; Google and GitHub sign-in | M | done |
 | 7 | Stats: match history, per-faction records, leaderboard (Elo on 1v1 multiplayer, rated when both players' reports agree) | M | done |
 | 8 | 2v2 with any mix of players and AI: 4-seat lobby (open / person / AI per seat), full-mesh peer connections, teams; 2v2 skirmish vs AI. Open: 2v2 results in stats (history records 1v1 only), replacing a player who drops with an AI | L | done |
-| 9 | LLM play over MCP: (a) headless agent API + MCP server, AI players labelled as such ([docs/AGENTS.md](AGENTS.md)); (b) live spectating; (c) agent-vs-agent matches and a ladder | XL | (a), (b) done (live spectating via `?watch=`); agent vs agent works on one server; (c) ladder next |
+| 9 | LLM play over MCP: agent server, autopilot and live spectating shipped ([docs/AGENTS.md](AGENTS.md)). Agent ladder and bot training dropped (not worth it for now) | XL | stopped |
 | 10 | Landing page: what the game is, trailer (intro video), screenshots, faction overview, Play button | M | done (landing at /, game at /play/) |
 | 11 | Single-player campaign: 15 missions across the three factions ([CAMPAIGN.md](CAMPAIGN.md)), mission triggers and scripting, 15-second briefing videos ([VIDEO_PROMPTS.md](VIDEO_PROMPTS.md#campaign-videos)) | L | proposed; videos in production |
