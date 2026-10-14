@@ -312,6 +312,8 @@ export class ClientState {
   private lastReady = [false, false];
   private lastQueueLengths = [0, 0, 0];
   private lastLowPower = false;
+  private lastUpgrades = -1;
+  private lastOptions = -1;
 
   private detectEconomyEvents(): void {
     const cur = this.cur;
@@ -328,6 +330,26 @@ export class ClientState {
     }
     if (this.lowPower && !this.lastLowPower) this.alert('Low power', -1, -1);
     this.lastLowPower = this.lowPower;
+    // Research finished: one more upgrade bit.
+    const upgrades = cur.player(this.localPlayer, 7);
+    if (this.lastUpgrades >= 0 && upgrades !== this.lastUpgrades && popcount(upgrades) > popcount(this.lastUpgrades)) this.notice('Research complete');
+    this.lastUpgrades = upgrades;
+    // A new building unlocked something to build or train.
+    const options = this.buildableCount();
+    if (this.lastOptions >= 0 && options > this.lastOptions) this.notice('New construction options');
+    this.lastOptions = options;
+  }
+
+  /** How many of our faction's structures and units have their requirements met. */
+  private buildableCount(): number {
+    const p = this.players[this.localPlayer];
+    if (!p) return 0;
+    const faction = this.rules.factions[p.faction]!;
+    const roles = this.roles();
+    let n = 0;
+    for (const i of faction.structures) if (this.rules.structures[i]!.category && this.missing(this.rules.structures[i]!.requires, roles).length === 0) n++;
+    for (const i of faction.units) if (this.missing(this.rules.units[i]!.requires, roles).length === 0) n++;
+    return n;
   }
 
   /** Explain why an action did nothing (shown in the top bar). */
@@ -348,6 +370,17 @@ export class ClientState {
   private detectAlerts(): void {
     const { prev, cur } = this;
     if (!prev || !cur) return;
+    // Losses: our entities in the previous snapshot that are gone now (killed, not deployed or sold: those vanish too,
+    // so only count what was recently hurt).
+    for (let i = 0; i < prev.entityCount; i++) {
+      const o = prev.ent(i);
+      if (prev.get(o, E.owner) !== this.localPlayer || cur.index.has(prev.get(o, E.handle))) continue;
+      const kind = prev.get(o, E.kind);
+      if (kind !== KIND.unit && kind !== KIND.structure) continue;
+      const hp = prev.get(o, E.hp) + prev.get(o, E.shields);
+      if (hp > prev.get(o, E.maxHp) * 0.35) continue;
+      this.alert(kind === KIND.structure ? 'Structure lost' : 'Unit lost', prev.get(o, E.x), prev.get(o, E.y));
+    }
     for (let i = 0; i < cur.entityCount; i++) {
       const o = cur.ent(i);
       if (cur.get(o, E.owner) !== this.localPlayer) continue;
@@ -397,4 +430,11 @@ export function saveSettings(s: Settings): void {
   } catch {
     // Not persisted; applies for this session.
   }
+}
+
+/** Bits set in a 32-bit mask. */
+function popcount(n: number): number {
+  let c = 0;
+  for (let v = n >>> 0; v; v &= v - 1) c++;
+  return c;
 }

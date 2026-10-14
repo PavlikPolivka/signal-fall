@@ -49,6 +49,13 @@
       "source": "Captured from the game (apps/client) with Playwright",
       "author": "Signal Fall contributors",
       "license": "MIT"
+    },
+    {
+      "files": "voice/*/*.mp3",
+      "title": "Announcer voices",
+      "source": "Generated with Piper TTS (tools/assets/voices) from the voices norman and cori (LibriVox recordings, public domain) and ljspeech (LJ Speech, public domain), then processed with ffmpeg",
+      "author": "Signal Fall contributors",
+      "license": "MIT"
     }
   ],
   "bundled": [

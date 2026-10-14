@@ -1,0 +1,30 @@
+{
+  "_comment": "Announcer lines per faction. Same meaning for every faction (clear first), faction flavor only where it cannot confuse.",
+  "common": {
+    "construction_complete": "Construction complete.",
+    "unit_ready": "Unit ready.",
+    "base_attack": "Our base is under attack!",
+    "harvester_attack": "Harvester under attack.",
+    "units_attack": "Units under attack.",
+    "low_power": "Low power.",
+    "no_money": "Insufficient funds.",
+    "cant_build": "Cannot build there.",
+    "structure_lost": "Structure lost.",
+    "unit_lost": "Unit lost.",
+    "research_complete": "Research complete.",
+    "new_options": "New construction options.",
+    "field_depleted": "Echo field depleted."
+  },
+  "holdout": {
+    "victory": "Victory. The line held.",
+    "defeat": "We have been defeated."
+  },
+  "halcyon": {
+    "victory": "Victory. Optimization complete.",
+    "defeat": "Defeat. Network lost."
+  },
+  "choir": {
+    "victory": "Victory. The song endures.",
+    "defeat": "Defeat. The song falls silent."
+  }
+}

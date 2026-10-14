@@ -22,6 +22,8 @@ const TOOLS: Entry[] = [
   { title: 'Blender', source: 'blender.org', author: 'Blender Foundation', license: 'GPL-2.0-or-later (tool only; renders are ours)' },
   { title: 'sharp', source: 'sharp.pixelplumbing.com', author: 'Lovell Fuller and contributors', license: 'Apache-2.0' },
   { title: 'maxrects-packer', source: 'npm: maxrects-packer', author: 'Gio Mo', license: 'MIT' },
+  { title: 'Piper TTS', source: 'github.com/rhasspy/piper', author: 'Michael Hansen and contributors', license: 'MIT (tool only); voices norman, cori and ljspeech trained on public-domain recordings' },
+  { title: 'FFmpeg', source: 'ffmpeg.org', author: 'FFmpeg developers', license: 'LGPL/GPL (tool only)' },
 ];
 
 function Section({ title, items }: { title: string; items: Entry[] }) {

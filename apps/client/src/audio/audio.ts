@@ -4,6 +4,8 @@ import type { ClientState } from '../game/state';
 import { isoX, isoY } from '../game/iso';
 import { Music } from './music';
 import { renderSfx } from './sfx';
+import { VoicePlayer, type VoiceLine } from './voice';
+import { PLACEMENT_MESSAGES } from '@signal-fall/sim';
 
 const FX = 1024;
 const KEY = 'signalfall.audio';
@@ -17,6 +19,8 @@ export interface AudioSettings {
   /** 0..1 each. */
   music: number;
   sfx: number;
+  /** The announcer. */
+  voice: number;
   /** Everything silent, volumes kept for unmuting. */
   muted: boolean;
 }
@@ -34,6 +38,23 @@ const LIMITS: Record<string, [number, number]> = {
   boom: [80, 4],
   bigBoom: [200, 2],
 };
+
+/** Alert texts the announcer speaks. */
+const VOICE_FOR: Record<string, VoiceLine> = {
+  'Construction complete': 'construction_complete',
+  'Unit ready': 'unit_ready',
+  'Base under attack': 'base_attack',
+  'Harvester under attack': 'harvester_attack',
+  'Unit under attack': 'units_attack',
+  'Low power': 'low_power',
+  'Not enough money': 'no_money',
+  'Structure lost': 'structure_lost',
+  'Unit lost': 'unit_lost',
+  'Research complete': 'research_complete',
+  'New construction options': 'new_options',
+  'Echo field depleted': 'field_depleted',
+};
+const PLACEMENT_TEXTS = new Set<string>(Object.values(PLACEMENT_MESSAGES));
 
 /** Where the listener is: screen-relative position of a sim point (-1..1 = on screen). */
 export type Listener = (x: number, y: number) => { nx: number; ny: number };
@@ -54,7 +75,11 @@ export class GameAudio {
   private sentSeen = 0;
   /** Times (ms) of recent shots near the player, for music intensity. */
   private combat: number[] = [];
-  settings: AudioSettings = { music: 0.5, sfx: 0.8, muted: false };
+  settings: AudioSettings = { music: 0.5, sfx: 0.8, voice: 0.9, muted: false };
+  private voiceGain: GainNode | null = null;
+  private voice: VoicePlayer | null = null;
+  private ducked = false;
+  private ended = false;
 
   constructor(
     private readonly state: ClientState,
@@ -90,11 +115,14 @@ export class GameAudio {
     this.sfxGain.connect(comp);
     this.music = new Music(ctx);
     this.music.out.connect(comp);
+    // The announcer skips the compressor so it stays crisp over a battle.
+    this.voiceGain = ctx.createGain();
+    this.voiceGain.connect(ctx.destination);
     this.apply();
     this.buffers = await renderSfx(ctx.sampleRate);
   }
 
-  set(kind: 'music' | 'sfx', value: number): void {
+  set(kind: 'music' | 'sfx' | 'voice', value: number): void {
     this.settings[kind] = Math.max(0, Math.min(1, value));
     this.settings.muted = false;
     this.save();
@@ -122,7 +150,9 @@ export class GameAudio {
     const t = this.ctx.currentTime;
     const on = this.settings.muted ? 0 : 1;
     this.sfxGain.gain.setTargetAtTime(this.settings.sfx * on, t, 0.05);
-    this.music.out.gain.setTargetAtTime(this.settings.music * 0.9 * on, t, 0.1);
+    this.voiceGain?.gain.setTargetAtTime(this.settings.voice * on, t, 0.05);
+    // Music steps back while the announcer speaks.
+    this.music.out.gain.setTargetAtTime(this.settings.music * 0.9 * on * (this.ducked ? 0.35 : 1), t, this.ducked ? 0.08 : 0.4);
     if (this.settings.music > 0 && !this.settings.muted) this.music.start();
     else this.music.stop();
   }
@@ -165,18 +195,46 @@ export class GameAudio {
     return unit?.tab === 'infantry' || unit?.isAir ? 'rocket' : 'cannon';
   }
 
-  /** Per-frame: UI cues and music intensity. */
+  /** Lines the announcer has spoken. */
+  get spoken(): readonly string[] {
+    return this.voice?.history ?? [];
+  }
+
+  /** The announcer for our faction, created once the match (and our faction) is known. */
+  private announcer(): VoicePlayer | null {
+    if (this.voice || !this.ctx || !this.voiceGain || !this.state.ready) return this.voice;
+    const faction = this.rules.factions[this.state.players[this.state.localPlayer]?.faction ?? 0]!.id;
+    this.voice = new VoicePlayer(this.ctx, this.voiceGain, faction);
+    this.voice.onSpeaking = (on) => {
+      this.ducked = on;
+      this.apply();
+    };
+    this.voice.preload();
+    return this.voice;
+  }
+
+  /** Per-frame: UI cues, the announcer and music intensity. */
   update(): void {
     if (!this.ctx) return;
     const s = this.state;
+    const voice = this.announcer();
+    const say = (line: VoiceLine) => voice?.say(line);
     const newAlerts = s.alerts.slice(Math.max(0, s.alerts.length - (s.alertTotal - this.alertsSeen)));
     this.alertsSeen = s.alertTotal;
     for (const a of newAlerts) {
+      const line = VOICE_FOR[a.text] ?? (PLACEMENT_TEXTS.has(a.text) ? 'cant_build' : null);
       if (a.kind === 'warn') this.play('error');
       else if (a.text === 'Construction complete') this.play('complete');
       else if (a.text === 'Unit ready') this.play('ready');
       else if (a.text === 'Low power') this.play('lowPower');
       else if (a.text.endsWith('under attack')) this.play('alarm', undefined, undefined, a.text.startsWith('Base') ? 0.9 : 0.55);
+      if (line) say(line);
+    }
+    // Victory and defeat, once.
+    const cur = s.cur;
+    if (!this.ended && cur && cur.a[1] === 1 && !s.spectator) {
+      this.ended = true;
+      say(cur.a[2] === s.players[s.localPlayer]?.team ? 'victory' : 'defeat');
     }
     const newSent = s.sent.slice(Math.max(0, s.sent.length - (s.sentTotal - this.sentSeen)));
     this.sentSeen = s.sentTotal;

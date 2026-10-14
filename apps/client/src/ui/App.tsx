@@ -870,7 +870,7 @@ function EndScreen({ state }: { state: ClientState }) {
 
 function Menu({ state, input, audio }: { state: ClientState; input: Input; audio: GameAudio }) {
   const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
-  const slider = (label: string, kind: 'music' | 'sfx') => (
+  const slider = (label: string, kind: 'music' | 'sfx' | 'voice') => (
     <label class="slider">
       {label}
       <input
@@ -916,6 +916,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
         )}
         {slider('Music', 'music')}
         {slider('Effects', 'sfx')}
+        {slider('Announcer', 'voice')}
         <label class="slider">
           Scroll
           <input
