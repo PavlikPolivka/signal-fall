@@ -8,12 +8,16 @@
     "atlas": "tsx pack.ts",
     "render": "blender -b --factory-startup -P blender/render.py --",
     "terrain": "tsx terrain.ts",
-    "mapshot": "tsx mapshot.ts"
+    "mapshot": "tsx mapshot.ts",
+    "brand": "tsx brand.ts"
   },
   "devDependencies": {
+    "@fontsource/saira-stencil-one": "5.3.0",
     "@signal-fall/data": "workspace:*",
     "@signal-fall/mapgen": "workspace:*",
+    "@types/opentype.js": "1.3.8",
     "maxrects-packer": "2.7.3",
+    "opentype.js": "1.3.4",
     "sharp": "0.35.5"
   }
 }
