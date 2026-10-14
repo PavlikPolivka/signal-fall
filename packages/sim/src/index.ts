@@ -2,6 +2,7 @@ export * from './fx';
 export * from './rng';
 export * from './hash';
 export * from './commands';
+export * from './directives';
 export * from './entities';
 export * from './map';
 export * from './path';

@@ -9,7 +9,7 @@ Ordered by benefit relative to effort. Every item updates the Codex and docs whe
 | 3 | Menus: main menu (Skirmish vs AI / Multiplayer), a setup screen for each with its own map options (the lobby host picks the map), one seamless backdrop video | S | done |
 | 4 | Post-game breakdown: income, army value, losses/kills over time; per-player summary | M | done |
 | 5 | Choir buildings rework (floating crystal style, like the vehicles; growing seedlings while under construction) | M | done |
-| 6 | Permanent accounts: upgrade the anonymous account (email link), display name, sign in elsewhere. Email via Resend from signal-fall.app. Open: Google/GitHub sign-in needs OAuth apps | M | done (email) |
+| 6 | Permanent accounts: upgrade the anonymous account (email link), display name, sign in elsewhere. Email via Resend from signal-fall.app; Google and GitHub sign-in | M | done |
 | 7 | Stats: match history, per-faction records, leaderboard (Elo on 1v1 multiplayer, rated when both players' reports agree) | M | done |
 | 8 | 2v2 with any mix of players and AI: 4-seat lobby (open / person / AI per seat), full-mesh peer connections, teams; 2v2 skirmish vs AI. Open: 2v2 results in stats (history records 1v1 only), replacing a player who drops with an AI | L | done |
 | 9 | LLM play over MCP: (a) headless agent API + MCP server, AI players labelled as such ([docs/AGENTS.md](AGENTS.md)); (b) live spectating; (c) agent-vs-agent matches and a ladder | XL | (a), (b) done (live spectating via `?watch=`); agent vs agent works on one server; (c) ladder next |

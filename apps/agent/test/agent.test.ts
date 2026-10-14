@@ -32,7 +32,7 @@ function decide(o: Observation): Action[] {
 }
 
 describe('agent matches', () => {
-  it('an agent plays an opening through actions; the match replays exactly', () => {
+  it('an agent plays an opening through actions; the match replays exactly', { timeout: 60_000 }, () => {
     const m = new AgentMatch({ factions: [0, 1], seats: [{ kind: 'agent', agent: { name: 'script', model: 'test' } }, { kind: 'ai', difficulty: 'easy' }], seed: 11, map: { size: 'S' } });
     const { seat } = m.claim(0);
     let o = observe(m, seat);

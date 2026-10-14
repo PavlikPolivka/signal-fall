@@ -1,3 +1,5 @@
+import type { Directives } from './directives';
+
 /**
  * Player commands: the only input to the sim. Unit lists are entity handles;
  * positions are Q10 world coordinates. `queue` appends instead of replacing
@@ -42,7 +44,9 @@ export type Command =
   | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number }
   /** Research an upgrade (rules.upgrades index) at the tech center; one at a time. */
   | { type: 'research'; upgrade: number }
-  | { type: 'cancelResearch' };
+  | { type: 'cancelResearch' }
+  /** Set the standing plan an autopilot follows (AI agents); see directives.ts. */
+  | { type: 'directives'; directives: Directives };
 
 export type CommandType = Command['type'];
 

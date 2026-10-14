@@ -13,6 +13,12 @@ export interface AgentSeat {
   name: string;
   /** Model or program behind it, if the agent says. */
   model?: string;
+  /**
+   * An autopilot carries out the agent's directives (build order, army mix, when to attack):
+   * the built-in AI's hands at Hard speed, without its income bonus. Without it, the agent
+   * issues every unit order itself.
+   */
+  autopilot?: boolean;
 }
 
 /** A match to set up: map, sides, AI. Deterministic: the same spec always gives the same match. */
@@ -59,6 +65,7 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
       spec.ai.forEach((difficulty, p) => {
         // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.
         if (difficulty) attachAi(sim, p, difficulty, map.starts);
+        else if (spec.agents?.[p]?.autopilot) attachAi(sim, p, 'hard', map.starts, { directed: true });
         else if (p !== 0 && !spec.humans?.includes(p) && !spec.agents?.[p]) grantBase(sim, p, map.starts[p]!);
       });
       return {

@@ -15,6 +15,7 @@ import {
   worldPlacementView,
   type Brain,
   type Command,
+  type Directives,
   type PlacementView,
   type World,
 } from '@signal-fall/sim';
@@ -86,16 +87,25 @@ export class AiPlayer implements Brain {
   private scoutSentTick = -MINUTE * 10;
   private raiders = new Set<number>();
   private ralliedFactories = new Set<number>();
+  private lastRally = { x: -1, y: -1 };
   private cmds: Command[] = [];
   /** Largest enemy army value seen, fading 1% per think (a pessimistic estimate of what's out there). */
   private peakEnemyArmy = 0;
   private budget = 0;
+  /**
+   * Directed (an AI agent's autopilot): the player's directives replace the faction profile
+   * and the attack logic. Without directives yet, it builds up its economy and stays home.
+   */
+  private readonly directed: boolean;
+  /** This think's plan (directed only). */
+  private plan: Directives = {};
 
-  constructor(opts: { player: number; difficulty: Difficulty; profile: AiProfile; starts: { x: number; y: number }[] }) {
+  constructor(opts: { player: number; difficulty: Difficulty; profile: AiProfile; starts: { x: number; y: number }[]; directed?: boolean }) {
     this.player = opts.player;
     this.difficulty = opts.difficulty;
     this.d = PROFILES[opts.difficulty];
     this.profile = opts.profile;
+    this.directed = opts.directed ?? false;
     this.home = opts.starts[opts.player]!;
     this.enemyStarts = opts.starts.filter((_, i) => i !== opts.player);
     this.nextWaveTick = this.d.firstAttackTick;
@@ -106,6 +116,7 @@ export class AiPlayer implements Brain {
     const allowed = idiv(this.d.apm * world.tick, MINUTE) - this.actionsUsed;
     this.budget = Math.min(MAX_ACTIONS_PER_THINK, allowed);
     this.remember(world);
+    if (this.directed) this.plan = world.players[this.player]!.directives ?? { posture: 'defend' };
     this.peakEnemyArmy = Math.max(this.knownEnemyArmy(world), this.peakEnemyArmy - idiv(this.peakEnemyArmy, 100));
     const own = this.survey(world);
 
@@ -222,7 +233,9 @@ export class AiPlayer implements Brain {
     if (p.research.item >= 0 || p.credits < RESEARCH_RESERVE) return;
     const facts = computeFacts(world)[this.player]!;
     const ups = world.rules.upgrades;
-    const order = [...ups.filter((u) => u.faction === p.faction), ...ups.filter((u) => u.faction < 0)].sort((a, b) => a.tier - b.tier);
+    const order = this.directed
+      ? (this.plan.research ?? []).map((id) => ups.find((u) => u.id === id)!).filter((u) => u)
+      : [...ups.filter((u) => u.faction === p.faction), ...ups.filter((u) => u.faction < 0)].sort((a, b) => a.tier - b.tier);
     for (const u of order) {
       if (!canResearch(world, facts, this.player, u.index)) continue;
       this.act({ type: 'research', upgrade: u.index });
@@ -286,6 +299,25 @@ export class AiPlayer implements Brain {
     // Keep headroom for the next building (most use 20-60).
     if (p.powerProduced - p.powerUsed < 40 && this.count(own, 'conyard') > 0) return 'power';
     const seen = new Map<Role, number>();
+    if (this.directed) {
+      for (const id of this.plan.build ?? []) {
+        const role = world.rules.structures[world.rules.structureIndex.get(id)!]!.role;
+        seen.set(role, (seen.get(role) ?? 0) + 1);
+        if (this.count(own, role) < seen.get(role)!) return role;
+      }
+      // Then whatever the wanted army still needs (a plan asking for tanks gets the buildings for tanks).
+      const faction = world.rules.factions[p.faction]!;
+      const have = (role: Role) => this.count(own, role) > 0;
+      for (const [id, weight] of this.plan.army ?? []) {
+        if (weight <= 0) continue;
+        for (const role of world.rules.units[world.rules.unitIndex.get(id)!]!.requires) {
+          if (have(role)) continue;
+          const rule = faction.structures.map((i) => world.rules.structures[i]!).find((r) => r.role === role && r.category);
+          if (rule && rule.requires.every(have)) return role;
+        }
+      }
+      if (this.plan.build) return null;
+    }
     for (const role of this.profile.opening) {
       seen.set(role, (seen.get(role) ?? 0) + 1);
       if (this.count(own, role) < seen.get(role)!) return role;
@@ -300,8 +332,11 @@ export class AiPlayer implements Brain {
     return null;
   }
 
-  private nextDefense(own: Own): Role | null {
-    const wanted = this.profile.defenses.slice(0, this.d.defenses);
+  private nextDefense(world: World, own: Own): Role | null {
+    const wanted =
+      this.directed && this.plan.defenses
+        ? this.plan.defenses.map((id) => world.rules.structures[world.rules.structureIndex.get(id)!]!.role)
+        : this.profile.defenses.slice(0, this.d.defenses);
     const seen = new Map<Role, number>();
     for (const role of wanted) {
       seen.set(role, (seen.get(role) ?? 0) + 1);
@@ -329,7 +364,7 @@ export class AiPlayer implements Brain {
       if (rule && can(rule) && this.act({ type: 'build', category: 'structures', item: rule.index })) this.nextBuildTick = world.tick + this.d.buildDelayTicks;
     }
     if (p.build[1]!.item < 0 && world.tick > 3 * MINUTE) {
-      const role = this.nextDefense(own);
+      const role = this.nextDefense(world, own);
       const rule = role ? roleRule(role) : null;
       if (rule && can(rule) && p.credits > rule.cost) this.act({ type: 'build', category: 'defenses', item: rule.index });
     }
@@ -399,7 +434,14 @@ export class AiPlayer implements Brain {
 
     // Harvesters first.
     // Easy under-harvests, Hard over-harvests; Normal follows the faction profile.
-    const perRefinery = this.difficulty === 'easy' ? 1 : this.difficulty === 'normal' ? this.profile.harvestersPerRefinery : this.d.maxHarvestersPerRefinery;
+    const perRefinery =
+      this.directed && this.plan.harvestersPerRefinery !== undefined
+        ? this.plan.harvestersPerRefinery
+        : this.difficulty === 'easy'
+          ? 1
+          : this.difficulty === 'normal'
+            ? this.profile.harvestersPerRefinery
+            : this.d.maxHarvestersPerRefinery;
     const refineries = this.count(own, 'refinery');
     const wantHarvesters = Math.min(MAX_HARVESTERS, refineries * perRefinery);
     const harvester = world.rules.units[faction.harvester]!;
@@ -411,8 +453,10 @@ export class AiPlayer implements Brain {
     if ((own.harvesters.length < refineries && ok(harvester)) || p.lowPower) return;
 
     // Scouts/raiders are part of the army list; army fills each tab's queue up to two.
-    const candidates = this.profile.army
+    const mix = this.directed && this.plan.army ? this.plan.army : this.profile.army;
+    const candidates = mix
       .map(([id, weight]) => ({ rule: world.rules.units[world.rules.unitIndex.get(id)!]!, weight }))
+      .filter((c) => c.weight > 0)
       .filter((c) => ok(c.rule));
     if (candidates.length === 0) return;
     for (const tab of ['infantry', 'vehicles', 'air'] as const) {
@@ -434,7 +478,7 @@ export class AiPlayer implements Brain {
     for (const m of this.known(world)) {
       if (m.structure || !m.armed) continue;
       if (m.armor === AIR_ARMOR) air += m.cost;
-      if (!this.d.counter) continue;
+      if (this.directed ? this.plan.adapt !== true : !this.d.counter) continue;
       armorValue[m.armor]! += m.cost;
       total += m.cost;
     }
@@ -465,6 +509,7 @@ export class AiPlayer implements Brain {
 
   /** Staging point in front of the base, toward the enemy. */
   private stagingPoint(world: World, own: Own): { x: number; y: number } {
+    if (this.directed && this.plan.rally) return { x: (this.plan.rally[0] << FX_SHIFT) + FX_HALF, y: (this.plan.rally[1] << FX_SHIFT) + FX_HALF };
     const e = world.entities;
     const yard = own.conyards[0] ?? own.structures[0];
     const bx = yard !== undefined ? e.x[yard]! : (this.home.x << FX_SHIFT) + FX_HALF;
@@ -479,6 +524,11 @@ export class AiPlayer implements Brain {
   private rally(world: World, own: Own): void {
     const e = world.entities;
     const stage = this.stagingPoint(world, own);
+    // A new rally point re-rallies every factory.
+    if (this.directed && (this.lastRally.x !== stage.x || this.lastRally.y !== stage.y)) {
+      this.ralliedFactories.clear();
+      this.lastRally = stage;
+    }
     for (const s of own.structures) {
       const rule = world.rules.structures[e.type[s]!]!;
       if (!rule.produces || this.ralliedFactories.has(e.handle(s))) continue;
@@ -493,6 +543,8 @@ export class AiPlayer implements Brain {
   }
 
   private defend(world: World, own: Own): void {
+    // An agent decides whether to defend (it sees the attack in its observation).
+    if (this.directed) return;
     const e = world.entities;
     let threatX = -1;
     let threatY = 0;
@@ -519,7 +571,7 @@ export class AiPlayer implements Brain {
   }
 
   private scout(world: World, own: Own): void {
-    if (!this.d.scout || world.tick < MINUTE || world.tick - this.scoutSentTick < 4 * MINUTE) return;
+    if (!(this.directed ? (this.plan.scout ?? true) : this.d.scout) || world.tick < MINUTE || world.tick - this.scoutSentTick < 4 * MINUTE) return;
     const e = world.entities;
     const scoutRule = world.rules.unitIndex.get(this.profile.scout);
     const s = own.army.find((u) => e.type[u] === scoutRule && !this.waveUnits.has(e.handle(u)) && !this.raiders.has(e.handle(u)));
@@ -532,7 +584,7 @@ export class AiPlayer implements Brain {
   }
 
   private harass(world: World, own: Own): void {
-    if (!this.d.harass || world.tick < 3 * MINUTE || (world.tick + this.player) % 200 !== 0) return;
+    if (!(this.directed ? (this.plan.harass ?? false) : this.d.harass) || world.tick < 3 * MINUTE || (world.tick + this.player) % 200 !== 0) return;
     const e = world.entities;
     const raiderRule = world.rules.unitIndex.get(this.profile.raider);
     for (const s of own.army) {
@@ -587,6 +639,7 @@ export class AiPlayer implements Brain {
 
   /** Attack target: the nearest remembered enemy structure, else an enemy start. */
   private attackTarget(world: World, own: Own): { x: number; y: number } {
+    if (this.directed && this.plan.target) return { x: (this.plan.target[0] << FX_SHIFT) + FX_HALF, y: (this.plan.target[1] << FX_SHIFT) + FX_HALF };
     const stage = this.stagingPoint(world, own);
     let best: Sighting | null = null;
     let bestD = 0x7fffffff;
@@ -612,8 +665,8 @@ export class AiPlayer implements Brain {
         this.nextWaveTick = world.tick + MINUTE;
         return;
       }
-      // Retreat from a lost fight (Hard+).
-      if (this.d.retreat && value * 100 < this.waveStartValue * 35) {
+      // Retreat from a lost fight (Hard+; an agent decides that itself).
+      if (this.d.retreat && !this.directed && value * 100 < this.waveStartValue * 35) {
         const stage = this.stagingPoint(world, own);
         if (this.act({ type: 'move', units: [...this.waveUnits], x: stage.x, y: stage.y })) {
           this.waveUnits.clear();
@@ -633,15 +686,22 @@ export class AiPlayer implements Brain {
           this.act({ type: 'attackMove', units: idle, x: t.x, y: t.y });
         }
       }
-      if (this.d.focusFire && (world.tick + this.player) % 30 === 0) this.focusFire(world);
+      if (this.d.focusFire && !this.directed && (world.tick + this.player) % 30 === 0) this.focusFire(world);
       return;
     }
-    if (world.tick < this.nextWaveTick) return;
     const reserve = this.reserve(world, own);
     const value = this.armyValue(world, reserve);
-    if (value < this.d.firstWave + this.waveIndex * this.d.waveGrowth) return;
-    // Smarter AIs only attack with a clear edge over the enemy army they know about.
-    if (this.d.retreat && value * 10 < this.peakEnemyArmy * ADVANTAGE_X10) return;
+    if (this.directed) {
+      // The agent decides when to fight: defend never attacks, attack waits for the threshold, all-in goes now.
+      const posture = this.plan.posture ?? 'defend';
+      if (posture === 'defend' || reserve.length === 0) return;
+      if (posture === 'attack' && (world.tick < this.nextWaveTick || value < (this.plan.attackAt ?? this.d.firstWave))) return;
+    } else {
+      if (world.tick < this.nextWaveTick) return;
+      if (value < this.d.firstWave + this.waveIndex * this.d.waveGrowth) return;
+      // Smarter AIs only attack with a clear edge over the enemy army they know about.
+      if (this.d.retreat && value * 10 < this.peakEnemyArmy * ADVANTAGE_X10) return;
+    }
     const t = this.attackTarget(world, own);
     const wave = reserve;
     if (!this.act({ type: 'attackMove', units: wave, x: t.x, y: t.y })) return;

@@ -8,6 +8,7 @@ import { removeEntity, spawnStructure } from './spawn';
 import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
 import { BUILD_CATEGORY_INDEX, type World } from './world';
 import { canResearch, useAbility } from './systems/faction';
+import { sanitizeDirectives } from './directives';
 
 /** Groups of at least this many units share a flow field instead of running A* each. */
 export const FLOW_MIN_GROUP = 4;
@@ -83,6 +84,9 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
   const e = world.entities;
   switch (cmd.type) {
     case 'noop':
+      return;
+    case 'directives':
+      player.directives = sanitizeDirectives(world, c.player, cmd.directives);
       return;
     case 'surrender':
       player.surrendered = true;

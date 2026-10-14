@@ -55,6 +55,8 @@ export interface PlayerState {
   trained: number[];
   /** 1 per researched upgrade (rules.upgrades index). */
   upgrades: number[];
+  /** Standing plan for an autopilot (AI agents), null until one is set. */
+  directives: import('./directives').Directives | null;
   /** Upgrade being researched (-1 none), paid continuously like construction. */
   research: { item: number; progress: number; spent: number };
 }
@@ -197,6 +199,7 @@ export function createWorld(o: WorldOptions): World {
       build: [0, 1].map(() => ({ item: -1, progress: 0, spent: 0, ready: false })),
       production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
       incomeBonusPct: 0,
+      directives: null,
       harvested: 0,
       stats: { unitsLost: 0, unitsKilled: 0, structuresLost: 0, structuresKilled: 0, valueLost: 0, valueKilled: 0 },
       trained: o.rules.units.map(() => 0),
