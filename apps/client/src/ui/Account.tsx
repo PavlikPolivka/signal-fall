@@ -10,6 +10,7 @@ import {
   signInWithEmail,
   signInWithProvider,
   signOut,
+  takeLinkConflict,
   type Account as AccountInfo,
   type OAuthProvider,
 } from '../net/backend';
@@ -33,6 +34,8 @@ export function Account({ onClose, onChange }: { onClose: () => void; onChange?:
   const [notice, setNotice] = useState<string | null>(null);
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
   const [linked, setLinked] = useState<string[]>([]);
+  /** Linking failed because that Google / GitHub account already has an account. */
+  const [conflict] = useState(takeLinkConflict);
   useEffect(() => void oauthProviders().then(setProviders), []);
 
   const load = async () => {
@@ -98,6 +101,18 @@ export function Account({ onClose, onChange }: { onClose: () => void; onChange?:
                   </button>
                 </div>
               </section>
+              {me.guest && conflict && (
+                <section class="conflict" data-testid="account-conflict">
+                  <h3>You already have an account</h3>
+                  <p class="muted small">
+                    Your {PROVIDER_NAME[conflict]} email already belongs to a Signal Fall account, so it cannot be added to this guest. Sign in to that
+                    account instead: its name, history and rating come back. This guest's matches stay with the guest.
+                  </p>
+                  <button class={`oauth ${conflict}`} data-testid="account-conflict-signin" disabled={busy !== null} onClick={() => void run('oauth', () => signInWithProvider(sb, conflict), '')}>
+                    Sign in with {PROVIDER_NAME[conflict]}
+                  </button>
+                </section>
+              )}
               {me.guest ? (
                 <>
                   <section>

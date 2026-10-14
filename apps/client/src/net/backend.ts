@@ -113,8 +113,39 @@ export async function oauthProviders(): Promise<OAuthProvider[]> {
  * Guest → permanent with Google or GitHub: the provider's identity is linked to this
  * guest, so the name and history stay. The browser goes to the provider and comes back.
  */
+const LINKING_KEY = 'signalfall.linking';
+const CONFLICT_KEY = 'signalfall.conflict';
+const session = {
+  get: (k: string) => {
+    try {
+      return sessionStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  },
+  set: (k: string, v: string | null) => {
+    try {
+      if (v === null) sessionStorage.removeItem(k);
+      else sessionStorage.setItem(k, v);
+    } catch {
+      // Not remembered across the redirect; the generic error message shows instead.
+    }
+  },
+};
+
+/**
+ * A guest tried to keep their account with a provider whose email already has an
+ * account: the provider to sign in with instead (once), or null.
+ */
+export function takeLinkConflict(): OAuthProvider | null {
+  const p = session.get(CONFLICT_KEY) as OAuthProvider | null;
+  session.set(CONFLICT_KEY, null);
+  return p;
+}
+
 export async function linkProvider(sb: SupabaseClient, provider: OAuthProvider): Promise<void> {
   await signIn(sb);
+  session.set(LINKING_KEY, provider);
   const { error } = await sb.auth.linkIdentity({ provider, options: { redirectTo: returnUrl() } });
   if (error) throw new Error(friendly(error.message));
 }
@@ -149,7 +180,14 @@ export async function finishEmailLink(sb: SupabaseClient): Promise<string | null
   if (!error && !message && !hash.has('access_token') && !query.has('code')) return null;
   await sb.auth.getSession();
   history.replaceState(null, '', returnUrl());
-  if (error) return `Sign-in link failed: ${error}`;
+  const linking = session.get(LINKING_KEY) as OAuthProvider | null;
+  session.set(LINKING_KEY, null);
+  if (error && linking && /already|exists|registered/i.test(error)) {
+    // That Google / GitHub email already has an account: offer to sign in to it.
+    session.set(CONFLICT_KEY, linking);
+    return 'That account already has Signal Fall progress. Sign in to it instead (below).';
+  }
+  if (error) return `Sign-in failed: ${error}`;
   if (message) return message; // e.g. "confirm the link sent to the other email" during a change
   if (type === 'email_change' || type === 'signup') return 'Account saved. You can now sign in with your email on any device.';
   // Back from Google / GitHub: a guest who linked it is now a saved account.

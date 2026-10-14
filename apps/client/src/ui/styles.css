@@ -1809,6 +1809,11 @@ table.matrix td.lo {
   background: #7a3b00;
 }
 
+.account .conflict {
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
 .account .oauth-row {
   display: flex;
   flex-wrap: wrap;
