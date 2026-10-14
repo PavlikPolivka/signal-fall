@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from 'preact/hooks';
+import { useEffect, useReducer, useRef, useState } from 'preact/hooks';
 import { KIND } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E, H, P } from '../protocol';
@@ -814,6 +814,22 @@ function NetOverlays({ state }: { state: ClientState }) {
 
 function EndScreen({ state }: { state: ClientState }) {
   const cur = state.cur;
+  const [watching, setWatching] = useState(false);
+  // Team games: knocked out (or surrendered) while teammates still fight.
+  const out = !!cur && cur.a[1] !== 1 && !state.spectator && !state.replay && cur.player(state.localPlayer, P.defeated) === 1;
+  if (out && !watching)
+    return (
+      <div class="menu-overlay" data-testid="out-screen">
+        <div class="menu">
+          <h2>You are out</h2>
+          <p class="muted">Your team fights on. Watch the rest of the match with your team's vision, or leave.</p>
+          <button data-testid="keep-watching" onClick={() => setWatching(true)}>
+            Keep watching
+          </button>
+          <button onClick={() => (location.href = location.pathname)}>Leave match</button>
+        </div>
+      </div>
+    );
   if (!cur || cur.a[1] !== 1) return null;
   const won = cur.a[2] === state.players[state.localPlayer]?.team;
   return (

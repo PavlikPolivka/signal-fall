@@ -16,3 +16,13 @@ test('the end screen opens a match report with a table and charts', async ({ pag
   await report.locator('[data-chart=army]').click();
   await expect(report.locator('.report-chart polyline')).toHaveCount(2);
 });
+
+test('2v2: surrendering while the ally fights on shows "you are out", then the end', async ({ page }) => {
+  await page.goto('/?mode=2v2&seed=8&size=S&ai=easy&speed=8');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => (window as unknown as Win).__signalFall.state.send({ type: 'surrender' }));
+  await expect(page.getByTestId('out-screen')).toBeVisible({ timeout: 20_000 });
+  await page.getByTestId('keep-watching').click();
+  await expect(page.getByTestId('out-screen')).toHaveCount(0);
+});
