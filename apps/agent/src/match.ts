@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
-import { createSim, type AgentSeat, type MapExtras, type Replay, type ScenarioSpec } from '@signal-fall/scenario';
+import { createSim, sampleStats, type AgentSeat, type MapExtras, type Replay, type ScenarioSpec, type StatPoint } from '@signal-fall/scenario';
 import { KIND, type Command, type ScheduledCommand, type Sim } from '@signal-fall/sim';
 
 /** Who plays a seat: an agent over this API, or the built-in AI. */
@@ -67,6 +67,10 @@ export class AgentMatch {
   private readonly watchers = new Set<(turn: { commands: ScheduledCommand[]; until: number; over: boolean; hash?: number }) => void>();
   /** Ticks at which each seat last observed (for "what changed" summaries). */
   readonly lastObserved: number[];
+  /** Every player's statistics once a game minute (for the match report). */
+  readonly samples: { tick: number; players: StatPoint[] }[] = [];
+  /** What each seat saw at its last observation (for "since last turn" events). */
+  readonly seen: ({ units: Map<number, string>; structures: Map<number, string>; enemyTypes: Set<string> } | null)[];
 
   constructor(readonly options: MatchOptions) {
     const n = options.factions.length;
@@ -90,6 +94,8 @@ export class AgentMatch {
     options.seats.forEach((s, k) => s.kind === 'agent' && this.unclaimed.add(k));
     this.memory = options.seats.map(() => new Map());
     this.lastObserved = options.seats.map(() => 0);
+    this.seen = options.seats.map(() => null);
+    this.samples.push({ tick: 0, players: sampleStats(this.sim.world) });
   }
 
   get agentSeats(): number[] {
@@ -108,8 +114,9 @@ export class AgentMatch {
     if (agent) {
       const s = this.options.seats[k]!;
       if (s.kind === 'agent') {
-        s.agent = agent;
-        this.scenario.agents![k] = agent;
+        // The autopilot was decided when the match was made (it is part of the scenario).
+        s.agent = { ...agent, autopilot: s.agent.autopilot };
+        this.scenario.agents![k] = s.agent;
       }
     }
     const token = randomBytes(12).toString('base64url');
@@ -170,7 +177,10 @@ export class AgentMatch {
     }
     this.pending = new Map();
     const end = Math.min(MAX_TICKS, tick + this.turnTicks);
-    while (this.sim.tick < end && !this.sim.world.ended) this.sim.step();
+    while (this.sim.tick < end && !this.sim.world.ended) {
+      this.sim.step();
+      if (this.sim.tick % 1200 === 0 || this.sim.world.ended) this.samples.push({ tick: this.sim.tick, players: sampleStats(this.sim.world) });
+    }
     this.remember();
     const turn = { commands: this.log.slice(applied), until: this.sim.tick, over: this.over, ...(this.over ? { hash: this.sim.hash() } : {}) };
     for (const w of this.watchers) w(turn);
@@ -229,6 +239,18 @@ export class AgentMatch {
       endTick: this.sim.tick,
       hash: this.sim.hash(),
     };
+  }
+
+  /** Has this seat's base or a harvester been hit in the last turn? (Ends a multi-turn wait.) */
+  attacked(seat: number): boolean {
+    const e = this.sim.world.entities;
+    const rules = this.sim.world.rules;
+    const harvester = rules.factions[this.sim.world.players[seat]!.faction]!.harvester;
+    for (let s = 0; s < e.high; s++) {
+      if (e.alive[s] !== 1 || e.owner[s] !== seat || this.sim.tick - e.lastHitTick[s]! > this.turnTicks || e.lastHitTick[s]! < 0) continue;
+      if (e.kind[s] === KIND.structure || (e.kind[s] === KIND.unit && e.type[s] === harvester)) return true;
+    }
+    return false;
   }
 
   /** Result for a seat: playing, won, lost or draw. */

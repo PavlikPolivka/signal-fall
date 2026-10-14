@@ -36,11 +36,12 @@ Read get_guide first."*
 |---|---|
 | `get_guide` | How the game works and an opening that beats the easy AI. The server also sends this as its instructions. |
 | `get_rules {faction?}` | Units, structures, upgrades with costs, build times, requirements and weapons, plus the damage-vs-armor table. |
-| `create_match {agent_name, model?, faction, opponent, opponent_faction, map_size?, biome?, seed?, turn_seconds?}` | A 1v1. `opponent` is `easy` / `normal` / `hard` / `brutal` (built-in AI) or `agent`. Returns `match_id`, your seat `token`, a `join_code` for agent opponents, and the first observation. |
+| `create_match {agent_name, model?, faction, opponent, opponent_faction, map_size?, biome?, seed?, turn_seconds?, autopilot?}` | A 1v1. `opponent` is `easy` / `normal` / `hard` / `brutal` (built-in AI) or `agent`. `autopilot` (default on): see below. Returns `match_id`, your seat `token`, a `join_code` for agent opponents, and the first observation. |
 | `join_match {join_code, agent_name, model?}` | Take the open seat of an agent-vs-agent match. |
 | `observe {match_id, token}` | Your side's view (below). |
 | `act {match_id, token, actions}` | Queue actions for this turn. Each one is answered with ok or an error. |
-| `end_turn {match_id, token, actions?}` | Queue actions (optional) and end the turn. When every agent in the match has ended its turn, the game runs one turn and the new observation comes back. |
+| `end_turn {match_id, token, plan?, actions?, wait_turns?}` | Set a new plan and/or queue actions (both optional), then end the turn. When every agent in the match has ended its turn, the game runs one turn (or `wait_turns`, up to 12, stopping early if you are attacked) and the new observation comes back. With a plan, `plan_accepted` shows what the game kept. |
+| `match_report {match_id}` | Every player's income, army value, units, structures, kills and losses, once per game minute. For reviewing a match. |
 | `save_replay {match_id, path?}` | Write a replay (default `replays/signal-fall-<id>.json`). |
 | `list_matches` | Running matches, seats, and open join codes. |
 
@@ -50,6 +51,39 @@ Time moves in turns of `turn_seconds` game seconds (default 5, which is 100 tick
 then call `end_turn`. Built-in AIs think continuously inside the simulation, as in a normal skirmish. With
 two agents, a turn plays once both have ended theirs. A seat that takes longer than 2 minutes is skipped
 for that turn. Before an agent opponent joins, `end_turn` waits for them and the game does not start.
+
+## The autopilot (default)
+
+An LLM is good at strategy and slow at clicking, so by default an agent does not click. It sets a **plan**,
+and an autopilot carries it out with the built-in AI's hands: Hard-level speed, no income bonus, and no orders a
+player could not give.
+
+```jsonc
+"plan": {
+  "build": ["dynamo", "smelter", "bunkhouse", "motor_pool", "smelter"],  // in order; repeat ids for more
+  "defenses": ["pillbox"],
+  "army": [["grunt", 30], ["bulldog", 70]],     // what to keep producing, by weight
+  "adapt": false,                               // auto counter-picking (off: you choose the mix)
+  "harvestersPerRefinery": 2, "maxRefineries": 3,
+  "research": ["<upgrade id>"],
+  "posture": "attack", "attackAt": 4000,        // defend | attack (when the army is worth attackAt) | all_in
+  "target": [77, 77], "rally": [30, 28],        // tiles; null = automatic
+  "scout": true, "harass": false
+}
+```
+
+- **The autopilot does:** deploy, build in order (adding power when needed, and whatever the army mix
+  requires, e.g. a radar for tanks), place buildings, harvest, keep the factories busy with your mix, gather
+  new units at the rally point, send waves at the threshold. It also uses ability reflexes (phase or blink
+  away when hurt).
+- **It does not:** retreat, defend the base, pick counters or focus targets. Those are decisions. Watch
+  `events` ("UNDER ATTACK at [x, y]…", losses, new enemy types) and change the plan, or give unit orders
+  directly. Actions and the plan work together.
+- **Before your first plan:** it builds its faction's standard opening and stays home.
+
+Turns are 10 game seconds with the autopilot. `wait_turns` lets quiet stretches pass in one call. A full match
+is then about 30–60 decisions instead of hundreds. Without the autopilot (`autopilot: false`) you give every
+order yourself in 5-second turns.
 
 ## Observation
 
@@ -70,9 +104,13 @@ All coordinates are tiles; `[x, y]` with x to the east and y to the south on the
   "enemies": [],                                   // only what your team sees right now
   "remembered_enemy_structures": [],               // enemy buildings seen before, with the tick
   "echo_fields": [ { "x": 30, "y": 22, "amount": 5200 } ],
+  "plan": { "posture": "attack", "attackAt": 4000 },   // with the autopilot
+  "events": ["Finished: motor_pool", "UNDER ATTACK at [24, 30] (smelter hit); attackers seen: 3 sentry"],
   "notes": ["A finished structure is waiting to be placed."]
 }
 ```
+
+With more than 25 units, `units` are grouped by type and status: `{ "type", "status", "count", "ids", "x", "y", "hp" }`.
 
 `status` is idle, moving, attack-moving, attacking, fighting, patrolling, guarding, harvesting,
 to field, returning cargo, fleeing or salvaging. `hp` is a percentage (shields included).

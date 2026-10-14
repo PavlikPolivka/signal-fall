@@ -5,7 +5,7 @@ import { AgentMatch } from '@signal-fall/agent/src/match';
 import { MatchManager } from '@signal-fall/agent/src/server';
 import { spectate } from '@signal-fall/agent/src/spectate';
 import { translate } from '@signal-fall/agent/src/act';
-import { observe } from '@signal-fall/agent/src/observe';
+import { observe, unitIds } from '@signal-fall/agent/src/observe';
 
 type W = { __signalFall: { state: { cur: { tick: number } | null; replay: { live?: boolean } | null } } };
 
@@ -28,7 +28,7 @@ test('follow an agent match live, to the verified end', async ({ page }) => {
   });
   manager.matches.set(match.id, match);
   const { seat } = match.claim(0);
-  const deploy = translate(match.sim.world, seat, { do: 'deploy', units: [observe(match, seat).units[0]!.id] });
+  const deploy = translate(match.sim.world, seat, { do: 'deploy', units: [unitIds(observe(match, seat))[0]!] });
   if ('cmd' in deploy) match.queue(seat, [deploy.cmd]);
   for (let i = 0; i < 5; i++) await match.endTurn(seat);
 

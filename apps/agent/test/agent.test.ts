@@ -7,14 +7,14 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { parseReplay, runReplay } from '@signal-fall/scenario';
 import { translate, type Action } from '../src/act';
 import { AgentMatch } from '../src/match';
-import { observe, type Observation } from '../src/observe';
+import { observe, unitIds, type Observation } from '../src/observe';
 import { createServer } from '../src/server';
 
 /** A tiny scripted "agent": the guide's opening, one decision per turn. */
 function decide(o: Observation): Action[] {
   const out: Action[] = [];
-  const mcv = o.units.find((u) => u.type === 'dozer' || u.type === 'seedship' || u.type === 'overture' || u.status === 'idle');
-  if (!o.structures.length && mcv) return [{ do: 'deploy', units: [mcv.id] }];
+  const mcv = unitIds(o)[0];
+  if (!o.structures.length && mcv !== undefined) return [{ do: 'deploy', units: [mcv] }];
   for (const [cat, q] of Object.entries(o.queues)) {
     const item = q as { item: string; ready?: boolean };
     if ((cat === 'structures' || cat === 'defenses') && item.ready) out.push({ do: 'place', what: item.item });
@@ -61,7 +61,7 @@ describe('agent matches', () => {
     expect(translate(w, 0, { do: 'build', what: 'nexus' })).toEqual({ error: expect.stringContaining('not a holdout structure') });
     expect(translate(w, 0, { do: 'place', what: 'dynamo' })).toEqual({ error: expect.stringContaining('no finished dynamo') });
     expect(translate(w, 0, { do: 'move', units: [123456], to: [5, 5] })).toEqual({ error: expect.stringContaining('none of those units') });
-    const enemyUnit = observe(m, 1).units[0]!.id;
+    const enemyUnit = unitIds(observe(m, 1))[0]!;
     expect(translate(w, 0, { do: 'move', units: [enemyUnit], to: [5, 5] })).toEqual({ error: expect.stringContaining('none of those units') });
     expect(translate(w, 0, { do: 'move', units: 'army', to: [-1, 5] })).toEqual({ error: expect.anything() });
   });
@@ -106,20 +106,20 @@ describe('MCP server', () => {
     const client = new Client({ name: 'test', version: '1.0.0' });
     await client.connect(clientSide);
     const tools = (await client.listTools()).tools.map((t) => t.name).sort();
-    expect(tools).toEqual(['act', 'create_match', 'end_turn', 'get_guide', 'get_rules', 'join_match', 'list_matches', 'observe', 'save_replay']);
+    expect(tools).toEqual(['act', 'create_match', 'end_turn', 'get_guide', 'get_rules', 'join_match', 'list_matches', 'match_report', 'observe', 'save_replay']);
 
     const call = async (name: string, args: Record<string, unknown>) => {
       const r = (await client.callTool({ name, arguments: args })) as { content: { text: string }[]; isError?: boolean };
       if (r.isError) throw new Error(r.content[0]!.text);
       return JSON.parse(r.content[0]!.text) as Record<string, unknown>;
     };
-    const created = await call('create_match', { agent_name: 'Claude', model: 'claude-opus-5-5', faction: 'choir', opponent: 'easy', opponent_faction: 'holdout', map_size: 'S', seed: 9 });
+    const created = await call('create_match', { agent_name: 'Claude', model: 'claude-opus-5-5', faction: 'choir', opponent: 'easy', opponent_faction: 'holdout', map_size: 'S', seed: 9, autopilot: false });
     const id = created.match_id as string;
     const token = created.token as string;
     const o = created.observation as Observation;
     expect(o.you.faction).toBe('choir');
-    const mcv = o.units.find((u) => u.type === 'overture')!;
-    const turn = await call('end_turn', { match_id: id, token, actions: [{ do: 'deploy', units: [mcv.id] }, { do: 'build', what: 'nonsense' }] });
+    const mcv = unitIds(o, 'overture')[0]!;
+    const turn = await call('end_turn', { match_id: id, token, actions: [{ do: 'deploy', units: [mcv] }, { do: 'build', what: 'nonsense' }] });
     expect(turn.results).toEqual([{ ok: true }, { ok: false, error: expect.any(String) }]);
     expect((turn.observation as Observation).structures.map((s) => s.type)).toContain('opus');
     await expect(call('observe', { match_id: id, token: 'wrong' })).rejects.toThrow('unknown seat token');
@@ -131,5 +131,37 @@ describe('MCP server', () => {
     const saved = await call('save_replay', { match_id: id, path: join(dir, 'r.json') });
     const replay = parseReplay(readFileSync(saved.path as string, 'utf8'));
     expect(runReplay(replay)).toBe(replay.hash);
+  });
+});
+
+describe('autopilot over MCP', () => {
+  it('a plan steers the autopilot; waits stop when attacked; the report has the minutes', { timeout: 120_000 }, async () => {
+    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+    await createServer().connect(serverSide);
+    const client = new Client({ name: 'test', version: '1.0.0' });
+    await client.connect(clientSide);
+    const call = async (name: string, args: Record<string, unknown>) => {
+      const r = (await client.callTool({ name, arguments: args })) as { content: { text: string }[]; isError?: boolean };
+      if (r.isError) throw new Error(r.content[0]!.text);
+      return JSON.parse(r.content[0]!.text) as Record<string, unknown>;
+    };
+    const c = await call('create_match', { agent_name: 'Planner', faction: 'holdout', opponent: 'easy', opponent_faction: 'halcyon', map_size: 'S', seed: 21 });
+    const id = c.match_id as string;
+    const token = c.token as string;
+    const first = await call('end_turn', {
+      match_id: id,
+      token,
+      plan: { build: ['dynamo', 'smelter', 'bunkhouse', 'motor_pool', 'smelter'], army: [['grunt', 30], ['bulldog', 70], ['laser_shark', 50]], posture: 'attack', attackAt: 3000 },
+      wait_turns: 6,
+    });
+    // Unknown ids are dropped, and the agent is told what stuck.
+    expect(first.plan_accepted).toMatchObject({ army: [['grunt', 30], ['bulldog', 70]], posture: 'attack' });
+    let o = first.observation as Observation;
+    expect(o.plan).toMatchObject({ posture: 'attack' });
+    expect(o.events.join(' ')).toContain('Finished');
+    for (let i = 0; i < 80 && o.result === 'playing'; i++) o = (await call('end_turn', { match_id: id, token, wait_turns: 12 })).observation as Observation;
+    expect(o.result).toBe('won');
+    const report = await call('match_report', { match_id: id });
+    expect((report.minutes as unknown[]).length).toBeGreaterThan(4);
   });
 });

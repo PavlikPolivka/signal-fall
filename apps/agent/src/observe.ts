@@ -36,6 +36,31 @@ function unitStatus(world: World, s: number): string {
   }
 }
 
+export interface OwnUnit {
+  id: number;
+  type: string;
+  x: number;
+  y: number;
+  hp: number;
+  status: string;
+  rank?: number;
+  cargo?: number;
+}
+export interface UnitGroup {
+  type: string;
+  status: string;
+  count: number;
+  ids: number[];
+  x: number;
+  y: number;
+  hp: number;
+}
+
+/** Ids of the observed units (single or grouped) of a type. */
+export function unitIds(o: Observation, type?: string): number[] {
+  return o.units.filter((u) => !type || u.type === type).flatMap((u) => ('ids' in u ? u.ids : [u.id]));
+}
+
 export interface Observation {
   match: string;
   tick: number;
@@ -53,7 +78,12 @@ export interface Observation {
   players: { seat: number; faction: string; team: number; controller: string; defeated: boolean }[];
   map: { width: number; height: number; starts: { seat: number; x: number; y: number }[] };
   structures: { id: number; type: string; x: number; y: number; hp: number; rally?: [number, number]; repairing?: boolean }[];
-  units: { id: number; type: string; x: number; y: number; hp: number; status: string; rank?: number; cargo?: number }[];
+  /** Your units; with many of them, grouped by type and status (ids kept for orders). */
+  units: (OwnUnit | UnitGroup)[];
+  /** The plan your autopilot follows (null: none yet, or no autopilot). */
+  plan?: unknown;
+  /** What happened since your last observation. */
+  events: string[];
   queues: Record<string, unknown>;
   can_build: { structures: string[]; defenses: string[]; units: string[]; research: string[] };
   locked: Record<string, string>;
@@ -76,7 +106,7 @@ export function observe(match: AgentMatch, seat: number): Observation {
   const missing = (requires: readonly Role[]) => requires.filter((r) => !has(r)).map((r) => roleName(rules, me.faction, r));
 
   const structures: Observation['structures'] = [];
-  const units: Observation['units'] = [];
+  const units: OwnUnit[] = [];
   const enemies: Observation['enemies'] = [];
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1) continue;
@@ -95,7 +125,7 @@ export function observe(match: AgentMatch, seat: number): Observation {
         if (e.repairing[s]) st.repairing = true;
         structures.push(st);
       } else {
-        const u: Observation['units'][number] = { id, type: rule.id, x, y, hp, status: unitStatus(w, s) };
+        const u: OwnUnit = { id, type: rule.id, x, y, hp, status: unitStatus(w, s) };
         if (e.rank[s]) u.rank = e.rank[s]!;
         if (e.cargo[s]) u.cargo = e.cargo[s]!;
         units.push(u);
@@ -174,6 +204,58 @@ export function observe(match: AgentMatch, seat: number): Observation {
     }
   echo_fields.sort((a, b) => b.amount - a.amount);
 
+  // --- what happened since the last observation ---
+  const events: string[] = [];
+  const prev = match.seen[seat];
+  const since = match.lastObserved[seat]!;
+  const counted = (list: string[]) => {
+    const m = new Map<string, number>();
+    for (const t of list) m.set(t, (m.get(t) ?? 0) + 1);
+    return [...m].map(([t, n]) => (n > 1 ? `${n} ${t}` : t)).join(', ');
+  };
+  const nowUnits = new Map(units.map((u) => [u.id, u.type]));
+  const nowStructures = new Map(structures.map((st) => [st.id, st.type]));
+  if (prev) {
+    const lostU = [...prev.units].filter(([id]) => !nowUnits.has(id)).map(([, t]) => t);
+    const lostS = [...prev.structures].filter(([id]) => !nowStructures.has(id)).map(([, t]) => t);
+    const newS = [...nowStructures].filter(([id]) => !prev.structures.has(id)).map(([, t]) => t);
+    if (lostU.length) events.push(`Lost units: ${counted(lostU)}`);
+    if (lostS.length) events.push(`Lost structures: ${counted(lostS)}`);
+    if (newS.length) events.push(`Finished: ${counted(newS)}`);
+  }
+  // Under attack: our structures or harvesters hit since we last looked.
+  const hit: { x: number; y: number; type: string }[] = [];
+  for (let s2 = 0; s2 < e.high; s2++) {
+    if (e.alive[s2] !== 1 || e.owner[s2] !== seat || e.lastHitTick[s2]! < Math.max(1, since)) continue;
+    const isStructure = e.kind[s2] === KIND.structure;
+    const isHarvester = e.kind[s2] === KIND.unit && rules.units[e.type[s2]!]!.index === faction.harvester;
+    if (!isStructure && !isHarvester) continue;
+    hit.push({ x: Math.round(e.x[s2]! / (1 << FX_SHIFT)), y: Math.round(e.y[s2]! / (1 << FX_SHIFT)), type: isStructure ? rules.structures[e.type[s2]!]!.id : rules.units[e.type[s2]!]!.id });
+  }
+  if (hit.length) {
+    const near = enemies.filter((en) => hit.some((h) => Math.hypot(en.x - h.x, en.y - h.y) < 10));
+    events.push(`UNDER ATTACK at [${hit[0]!.x}, ${hit[0]!.y}] (${counted(hit.map((h) => h.type))} hit)${near.length ? `; attackers seen: ${counted(near.map((n) => n.type))}` : ''}`);
+  }
+  const enemyTypes = new Set(prev?.enemyTypes ?? []);
+  const fresh = [...new Set(enemies.map((en) => en.type))].filter((t) => !enemyTypes.has(t));
+  if (fresh.length) events.push(`New enemy types seen: ${fresh.join(', ')}`);
+  for (const t of fresh) enemyTypes.add(t);
+  match.seen[seat] = { units: nowUnits, structures: nowStructures, enemyTypes };
+
+  // Many units: group them, so the observation stays small.
+  const shownUnits: Observation['units'] =
+    units.length <= 25
+      ? units
+      : [...units.reduce((m, u) => m.set(`${u.type}|${u.status}`, [...(m.get(`${u.type}|${u.status}`) ?? []), u]), new Map<string, typeof units>()).values()].map((g) => ({
+          type: g[0]!.type,
+          status: g[0]!.status,
+          count: g.length,
+          ids: g.map((u) => u.id),
+          x: Math.round(g.reduce((a, u) => a + u.x, 0) / g.length),
+          y: Math.round(g.reduce((a, u) => a + u.y, 0) / g.length),
+          hp: Math.round(g.reduce((a, u) => a + u.hp, 0) / g.length),
+        }));
+
   const notes: string[] = [];
   if (!conyard && units.some((u) => u.type === rules.units[faction.constructionUnit]!.id))
     notes.push(`Deploy your construction vehicle first: {"do":"deploy","units":[<${rules.units[faction.constructionUnit]!.id} id>]}`);
@@ -208,7 +290,9 @@ export function observe(match: AgentMatch, seat: number): Observation {
     }),
     map: { width: m.width, height: m.height, starts: match.extras.starts.map((s, k) => ({ seat: k, x: s.x, y: s.y })) },
     structures,
-    units,
+    units: shownUnits,
+    ...(match.options.seats[seat]!.kind === 'agent' && (match.options.seats[seat] as { agent: { autopilot?: boolean } }).agent.autopilot ? { plan: me.directives } : {}),
+    events,
     queues,
     can_build,
     locked,

@@ -2,7 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { AgentMatch } from '@signal-fall/agent/src/match';
 import { translate } from '@signal-fall/agent/src/act';
-import { observe } from '@signal-fall/agent/src/observe';
+import { observe, unitIds } from '@signal-fall/agent/src/observe';
 
 test('a replay of an AI agent match marks the agent', async ({ page }, info) => {
   // An agent opens like the guide says, against the easy AI, for two minutes.
@@ -14,7 +14,7 @@ test('a replay of an AI agent match marks the agent', async ({ page }, info) => 
   });
   const { seat } = m.claim(0);
   const o = observe(m, seat);
-  const deploy = translate(m.sim.world, seat, { do: 'deploy', units: [o.units[0]!.id] });
+  const deploy = translate(m.sim.world, seat, { do: 'deploy', units: [unitIds(o)[0]!] });
   if ('cmd' in deploy) m.queue(seat, [deploy.cmd]);
   for (let turn = 0; turn < 24; turn++) void m.endTurn(seat);
   const file = info.outputPath('agent-replay.json');

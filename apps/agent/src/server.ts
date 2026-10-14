@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Difficulty } from '@signal-fall/ai';
 import { defaultRules } from '@signal-fall/data';
+import { sanitizeDirectives } from '@signal-fall/sim';
 import { translate, type Action } from './act';
 import { AgentMatch, type Seat } from './match';
 import { observe } from './observe';
@@ -46,6 +47,15 @@ rally {building, to} · sell | repair {building} · surrender
 "units" is a list of ids or "army" | "idle_army" | "harvesters" | "type:<unit id>". Coordinates are tiles.`;
 
 const action = z.looseObject({ do: z.string() });
+
+const PLAN_HELP = `"plan" (with the autopilot) is your standing orders; it replaces the previous plan:
+{ build: [structure ids in order, repeat for more], defenses: [ids], army: [[unit id, weight 0-100], ...], adapt: bool (auto counter-picking, default off),
+  harvestersPerRefinery: 0-4, maxRefineries: 1-6, research: [upgrade ids], posture: "defend" | "attack" | "all_in", attackAt: army value in credits,
+  target: [x, y] or null (nearest known enemy structure), rally: [x, y] or null, scout: bool, harass: bool }
+The autopilot builds, harvests, places, fills production queues with your mix and builds what that mix needs. It never retreats, defends or
+picks counters on its own: watch "events" and change the plan (or give unit orders) yourself.`;
+
+const plan = z.looseObject({}).describe('Standing orders for the autopilot (see the tool description)');
 
 /** Apply actions for a seat: translate, queue the valid ones, report each. */
 function apply(match: AgentMatch, seat: number, actions: Action[]): { ok: boolean; error?: string }[] {
@@ -93,19 +103,22 @@ export function createServer(manager = new MatchManager()): McpServer {
         map_size: z.enum(['S', 'M', 'L']).optional(),
         biome: z.enum(['wasteland', 'city', 'crystal']).optional(),
         seed: z.number().int().min(0).max(2_147_483_647).optional(),
-        turn_seconds: z.number().min(1).max(30).optional().describe('Game seconds per turn (default 5)'),
+        turn_seconds: z.number().min(1).max(30).optional().describe('Game seconds per turn (default 10 with the autopilot, 5 without)'),
+        autopilot: z.boolean().optional().describe('Default true: you set a plan (end_turn "plan") and the autopilot does the clicking. False: you give every order yourself.'),
       },
     },
     async (a) => {
       try {
-        const me: Seat = { kind: 'agent', agent: { name: a.agent_name, model: a.model } };
-        const them: Seat = a.opponent === 'agent' ? { kind: 'agent', agent: { name: 'waiting for an agent' } } : { kind: 'ai', difficulty: a.opponent as Difficulty };
+        const autopilot = a.autopilot ?? true;
+        const me: Seat = { kind: 'agent', agent: { name: a.agent_name, model: a.model, autopilot } };
+        const them: Seat =
+          a.opponent === 'agent' ? { kind: 'agent', agent: { name: 'waiting for an agent', autopilot } } : { kind: 'ai', difficulty: a.opponent as Difficulty };
         const match = new AgentMatch({
           factions: [FACTION_IDS.indexOf(a.faction), FACTION_IDS.indexOf(a.opponent_faction)],
           seats: [me, them],
           seed: a.seed,
           map: { size: a.map_size, biome: a.biome },
-          turnTicks: Math.round((a.turn_seconds ?? 5) * rules.constants.tickRate),
+          turnTicks: Math.round((a.turn_seconds ?? (autopilot ? 10 : 5)) * rules.constants.tickRate),
         });
         manager.matches.set(match.id, match);
         const { seat, token } = match.claim(0);
@@ -182,17 +195,32 @@ export function createServer(manager = new MatchManager()): McpServer {
     {
       title: 'End turn',
       description:
-        'Optionally queue more actions, then end your turn. When every agent in the match has ended theirs, the game runs one turn (a few game seconds) ' +
-        `and this returns the new observation. Repeat until "result" is won, lost or draw.\n${ACTIONS_HELP}`,
-      inputSchema: { ...seatArgs, actions: z.array(action).max(60).optional() },
+        'Optionally set a new plan and queue actions, then end your turn. When every agent in the match has ended theirs, the game runs one turn ' +
+        '(a few game seconds; wait_turns runs several when nothing needs deciding) and this returns the new observation. Repeat until "result" is ' +
+        `won, lost or draw.\n${PLAN_HELP}\n${ACTIONS_HELP}`,
+      inputSchema: {
+        ...seatArgs,
+        plan: plan.optional(),
+        actions: z.array(action).max(60).optional(),
+        wait_turns: z.number().int().min(1).max(12).optional().describe('Turns to play before you are asked again (default 1)'),
+      },
     },
-    async ({ match_id, token, actions }) => {
+    async ({ match_id, token, plan: next, actions, wait_turns }) => {
       try {
         const match = manager.get(match_id);
         const seat = match.seatOf(token);
+        let accepted: unknown;
+        if (next) {
+          accepted = sanitizeDirectives(match.sim.world, seat, next);
+          match.queue(seat, [{ type: 'directives', directives: accepted as never }]);
+        }
         const results = actions?.length ? apply(match, seat, actions as unknown as Action[]) : [];
-        await match.endTurn(seat);
-        return json({ ...(results.length ? { results } : {}), observation: observe(match, seat) });
+        for (let i = 0; i < (wait_turns ?? 1) && !match.over; i++) {
+          await match.endTurn(seat);
+          // Stop waiting early when something needs a decision.
+          if (i + 1 < (wait_turns ?? 1) && match.attacked(seat)) break;
+        }
+        return json({ ...(next ? { plan_accepted: accepted } : {}), ...(results.length ? { results } : {}), observation: observe(match, seat) });
       } catch (e) {
         return fail(e);
       }
@@ -213,6 +241,35 @@ export function createServer(manager = new MatchManager()): McpServer {
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, JSON.stringify(match.replay(0)));
         return json({ path: file, ticks: match.sim.tick });
+      } catch (e) {
+        return fail(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    'match_report',
+    {
+      title: 'Match report',
+      description:
+        'Statistics over the match so far, one sample per game minute for every player: income, army value, units, structures, kills and losses. ' +
+        'Use it to review a finished match and decide what to do differently.',
+      inputSchema: { match_id: z.string() },
+    },
+    async ({ match_id }) => {
+      try {
+        const match = manager.get(match_id);
+        const w = match.sim.world;
+        return json({
+          ticks: match.sim.tick,
+          players: w.players.map((p, k) => ({
+            seat: k,
+            faction: rules.factions[p.faction]!.id,
+            controller: match.options.seats[k]!.kind === 'ai' ? 'built-in AI' : 'agent',
+            result: match.result(k),
+          })),
+          minutes: match.samples.map((s) => ({ minute: Math.round(s.tick / 1200), players: s.players })),
+        });
       } catch (e) {
         return fail(e);
       }
