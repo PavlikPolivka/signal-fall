@@ -166,8 +166,15 @@ WORKER = textwrap.dedent(r'''
     dtype = torch.float16
     pipe = CogVideoXPipeline.from_pretrained(model, torch_dtype=dtype)
 
-    # 1. Encode every prompt once with T5 on the GPU, then free it.
-    pipe.text_encoder.to("cuda")
+    # 1. Encode every prompt once with T5 (about 9.5 GB) on the GPU, then free it. If it does not fit,
+    #    stream it through the GPU layer by layer instead (slower, but only once per session).
+    try:
+        pipe.text_encoder.to("cuda")
+    except torch.OutOfMemoryError:
+        print(tag, "T5 does not fit on the GPU, encoding layer by layer instead", flush=True)
+        pipe.text_encoder.to("cpu"); gc.collect(); torch.cuda.empty_cache()
+        from accelerate import cpu_offload
+        cpu_offload(pipe.text_encoder, execution_device=torch.device("cuda"))
     embeds = {}
     with torch.no_grad():
         for job in jobs:
@@ -255,8 +262,24 @@ def restore(hf_repo, hf_token):
         print(f"Synced with Hugging Face dataset {hf_repo}")
 
 
+def gpus_in_use():
+    """GPU memory already taken (MiB) per GPU, read from nvidia-smi so this process does not grab a GPU itself."""
+    try:
+        out = subprocess.run(["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"], capture_output=True, text=True, check=True).stdout
+        return [int(x) for x in out.split()]
+    except Exception:
+        return []
+
+
 def main():
     started = time.time()
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+    used = gpus_in_use()
+    busy = [(g, mb) for g, mb in enumerate(used) if mb > 1000]
+    if busy:
+        print("\n".join(f"GPU {g} already has {mb} MiB in use by another process (an earlier cell?)." for g, mb in busy))
+        print("Restart the notebook first: Run -> Restart & clear cell outputs, then run only this cell.")
+        return
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "diffusers>=0.30", "transformers", "accelerate",
                     "sentencepiece", "imageio-ffmpeg", "huggingface_hub"], check=True)
     import torch
