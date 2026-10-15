@@ -2,7 +2,17 @@
 #
 # Kaggle notebook: Settings → Accelerator: "GPU T4 x2", Internet: on. Paste this whole file into
 # ONE cell and run it. Videos land in /kaggle/working/campaign/campaign-NN.mp4, plus a zip of all.
-# Sessions stop after 12 hours: just run the cell again, finished shots are skipped.
+#
+# RESUMABLE: it never has to finish in one go. /kaggle/working is wiped between sessions, so
+# finished shots are kept in one of two ways (use either or both):
+#   A) Kaggle only: run with "Save Version → Save & Run All" (runs in the background, output kept).
+#      Next time, "Add Input → Your Work → <this notebook>" (its latest version's output) and run
+#      again: finished shots are picked up from /kaggle/input and only the rest is rendered.
+#   B) Hugging Face (also for interactive sessions): add Kaggle Secrets HF_TOKEN (a write token from
+#      huggingface.co/settings/tokens) and optionally HF_REPO (default "<you>/signal-fall-campaign").
+#      Every shot is uploaded the moment it is done and downloaded again on the next start.
+# The workers stop taking new shots after TIME_BUDGET_HOURS, so a background run ends cleanly
+# (and its output is saved) before Kaggle's 12-hour limit. Missions render in order.
 #
 # Built for T4 x2 (2 x 15 GB GPU, 30 GB RAM):
 #   - both GPUs render at the same time (one worker process per GPU, shots split between them);
@@ -32,6 +42,7 @@ GUIDANCE = 6.0
 FRAMES = 49                               # the model's native length: 49 frames at 8 fps = ~6 s
 OUT = "/kaggle/working/campaign"
 UPSCALE = True                            # 1280x720 at 24 fps; False keeps raw 720x480 at 8 fps
+TIME_BUDGET_HOURS = 11.0                  # stop starting new shots after this (Kaggle allows 12 h)
 
 # ---------------------------------------------------------------------------------------------
 # Art direction (short on purpose)
@@ -143,6 +154,7 @@ WORKER = textwrap.dedent(r'''
 
     jobs = json.loads(sys.argv[1]); model = sys.argv[2]; steps = int(sys.argv[3]); guidance = float(sys.argv[4])
     frames = int(sys.argv[5]); gpu = int(sys.argv[6]); out = sys.argv[7]
+    deadline = float(sys.argv[8]); hf_repo = sys.argv[9]
     tag = f"[gpu{gpu}]"
 
     # Load one GPU at a time: wait for the previous worker to be on its GPU (keeps RAM low).
@@ -174,9 +186,22 @@ WORKER = textwrap.dedent(r'''
     open(f"{out}/.ready{gpu}", "w").close()
     print(tag, "ready,", len(jobs), "shots", flush=True)
 
+    def upload(path):
+        if not hf_repo:
+            return
+        try:
+            from huggingface_hub import upload_file
+            upload_file(path_or_fileobj=path, path_in_repo=os.path.basename(path), repo_id=hf_repo, repo_type="dataset",
+                        token=os.environ.get("HF_TOKEN"), commit_message=f"shot {os.path.basename(path)}")
+        except Exception as e:  # a failed upload must not stop rendering; it is retried at the end
+            print(tag, "upload failed:", e, flush=True)
+
     for job in jobs:
         if os.path.exists(job["path"]):
             continue
+        if time.time() > deadline:
+            print(tag, "time budget reached, stopping (run again to continue)", flush=True)
+            break
         t = time.time()
         pe, ne = embeds[job["path"]]
         video = pipe(prompt_embeds=pe.to("cuda"), negative_prompt_embeds=ne.to("cuda"), num_inference_steps=steps,
@@ -185,15 +210,62 @@ WORKER = textwrap.dedent(r'''
         export_to_video(video, job["path"] + ".tmp.mp4", fps=8)
         os.replace(job["path"] + ".tmp.mp4", job["path"])
         print(tag, os.path.basename(job["path"]), f"{time.time() - t:.0f}s", flush=True)
+        upload(job["path"])
 ''')
 
 
+def hf_settings():
+    """(repo, token) from Kaggle Secrets or the environment, or (None, None) when not set up."""
+    token = os.environ.get("HF_TOKEN")
+    repo = os.environ.get("HF_REPO")
+    try:
+        from kaggle_secrets import UserSecretsClient
+        secrets = UserSecretsClient()
+        token = token or secrets.get_secret("HF_TOKEN")
+        try:
+            repo = repo or secrets.get_secret("HF_REPO")
+        except Exception:
+            pass
+    except Exception:
+        pass
+    if not token:
+        return None, None
+    if not repo:
+        from huggingface_hub import whoami
+        repo = f"{whoami(token=token)['name']}/signal-fall-campaign"
+    return repo, token
+
+
+def restore(hf_repo, hf_token):
+    """Bring back finished work: from attached inputs (earlier versions' output) and from Hugging Face."""
+    import glob
+    import shutil
+    found = 0
+    for src in glob.glob("/kaggle/input/**/*.mp4", recursive=True):
+        name = os.path.basename(src)
+        if (name.startswith("shot-") or name.startswith("campaign-")) and not os.path.exists(os.path.join(OUT, name)):
+            shutil.copy(src, os.path.join(OUT, name))
+            found += 1
+    if found:
+        print(f"Restored {found} file(s) from /kaggle/input")
+    if hf_repo:
+        from huggingface_hub import create_repo, snapshot_download
+        create_repo(hf_repo, repo_type="dataset", private=True, exist_ok=True, token=hf_token)
+        snapshot_download(repo_id=hf_repo, repo_type="dataset", local_dir=OUT, token=hf_token, allow_patterns=["shot-*.mp4", "campaign-*.mp4"])
+        print(f"Synced with Hugging Face dataset {hf_repo}")
+
+
 def main():
+    started = time.time()
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "diffusers>=0.30", "transformers", "accelerate",
-                    "sentencepiece", "imageio-ffmpeg"], check=True)
+                    "sentencepiece", "imageio-ffmpeg", "huggingface_hub"], check=True)
     import torch
 
     os.makedirs(OUT, exist_ok=True)
+    hf_repo, hf_token = hf_settings()
+    if hf_token:
+        os.environ["HF_TOKEN"] = hf_token
+    restore(hf_repo, hf_token)
     for f in os.listdir(OUT):
         if f.startswith(".ready"):
             os.remove(os.path.join(OUT, f))
@@ -211,8 +283,10 @@ def main():
             if not os.path.exists(path):
                 jobs.append({"path": path, "prompt": prompt, "seed": 1000 * n + k})
 
+    total = sum(len(MISSIONS[n][1]) for n in MISSIONS_TO_RENDER)
     gpus = max(1, torch.cuda.device_count())
-    print(f"{len(jobs)} shots to render on {gpus} GPU(s) with {MODEL}")
+    print(f"Progress: {total - len(jobs)}/{total} shots done; {len(jobs)} to render on {gpus} GPU(s) with {MODEL}")
+    deadline = started + TIME_BUDGET_HOURS * 3600
     procs = []
     for g in range(gpus):
         share = jobs[g::gpus]
@@ -220,7 +294,7 @@ def main():
             continue
         env = {**os.environ, "CUDA_VISIBLE_DEVICES": str(g)}
         procs.append(subprocess.Popen([sys.executable, worker, json.dumps(share), MODEL, str(STEPS), str(GUIDANCE),
-                                       str(FRAMES), str(g), OUT], env=env))
+                                       str(FRAMES), str(g), OUT, str(deadline), hf_repo or ""], env=env))
     for p in procs:
         p.wait()
 
@@ -238,9 +312,25 @@ def main():
                         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", dest], check=True)
         os.remove(listing)
         print(f"Mission {n} {MISSIONS[n][0]} -> {dest}")
+        if hf_repo:
+            from huggingface_hub import upload_file
+            upload_file(path_or_fileobj=dest, path_in_repo=os.path.basename(dest), repo_id=hf_repo, repo_type="dataset", token=hf_token)
+    # Retry uploads that failed while rendering.
+    if hf_repo:
+        from huggingface_hub import HfApi
+        remote = set(HfApi().list_repo_files(hf_repo, repo_type="dataset", token=hf_token))
+        for f in sorted(os.listdir(OUT)):
+            if (f.startswith("shot-") or f.startswith("campaign-")) and f.endswith(".mp4") and f not in remote:
+                from huggingface_hub import upload_file
+                upload_file(path_or_fileobj=os.path.join(OUT, f), path_in_repo=f, repo_id=hf_repo, repo_type="dataset", token=hf_token)
+
+    done = sorted(f for f in os.listdir(OUT) if f.startswith("campaign-"))
+    left = [n for n in MISSIONS_TO_RENDER if f"campaign-{n:02d}.mp4" not in done]
+    print(f"Finished missions: {len(done)}/{len(MISSIONS_TO_RENDER)}" + (f"; still to do: {left}. Run again to continue." if left else ". All done!"))
 
     subprocess.run(["bash", "-c", f"cd {OUT} && ls campaign-*.mp4 >/dev/null 2>&1 && zip -q -j /kaggle/working/signal-fall-campaign.zip campaign-*.mp4"], check=False)
-    print("Done. Download /kaggle/working/signal-fall-campaign.zip from the Output panel.")
+    # The shots stay in /kaggle/working/campaign too: a saved version's output is what the next run resumes from.
+    print("Download /kaggle/working/signal-fall-campaign.zip from the Output panel.")
 
 
 main()
