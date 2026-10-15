@@ -1,7 +1,8 @@
 # Single-player campaign: proposal
 
-Fifteen missions across all three factions, in three acts and a finale. Each mission opens with a 15-second
-video (prompts in [VIDEO_PROMPTS.md](VIDEO_PROMPTS.md#campaign-videos)), then a short text briefing over the map.
+Fifteen missions across all three factions, in three acts and a finale. Each mission opens with a briefing:
+key art or an in-game scene, the briefing text, and the faction announcer reading it (the voice pipeline in
+`tools/assets/voices`). No pre-rendered videos.
 Every mission teaches or stresses one mechanic, so the campaign doubles as the tutorial the skirmish mode lacks.
 
 ## The story in one paragraph
@@ -16,7 +17,7 @@ is to burn every Echo field on the planet, the three sides have one chance to st
 
 ## Recurring characters
 
-Each video prompt repeats these descriptions word for word, so they look the same across clips.
+
 
 - **Captain Ilse Varga** (Holdout): a woman in her late forties, cropped grey hair, a pale scar across her left
   cheek. She wears an olive field jacket with rust-colored shoulder plates and has a battered radio headset.
@@ -77,7 +78,7 @@ You are the Cantor's chorus. Mechanics: grown structures, shields instead of hul
   so replays of campaign missions still reproduce exactly.
 - **Unlocks.** A per-mission allow-list of units and buildings uses the existing data (`requires`, faction rosters).
 - **Progress.** Saved locally, and in the account (Supabase) when signed in. Mission results go into Stats.
-- **Videos.** `apps/client/public/assets/video/campaign-01.mp4` … `campaign-15.mp4`, played with the existing
+- **Briefings.** Text plus a spoken version generated with the announcer voices (one line file per paragraph), over key art or a scripted camera pan of the mission map. No videos.
   cutscene player and skippable. A mission without its video shows only the text briefing.
 
 Rough size: a trigger system and mission format (M), a mission select and briefing screen (S), and then about one
