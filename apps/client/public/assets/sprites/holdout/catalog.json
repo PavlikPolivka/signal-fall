@@ -45,7 +45,7 @@
    "anims": {
     "idle": 1
    },
-   "turret": true
+   "turret": false
   },
   "mule": {
    "kind": "vehicle",
@@ -81,7 +81,7 @@
    "anims": {
     "idle": 1
    },
-   "turret": true
+   "turret": false
   },
   "patch": {
    "kind": "vehicle",

@@ -72,7 +72,7 @@
    "anims": {
     "idle": 1
    },
-   "turret": true
+   "turret": false
   },
   "crescendo": {
    "kind": "vehicle",
@@ -81,7 +81,7 @@
    "anims": {
     "idle": 1
    },
-   "turret": true
+   "turret": false
   },
   "aria": {
    "kind": "air",
@@ -99,7 +99,7 @@
    "anims": {
     "idle": 1
    },
-   "turret": true
+   "turret": false
   },
   "overture": {
    "kind": "vehicle",

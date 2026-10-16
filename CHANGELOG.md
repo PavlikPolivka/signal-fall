@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-16 19:01 UTC
+
+- **All-new 3D models.** Every vehicle, building and soldier of all three factions has been rebuilt as a detailed 3D model: welded Holdout tanks, trucks and diesel works, white Halcyon hover machines and reactors, violet Choir crystals and geodes.
+- **Animated soldiers:** infantry now really walk, aim their weapons and fall, in all eight directions, with team colors on their vests and armor.
+
 ## 2026-10-16 16:06 UTC
 
 - **Comeback: rebuild from your refinery.** Lost your construction yard and every construction vehicle? As long as a refinery stands, it can build a new construction vehicle (Vehicles tab, normal price), even without a factory. The AI plays by the same rule.

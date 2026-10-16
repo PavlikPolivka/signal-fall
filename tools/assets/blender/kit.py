@@ -67,9 +67,12 @@ def saturate(rgba, amount):
 
 
 def material(name, color, *, rough=0.8, metal=0.0, emission=None, style="clean"):
-    """Flat material. style 'toon' adds banded shading via Shader-to-RGB + ramp."""
+    """Flat material. style 'toon' adds banded shading via Shader-to-RGB + ramp; 'pbr' is textured (Cycles)."""
     key = (name, color, style)
     if key in _materials:
+        return _materials[key]
+    if style == "pbr":
+        _materials[key] = pbr_material(name, color, rough=rough, metal=metal, emission=emission)
         return _materials[key]
     m = bpy.data.materials.new(f"{name}.{style}")
     m.use_nodes = True
@@ -248,7 +251,12 @@ def camera_and_light(target_height, ortho_scale):
 
 
 def shadow_catcher(size=12):
-    """Ground plane that only shows shadows (EEVEE: holdout via shadow-only material)."""
+    """Ground plane that only shows shadows (EEVEE: holdout via shadow-only material; Cycles: shadow catcher)."""
+    if bpy.context.scene.render.engine == "CYCLES":
+        bpy.ops.mesh.primitive_plane_add(size=size, location=(0, 0, 0))
+        plane = bpy.context.active_object
+        plane.is_shadow_catcher = True
+        return plane
     bpy.ops.mesh.primitive_plane_add(size=size, location=(0, 0, 0))
     plane = bpy.context.active_object
     m = bpy.data.materials.new("shadow")
@@ -440,6 +448,7 @@ def render_passes(objects, catcher, path_prefix, frame_px, samples=24, shadow=Tr
     scene.render.resolution_x = size
     scene.render.resolution_y = size
     scene.eevee.taa_render_samples = samples
+    scene.cycles.samples = max(48, samples * 2)
     scene.render.film_transparent = True
 
     def go(suffix):
@@ -455,6 +464,12 @@ def render_passes(objects, catcher, path_prefix, frame_px, samples=24, shadow=Tr
     for o in objects:
         for slot in o.material_slots:
             saved.append((slot, slot.material))
+            if slot.material is not None and "mask_from" in slot.material:
+                # Imported (Meshy) model: magenta panels in its texture are the team areas.
+                import meshy_import
+
+                slot.material = meshy_import.mask_material(slot.material)
+                continue
             is_team = slot.material is not None and slot.material.name.startswith("team")
             slot.material = white if is_team else black
     world = scene.world.node_tree.nodes["Background"]
@@ -470,7 +485,18 @@ def render_passes(objects, catcher, path_prefix, frame_px, samples=24, shadow=Tr
     catcher.hide_render = False
     for o in objects:
         o.visible_camera = False
+    # Cycles' shadow catcher also darkens for occluded sky light: only the sun's shadow counts.
+    cycles = scene.render.engine == "CYCLES"
+    if cycles:
+        world.inputs[1].default_value = 0.0
+        rim = bpy.data.objects.get("rim")
+        if rim:
+            rim.hide_render = True
     go("shadow")
+    if cycles:
+        world.inputs[1].default_value = strength
+        if rim:
+            rim.hide_render = False
     for o in objects:
         o.visible_camera = True
     catcher.hide_render = True
@@ -573,3 +599,210 @@ def parent(objs, to):
     for o in objs:
         o.parent = to
     return objs
+
+
+# --- PBR style (Cycles) -----------------------------------------------------
+
+import os  # noqa: E402
+
+CC0 = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "build", "cc0"))
+
+# Which CC0 texture set breaks up which material (by material name prefix), and how it is used:
+# "paint" = the faction color, detailed by the texture's light/dark and worn bright at edges;
+# "tex"   = the texture's own color, pulled toward the palette color.
+TEXSETS = [
+    (("olive", "khaki", "team", "white", "graphite", "violet", "amber", "panel", "hull", "armor", "paint"), "PaintedMetal006", "paint", 2.2),
+    (("rust",), "Metal041B", "paint", 2.0),
+    (("steel", "metal", "chrome", "dark"), "Metal024", "paint", 2.5),
+    (("concrete", "plaza", "pad", "scorch"), "Concrete036", "tex", 1.2),
+    (("wood", "crate"), "Wood094", "tex", 2.5),
+    (("canvas", "sand", "fabric", "cloth", "skin"), "Fabric061", "paint", 4.0),
+]
+
+CC0_IDS = sorted({t[1] for t in TEXSETS})
+
+
+def ensure_cc0():
+    """Download each CC0 material's 1K maps (color, roughness, normal) from ambientCG once."""
+    import json
+    import urllib.request
+    import zipfile
+    import io
+
+    for tid in CC0_IDS:
+        d = os.path.join(CC0, tid)
+        if os.path.exists(os.path.join(d, f"{tid}_1K-JPG_Color.jpg")):
+            continue
+        os.makedirs(d, exist_ok=True)
+        meta = json.load(urllib.request.urlopen(f"https://ambientcg.com/api/v2/full_json?id={tid}&include=downloadData"))
+        dl = meta["foundAssets"][0]["downloadFolders"]["default"]["downloadFiletypeCategories"]["zip"]["downloads"]
+        url = next(x["fullDownloadPath"] for x in dl if x["attribute"] == "1K-JPG")
+        z = zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(url).read()))
+        for n in z.namelist():
+            if n.endswith(("_Color.jpg", "_Roughness.jpg", "_NormalGL.jpg")):
+                open(os.path.join(d, os.path.basename(n)), "wb").write(z.read(n))
+
+
+_images = {}
+
+
+def _image(tid, kind):
+    path = os.path.join(CC0, tid, f"{tid}_1K-JPG_{kind}.jpg")
+    if path not in _images:
+        img = bpy.data.images.load(path)
+        if kind != "Color":
+            img.colorspace_settings.name = "Non-Color"
+        _images[path] = img
+    return _images[path]
+
+
+def use_cycles(samples=64):
+    """Cycles on the GPU (Metal) when available: real AO, bounce light, bevel and AO shader nodes."""
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    try:
+        if os.environ.get("SF_DEVICE", "CPU") != "GPU":
+            raise RuntimeError("CPU requested")
+        prefs = bpy.context.preferences.addons["cycles"].preferences
+        prefs.compute_device_type = "METAL"
+        prefs.get_devices()
+        for d in prefs.devices:
+            d.use = True
+        scene.cycles.device = "GPU"
+    except Exception:  # noqa: BLE001 - CPU is fine, just slower
+        scene.cycles.device = "CPU"
+    scene.cycles.samples = samples
+    scene.cycles.use_denoising = True
+    scene.cycles.max_bounces = 4
+    scene.render.film_transparent = True
+    scene.view_settings.view_transform = "Standard"
+    ensure_cc0()
+
+
+def pbr_material(name, color, *, rough=0.8, metal=0.0, emission=None):
+    m = bpy.data.materials.new(f"{name}.pbr")
+    m.use_nodes = True
+    nt = m.node_tree
+    nodes = nt.nodes
+    L = nt.links.new
+    nodes.clear()
+    out = nodes.new("ShaderNodeOutputMaterial")
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
+    L(bsdf.outputs[0], out.inputs[0])
+    base = hex_rgba(color)
+    bsdf.inputs["Base Color"].default_value = base
+    bsdf.inputs["Roughness"].default_value = rough
+    bsdf.inputs["Metallic"].default_value = metal
+    if emission:
+        bsdf.inputs["Emission Color"].default_value = hex_rgba(emission)
+        bsdf.inputs["Emission Strength"].default_value = 4.0
+        return m
+    tex = next(((tid, use, scale) for prefixes, tid, use, scale in TEXSETS if name.startswith(prefixes)), None)
+    team = name.startswith("team")
+
+    # Box-projected texture coordinates in object space.
+    coord = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    L(coord.outputs["Object"], mapping.inputs["Vector"])
+
+    def img(kind):
+        n = nodes.new("ShaderNodeTexImage")
+        n.image = _image(tex[0], kind)
+        n.projection = "BOX"
+        n.projection_blend = 0.3
+        L(mapping.outputs[0], n.inputs["Vector"])
+        return n
+
+    color_out = None
+    if tex:
+        mapping.inputs["Scale"].default_value = (tex[2], tex[2], tex[2])
+        ctex = img("Color")
+        if tex[1] == "paint" or team:
+            # Detail: the texture's lightness scales the palette color (team areas stay a clean grey for the mask).
+            bw = nodes.new("ShaderNodeRGBToBW")
+            L(ctex.outputs["Color"], bw.inputs[0])
+            rng = nodes.new("ShaderNodeMapRange")
+            rng.inputs["From Min"].default_value = 0.08
+            rng.inputs["From Max"].default_value = 0.6
+            rng.inputs["To Min"].default_value = 0.92 if team else 0.7
+            rng.inputs["To Max"].default_value = 1.06 if team else 1.22
+            L(bw.outputs[0], rng.inputs["Value"])
+            mul = nodes.new("ShaderNodeMix")
+            mul.data_type = "RGBA"
+            mul.blend_type = "MULTIPLY"
+            mul.inputs["Factor"].default_value = 1.0
+            mul.inputs[6].default_value = base
+            comb = nodes.new("ShaderNodeCombineColor")
+            for i in range(3):
+                L(rng.outputs[0], comb.inputs[i])
+            L(comb.outputs[0], mul.inputs[7])
+            color_out = mul.outputs[2]
+        else:
+            # The material's own look, pulled 40% toward the palette color.
+            mix = nodes.new("ShaderNodeMix")
+            mix.data_type = "RGBA"
+            mix.inputs["Factor"].default_value = 0.4
+            L(ctex.outputs["Color"], mix.inputs[6])
+            mix.inputs[7].default_value = base
+            color_out = mix.outputs[2]
+        rtex = img("Roughness")
+        rmix = nodes.new("ShaderNodeMapRange")
+        rmix.inputs["To Min"].default_value = max(0.05, rough - 0.25)
+        rmix.inputs["To Max"].default_value = min(1.0, rough + 0.15)
+        L(rtex.outputs["Color"], rmix.inputs["Value"])
+        L(rmix.outputs[0], bsdf.inputs["Roughness"])
+        ntex = img("NormalGL")
+        nmap = nodes.new("ShaderNodeNormalMap")
+        nmap.inputs["Strength"].default_value = 0.35
+        L(ntex.outputs["Color"], nmap.inputs["Color"])
+        normal_out = nmap.outputs[0]
+    else:
+        rgb = nodes.new("ShaderNodeRGB")
+        rgb.outputs[0].default_value = base
+        color_out = rgb.outputs[0]
+        normal_out = None
+
+    # Rounded edges catch the light (Bevel shader), and worn paint shows bright metal there.
+    bevel = nodes.new("ShaderNodeBevel")
+    bevel.inputs["Radius"].default_value = 0.018
+    bevel.samples = 6
+    if normal_out is not None:
+        L(normal_out, bevel.inputs["Normal"])
+    L(bevel.outputs[0], bsdf.inputs["Normal"])
+    if not team:
+        geo = nodes.new("ShaderNodeNewGeometry")
+        dot = nodes.new("ShaderNodeVectorMath")
+        dot.operation = "DOT_PRODUCT"
+        L(bevel.outputs[0], dot.inputs[0])
+        L(geo.outputs["Normal"], dot.inputs[1])
+        edge = nodes.new("ShaderNodeMapRange")
+        edge.inputs["From Min"].default_value = 0.995
+        edge.inputs["From Max"].default_value = 0.93
+        edge.inputs["To Min"].default_value = 0.0
+        edge.inputs["To Max"].default_value = 0.55 if (tex and tex[1] == "paint") else 0.2
+        L(dot.outputs["Value"], edge.inputs["Value"])
+        worn = nodes.new("ShaderNodeMix")
+        worn.data_type = "RGBA"
+        worn.blend_type = "SCREEN"
+        L(edge.outputs[0], worn.inputs["Factor"])
+        L(color_out, worn.inputs[6])
+        worn.inputs[7].default_value = (0.55, 0.53, 0.5, 1)
+        color_out = worn.outputs[2]
+        # Grime: ambient occlusion darkens crevices and corners toward a dusty brown.
+        ao = nodes.new("ShaderNodeAmbientOcclusion")
+        ao.inputs["Distance"].default_value = 0.25
+        ao.only_local = True
+        grime = nodes.new("ShaderNodeMapRange")
+        grime.inputs["From Min"].default_value = 0.35
+        grime.inputs["From Max"].default_value = 1.0
+        grime.inputs["To Min"].default_value = 0.55
+        grime.inputs["To Max"].default_value = 0.0
+        L(ao.outputs["AO"], grime.inputs["Value"])
+        dirt = nodes.new("ShaderNodeMix")
+        dirt.data_type = "RGBA"
+        L(grime.outputs[0], dirt.inputs["Factor"])
+        L(color_out, dirt.inputs[6])
+        dirt.inputs[7].default_value = (0.06, 0.05, 0.035, 1)
+        color_out = dirt.outputs[2]
+    L(color_out, bsdf.inputs["Base Color"])
+    return m

@@ -81,7 +81,7 @@
    "anims": {
     "idle": 1
    },
-   "turret": true
+   "turret": false
   },
   "seek": {
    "kind": "air",

@@ -24,6 +24,8 @@ const TOOLS: Entry[] = [
   { title: 'maxrects-packer', source: 'npm: maxrects-packer', author: 'Gio Mo', license: 'MIT' },
   { title: 'Piper TTS', source: 'github.com/rhasspy/piper', author: 'Michael Hansen and contributors', license: 'MIT (tool only); voices norman, cori and ljspeech trained on public-domain recordings' },
   { title: 'FFmpeg', source: 'ffmpeg.org', author: 'FFmpeg developers', license: 'LGPL/GPL (tool only)' },
+  { title: 'Meshy', source: 'meshy.ai', author: 'Meshy', license: 'AI 3D model generation (tool; generated models owned by the project on a paid plan)' },
+  { title: 'ambientCG', source: 'ambientcg.com', author: 'Lennart Demes', license: 'CC0 (terrain and material textures)' },
 ];
 
 function Section({ title, items }: { title: string; items: Entry[] }) {

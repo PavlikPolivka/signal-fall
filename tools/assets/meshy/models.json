@@ -1,0 +1,478 @@
+{
+  "styles": {
+    "holdout": "Stylized-realistic real-time strategy game unit, chunky readable silhouette seen from above. Post-apocalyptic human resistance: analog diesel machinery, welded and riveted steel plates, saturated dark olive green paint with rust streaks and worn edges, sandbags, crates, searchlights. No insignia, no stars, no text. Bright magenta painted identification panels.",
+    "halcyon": "Stylized-realistic real-time strategy game unit, chunky readable silhouette seen from above. Planetary AI machine faction: clean white and graphite composite panels, hexagonal details, glowing cyan light lines, hover emitters, precise industrial design. No insignia, no stars, no text. Bright magenta painted identification panels.",
+    "choir": "Stylized-realistic real-time strategy game unit, chunky readable silhouette seen from above. Alien crystalline faction: floating violet crystal shards around a glowing amber core, resonant harmonic forms, translucent facets. No insignia, no stars, no text. Bright emerald green glowing accent panels.",
+    "holdout_infantry": "Stylized-realistic real-time strategy game character, full body, sturdy readable proportions, clean silhouette. Post-apocalyptic human resistance soldier: olive drab fatigues, combat helmet, boots. No insignia, no text. Bright magenta tactical vest and bright magenta shoulder pads.",
+    "halcyon_infantry": "Stylized-realistic real-time strategy game character, full body, humanoid combat robot, readable silhouette. Clean white and graphite composite armor plates, glowing cyan light lines, visor eye slit. No text. Bright magenta chest plate and bright magenta shoulder plates.",
+    "choir_infantry": "Stylized-realistic real-time strategy game character, full body, humanoid alien made of floating violet crystal shards around a glowing amber core, readable silhouette. Bright emerald green crystal chest and bright emerald green shoulder crystals."
+  },
+  "models": {
+    "bulldog": {
+      "faction": "holdout",
+      "prompt": "Main battle tank on two wide tracks with road wheels and side skirts, low welded hull, one squat turret with a long cannon and a mantlet, two exhaust stacks at the rear, crates and a spare track on the rear deck.",
+      "render": {
+        "length": 3.0,
+        "turret_cut": 0.6,
+        "turret_radius": 0.28
+      },
+      "v1": {
+        "preview_id": "01a14589-984a-7192-98f4-48f3936876c9",
+        "refine_id": "01a1458a-3898-73f5-aa8d-f5fb87dd060d",
+        "note": "khaki, star insignia"
+      }
+    },
+    "jackrabbit": {
+      "faction": "holdout",
+      "prompt": "Fast four-wheeled armored scout car, open top with a ring-mounted machine gun, spare wheel, jerry cans, searchlight.",
+      "render": {
+        "length": 2.2
+      }
+    },
+    "mule": {
+      "faction": "holdout",
+      "prompt": "Armored six-wheeled ore harvester truck: armored cab, big ore hopper on the back, wide front scoop shovel, hydraulic pistons.",
+      "render": {
+        "length": 2.9
+      }
+    },
+    "flak_track": {
+      "faction": "holdout",
+      "prompt": "Half-track anti-aircraft vehicle: wheels at the front, tracks at the rear, and a big quad-barrel anti-aircraft cannon turret on the rear bed with the four barrels pointing up.",
+      "render": {
+        "length": 2.7,
+        "turret_cut": 0.55
+      },
+      "v1": {
+        "note": "regenerated: did not match the unit"
+      }
+    },
+    "thumper": {
+      "faction": "holdout",
+      "prompt": "Self-propelled heavy howitzer on tracks: open-top armored casemate, huge long artillery barrel angled upward, ammunition racks.",
+      "render": {
+        "length": 3.1
+      }
+    },
+    "patch": {
+      "faction": "holdout",
+      "prompt": "Repair truck: flatbed truck with a crane arm, welding rig, gas cylinders, tool boxes and spare parts.",
+      "render": {
+        "length": 2.7
+      }
+    },
+    "hornet": {
+      "faction": "holdout",
+      "prompt": "Military gunship helicopter with twin rotors, rocket pods and side machine guns, riveted armor plates.",
+      "render": {
+        "length": 2.9
+      }
+    },
+    "ironclad": {
+      "faction": "holdout",
+      "prompt": "Huge crewed four-legged armored walker war machine with a heavy cannon, riveted armor, exhaust stacks, searchlight.",
+      "render": {
+        "length": 3.3
+      }
+    },
+    "homestead": {
+      "faction": "holdout",
+      "prompt": "Mobile construction vehicle: big eight-wheeled truck carrying a folded workshop container and a folded crane.",
+      "render": {
+        "length": 3.4
+      }
+    },
+    "holdfast": {
+      "faction": "holdout",
+      "prompt": "Construction yard: welded workshop hall with a gantry crane, stacked steel beams and materials, concrete pad, square footprint."
+    },
+    "dynamo": {
+      "faction": "holdout",
+      "prompt": "Power plant: diesel generator house with two big exhaust stacks, fuel tanks, cables and transformers, concrete pad."
+    },
+    "smelter": {
+      "faction": "holdout",
+      "prompt": "Ore refinery: furnace with a tall smokestack, ore silo, conveyor belt to an unloading dock, concrete pad, square footprint."
+    },
+    "bunkhouse": {
+      "faction": "holdout",
+      "prompt": "Military barracks: corrugated metal hut behind sandbag walls, a flag pole, ammunition crates, concrete pad."
+    },
+    "motor_pool": {
+      "faction": "holdout",
+      "prompt": "Vehicle factory: big hangar with roller doors, crane rail, fuel tank, concrete apron, square footprint."
+    },
+    "radio_mast": {
+      "faction": "holdout",
+      "prompt": "Radar station: steel lattice radio tower with a radar dish and a small radio shack, sandbags."
+    },
+    "garage": {
+      "faction": "holdout",
+      "prompt": "Vehicle repair bay: open steel service frame with a ramp, hoist and tool racks, concrete pad, rectangular footprint."
+    },
+    "airstrip": {
+      "faction": "holdout",
+      "prompt": "Helipad airfield: concrete helipad with markings, a small hangar and fuel drums, square footprint."
+    },
+    "foundry": {
+      "faction": "holdout",
+      "prompt": "Tech center: heavy industrial hall with two smokestacks, a laboratory annex with antennas, square footprint."
+    },
+    "pillbox": {
+      "faction": "holdout",
+      "prompt": "Small concrete machine gun bunker with a firing slit, sandbags on top."
+    },
+    "flak_nest": {
+      "faction": "holdout",
+      "prompt": "Anti-aircraft emplacement: sandbag ring with a twin flak cannon on a rotating mount in the middle.",
+      "render": {
+        "turret_cut": 0.35
+      }
+    },
+    "bastion": {
+      "faction": "holdout",
+      "prompt": "Heavy anti-armor fortification: thick concrete casemate with a long-barrel gun in a rotating armored turret.",
+      "render": {
+        "turret_cut": 0.5
+      }
+    },
+    "barricade": {
+      "faction": "holdout",
+      "prompt": "Wall segment: concrete jersey barrier blocks with barbed wire coils."
+    },
+    "ping": {
+      "faction": "halcyon",
+      "prompt": "Small fast hovercraft scout vehicle: a flat white wedge-shaped hull floating on two glowing hover pads, a small energy gun on top, compact and wide, seen from above.",
+      "render": {
+        "length": 2.2
+      },
+      "v1": {
+        "note": "regenerated: did not match the unit"
+      }
+    },
+    "fetch": {
+      "faction": "halcyon",
+      "prompt": "Hover harvester: a white hover hauler with a scoop intake at the front and a hexagonal cargo pod.",
+      "render": {
+        "length": 2.9
+      }
+    },
+    "vector": {
+      "faction": "halcyon",
+      "prompt": "Fast hover tank: wedge-shaped white armored hull, low turret with a split-rail energy cannon.",
+      "render": {
+        "length": 2.9,
+        "turret_cut": 0.55
+      }
+    },
+    "firewall": {
+      "faction": "halcyon",
+      "prompt": "Mobile anti-aircraft hover platform with a hexagonal missile launcher cell pointing skyward.",
+      "render": {
+        "length": 2.7,
+        "turret_cut": 0.5
+      }
+    },
+    "broadcast": {
+      "faction": "halcyon",
+      "prompt": "Hover artillery: hover base carrying a tall tesla emitter coil that throws arcing energy bolts.",
+      "render": {
+        "length": 2.9
+      }
+    },
+    "seek": {
+      "faction": "halcyon",
+      "prompt": "Anti-armor flying wing drone with underslung missiles and a cyan sensor eye.",
+      "render": {
+        "length": 2.7
+      }
+    },
+    "root": {
+      "faction": "halcyon",
+      "prompt": "Huge hover platform war machine: broad hexagonal deck with a large dish turret emitter.",
+      "render": {
+        "length": 3.4,
+        "turret_cut": 0.5
+      }
+    },
+    "init": {
+      "faction": "halcyon",
+      "prompt": "Construction unit: big hover carrier holding a folded hexagonal core node.",
+      "render": {
+        "length": 3.4
+      }
+    },
+    "kernel": {
+      "faction": "halcyon",
+      "prompt": "Construction yard core node: buttressed white hexagonal tower with glowing cyan slits, a floating ring of segments and an antenna."
+    },
+    "powerd": {
+      "faction": "halcyon",
+      "prompt": "Power reactor: glowing cyan reactor core visible through slots in a white housing, tall cooling fins, conduits."
+    },
+    "ingest": {
+      "faction": "halcyon",
+      "prompt": "Refinery: twin intake funnels on a processor block, a conveyor arm to a dock, crystal storage tanks."
+    },
+    "spawn": {
+      "faction": "halcyon",
+      "prompt": "Robot factory: glass canopy over a print bed with a half-printed robot and a gantry print head."
+    },
+    "make": {
+      "faction": "halcyon",
+      "prompt": "Vehicle fabricator: a hall with hexagonal roof panels, a large cyan-framed bay door, overhead crane."
+    },
+    "scan": {
+      "faction": "halcyon",
+      "prompt": "Radar: hex-tiled phased array panel on a pylon with a sensor dome and an equipment hut."
+    },
+    "relay": {
+      "faction": "halcyon",
+      "prompt": "Relay node: slim tripod pylon with stacked glowing coverage rings."
+    },
+    "launchd": {
+      "faction": "halcyon",
+      "prompt": "Drone airfield: hexagonal landing pad with a light ring, a slim control tower and a launch rail."
+    },
+    "sudo": {
+      "faction": "halcyon",
+      "prompt": "Tech center: dark server monoliths around a holographic projector under a cantilevered white canopy."
+    },
+    "guard": {
+      "faction": "halcyon",
+      "prompt": "Laser turret: stepped hexagonal base with a rotating laser emitter head.",
+      "render": {
+        "turret_cut": 0.45
+      }
+    },
+    "filter": {
+      "faction": "halcyon",
+      "prompt": "Anti-aircraft defense: ring of radiator fins around a twin-barrel flak turret.",
+      "render": {
+        "turret_cut": 0.45
+      }
+    },
+    "sigkill": {
+      "faction": "halcyon",
+      "prompt": "Heavy defense: long-range rail cannon turret on an armored hexagonal plinth with capacitor banks.",
+      "render": {
+        "turret_cut": 0.45
+      }
+    },
+    "block": {
+      "faction": "halcyon",
+      "prompt": "Wall: a hexagonal barrier block with a glowing seam and a graphite cap."
+    },
+    "glissando": {
+      "faction": "choir",
+      "prompt": "A long crystal shard lying flat and hovering horizontally just above the ground like a skimming boat, longer than it is tall, with amber fins along both sides.",
+      "render": {
+        "length": 2.3
+      },
+      "v1": {
+        "note": "regenerated: did not match the unit"
+      }
+    },
+    "refrain": {
+      "faction": "choir",
+      "prompt": "Harvester: a floating geode split open, its crystal bowl gathering ore, an amber glowing maw at the front.",
+      "render": {
+        "length": 2.9
+      }
+    },
+    "basso": {
+      "faction": "choir",
+      "prompt": "A heavy hover tank made of a large faceted violet crystal hull floating above the ground, a long prism crystal cannon on top, a few small violet shards orbiting it. Mostly violet and amber, only small green accents.",
+      "render": {
+        "length": 3.0,
+        "turret_cut": 0.55
+      },
+      "v1": {
+        "note": "regenerated: did not match the unit"
+      }
+    },
+    "falsetto": {
+      "faction": "choir",
+      "prompt": "Mobile anti-aircraft: twin tuning-fork crystal spires over a small floating keel.",
+      "render": {
+        "length": 2.6
+      }
+    },
+    "crescendo": {
+      "faction": "choir",
+      "prompt": "Artillery: a tall floating violet obelisk ringed by glowing amber bands.",
+      "render": {
+        "length": 2.7
+      }
+    },
+    "aria": {
+      "faction": "choir",
+      "prompt": "Flying unit: a violet crystal with two long blade wings.",
+      "render": {
+        "length": 2.7
+      }
+    },
+    "requiem": {
+      "faction": "choir",
+      "prompt": "Huge war machine: a great floating ring of violet crystal shards around a central beam crystal.",
+      "render": {
+        "length": 3.5
+      }
+    },
+    "overture": {
+      "faction": "choir",
+      "prompt": "Construction unit: a floating crystal seed pod with amber veins.",
+      "render": {
+        "length": 3.3
+      }
+    },
+    "opus": {
+      "faction": "choir",
+      "prompt": "Construction yard: a large crystalline spire growing out of rock, floating crystal shards around it, glowing amber core."
+    },
+    "bell": {
+      "faction": "choir",
+      "prompt": "Power: a resonance bell made of violet crystal hanging in a crystal frame, glowing amber core."
+    },
+    "coda": {
+      "faction": "choir",
+      "prompt": "Refinery: crystal formation with a glowing amber bowl where ore is gathered, crystal pillars."
+    },
+    "loft": {
+      "faction": "choir",
+      "prompt": "Infantry nest: cluster of tall crystal pods on a rock base, glowing seams."
+    },
+    "pit": {
+      "faction": "choir",
+      "prompt": "Vehicle grower: a sunken crystal crater with tall crystal ribs and a glowing amber pool."
+    },
+    "antiphon": {
+      "faction": "choir",
+      "prompt": "Radar: twin crystal antennae facing each other over a rock base, harmonic rings."
+    },
+    "chord": {
+      "faction": "choir",
+      "prompt": "Special structure: a single tall crystal tuning column with floating amber rings."
+    },
+    "belfry": {
+      "faction": "choir",
+      "prompt": "Airfield: a crystal tower with floating landing petals around it."
+    },
+    "conservatory": {
+      "faction": "choir",
+      "prompt": "Tech center: a dome of interlocking crystal panels over a glowing amber chamber."
+    },
+    "discord": {
+      "faction": "choir",
+      "prompt": "Defense: a jagged crystal spike turret on a rock base that fires energy.",
+      "render": {
+        "turret_cut": 0.45
+      }
+    },
+    "descant": {
+      "faction": "choir",
+      "prompt": "Anti-aircraft defense: three thin crystal spires on a rock base aiming upward.",
+      "render": {
+        "turret_cut": 0.45
+      }
+    },
+    "fortissimo": {
+      "faction": "choir",
+      "prompt": "Heavy defense: a large crystal prism cannon on a rock pedestal.",
+      "render": {
+        "turret_cut": 0.45
+      }
+    },
+    "fermata": {
+      "faction": "choir",
+      "prompt": "Wall: fused violet crystals hovering just above a low stone ridge, joined by an amber seam."
+    },
+    "grunt": {
+      "faction": "holdout_infantry",
+      "prompt": "Infantry rifleman in a strict T-pose: both arms raised straight out horizontally to the sides, palms down, empty hands, nothing held. Rifle strapped to the backpack. Wearing a bright magenta tactical vest and bright magenta shoulder pads over olive fatigues.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "v1": {
+        "note": "no helmet, no team color (yellow armband)"
+      },
+      "render": {
+        "weapon": "rifle"
+      },
+      "v2": {
+        "note": "held the rifle (no T-pose), no magenta"
+      }
+    },
+    "tankbuster": {
+      "faction": "holdout_infantry",
+      "prompt": "Anti-tank soldier standing in a T-pose with arms straight out to the sides, heavy backpack with rockets, rocket launcher slung on the back.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "launcher"
+      }
+    },
+    "wrench": {
+      "faction": "holdout_infantry",
+      "prompt": "Combat engineer standing in a T-pose with arms straight out to the sides, tool belt, welding goggles, toolbox backpack.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "tool"
+      }
+    },
+    "sentry": {
+      "faction": "halcyon_infantry",
+      "prompt": "Light infantry robot standing in a T-pose with arms straight out to the sides, slim build, small energy pistol holstered.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "rifle"
+      }
+    },
+    "lance": {
+      "faction": "halcyon_infantry",
+      "prompt": "Heavy anti-armor robot standing in a T-pose with arms straight out to the sides, bulky shoulders, a rail launcher on the back.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "launcher"
+      }
+    },
+    "fork": {
+      "faction": "halcyon_infantry",
+      "prompt": "Engineer robot standing in a T-pose with arms straight out to the sides, tool arms folded on the back, antenna.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "tool"
+      }
+    },
+    "grace": {
+      "faction": "choir_infantry",
+      "prompt": "Graceful slender crystal warrior standing in a T-pose with arms straight out to the sides.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "none"
+      }
+    },
+    "staccato": {
+      "faction": "choir_infantry",
+      "prompt": "Heavy crystal warrior standing in a T-pose with arms straight out to the sides, large crystal shoulder blades.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "none"
+      }
+    },
+    "cantor": {
+      "faction": "choir_infantry",
+      "prompt": "Tall robed crystal singer standing in a T-pose with arms straight out to the sides, a halo of amber shards over the head.",
+      "pose_mode": "t-pose",
+      "kind": "infantry",
+      "render": {
+        "weapon": "none"
+      }
+    }
+  }
+}

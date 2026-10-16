@@ -23,7 +23,8 @@ args = sys.argv[sys.argv.index("--") + 1 :]
 faction, out_dir, only = args[0], args[1], set(args[2:])
 sys.path.insert(0, os.path.join(HERE, "models", faction))
 models = importlib.import_module("models")
-STYLE = "gritty"
+# "pbr" = textured materials, edge wear and grime, rendered with Cycles; "gritty" = the original EEVEE look.
+STYLE = os.environ.get("SF_STYLE", "gritty")
 os.makedirs(out_dir, exist_ok=True)
 manifest_path = os.path.join(out_dir, "manifest.json")
 manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {"faction": faction, "sprites": {}}
@@ -32,6 +33,9 @@ manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else 
 def fresh(frame_px):
     kit.reset()
     kit._materials.clear()
+    kit._images.clear()
+    if STYLE == "pbr":
+        kit.use_cycles()
     kit.setup_sprite_camera(frame_px)
     catcher = kit.shadow_catcher(size=12)
     return catcher
@@ -52,11 +56,36 @@ def frame_name(sid, part, anim, d, f):
 UNIT_SCALE = {"vehicle": 0.72, "air": 0.72, "infantry": 1.0}
 
 
+MESHY_CFG = json.load(open(os.path.join(HERE, "..", "meshy", "models.json")))["models"]
+
+
+def build_model(sid, spec):
+    """A generated (Meshy) model when one has been made for this id, else the procedural one."""
+    import meshy_import
+
+    entry = MESHY_CFG.get(sid, {})
+    cfg = dict(entry.get("render", {}))
+    if spec.get("kind") == "infantry":
+        if entry and meshy_import.has_character(sid):
+            meshy_import.POSE_COUNTS.clear()
+            meshy_import.POSE_COUNTS.update(spec.get("anims", {}))
+            return meshy_import.load_character(sid, **cfg)
+        return spec["build"](STYLE)
+    if entry and meshy_import.has_model(sid):
+        if "footprint" in spec:
+            cfg.setdefault("footprint", spec["footprint"])
+            cfg["building"] = True
+        if entry.get("faction") == "choir":
+            cfg.setdefault("key", "green")
+        return meshy_import.load(sid, **cfg)
+    return spec["build"](STYLE)
+
+
 def render_unit(sid, spec):
     scale = UNIT_SCALE[spec["kind"]]
     frame_px = int(round(spec["frame"] * scale / 8) * 8)
     catcher = fresh(frame_px)
-    model = spec["build"](STYLE)
+    model = build_model(sid, spec)
     root = kit.root()
     root.scale = (scale, scale, scale)
     hull = [o for o in model["hull"] if o is not None]
@@ -69,7 +98,7 @@ def render_unit(sid, spec):
     anims = spec.get("anims", {"idle": 1})
     dirs = spec["dirs"]
     entry = {"kind": spec["kind"], "frame": frame_px, "dirs": dirs, "anims": anims, "turret": bool(turret), "frames": []}
-    pose = spec.get("pose")
+    pose = model.get("pose") if model.get("meshy") else spec.get("pose")
     for d in range(dirs):
         root.rotation_euler = (0, 0, kit.sim_yaw(d, dirs))
         for anim, count in anims.items():
@@ -100,7 +129,7 @@ def render_building(sid, spec):
     entry = {"kind": "building", "frame": frame_px, "footprint": [w, dpt], "frames": [], "turret": False}
     for state in ("built", "damaged", "construction"):
         catcher = fresh(frame_px)
-        model = spec["build"](STYLE)
+        model = build_model(sid, spec)
         body = model["body"]
         turret = model.get("turret", [])
         root = kit.root()
@@ -118,7 +147,7 @@ def render_building(sid, spec):
             for o in body + turret:
                 if o.name.startswith(("light", "beacon", "glow", "pad_light")):
                     o.hide_render = True
-        if state == "construction" and hasattr(models, "construction"):
+        if state == "construction" and hasattr(models, "construction") and not model.get("meshy"):
             # The faction draws its own half-built look (Choir: crystals still growing).
             models.construction(body, turret)
         elif state == "construction":
