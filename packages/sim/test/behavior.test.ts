@@ -68,7 +68,7 @@ describe('target priority', () => {
     e.hp[weak] = 5;
     e.shields[weak] = 0;
     spawnUnit(w, unit('grace'), 1, at(15), at(14));
-    spawnUnit(w, unit('jackrabbit'), 0, at(12), at(11)); // spotter
+    spawnUnit(w, unit('patch'), 0, at(12), at(11)); // unarmed spotter
     // Count how many shells are ever in flight at the nearly dead unit at once.
     let maxAtWeak = 0;
     for (let t = 0; t < 60; t++) {

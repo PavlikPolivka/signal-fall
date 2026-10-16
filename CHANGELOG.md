@@ -1,5 +1,14 @@
 # What's new
 
+## 2026-10-16 12:13 UTC
+
+- **Faction balance.** Every match-up is now within a few points of even (Hard AI against Hard AI, 300 matches each).
+- **Choir combat units cost 10% more**, and Graces deal 12 damage instead of 14.
+- **Bullets hit Choir shields harder:** 85% damage, up from 70%.
+- **Energy weapons are softer on shields and aircraft:** 140% damage to shields (was 180%), and 50% to aircraft (was 75%), the same as bullets.
+- **Halcyon lances** deal 75 damage, up from 65.
+- **Holdout Mules** carry 800 Echo a trip.
+
 ## 2026-10-16 10:36 UTC
 
 - **Richer economy.** Echo fields are bigger and regrow faster, so expanding to new fields pays off.

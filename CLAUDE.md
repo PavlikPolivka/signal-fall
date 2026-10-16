@@ -26,3 +26,4 @@ CI owns the balance numbers. The `balance` job runs `pnpm -s headless balance-re
 - Commit and push to `main` per feature. Track progress in README and `docs/`, not in Obsidian.
 - The sim, AI and mapgen are deterministic: no floats, no `/`, no `Math.*` (lint enforces this; use `idiv`).
 - Run Node 22: `source ~/.nvm/nvm.sh && nvm use 22`.
+- Typecheck with `pnpm typecheck`, never `pnpm -s typecheck`: the silent flag hides failures.

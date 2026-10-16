@@ -34,7 +34,7 @@ const heavy = (u: UnitRule) => u.cost >= 1200;
 
 /** The radar last: units first, tech after. */
 function lean(base: readonly Role[]): Role[] {
-  const out = base.filter((r) => r !== 'radar');
+  const out: Role[] = base.filter((r) => r !== 'radar');
   if (out.length < base.length) out.push('radar');
   return out;
 }

@@ -34,4 +34,22 @@ Richer Echo fields, refineries priced above harvesters, AI strategies and expans
   - Counter-picks account for shields.
 - Choir far seeds replace the 16-tile reach limit on Echo growth.
 - Measured, not the cause: Choir harvests the same as Holdout through minute 9; its larger totals come from longer games it wins. Kinetic damage against shields at 85% and a Chord nerf made no difference, so both were reverted.
-- Open: Choir wins about 70% against both other factions. In equal-cost tier-3 fights, Basso masses beat vectors; Holdout wins its core duels against Choir but loses whole matches.
+- Tools for finding the cause: a kill ledger (value destroyed by each unit type against each victim type, over
+  full matches), per-strategy win counts (now in the CSV and on the balance page), and the lab with `LAB_AIR=1`.
+- The lab didn't help here: Holdout wins equal-cost fights against both other factions, yet lost 70% of matches
+  to Choir. The ledger showed Graces destroying Holdout Hornets (energy did 75% to aircraft, kinetic 50%), and
+  Graces and Arias as the top killers overall.
+- The fix, all measured at 300 matches per pairing:
+  - Choir combat units cost 10% more and Graces deal 12 damage (was 14).
+  - Energy does 50% to aircraft (was 75).
+  - Kinetic does 85% to shields (was 70); only Holdout fires kinetic at Choir.
+  - Lances deal 75 damage (was 65), which fixed Holdout vs Halcyon at 58%.
+  - Energy does 140% to shields (was 180); only Halcyon fires energy at Choir.
+  - The Mule carries 800.
+- Tried and reverted:
+  - Requiem nerf.
+  - Slower shield recharge.
+  - Halcyon fire-rate bonus 15%.
+  - fetch 750: Halcyon's income barely changed.
+  - Graces ground-only: Choir fell to about 40%.
+- Result: Holdout vs Halcyon 51.7%, Holdout vs Choir 50.7%, Halcyon vs Choir 51%.

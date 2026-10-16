@@ -25,7 +25,7 @@ function army(faction: number): number[] {
   const prof = profiles.get(FACTIONS[faction]!)!;
   const pool = prof.army
     .map(([id, w]) => ({ rule: rules.units[rules.unitIndex.get(id)!]!, w }))
-    .filter((p) => p.rule.tier <= maxTier && p.rule.tab !== 'air');
+    .filter((p) => p.rule.tier <= maxTier && (process.env.LAB_AIR !== undefined || p.rule.tab !== 'air'));
   const counts = pool.map(() => 0);
   let left = budget;
   for (;;) {
