@@ -34,6 +34,7 @@ Commands:
          Exits 1 outside 45-55% per pairing or under 90% Hard vs Easy.
          --matches <n>     matches per pairing (default 300)
          --easy <n>        Hard vs Easy matches per faction (default 200)
+         --normal <n>      Normal vs Normal matches per pairing, shown not gated (default 100)
          --out <file>      JSON path (default balance.json)
          --csv <dir>       where the CSVs go (default .)
 `;
@@ -143,6 +144,7 @@ async function balanceReport(args: string[]): Promise<void> {
     options: {
       matches: { type: 'string', default: '300' },
       easy: { type: 'string', default: '200' },
+      normal: { type: 'string', default: '100' },
       out: { type: 'string', default: 'balance.json' },
       csv: { type: 'string', default: '.' },
     },
@@ -189,6 +191,20 @@ async function balanceReport(args: string[]): Promise<void> {
       console.log(`${sides[0].faction} vs ${sides[1].faction}: ${s.winsA}-${s.winsB} (${s.draws} draws) · A wins ${winPct}%`);
     }
   }
+  // Normal AI does not use abilities, much like a player who doesn't micro: shown, not gated.
+  const normal = [];
+  for (let i = 0; i < factions.length; i++) {
+    for (let j = i + 1; j < factions.length; j++) {
+      const sides: [Side, Side] = [
+        { faction: factions[i]!, difficulty: 'normal' },
+        { faction: factions[j]!, difficulty: 'normal' },
+      ];
+      const outcomes = await run(sides, Number(values.normal));
+      const s = summarize(sides, outcomes);
+      normal.push({ a: sides[0].faction, b: sides[1].faction, winsA: s.winsA, winsB: s.winsB, draws: s.draws, winPctA: pct(s.winsA, outcomes.length), avgMinutes: s.avgMinutes });
+      console.log(`normal ${sides[0].faction} vs ${sides[1].faction}: A wins ${pct(s.winsA, outcomes.length)}%`);
+    }
+  }
   const easy = [];
   for (const f of factions) {
     const sides: [Side, Side] = [
@@ -208,6 +224,7 @@ async function balanceReport(args: string[]): Promise<void> {
     gate: { min: 45, max: 55, easyMin: 90 },
     ok,
     pairings,
+    normal,
     easy,
   };
   writeFileSync(values.out, JSON.stringify(report, null, 2) + '\n');

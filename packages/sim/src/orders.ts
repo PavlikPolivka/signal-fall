@@ -45,6 +45,8 @@ function stopHarvesting(world: World, s: number): void {
 function give(world: World, s: number, order: Order, queue: boolean): void {
   const e = world.entities;
   stopHarvesting(world, s);
+  // Any order packs up a dug-in unit.
+  e.dugInAt[s] = 0;
   if (!queue || e.orders[s]!.length === 0) {
     e.orders[s] = [order];
     e.target[s] = NO_ENTITY;

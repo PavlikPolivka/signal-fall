@@ -53,7 +53,8 @@ export type AbilityRule =
   | { kind: 'phase'; duration: number; cooldown: number }
   | { kind: 'override'; range: number; duration: number; cooldown: number }
   | { kind: 'chain'; jumps: number; falloffPct: number }
-  | { kind: 'sweep'; width: number };
+  | { kind: 'sweep'; width: number }
+  | { kind: 'digIn'; setup: number; damageTakenPct: number; rangeBonus: number };
 
 export interface UnitRule {
   kind: 'unit';
@@ -230,6 +231,8 @@ export function compileRules(raw: RawData): Rules {
         return a;
       case 'sweep':
         return { kind: 'sweep', width: fx(a.width) };
+      case 'digIn':
+        return { kind: 'digIn', setup: ticks(a.setup), damageTakenPct: a.damageTakenPct, rangeBonus: fx(a.rangeBonus) };
     }
   };
 

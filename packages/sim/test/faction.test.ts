@@ -4,6 +4,8 @@ import { KIND } from '../src/entities';
 import { Sim } from '../src/sim';
 import { spawnStructure, spawnUnit } from '../src/spawn';
 import { inCoverage } from '../src/systems/faction';
+import { damage } from '../src/systems/combat';
+import { inWeaponRange, isDugIn } from '../src/query';
 import { CREDIT_REASON, FX_EVENT, FX_STRIDE } from '../src/world';
 import { at, rules, structure, unit } from './helpers';
 
@@ -77,6 +79,30 @@ describe('Halcyon network coverage', () => {
 });
 
 describe('active abilities', () => {
+  it('Dig In: sets up, then takes 30% less damage and shoots 1 tile farther; any order packs up', () => {
+    const s = sim(HOLDOUT, HALCYON);
+    const h = spawnUnit(s.world, unit('grunt'), 0, at(5), at(5));
+    const g = slot(h);
+    const e = s.world.entities;
+    const grunt = rules.units[unit('grunt')]!;
+    cmd(s, 0, { type: 'ability', units: [h] });
+    s.run(1);
+    expect(e.dugInAt[g]).toBeGreaterThan(0);
+    // Setting up: no bonus yet.
+    const target = slot(spawnUnit(s.world, unit('sentry'), 1, at(5) + grunt.weapon!.range + FX_ONE - 100, at(5)));
+    expect(inWeaponRange(s.world, g, grunt.weapon!, target)).toBe(false);
+    s.run(40);
+    expect(isDugIn(s.world, g)).toBe(true);
+    expect(inWeaponRange(s.world, g, grunt.weapon!, target)).toBe(true);
+    const hp = e.hp[g]!;
+    damage(s.world, g, 100, 0, -1);
+    expect(hp - e.hp[g]!).toBe(70);
+    cmd(s, 0, { type: 'move', units: [h], x: at(10), y: at(5) });
+    s.run(1);
+    expect(e.dugInAt[g]).toBe(0);
+  });
+
+
   it('Grace blinks up to its range toward a point, then waits for the cooldown', () => {
     const s = sim(CHOIR, HOLDOUT);
     const h = spawnUnit(s.world, unit('grace'), 0, at(5), at(5));
@@ -106,7 +132,7 @@ describe('active abilities', () => {
     expect(e.hp[b]! + e.shields[b]!).toBeLessThan(hp);
   });
 
-  it('root overrides an enemy vehicle for a while; Holdout is air-gapped and Choir resists', () => {
+  it('root overrides an enemy vehicle for a while; Choir resists and air-gapped Holdout holds it half as long', () => {
     const tryOverride = (victimFaction: number, victimUnit: string) => {
       const s = sim(HALCYON, victimFaction);
       const r = spawnUnit(s.world, unit('root'), 0, at(10), at(10));
@@ -129,7 +155,9 @@ describe('active abilities', () => {
     const choir = tryOverride(CHOIR, 'basso');
     expect(choir.owned).toBe(0);
     expect(choir.ticks).toBeLessThan(halcyon.ticks * 0.6);
-    expect(tryOverride(HOLDOUT, 'bulldog').owned).toBe(1);
+    const holdout = tryOverride(HOLDOUT, 'bulldog');
+    expect(holdout.owned).toBe(0);
+    expect(holdout.ticks).toBeLessThan(halcyon.ticks * 0.6);
   });
 });
 

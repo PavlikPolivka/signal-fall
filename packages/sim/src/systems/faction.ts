@@ -12,6 +12,8 @@ import { requirementsMet } from './economy';
 
 /** Coverage is rebuilt this often (ticks); placement checks compute it exactly. */
 const COVERAGE_INTERVAL = 10;
+/** How much shorter Override is on air-gapped (Holdout) machines, percent. */
+const AIR_GAPPED_OVERRIDE_RESIST = 50;
 /** Cantor shield restoration: radius (tiles) and shields per second. */
 const SHIELD_AURA_RADIUS = 3 * FX_ONE;
 const SHIELD_AURA_PER_SECOND = 20;
@@ -271,6 +273,22 @@ export function useAbility(world: World, player: number, s: number, x: number, y
       e.abilityReady[s] = world.tick + a.cooldown;
       return true;
     }
+    if (a.kind === 'digIn') {
+      // Toggle: dig in where it stands (ready after the setup time), or pack up.
+      if (e.dugInAt[s]! > 0) e.dugInAt[s] = 0;
+      else {
+        e.dugInAt[s] = world.tick + a.setup;
+        e.orders[s] = [];
+        e.paths[s] = null;
+        e.pathGoal[s] = -1;
+        e.hasGoal[s] = 0;
+        e.anchorX[s] = e.x[s]!;
+        e.anchorY[s] = e.y[s]!;
+        pushFx(world, FX_EVENT.ability, 4, e.type[s]!, player, e.x[s]!, e.y[s]!, 0, 0);
+      }
+      e.abilityReady[s] = world.tick + world.rules.constants.tickRate;
+      return true;
+    }
     if (a.kind === 'phase') {
       e.phasedUntil[s] = world.tick + a.duration;
       e.target[s] = NO_ENTITY;
@@ -285,9 +303,10 @@ export function useAbility(world: World, player: number, s: number, x: number, y
       // Mechanical units only: vehicles and aircraft.
       if (victim.tab === 'infantry') return false;
       const vf = world.rules.factions[world.players[e.owner[t]!]!.faction]!;
-      if (vf.airGapped) return false;
       if (ilength(e.x[t]! - e.x[s]!, e.y[t]! - e.y[s]!) > a.range) return false;
-      const duration = pct(a.duration, 100 - vf.overrideResistPct);
+      // Air-gapped machines have no network to hold on to: Override lasts half as long.
+      const resist = Math.max(vf.overrideResistPct, vf.airGapped ? AIR_GAPPED_OVERRIDE_RESIST : 0);
+      const duration = pct(a.duration, 100 - resist);
       if (duration <= 0) return false;
       e.homeOwner[t] = e.owner[t]!;
       e.owner[t] = player;

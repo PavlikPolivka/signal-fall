@@ -6,8 +6,9 @@ export const FACTION_LORE: Record<string, { tagline: string; story: string; look
       'The survivors abandoned anything networked, because networked meant hijacked. Their machines are analog and diesel-heavy: armored crawlers, cable-guided missiles, crewed walkers, flak.',
     look: 'Olive and rust, welded plates, exhaust, searchlights.',
     twists: [
-      ['Air-gapped', 'Immune to Halcyon disruption and takeover effects.'],
-      ['Salvage', 'Wrecks on the field, from any faction, can be collected by harvesters and engineers for credits.'],
+      ['Dig In', 'Grunts and Tankbusters entrench behind sandbags (F): 30% less damage and 1 tile more range, but they cannot move until given an order.'],
+      ['Air-gapped', 'No network to hijack: Halcyon\'s Override holds Holdout machines only half as long.'],
+      ['Salvage', 'Any Holdout vehicle that drives over a wreck, from any faction, turns it into credits: 15% of its value.'],
       ['Field repair', 'Cheap repair vehicles and repair bays; units are durable, slow and cost-efficient.'],
     ],
     play: 'Solid defenses, attrition, trading efficiently.',
@@ -20,7 +21,7 @@ export const FACTION_LORE: Record<string, { tagline: string; story: string; look
     twists: [
       ['Coverage', 'Buildings and relays project network coverage: units inside fire faster and slowly self-repair. Buildings can only be placed inside coverage.'],
       ['Recompile', 'A unit destroyed inside coverage refunds part of its cost.'],
-      ['Override', 'A tier-3 ability briefly takes control of an enemy machine (Choir resist, Holdout are immune).'],
+      ['Override', 'A tier-3 ability briefly takes control of an enemy machine (Choir and Holdout machines break free twice as fast).'],
     ],
     play: 'Fast, fragile units; strong on its own network, weaker when pushing out.',
   },

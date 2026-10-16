@@ -100,11 +100,18 @@ export class VoicePlayer {
     src.connect(this.out);
     this.onSpeaking(true);
     this.history.push(item.line);
-    src.onended = () => {
+    // Done when playback ends, or after the line's length if the audio clock never reports it
+    // (no output device): one stuck line must not silence the announcer for the rest of the match.
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
       this.speaking = false;
       this.onSpeaking(false);
       void this.next();
     };
+    src.onended = finish;
+    setTimeout(finish, buf.duration * 1000 + 300);
     src.start();
   }
 }

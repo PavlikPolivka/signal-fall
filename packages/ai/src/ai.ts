@@ -544,7 +544,7 @@ export class AiPlayer implements Brain {
     }
     // Money piling up means production is the bottleneck: another barracks or factory
     // (extra ones speed up their tab), alternating, up to a few of each.
-    if (p.credits >= FLOAT_CREDITS) {
+    if (this.d.extraProduction && p.credits >= FLOAT_CREDITS) {
       const barracks = this.count(own, 'barracks');
       const factories = this.count(own, 'factory');
       if (factories <= barracks && factories < MAX_PRODUCTION) return 'factory';
@@ -1020,7 +1020,7 @@ function crowded(view: PlacementView, rule: StructureRule, tx: number, ty: numbe
 
 /**
  * Ability use for a set of units: phase out or blink away when badly hurt,
- * blink in to close the gap on a target, Override the most valuable enemy
+ * blink in to close the gap on a target, dig in when holding and enemies close in, Override the most valuable enemy
  * machine in reach. Pure function of the world, so the battle lab can reuse it.
  */
 export function abilityOrders(world: World, player: number, home: { x: number; y: number }, units: number[]): Command[] {
@@ -1029,9 +1029,22 @@ export function abilityOrders(world: World, player: number, home: { x: number; y
   for (const s of units) {
     if (e.alive[s] !== 1 || world.tick < e.abilityReady[s]!) continue;
     const rule = world.rules.units[e.type[s]!]!;
-    const ability = rule.abilities.find((a) => a.kind === 'blink' || a.kind === 'phase' || a.kind === 'override');
+    const ability = rule.abilities.find((a) => a.kind === 'blink' || a.kind === 'phase' || a.kind === 'override' || a.kind === 'digIn');
     if (!ability) continue;
     const h = e.handle(s);
+    if (ability.kind === 'digIn') {
+      // Holding a position (no orders) with enemies closing in: dig in. Any new order packs up.
+      if (e.dugInAt[s]! > 0 || e.orders[s]!.length > 0 || !rule.weapon) continue;
+      let threat = false;
+      const team = teamOf(world, s);
+      const reach = rule.weapon.range + 3 * FX_ONE;
+      world.spatial.query(e.x[s]!, e.y[s]!, reach, (n) => {
+        if (threat || e.kind[n] !== KIND.unit || teamOf(world, n) === team || !visibleTo(world, player, n)) return;
+        if (ilength(e.x[n]! - e.x[s]!, e.y[n]! - e.y[s]!) <= reach) threat = true;
+      });
+      if (threat) out.push({ type: 'ability', units: [h] });
+      continue;
+    }
     const life = e.hp[s]! + e.shields[s]!;
     const max = e.maxHp[s]! + e.maxShields[s]!;
     const hurt = life * 100 < max * 40 && e.lastHitTick[s]! >= 0 && world.tick - e.lastHitTick[s]! < 20;
@@ -1058,7 +1071,6 @@ export function abilityOrders(world: World, player: number, home: { x: number; y
       if (e.kind[n] !== KIND.unit || teamOf(world, n) === team || e.homeOwner[n]! >= 0) return;
       const victim = world.rules.units[e.type[n]!]!;
       if (victim.tab === 'infantry' || !victim.weapon) return;
-      if (world.rules.factions[world.players[e.owner[n]!]!.faction]!.airGapped) return;
       if (!visibleTo(world, player, n) || ilength(e.x[n]! - e.x[s]!, e.y[n]! - e.y[s]!) > ability.range) return;
       if (victim.cost > bestCost || (victim.cost === bestCost && n < best)) {
         best = n;

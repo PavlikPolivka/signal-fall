@@ -99,9 +99,8 @@ test('build a base and train a unit with hotkeys', async ({ page }) => {
   await page.keyboard.press('KeyI');
   for (let i = 0; i < 3; i++) await page.keyboard.press('KeyG');
   await expect(page.getByTestId('mode')).toContainText('Infantry');
-  await expect
-    .poll(() => page.evaluate(() => (window as unknown as Win).__signalFall.state.cur.productionQueue(0, 0).items.length), { timeout: 5000 })
-    .toBe(3);
+  // Queued or already trained: at 4x speed they may finish before we look.
+  await expect.poll(() => owned(page, 'grunt'), { timeout: 30_000 }).toBe(5);
   // A letter that is not on the tab closes it.
   await page.keyboard.press('KeyX');
   await expect(page.getByTestId('mode')).not.toContainText('Infantry');

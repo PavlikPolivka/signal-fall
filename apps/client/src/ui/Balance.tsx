@@ -18,6 +18,8 @@ interface Report {
   gate: { min: number; max: number; easyMin: number };
   ok: boolean;
   pairings: { a: Side; b: Side; winsA: number; winsB: number; draws: number; winPctA: number; avgMinutes: number }[];
+  /** Normal AI against Normal AI: no abilities, like a player who doesn't micro. Not gated. */
+  normal?: { a: string; b: string; winsA: number; winsB: number; draws: number; winPctA: number; avgMinutes: number }[];
   easy: { faction: string; winPct: number; matches: number }[];
 }
 
@@ -143,6 +145,40 @@ export function BalanceReport({ rules }: { rules: Rules }) {
           )}
         </tbody>
       </table>
+      {report.normal && report.normal.length > 0 && (
+        <>
+          <h3>Without abilities</h3>
+          <p>
+            Normal AI against Normal AI. Normal never uses abilities (blink, phase, Dig In, Override), much like a player who doesn't micro. Shown for
+            reference; the target applies to Hard.
+          </p>
+          <table class="md-table">
+            <thead>
+              <tr>
+                <th>Pairing</th>
+                <th>Wins</th>
+                <th>First side wins</th>
+                <th>Average match</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.normal.map((p) => (
+                <tr>
+                  <td>
+                    {faction(p.a)} vs {faction(p.b)}
+                  </td>
+                  <td>
+                    {p.winsA}–{p.winsB}
+                    {p.draws ? `, ${p.draws} draws` : ''}
+                  </td>
+                  <td class={inGate(p.winPctA) ? 'good' : 'bad'}>{p.winPctA}%</td>
+                  <td>{p.avgMinutes} min</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
       <h3>Difficulty</h3>
       <p>
         Hard beats Easy: {report.easy.map((e) => `${faction(e.faction)} ${e.winPct}%`).join(', ')} ({report.easy[0]?.matches ?? 0} matches each).

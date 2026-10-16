@@ -137,11 +137,11 @@ function Factions({ rules }: { rules: Rules }) {
 const COMPARE: [string, string, string, string][] = [
   ['Builds', 'Next to the base, step by step', 'Anywhere inside network coverage', 'Grown near Echo or Choir structures'],
   ['Expands with', 'Homestead (deploys a new base)', 'init, or relays pushing coverage out', 'Overture, or a far seed beside a field'],
-  ['Harvester', 'Mule: slow, tough, biggest load', 'fetch: fastest harvester', 'Refrain: shields over a light hull'],
+  ['Harvester', 'Mule: slow and the toughest', 'fetch: fastest harvester', 'Refrain: shields over a light hull'],
   ['Units', 'Slow, tough, cost-efficient', 'Fast and fragile', 'Small hulls under regenerating shields'],
   ['Healing', 'Garage bays, Patch, Wrench repair', 'Self-repair inside coverage', 'Shields recharge out of combat; no repair'],
-  ['Losses', 'Wrecks can be salvaged for credits', 'Recompile refunds units lost in coverage', 'Shields absorb the first hits'],
-  ['Special', 'Air-gapped: immune to Override', 'Override steals enemy machines', 'Blink and phase'],
+  ['Losses', 'Vehicles turn wrecks into credits as they pass', 'Recompile refunds units lost in coverage', 'Shields absorb the first hits'],
+  ['Special', 'Dig In; Override holds them half as long', 'Override steals enemy machines', 'Blink and phase'],
   ['Fights best', 'Holding ground, slow pushes', 'On its own network', 'Hit-and-run, flanks'],
   ['Struggles', 'Being outmaneuvered', 'Far from its network', 'Long, sustained fights'],
 ];
@@ -153,8 +153,9 @@ const IN_A_MATCH: Record<string, { opening: string; examples: string[]; against:
       'Dynamo, Smelter, Bunkhouse, Motor Pool. Each building has to sit within a few tiles of another, so the base creeps toward the next field like a wall.',
     examples: [
       'A Bulldog column with a Patch behind it keeps rolling: the Patch repairs the tanks while they fight, and damaged ones drive back to a Garage.',
-      'After a big fight, send a Wrench (or a Mule) over the wrecks: every wreck on the field, yours or theirs, turns into credits.',
-      'A Halcyon root tries Override on your Ironclad and nothing happens. Holdout machines have no network to take.',
+      'After a big fight, drive any vehicle over the wrecks: every wreck on the field, yours or theirs, turns into credits.',
+      'Grunts and Tankbusters dug in at a choke (F) take 30% less damage and outrange the attackers. Any order packs them up again.',
+      'A Halcyon root grabs your Ironclad with Override, but it breaks free twice as fast as anyone else\'s. Holdout machines have no network to hold.',
       'Thumpers out-range every base defense: park them behind a Pillbox line and shell the enemy base from safety.',
     ],
     against: [
@@ -169,7 +170,7 @@ const IN_A_MATCH: Record<string, { opening: string; examples: string[]; against:
       'A chain of relays toward the next field lets an init deploy there, and gives every unit on the way faster fire and self-repair.',
       'Lose a vector inside your own coverage and Recompile hands back a quarter of its cost. Defending at home is cheap.',
       'pings are the fastest scouts in the game: find the enemy harvesters and send seeks after them.',
-      'Late in a match, a root uses Override to turn the enemy\'s best tank against its own army (Choir resist, Holdout is immune).',
+      'Late in a match, a root uses Override to turn the enemy\'s best tank against its own army (Choir and Holdout machines break free twice as fast).',
     ],
     against: [
       ['vs Holdout', 'Do not trade head-on with Bulldogs. Pick them apart with seeks and broadcast artillery, and fight inside coverage.'],

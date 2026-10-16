@@ -468,6 +468,7 @@ const ABILITY_NAMES: Record<string, [string, string]> = {
   blink: ['Blink', 'Jump a short distance: press, then click where'],
   phase: ['Phase', 'Phase out: untouchable, but cannot shoot, for a few seconds'],
   override: ['Override', 'Take control of an enemy vehicle for a while: press, then click it'],
+  digIn: ['Dig In', 'Entrench behind sandbags: takes 30% less damage and shoots 1 tile farther, but cannot move. Any order packs up'],
 };
 
 /** Label for the ability button: the selection's ability and its shortest cooldown. */
@@ -477,7 +478,7 @@ function abilityInfo(state: ClientState): { label: string; title: string } | nul
   for (const h of state.selectedUnits()) {
     const rule = state.ruleOf(h);
     if (rule.kind !== 'unit') continue;
-    const a = rule.abilities.find((x) => x.kind === 'blink' || x.kind === 'phase' || x.kind === 'override');
+    const a = rule.abilities.find((x) => x.kind === 'blink' || x.kind === 'phase' || x.kind === 'override' || x.kind === 'digIn');
     if (!a) continue;
     kind ??= a.kind;
     left = Math.min(left, state.field(h, E.abilityLeft));

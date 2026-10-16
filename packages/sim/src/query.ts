@@ -97,7 +97,26 @@ export function canTarget(world: World, attacker: number, weapon: WeaponRule, vi
 export function inWeaponRange(world: World, attacker: number, weapon: WeaponRule, victim: number): boolean {
   const e = world.entities;
   const d = distToBody(world, e.x[attacker]!, e.y[attacker]!, victim);
-  return d <= weapon.range && d >= weapon.minRange;
+  return d <= rangeOf(world, attacker, weapon) && d >= weapon.minRange;
+}
+
+/** Dig In settings of a unit, or null if it cannot dig in. */
+export function digInOf(world: World, s: number): { setup: number; damageTakenPct: number; rangeBonus: number } | null {
+  if (world.entities.kind[s] !== KIND.unit) return null;
+  for (const a of world.rules.units[world.entities.type[s]!]!.abilities) if (a.kind === 'digIn') return a;
+  return null;
+}
+
+/** Dug in (and done setting up): takes less damage and outranges a little. */
+export function isDugIn(world: World, s: number): boolean {
+  const at = world.entities.dugInAt[s]!;
+  return at > 0 && world.tick >= at;
+}
+
+/** Weapon range, plus the Dig In bonus while entrenched. */
+export function rangeOf(world: World, s: number, weapon: WeaponRule): number {
+  if (!isDugIn(world, s)) return weapon.range;
+  return weapon.range + (digInOf(world, s)?.rangeBonus ?? 0);
 }
 
 /** Score bonus for the unit's current target, so units don't flicker between targets. */

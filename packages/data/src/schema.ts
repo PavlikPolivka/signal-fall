@@ -87,6 +87,10 @@ export const abilitySchema = z.discriminatedUnion('kind', [
     .strict(),
   z.object({ kind: z.literal('chain'), jumps: z.number().int().positive(), falloffPct: pct }).strict(),
   z.object({ kind: z.literal('sweep'), width: z.number().positive() }).strict(),
+  // Entrench: can't move; takes less damage and outranges a little once dug in. Moving packs up.
+  z
+    .object({ kind: z.literal('digIn'), setup: z.number().positive(), damageTakenPct: pct, rangeBonus: z.number().nonnegative() })
+    .strict(),
 ]);
 
 export const unitSchema = z

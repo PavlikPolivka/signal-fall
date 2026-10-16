@@ -2,7 +2,7 @@ import type { WeaponRule } from '@signal-fall/data';
 import { ARMOR } from '@signal-fall/data';
 import { FX_HALF, FX_ONE, clamp, idiv, ilength, pct } from '../fx';
 import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from '../entities';
-import { acquireTarget, armorOf, bestTarget, canTarget, distToBody, inWeaponRange, isAir, targetScore, teamOf, visibleTo, weaponOf, STICKY_BONUS } from '../query';
+import { acquireTarget, armorOf, bestTarget, canTarget, distToBody, inWeaponRange, isAir, rangeOf, targetScore, teamOf, visibleTo, weaponOf, STICKY_BONUS } from '../query';
 import { CREDIT_REASON, FX_EVENT, pushFx, type GroupInfo, type World } from '../world';
 import { removeEntity } from '../spawn';
 import { salvageValue } from './economy';
@@ -180,7 +180,7 @@ function awayFrom(world: World, s: number, fx: number, fy: number, step: number)
  */
 function micro(world: World, s: number, weapon: WeaponRule, t: number): boolean {
   const e = world.entities;
-  if (e.stance[s] === STANCE.hold) return false;
+  if (e.stance[s] === STANCE.hold || e.dugInAt[s]! > 0) return false;
   if (weapon.minRange > 0) {
     // Nearest visible enemy ground unit inside min range + half a tile.
     const team = teamOf(world, s);
@@ -286,7 +286,8 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
   const o: Order | undefined = e.orders[s]![0];
   const sight = world.rules.units[e.type[s]!]!.sight;
 
-  const stance = e.stance[s]!;
+  // Dug in: holds its ground whatever the stance.
+  const stance = e.dugInAt[s]! > 0 ? STANCE.hold : e.stance[s]!;
   if (!o) {
     if (!weapon || stance === STANCE.holdFire) {
       // Harvesters keep their refinery in `target` while working.
@@ -294,7 +295,7 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
       return;
     }
     if (stance === STANCE.hold) {
-      engage(world, s, weapon, weapon.range);
+      engage(world, s, weapon, rangeOf(world, s, weapon));
       return;
     }
     const aggressive = stance === STANCE.aggressive;

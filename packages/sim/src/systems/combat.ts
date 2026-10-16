@@ -1,7 +1,7 @@
 import { ARMOR, DAMAGE } from '@signal-fall/data';
 import { FX_ONE, iatan2, idiv, ilength, pct } from '../fx';
 import { KIND } from '../entities';
-import { armorOf, canTarget, costOf, distToBody, inWeaponRange, isAir, teamOf, weaponOf } from '../query';
+import { armorOf, canTarget, costOf, digInOf, distToBody, inWeaponRange, isAir, isDugIn, teamOf, weaponOf } from '../query';
 import { removeEntity } from '../spawn';
 import { spawnWreck } from './economy';
 import { cooldownFor, isPhased, recompileRefund, upgradePct } from './faction';
@@ -125,6 +125,8 @@ export function damage(world: World, victim: number, base: number, type: number,
     const resist = upgradePct(world, e.owner[victim]!, 'vehicleEnergyResistPct');
     if (resist > 0) dmg = pct(dmg, 100 - resist);
   }
+  // Dug in behind sandbags.
+  if (isDugIn(world, victim)) dmg = pct(dmg, digInOf(world, victim)!.damageTakenPct);
   if (dmg < 1) dmg = 1;
   // Shields soak damage first; energy weapons tear through shields faster.
   const shieldPct = world.rules.constants.shieldDamagePct[type]!;

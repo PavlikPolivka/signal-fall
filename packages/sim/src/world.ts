@@ -99,7 +99,7 @@ export interface Projectile {
  * fire:   a = shooter kind, b = shooter rule index, (x, y) muzzle, (tx, ty) target point
  * impact: a = damage type, b = splash radius, (x, y) impact point
  * death:  a = entity kind, b = rule index, (x, y) where it died
- * ability: a = 1 blink / 2 phase / 3 override, b = unit rule index, (x, y) from, (tx, ty) to
+ * ability: a = 1 blink / 2 phase / 3 override / 4 dig in, b = unit rule index, (x, y) from, (tx, ty) to
  * credits: a = amount, b = 1 recompile / 2 salvage, owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */

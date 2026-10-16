@@ -6,7 +6,7 @@ import { distToBody } from '../query';
 import { tileAt } from '../map';
 import { upgradePct } from './faction';
 import { CHOIR_SEED_GROW_PCT } from '../placement';
-import type { PlayerState, World } from '../world';
+import { CREDIT_REASON, FX_EVENT, pushFx, type PlayerState, type World } from '../world';
 
 /** Ticks between crystals while harvesting. */
 export const HARVEST_TICKS = 8;
@@ -521,9 +521,35 @@ export function spawnWreck(world: World, dead: number): void {
 
 export function wreckSystem(world: World): void {
   const e = world.entities;
+  const collect = world.tick % SALVAGE_INTERVAL === 0;
   for (let s = 0; s < e.high; s++) {
-    if (e.alive[s] === 1 && e.kind[s] === KIND.wreck && world.tick >= e.expires[s]!) removeEntity(world, s);
+    if (e.alive[s] !== 1 || e.kind[s] !== KIND.wreck) continue;
+    if (world.tick >= e.expires[s]!) removeEntity(world, s);
+    else if (collect) autoSalvage(world, s);
   }
+}
+
+/** How often vehicles pick up wrecks they drive past, ticks. */
+const SALVAGE_INTERVAL = 10;
+/** How close a vehicle must be to pick up a wreck. */
+const SALVAGE_REACH = FX_ONE + FX_HALF;
+
+/** Salvage factions' ground vehicles pick up wrecks they pass, no order needed. */
+function autoSalvage(world: World, wreck: number): void {
+  const e = world.entities;
+  let by = -1;
+  world.spatial.query(e.x[wreck]!, e.y[wreck]!, SALVAGE_REACH + FX_ONE, (u) => {
+    if (by >= 0 || e.kind[u] !== KIND.unit || e.alive[u] !== 1) return;
+    const rule = world.rules.units[e.type[u]!]!;
+    if (rule.tab !== 'vehicles' || rule.isAir || salvageValue(world, e.owner[u]!, wreck) <= 0) return;
+    if (ilength(e.x[u]! - e.x[wreck]!, e.y[u]! - e.y[wreck]!) <= SALVAGE_REACH) by = u;
+  });
+  if (by < 0) return;
+  const owner = e.owner[by]!;
+  const value = salvageValue(world, owner, wreck);
+  world.players[owner]!.credits += value;
+  pushFx(world, FX_EVENT.credits, value, CREDIT_REASON.salvage, owner, e.x[wreck]!, e.y[wreck]!, 0, 0);
+  removeEntity(world, wreck);
 }
 
 /** Credits a salvaging unit's owner gets for a wreck (0 for factions without salvage). */

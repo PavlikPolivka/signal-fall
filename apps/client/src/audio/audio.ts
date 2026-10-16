@@ -177,7 +177,7 @@ export class GameAudio {
         if ((a === EXPLOSIVE || a === SIEGE) && b > 0) this.play('boom', x, y, 0.45);
         else if (a === KINETIC && Math.random() < 0.25) this.play('hit', x, y, 0.3);
       } else if (kind === FX_EVENT.ability) {
-        this.play(a === 3 ? 'alarm' : 'energy', x, y, a === 3 ? 0.5 : 0.7);
+        this.play(a === 3 ? 'alarm' : a === 4 ? 'place' : 'energy', x, y, a === 3 ? 0.5 : 0.7);
       } else if (kind === FX_EVENT.credits) {
         if (events[i + 3] === s.localPlayer && !s.spectator) this.play('coin', x, y, 0.6);
       } else if (kind === FX_EVENT.death) {

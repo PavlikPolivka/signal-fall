@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import '@fontsource/saira-stencil-one/latin-400.css';
 import '@fontsource/rajdhani/latin-500.css';
 import '@fontsource/rajdhani/latin-700.css';
@@ -41,7 +41,8 @@ const FEATURES: [string, string][] = [
 
 function Lightbox({ shot, onClose }: { shot: number; onClose: () => void }) {
   const [i, setI] = useState(shot);
-  useEffect(() => {
+  // Layout effect: listening before the browser paints, so an Escape right away closes it.
+  useLayoutEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight') setI((n) => (n + 1) % SHOTS.length);

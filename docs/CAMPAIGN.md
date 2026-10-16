@@ -49,7 +49,7 @@ You are WREN. Mechanics: network coverage, recompile, override, the drone econom
 | 6 | **Initialization** | Bring a dead sector online: link the relays to the core and start harvesting. | Placement inside coverage | Ruined city, dark grid | Relay, Ingest, Sentry |
 | 7 | **Recompile** | Hold a sector with a fixed budget. Units lost inside coverage refund part of their cost. | Attrition, fighting on your own ground | Wasteland | Vector, Spawn, Scan |
 | 8 | **Harvest Protocol** | Strip the largest Echo field. Choir shards attack your harvesters, and the field "sings" back. | Defending harvesters, the Choir as enemy | Crystal fields | Air units, Launchd |
-| 9 | **Override** | Holdout raiders captured a Halcyon depot. Take the drones back with Override; Holdout machines are immune. | Override and its limits | Industrial ruins | Override ability, Sudo (tech) |
+| 9 | **Override** | Holdout raiders captured a Halcyon depot. Take the drones back with Override; Holdout machines shake it off twice as fast. | Override and its limits | Industrial ruins | Override ability, Sudo (tech) |
 | 10 | **Divergence** | HALCYON orders the crystal fields burned. WREN refuses. Survive the core's purge squads and break out of the sector. | Halcyon against Halcyon, escape | Mirror-symmetric Halcyon sector | — (everything you have) |
 
 ## Act III — The Choir (missions 11–14)

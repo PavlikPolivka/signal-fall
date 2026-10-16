@@ -1,5 +1,15 @@
 # What's new
 
+## 2026-10-16 13:19 UTC
+
+- **Holdout: Dig In.** Select Grunts or Tankbusters and press <kbd>F</kbd>. They entrench behind sandbags and take 30% less damage and shoot 1 tile farther, but cannot move. Any order packs them up again.
+- **Holdout: salvage on the move.** Any Holdout vehicle that drives over a wreck collects it, with no Wrench or order needed. A wreck pays 15% of the unit's cost (was 25%), since it now adds up over a match.
+- **Holdout Mules** carry 700 Echo again, the same as other harvesters: salvage is Holdout's extra income now.
+- **Air-gapped, reworked.** Halcyon's Override now works on Holdout machines, but only holds them half as long. Before, both sides' signature tricks cancelled out.
+- **Normal AI is beatable again.** It had picked up Hard's economy (three harvesters per refinery and extra factories); it is back to two harvesters and one of each production building.
+- **Announcer:** a voice line that never reports finishing can no longer silence the rest of the match.
+- **Balance page:** now also shows Normal AI against Normal AI, the closest thing to players who don't use abilities.
+
 ## 2026-10-16 12:25 UTC
 
 - **See your network.** Halcyon players always see their coverage as a faint cyan grid with a bright edge. Inside it, units fire faster and repair themselves.

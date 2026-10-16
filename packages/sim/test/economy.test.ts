@@ -279,7 +279,23 @@ describe('engineers and salvage', () => {
     const c0 = w.players[0]!.credits;
     cmd(sim, 0, { type: 'salvage', units: [wrench], target: e.handle(wreck) });
     sim.run(20 * 8);
-    expect(w.players[0]!.credits).toBe(c0 + 250); // 25% of 1000
+    expect(w.players[0]!.credits).toBe(c0 + 150); // 15% of 1000
+    expect(e.alive[wreck]).toBe(0);
+  });
+
+  it('Holdout vehicles pick up wrecks they drive past, no order needed', () => {
+    const sim = makeSim({ size: 40, victoryRules: false });
+    const w = sim.world;
+    const e = w.entities;
+    const victim = spawnUnit(w, unit('vector'), 1, at(20), at(20)) & 0xffff;
+    e.hp[victim] = 0;
+    sim.step();
+    const wreck = own(sim, 1, (s) => e.kind[s] === KIND.wreck)[0]!;
+    const bulldog = spawnUnit(w, unit('bulldog'), 0, at(12), at(20));
+    const c0 = w.players[0]!.credits;
+    cmd(sim, 0, { type: 'move', units: [bulldog], x: at(26), y: at(20) });
+    sim.run(20 * 10);
+    expect(w.players[0]!.credits).toBe(c0 + 150);
     expect(e.alive[wreck]).toBe(0);
   });
 });

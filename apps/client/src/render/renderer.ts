@@ -535,6 +535,18 @@ export class Renderer {
         const flags = cur.get(o, E.flags);
         const view = this.spriteUnits.get(h)?.root ?? this.units.get(h)?.root;
         if (view) view.alpha = flags & ENT_FLAG.phased ? 0.3 + 0.15 * Math.sin(performance.now() / 70) : 1;
+        if (visible && flags & (ENT_FLAG.dugIn | ENT_FLAG.digging)) {
+          // Dug in: a ring of sandbags on the ground around the unit (half-built while digging).
+          const built = (flags & ENT_FLAG.dugIn) !== 0;
+          const bags = built ? 12 : 6;
+          for (let k = 0; k < bags; k++) {
+            const a = (k / 12) * Math.PI * 2 + Math.PI / 12;
+            const bx = px + Math.cos(a) * 17;
+            const by = py + Math.sin(a) * 8.5;
+            this.decals.ellipse(bx, by, 5.2, 3.2).fill({ color: 0xd8c08a, alpha: built ? 1 : 0.65 }).stroke({ width: 1.2, color: 0x3a2c14, alpha: 0.9 });
+            this.decals.moveTo(bx - 3, by).lineTo(bx + 3, by).stroke({ width: 0.8, color: 0x7a6440, alpha: 0.8 });
+          }
+        }
         if (visible && flags & ENT_FLAG.overridden) {
           // Overridden: a cyan signal ring above the unit.
           const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 120);

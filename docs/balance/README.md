@@ -53,3 +53,14 @@ Richer Echo fields, refineries priced above harvesters, AI strategies and expans
   - fetch 750: Halcyon's income barely changed.
   - Graces ground-only: Choir fell to about 40%.
 - Result: Holdout vs Halcyon 51.7%, Holdout vs Choir 50.7%, Halcyon vs Choir 51%.
+
+## Holdout abilities (2026-10-16)
+
+- Dig In (Grunts and Tankbusters: 30% less damage, +1 range, cannot move) made no measurable difference to Hard
+  AI win rates, because the AI only digs in while holding a position with enemies closing in.
+- Automatic salvage is new income for Holdout, since the AI never sent Wrenches to wrecks before. At 40% Holdout won
+  70%, and at 25% about 61%. Salvage is now 15% and the Mule is back to 700. Results at 300 matches: Holdout vs Halcyon
+  51.3%, Holdout vs Choir 52.3%.
+- Normal reverted to 2 harvesters per refinery, and extra production buildings are Hard-only: a player was losing to
+  Normal. Hard beats Normal 80–86%. Normal vs Normal is lopsided for Choir (24% vs Holdout) because Normal uses no
+  abilities. That is now on the balance page; the planned fix is to autocast Choir's escape abilities for everyone.

@@ -118,6 +118,8 @@ export class Entities {
   abilityReady!: Int32Array;
   /** Phased out (untargetable, cannot fire) until this tick. */
   phasedUntil!: Int32Array;
+  /** Dig In: 0 = not dug in, else the tick from which the entrenchment is ready (set up while before). */
+  dugInAt!: Int32Array;
   /** Overridden units: owner to return to, -1 if not overridden. */
   homeOwner!: Int8Array;
   /** Overridden units: tick control returns to `homeOwner`. */
@@ -187,6 +189,7 @@ export class Entities {
     this.abilityReady = re(this.abilityReady, (n) => new Int32Array(n));
     this.lastAttackerOwner = re(this.lastAttackerOwner, (n) => new Int8Array(n));
     this.phasedUntil = re(this.phasedUntil, (n) => new Int32Array(n));
+    this.dugInAt = re(this.dugInAt, (n) => new Int32Array(n));
     this.homeOwner = re(this.homeOwner, (n) => new Int8Array(n));
     this.overrideUntil = re(this.overrideUntil, (n) => new Int32Array(n));
     this.capacity = capacity;
@@ -235,6 +238,7 @@ export class Entities {
     this.abilityReady[slot] = 0;
     this.lastAttackerOwner[slot] = -1;
     this.phasedUntil[slot] = 0;
+    this.dugInAt[slot] = 0;
     this.homeOwner[slot] = -1;
     this.overrideUntil[slot] = 0;
     this.orders[slot] = [];
@@ -315,6 +319,7 @@ export class Entities {
       w.push(this.abilityReady[s]!);
       w.push(this.lastAttackerOwner[s]!);
       w.push(this.phasedUntil[s]!);
+      w.push(this.dugInAt[s]!);
       w.push(this.homeOwner[s]!);
       w.push(this.overrideUntil[s]!);
       const orders = this.orders[s]!;

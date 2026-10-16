@@ -298,7 +298,8 @@ export class Input {
         return;
       case 'ability': {
         // Phase fires at once; blink and Override need a target, so they enter targeting mode.
-        const phase = this.withAbility(units, 'phase');
+        // Instant abilities (phase, Dig In) fire right away; the rest need a click.
+        const phase = [...this.withAbility(units, 'phase'), ...this.withAbility(units, 'digIn')];
         if (phase.length > 0) s.send({ type: 'ability', units: phase });
         if (this.withAbility(units, 'blink').length > 0 || this.withAbility(units, 'override').length > 0) this.setMode('ability');
         else if (phase.length === 0 && units.length > 0) s.warn('No ability on the selected units');
@@ -543,7 +544,7 @@ export class Input {
   }
 
   /** Selected units that have an active ability of this kind and can use it now. */
-  withAbility(units: number[], kind: 'blink' | 'phase' | 'override'): number[] {
+  withAbility(units: number[], kind: 'blink' | 'phase' | 'override' | 'digIn'): number[] {
     const s = this.state;
     return units.filter((h) => {
       const rule = s.ruleOf(h);

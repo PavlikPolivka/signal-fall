@@ -37,7 +37,7 @@ The three factions fight over one resource, Echo, and each has its own reason to
 The survivors abandoned anything networked, because networked meant hijacked. Their tech is analog and diesel-heavy: armored crawlers, cable-guided missiles, crewed walkers, flak.
 
 - **Look:** olive and rust, welded plates, exhaust, searchlights.
-- **Twist 1, Air-gapped:** immune to Halcyon disruption and takeover effects.
+- **Twist 1, Air-gapped:** no network to hijack. Halcyon's Override holds Holdout machines only half as long, and Jam does not reach them. (Changed 2026-10-16: was full immunity, which left Override useless in this match-up.)
 - **Twist 2, Salvage:** wrecks on the field (any faction's) can be collected by harvesters or engineers for a fraction of the unit's cost.
 - **Twist 3, Field repair:** cheap repair vehicles and repair bays; units are durable, slow and cost-efficient.
 - **Play style:** solid defenses, attrition, trading efficiently.
@@ -49,7 +49,7 @@ Drones, printed walkers and hover platforms, all clean geometry and light. Every
 - **Look:** white and graphite, cyan light lines, hexagonal panels.
 - **Twist 1, Coverage:** buildings and relay nodes project network coverage. Units inside it get +12% fire rate and slow self-repair (tuned in M7; originally +15%). Buildings can only be placed inside coverage.
 - **Twist 2, Recompile:** a unit destroyed inside coverage refunds 25% of its cost.
-- **Twist 3, Override:** a tier-3 ability briefly takes control of an enemy mechanical unit (Choir units are partially resistant; Holdout units are immune).
+- **Twist 3, Override:** a tier-3 ability briefly takes control of an enemy mechanical unit (Choir and Holdout machines break free twice as fast).
 - **Play style:** fast, fragile units; strong when fighting on its own network, weaker when pushing out.
 
 ### Choir (aliens): the awakened

@@ -11,6 +11,8 @@ export interface DifficultyProfile {
   buildDelayTicks: number;
   /** Pick units that counter what it has seen. */
   counter: boolean;
+  /** Turn piled-up credits into extra barracks and factories. */
+  extraProduction: boolean;
   /** Focus fire on weak targets in fights. */
   focusFire: boolean;
   /** Raid enemy harvesters. */
@@ -51,6 +53,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     reactionTicks: 60,
     buildDelayTicks: 300,
     counter: false,
+    extraProduction: false,
     focusFire: false,
     harass: false,
     retreat: false,
@@ -72,12 +75,13 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     reactionTicks: 30,
     buildDelayTicks: 40,
     counter: true,
+    extraProduction: false,
     focusFire: true,
     harass: false,
     retreat: false,
     scout: true,
     abilities: false,
-    maxHarvestersPerRefinery: 3,
+    maxHarvestersPerRefinery: 2,
     defenses: 2,
     firstWave: 4000,
     waveGrowth: 1500,
@@ -92,6 +96,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     reactionTicks: 10,
     buildDelayTicks: 0,
     counter: true,
+    extraProduction: true,
     focusFire: true,
     harass: true,
     retreat: true,
@@ -112,6 +117,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     reactionTicks: 10,
     buildDelayTicks: 0,
     counter: true,
+    extraProduction: true,
     focusFire: true,
     harass: true,
     retreat: true,

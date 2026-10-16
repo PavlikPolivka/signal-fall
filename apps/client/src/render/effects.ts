@@ -342,6 +342,10 @@ export class Effects {
       for (let k = 1; k < 6; k++) this.spawn(this.glow, px + ((qx - px) * k) / 6, py + ((qy - py) * k) / 6, 8, { life: 0.3, scale0: 0.18, scale1: 0.05, tint: 0xc58cff });
     } else if (kind === 2) {
       this.spawn(this.glow, px, py, 10, { life: 0.8, scale0: 0.4, scale1: 1.4, tint: 0xc58cff, alpha: 0.7 });
+    } else if (kind === 4) {
+      // Dig In: dust kicked up around the unit.
+      for (let k = 0; k < 6; k++)
+        this.spawn(this.smoke, px + rand(-12, 12), py + rand(-5, 5), 2, { life: rand(0.6, 1), scale0: 0.15, scale1: 0.45, tint: 0xb59a6a, alpha: 0.5, vz: 10, add: false });
     } else if (kind === 3) {
       const qx = isoX(tx / FX, ty / FX);
       const qy = isoY(tx / FX, ty / FX);
