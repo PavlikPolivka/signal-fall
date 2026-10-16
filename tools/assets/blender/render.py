@@ -56,29 +56,11 @@ def frame_name(sid, part, anim, d, f):
 UNIT_SCALE = {"vehicle": 0.72, "air": 0.72, "infantry": 1.0}
 
 
-MESHY_CFG = json.load(open(os.path.join(HERE, "..", "meshy", "models.json")))["models"]
-
-
 def build_model(sid, spec):
     """A generated (Meshy) model when one has been made for this id, else the procedural one."""
     import meshy_import
 
-    entry = MESHY_CFG.get(sid, {})
-    cfg = dict(entry.get("render", {}))
-    if spec.get("kind") == "infantry":
-        if entry and meshy_import.has_character(sid):
-            meshy_import.POSE_COUNTS.clear()
-            meshy_import.POSE_COUNTS.update(spec.get("anims", {}))
-            return meshy_import.load_character(sid, **cfg)
-        return spec["build"](STYLE)
-    if entry and meshy_import.has_model(sid):
-        if "footprint" in spec:
-            cfg.setdefault("footprint", spec["footprint"])
-            cfg["building"] = True
-        if entry.get("faction") == "choir":
-            cfg.setdefault("key", "green")
-        return meshy_import.load(sid, **cfg)
-    return spec["build"](STYLE)
+    return meshy_import.build(sid, spec, lambda: spec["build"](STYLE))
 
 
 def render_unit(sid, spec):

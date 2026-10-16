@@ -174,10 +174,19 @@ export class Renderer {
       if (!r.shape) continue;
       const p = this.worldToScreen(r.x, r.y - (r.air ? AIR_ALTITUDE : 0));
       const d = Math.hypot(p.x - sx, p.y - sy);
-      const radius = PICK_RADIUS[r.shape] * this.camera.zoom;
+      // The drawn sprite's box (trimmed a little: its corners are mostly empty), so big models
+      // are clickable wherever they show; the per-shape radius covers placeholders.
+      let hit = d <= PICK_RADIUS[r.shape] * this.camera.zoom;
+      const view = this.spriteUnits.get(h);
+      if (!hit && view?.root.visible) {
+        const b = view.root.getBounds();
+        const mx = b.width * 0.15;
+        const my = b.height * 0.15;
+        hit = sx >= b.x + mx && sx <= b.x + b.width - mx && sy >= b.y + my && sy <= b.y + b.height - my;
+      }
       // Prefer air (drawn on top), then nearest.
       const score = d - (r.air ? 4 : 0);
-      if (d <= radius && score < bestD) {
+      if (hit && score < bestD) {
         best = h;
         bestD = score;
       }

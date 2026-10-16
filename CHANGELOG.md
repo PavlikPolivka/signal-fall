@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-16 19:15 UTC
+
+- **Click what you see:** units are clickable anywhere on their new, bigger models.
+- **New portraits** in the sidebar, the selection panel and the Codex, rendered from the new models.
+- **Choir soldiers** show their team color.
+- **New screenshots** on the landing page.
+
 ## 2026-10-16 19:01 UTC
 
 - **All-new 3D models.** Every vehicle, building and soldier of all three factions has been rebuilt as a detailed 3D model: welded Holdout tanks, trucks and diesel works, white Halcyon hover machines and reactors, violet Choir crystals and geodes.

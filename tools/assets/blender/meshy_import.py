@@ -327,3 +327,36 @@ def load_character(sid, *, height=0.42, weapon="rifle", key="magenta"):
 
 # Filled by render.py from the unit spec (frames per animation).
 POSE_COUNTS = {}
+
+
+_CFG = None
+
+
+def build(sid, spec, procedural):
+    """The generated (Meshy) model when one exists for this id, else `procedural()`.
+
+    `spec` is the unit or building spec from the faction's models.py (kind, footprint, anims).
+    """
+    global _CFG
+    if _CFG is None:
+        import json
+
+        _CFG = json.load(open(os.path.join(HERE, "..", "meshy", "models.json")))["models"]
+    entry = _CFG.get(sid, {})
+    cfg = dict(entry.get("render", {}))
+    if spec.get("kind") == "infantry":
+        if entry and has_character(sid):
+            POSE_COUNTS.clear()
+            POSE_COUNTS.update(spec.get("anims", {}))
+            if entry.get("faction", "").startswith("choir"):
+                cfg.setdefault("key", "green")
+            return load_character(sid, **cfg)
+        return procedural()
+    if entry and has_model(sid):
+        if "footprint" in spec:
+            cfg.setdefault("footprint", spec["footprint"])
+            cfg["building"] = True
+        if entry.get("faction") == "choir":
+            cfg.setdefault("key", "green")
+        return load(sid, **cfg)
+    return procedural()

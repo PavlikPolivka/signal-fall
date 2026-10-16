@@ -14,6 +14,7 @@ sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
 import kit  # noqa: E402
+import meshy_import  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 args = sys.argv[sys.argv.index("--") + 1 :]
@@ -68,7 +69,7 @@ for sid, spec in models.UNITS.items():
     if only and sid not in only:
         continue
     setup()
-    model = spec["build"](STYLE)
+    model = meshy_import.build(sid, spec, lambda: spec["build"](STYLE))
     root = kit.root()
     for j in model.get("joints", {}).values():
         if j.parent is None:
@@ -79,8 +80,9 @@ for sid, spec in models.UNITS.items():
             o.parent = root
     # Three-quarter view: facing the screen's lower left.
     root.rotation_euler = (0, 0, kit.sim_yaw(2, 8))
-    if spec.get("pose"):
-        spec["pose"](model, "idle", 0)
+    pose = model.get("pose") if model.get("meshy") else spec.get("pose")
+    if pose:
+        pose(model, "idle", 0)
     meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.name != "shadow"]
     render(sid, meshes)
     print("ICON", sid)
@@ -89,7 +91,7 @@ for sid, spec in models.BUILDINGS.items():
     if only and sid not in only:
         continue
     setup()
-    model = spec["build"](STYLE)
+    model = meshy_import.build(sid, spec, lambda: spec["build"](STYLE))
     parts = model["body"] + model.get("turret", [])
     meshes = [o for o in parts if o.type == "MESH"]
     render(sid, meshes)
