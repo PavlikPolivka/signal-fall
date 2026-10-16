@@ -746,7 +746,8 @@ export class Input {
 
   activateUnit(rule: UnitRule, count: number): void {
     const s = this.state;
-    const missing = s.missing(rule.requires);
+    const comeback = rule.index === s.rules.factions[rule.faction]!.constructionUnit && s.emergencyRebuild();
+    const missing = comeback ? [] : s.missing(rule.requires);
     if (missing.length > 0) {
       s.warn(`${rule.name} requires ${roleNames(s.rules, rule.faction, missing)}`);
       return;

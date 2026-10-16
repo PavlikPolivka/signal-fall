@@ -466,7 +466,14 @@ export class AiPlayer implements Brain {
   // --- economy ---
 
   private deploy(world: World, own: Own): void {
-    if (own.conyards.length > 0 || own.constructionUnits.length === 0) return;
+    if (own.conyards.length > 0) return;
+    if (own.constructionUnits.length === 0) {
+      // Comeback: no yard and no construction unit, but a refinery can build one (same rule as players).
+      const p = world.players[this.player]!;
+      const cu = world.rules.factions[p.faction]!.constructionUnit;
+      if (this.count(own, 'refinery') > 0 && !p.production[1]!.items.includes(cu)) this.act({ type: 'train', item: cu, count: 1 });
+      return;
+    }
     // (Later construction vehicles are expanders, see expand().)
     const s = own.constructionUnits[0]!;
     this.act({ type: 'deploy', units: [world.entities.handle(s)] });
@@ -537,6 +544,8 @@ export class AiPlayer implements Brain {
     }
     for (const role of this.profile.opening) {
       seen.set(role, (seen.get(role) ?? 0) + 1);
+      // Easy and Normal open with one refinery for a while.
+      if (role === 'refinery' && seen.get(role)! > 1 && world.tick < this.d.secondRefineryTick) continue;
       if (this.count(own, role) < seen.get(role)!) return role;
     }
     const refineries = this.count(own, 'refinery');

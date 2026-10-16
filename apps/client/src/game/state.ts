@@ -279,6 +279,18 @@ export class ClientState {
     return requires.filter((r) => !roles.get(r));
   }
 
+  /** Comeback rule (as the sim): no construction yard or construction unit left, but a refinery builds one. */
+  emergencyRebuild(roles = this.roles()): boolean {
+    const cur = this.cur;
+    if (!cur || (roles.get('conyard') ?? 0) > 0 || !(roles.get('refinery') ?? 0)) return false;
+    const cu = this.rules.factions[this.players[this.localPlayer]?.faction ?? 0]!.constructionUnit;
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.owner) === this.localPlayer && cur.get(o, E.kind) === KIND.unit && cur.get(o, E.type) === cu) return false;
+    }
+    return true;
+  }
+
   get lowPower(): boolean {
     return this.cur?.player(this.localPlayer, 4) === 1;
   }

@@ -30,11 +30,13 @@ export interface PlayerFacts {
   /** Producer structure slots per tab, ascending. */
   producers: number[][];
   refineries: number[];
+  /** Construction units alive (deployable into a construction yard). */
+  constructionUnits: number;
 }
 
 export function computeFacts(world: World): PlayerFacts[] {
   const e = world.entities;
-  const facts: PlayerFacts[] = world.players.map(() => ({ roles: new Map(), units: 0, producers: [[], [], []], refineries: [] }));
+  const facts: PlayerFacts[] = world.players.map(() => ({ roles: new Map(), units: 0, producers: [[], [], []], refineries: [], constructionUnits: 0 }));
   for (const p of world.players) {
     p.powerProduced = 0;
     p.powerUsed = 0;
@@ -45,6 +47,7 @@ export function computeFacts(world: World): PlayerFacts[] {
     const f = facts[owner]!;
     if (e.kind[s] === KIND.unit) {
       f.units++;
+      if (e.type[s] === world.rules.factions[world.players[owner]!.faction]!.constructionUnit) f.constructionUnits++;
       continue;
     }
     if (e.kind[s] !== KIND.structure) continue;
@@ -63,6 +66,19 @@ export function computeFacts(world: World): PlayerFacts[] {
 export function requirementsMet(facts: PlayerFacts, requires: readonly Role[]): boolean {
   for (const r of requires) if (!facts.roles.get(r)) return false;
   return true;
+}
+
+/**
+ * Comeback rule: with no construction yard and no construction unit left, a refinery can build
+ * the construction unit (normal cost and time), so a surviving economy can always rebuild.
+ */
+export function emergencyRebuild(world: World, facts: PlayerFacts, player: number, unit: number): boolean {
+  return (
+    unit === world.rules.factions[world.players[player]!.faction]!.constructionUnit &&
+    !facts.roles.get('conyard') &&
+    facts.constructionUnits === 0 &&
+    facts.refineries.length > 0
+  );
 }
 
 function speedPct(world: World, p: PlayerState): number {
@@ -110,10 +126,11 @@ export function productionSystem(world: World, facts: PlayerFacts[]): void {
       const q = p.production[tab]!;
       const item = q.items[0];
       if (item === undefined) continue;
-      const producers = f.producers[tab]!;
-      if (producers.length === 0) continue;
       const rule = world.rules.units[item]!;
-      if (!requirementsMet(f, rule.requires)) continue;
+      const emergency = emergencyRebuild(world, f, p.index, item);
+      const producers = f.producers[tab]!.length > 0 ? f.producers[tab]! : emergency ? f.refineries : [];
+      if (producers.length === 0) continue;
+      if (!emergency && !requirementsMet(f, rule.requires)) continue;
       if (f.units >= c.unitCap) continue;
       let bonus = 0;
       for (let i = 0; i < producers.length - 1 && i < c.extraFactoryBonusPct.length; i++) bonus += c.extraFactoryBonusPct[i]!;

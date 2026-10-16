@@ -333,7 +333,7 @@ function place(world: World, player: number, category: 'structures' | 'defenses'
 function train(world: World, player: number, item: number, count: number): void {
   const p = world.players[player]!;
   const rule = world.rules.units[item];
-  if (!rule || rule.faction !== p.faction) return;
+  if (!rule || rule.faction !== p.faction || rule.summoned) return;
   const q = p.production[TABS.indexOf(rule.tab)]!;
   const n = Math.max(1, Math.min(count, MAX_QUEUE - q.items.length));
   for (let i = 0; i < n && q.items.length < MAX_QUEUE; i++) q.items.push(item);

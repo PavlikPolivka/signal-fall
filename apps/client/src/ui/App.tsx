@@ -141,7 +141,8 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   const pq = cur && !structureTab ? cur.productionQueue(state.localPlayer, tabIndex) : null;
   const teamColor = TEAM_COLORS[state.localPlayer % TEAM_COLORS.length]!;
   const art = state.art.has(faction.id);
-  const hasProducer = structureTab ? (roles.get('conyard') ?? 0) > 0 : (roles.get(tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield') ?? 0) > 0;
+  const emergency = !structureTab && tabIndex === 1 && state.emergencyRebuild(roles);
+  const hasProducer = structureTab ? (roles.get('conyard') ?? 0) > 0 : (roles.get(tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield') ?? 0) > 0 || emergency;
   return (
     <aside class="sidebar" data-faction={faction.id}>
       <Minimap state={state} renderer={renderer} input={input} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
@@ -191,6 +192,11 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
             : 'Click to place · right-click or Esc to cancel'}
         </div>
       )}
+      {emergency && (
+        <div class="hint" data-testid="rebuild-hint">
+          No construction yard: your refinery can build a {state.rules.units[faction.constructionUnit]!.name} to start again.
+        </div>
+      )}
       {!hasProducer && (
         <div class="hint muted">
           {structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${roleName(state.rules, faction.index, tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield')}.`}
@@ -203,7 +209,8 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       )}
       <div class={`grid ${MENU_MODES.includes(state.mode) ? 'keys' : ''} ${art ? 'art' : ''}`} data-testid="build-grid">
         {items.map((it) => {
-          const missing = state.missing(it.requires, roles);
+          // With no construction yard left, the refinery builds the construction vehicle.
+          const missing = emergency && it.kind === 'unit' && it.index === faction.constructionUnit ? [] : state.missing(it.requires, roles);
           let progress = 0;
           let ready = false;
           let busy = false;
@@ -748,6 +755,7 @@ function Hints({ state }: { state: ClientState }) {
     [has('power'), 'To build power, press B, then P, and click where it should go. It builds and places itself.'],
     [has('refinery'), 'Press B, then R for a refinery: it comes with a harvester that turns Echo into credits.'],
     [has('barracks') || has('factory'), 'Build a barracks (B, B) or a vehicle factory (B, F) to make an army.'],
+    [(roles.get('refinery') ?? 0) >= 2, 'Money wins matches: build a second refinery (B, R) next to another Echo field, and keep two or three harvesters per refinery.'],
     [army >= 5, "Train units: press I, then a unit's letter once per unit (I, G, G, G queues three). V for vehicles."],
     [false, 'Select your army (drag a box or Ctrl+A) and click an enemy or the ground to attack. Destroy every enemy building to win.'],
   ];

@@ -300,6 +300,24 @@ describe('engineers and salvage', () => {
   });
 });
 
+describe('comeback', () => {
+  it('with no construction yard or construction unit left, a refinery builds one', () => {
+    const sim = makeSim({ size: 40, victoryRules: false });
+    const w = sim.world;
+    const e = w.entities;
+    spawnStructure(w, structure('smelter'), 0, 10, 10);
+    w.players[0]!.credits = 5000;
+    const homestead = unit('homestead');
+    cmd(sim, 0, { type: 'train', item: homestead, count: 1 });
+    sim.run(20 * 45); // low power (no power plant): half speed
+    expect(own(sim, 0, (s) => e.kind[s] === KIND.unit && e.type[s] === homestead)).toHaveLength(1);
+    // Only one: with a construction unit alive, the refinery stops.
+    cmd(sim, 0, { type: 'train', item: homestead, count: 1 });
+    sim.run(20 * 45); // low power (no power plant): half speed
+    expect(own(sim, 0, (s) => e.kind[s] === KIND.unit && e.type[s] === homestead)).toHaveLength(1);
+  });
+});
+
 describe('full match', () => {
   it('a scripted Holdout player beats a passive opponent', () => {
     const { sim, map } = newMatch(1);

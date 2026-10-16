@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-16 16:06 UTC
+
+- **Comeback: rebuild from your refinery.** Lost your construction yard and every construction vehicle? As long as a refinery stands, it can build a new construction vehicle (Vehicles tab, normal price), even without a factory. The AI plays by the same rule.
+- **Normal AI opens gentler:** it waits until minute 3 for its second refinery (Easy until minute 5), so a new player can keep up. Hard is unchanged.
+- **New tip:** build a second refinery by another Echo field, and keep two or three harvesters per refinery.
+
 ## 2026-10-16 15:50 UTC
 
 - **New terrain.** Real photo textures for every biome: dry earth and sandy gravel in the wasteland, worn concrete, asphalt and rubble in the city, violet-tinted rock in the crystal fields. They are graded darker than the units so the fighting stays readable, and stay crisp when you zoom out.

@@ -32,6 +32,8 @@ export interface DifficultyProfile {
   waveGrowth: number;
   /** Earliest first attack, ticks. */
   firstAttackTick: number;
+  /** No second refinery before this tick (the gentler levels open slower). */
+  secondRefineryTick: number;
   /** Income bonus percent (Brutal is the only level that cheats). */
   incomeBonusPct: number;
   /** Refineries it builds at most (profile value applies when lower). */
@@ -65,6 +67,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     firstWave: 2000,
     waveGrowth: 500,
     firstAttackTick: 6 * TICKS_PER_MINUTE,
+    secondRefineryTick: 5 * TICKS_PER_MINUTE,
     incomeBonusPct: 0,
   },
   normal: {
@@ -86,6 +89,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     firstWave: 4000,
     waveGrowth: 1500,
     firstAttackTick: 4 * TICKS_PER_MINUTE,
+    secondRefineryTick: 3 * TICKS_PER_MINUTE,
     incomeBonusPct: 0,
   },
   hard: {
@@ -107,6 +111,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     firstWave: 4000,
     waveGrowth: 1000,
     firstAttackTick: 4 * TICKS_PER_MINUTE,
+    secondRefineryTick: 0,
     incomeBonusPct: 0,
   },
   brutal: {
@@ -128,6 +133,7 @@ export const PROFILES: Record<Difficulty, DifficultyProfile> = {
     firstWave: 4000,
     waveGrowth: 1000,
     firstAttackTick: 4 * TICKS_PER_MINUTE,
+    secondRefineryTick: 0,
     incomeBonusPct: 25,
   },
 };
