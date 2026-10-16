@@ -7,7 +7,7 @@ import { formationSlots } from './formation';
 import { removeEntity, spawnStructure } from './spawn';
 import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
 import { BUILD_CATEGORY_INDEX, type World } from './world';
-import { canResearch, useAbility } from './systems/faction';
+import { canResearch, useAbility, usePower } from './systems/faction';
 import { sanitizeDirectives } from './directives';
 
 /** Groups of at least this many units share a flow field instead of running A* each. */
@@ -133,6 +133,9 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
         e.anchorY[s] = e.y[s]!;
         resetMovement(world, s);
       }
+      return;
+    case 'power':
+      usePower(world, c.player, cmd.x, cmd.y);
       return;
     case 'ability': {
       const units = ownedUnits(world, c.player, cmd.units);

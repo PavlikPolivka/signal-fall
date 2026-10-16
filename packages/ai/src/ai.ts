@@ -6,6 +6,8 @@ import {
   KIND,
   canResearch,
   computeFacts,
+  inCoverage,
+  powerReady,
   idiv,
   teamOf,
   ilength,
@@ -452,7 +454,11 @@ export class AiPlayer implements Brain {
   }
 
   private abilities(world: World, own: Own): void {
+    // Easy and Normal leave abilities and support powers alone, like a player who doesn't micro.
+    if (!this.d.abilities && !this.directed) return;
     for (const cmd of abilityOrders(world, this.player, this.home, own.army)) if (!this.act(cmd)) return;
+    const power = powerOrder(world, this.player, own.army);
+    if (power) this.act(power);
   }
 
   // --- economy ---
@@ -1029,9 +1035,17 @@ export function abilityOrders(world: World, player: number, home: { x: number; y
   for (const s of units) {
     if (e.alive[s] !== 1 || world.tick < e.abilityReady[s]!) continue;
     const rule = world.rules.units[e.type[s]!]!;
-    const ability = rule.abilities.find((a) => a.kind === 'blink' || a.kind === 'phase' || a.kind === 'override' || a.kind === 'digIn');
+    const ability = rule.abilities.find((a) => a.kind === 'blink' || a.kind === 'phase' || a.kind === 'override' || a.kind === 'digIn' || a.kind === 'uplink');
     if (!ability) continue;
     const h = e.handle(s);
+    if (ability.kind === 'uplink') {
+      // Fighting outside the network: bring it along (one uplink per area is enough).
+      if (e.target[s]! < 0 || inCoverage(world, s) || e.uplinkUntil[s]! > world.tick) continue;
+      let near = false;
+      for (const o of units) if (o !== s && e.uplinkUntil[o]! > world.tick && ilength(e.x[o]! - e.x[s]!, e.y[o]! - e.y[s]!) <= ability.radius) near = true;
+      if (!near) out.push({ type: 'ability', units: [h] });
+      continue;
+    }
     if (ability.kind === 'digIn') {
       // Holding a position (no orders) with enemies closing in: dig in. Any new order packs up.
       if (e.dugInAt[s]! > 0 || e.orders[s]!.length > 0 || !rule.weapon) continue;
@@ -1080,4 +1094,32 @@ export function abilityOrders(world: World, player: number, home: { x: number; y
     if (best >= 0 && bestCost >= OVERRIDE_MIN_COST) out.push({ type: 'ability', units: [h], target: e.handle(best) });
   }
   return out;
+}
+
+/** Fewest enemies worth a support power. */
+const POWER_MIN_TARGETS = 4;
+
+/**
+ * Support power for an AI player: Jam the densest visible enemy group its army is fighting.
+ * Same rules as players (cooldown, building, visibility). Returns the command or null.
+ */
+export function powerOrder(world: World, player: number, army: number[]): Command | null {
+  if ((world.tick + player) % 20 !== 0 || !powerReady(world, player)) return null;
+  const power = world.rules.factions[world.players[player]!.faction]!.power;
+  if (!power || power.kind !== 'jam') return null;
+  const e = world.entities;
+  const team = world.players[player]!.team;
+  let best: { x: number; y: number; n: number } | null = null;
+  for (const s of army) {
+    const t = e.resolve(e.target[s]!);
+    if (t < 0 || !visibleTo(world, player, t)) continue;
+    let n = 0;
+    world.spatial.query(e.x[t]!, e.y[t]!, power.radius, (o) => {
+      if (e.kind[o] !== KIND.unit || teamOf(world, o) === team || !visibleTo(world, player, o)) return;
+      if (world.rules.factions[world.players[e.owner[o]!]!.faction]!.airGapped) return;
+      if (ilength(e.x[o]! - e.x[t]!, e.y[o]! - e.y[t]!) <= power.radius) n++;
+    });
+    if (n >= POWER_MIN_TARGETS && (!best || n > best.n)) best = { x: e.x[t]!, y: e.y[t]!, n };
+  }
+  return best ? { type: 'power', x: best.x, y: best.y } : null;
 }

@@ -3,7 +3,7 @@ import { FX_ONE } from '../src/fx';
 import { KIND } from '../src/entities';
 import { Sim } from '../src/sim';
 import { spawnStructure, spawnUnit } from '../src/spawn';
-import { inCoverage } from '../src/systems/faction';
+import { cooldownFor, inCoverage } from '../src/systems/faction';
 import { damage } from '../src/systems/combat';
 import { inWeaponRange, isDugIn } from '../src/query';
 import { CREDIT_REASON, FX_EVENT, FX_STRIDE } from '../src/world';
@@ -75,6 +75,51 @@ describe('Halcyon network coverage', () => {
     let shown = -1;
     for (let i = 0; i < fx.length; i += FX_STRIDE) if (fx[i] === FX_EVENT.credits && fx[i + 2] === CREDIT_REASON.recompile) shown = fx[i + 1]!;
     expect(shown).toBe((rules.units[unit('vector')]!.cost * 25) / 100);
+  });
+});
+
+describe('support powers', () => {
+  it('Jam needs the scan building, slows enemy fire in the area, skips air-gapped Holdout, and has a cooldown', () => {
+    const s = sim(HALCYON, CHOIR);
+    const w = s.world;
+    const e = w.entities;
+    const grace = slot(spawnUnit(w, unit('grace'), 1, at(20), at(20)));
+    cmd(s, 0, { type: 'power', x: at(20), y: at(20) });
+    s.run(1);
+    expect(e.jammedUntil[grace]).toBe(0); // no scan yet
+    spawnStructure(w, structure('kernel'), 0, 2, 2);
+    spawnStructure(w, structure('powerd'), 0, 6, 2);
+    spawnStructure(w, structure('scan'), 0, 2, 6);
+    s.run(1);
+    cmd(s, 0, { type: 'power', x: at(20), y: at(20) });
+    s.run(1);
+    expect(e.jammedUntil[grace]).toBeGreaterThan(w.tick);
+    expect(cooldownFor(w, grace, 80)).toBe(100); // 20% slower
+    const ready = w.players[0]!.powerReady;
+    expect(ready).toBeGreaterThan(w.tick);
+    // Air-gapped: Holdout units are not jammed.
+    const s2 = sim(HALCYON, HOLDOUT);
+    spawnStructure(s2.world, structure('kernel'), 0, 2, 2);
+    spawnStructure(s2.world, structure('powerd'), 0, 6, 2);
+    spawnStructure(s2.world, structure('scan'), 0, 2, 6);
+    const grunt = slot(spawnUnit(s2.world, unit('grunt'), 1, at(20), at(20)));
+    s2.run(1);
+    cmd(s2, 0, { type: 'power', x: at(20), y: at(20) });
+    s2.run(1);
+    expect(s2.world.entities.jammedUntil[grunt]).toBe(0);
+  });
+
+  it('Uplink: a fork projects coverage around itself for a while', () => {
+    const s = sim(HALCYON, HOLDOUT);
+    const h = spawnUnit(s.world, unit('fork'), 0, at(25), at(25));
+    const v = slot(h);
+    s.run(10);
+    expect(inCoverage(s.world, v)).toBe(false);
+    cmd(s, 0, { type: 'ability', units: [h] });
+    s.run(10);
+    expect(inCoverage(s.world, v)).toBe(true);
+    s.run(20 * 16);
+    expect(inCoverage(s.world, v)).toBe(false);
   });
 });
 

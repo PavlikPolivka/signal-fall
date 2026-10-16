@@ -87,6 +87,10 @@ export const abilitySchema = z.discriminatedUnion('kind', [
     .strict(),
   z.object({ kind: z.literal('chain'), jumps: z.number().int().positive(), falloffPct: pct }).strict(),
   z.object({ kind: z.literal('sweep'), width: z.number().positive() }).strict(),
+  // Uplink: the unit projects network coverage around itself for a while.
+  z
+    .object({ kind: z.literal('uplink'), radius: z.number().positive(), duration: z.number().positive(), cooldown: z.number().positive() })
+    .strict(),
   // Entrench: can't move; takes less damage and outranges a little once dug in. Moving packs up.
   z
     .object({ kind: z.literal('digIn'), setup: z.number().positive(), damageTakenPct: pct, rangeBonus: z.number().nonnegative() })
@@ -181,6 +185,36 @@ export const factionMechanicsSchema = z
   })
   .strict();
 
+/** A faction's support power: cast at a map point from a building, on a player-wide cooldown. */
+export const supportPowerSchema = z.discriminatedUnion('kind', [
+  // Jam: enemy weapons in the area fire this much slower for a while (air-gapped factions are immune).
+  z
+    .object({
+      kind: z.literal('jam'),
+      name: z.string(),
+      requires: z.enum(ROLES),
+      radius: z.number().positive(),
+      duration: z.number().positive(),
+      cooldown: z.number().positive(),
+      fireRatePct: pct,
+    })
+    .strict(),
+  // Awaken: crystals of an Echo field rise as guardians that fight for a while.
+  z
+    .object({
+      kind: z.literal('awaken'),
+      name: z.string(),
+      requires: z.enum(ROLES),
+      unit: id,
+      count: z.number().int().positive(),
+      duration: z.number().positive(),
+      cooldown: z.number().positive(),
+      echoCost: z.number().int().nonnegative(),
+      reach: z.number().positive(),
+    })
+    .strict(),
+]);
+
 export const factionSchema = z
   .object({
     id: z.enum(FACTIONS),
@@ -191,6 +225,7 @@ export const factionSchema = z
     harvester: id,
     engineer: id,
     mechanics: factionMechanicsSchema,
+    power: supportPowerSchema.optional(),
     structures: z.array(structureSchema),
     units: z.array(unitSchema),
   })

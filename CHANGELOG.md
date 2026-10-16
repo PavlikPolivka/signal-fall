@@ -1,5 +1,11 @@
 # What's new
 
+## Coming in the next release
+
+- **Halcyon: Uplink.** Select a fork, Halcyon's engineer, and press <kbd>F</kbd>. For 15 seconds it carries a bubble of network coverage with it, so the units around it keep their faster fire, repair and Recompile in the enemy's base. It recharges for 90 seconds.
+- **Halcyon: Jam**, the first support power. Once you have a scan, press <kbd>Q</kbd> (or the new button above the build tabs) and click the map. Enemy weapons in the area fire 20% slower for 5 seconds. It recharges for 90 seconds. Air-gapped Holdout is immune.
+- **Easy and Normal AI** no longer use abilities or support powers, like a player who doesn't micro. Hard and Brutal use them all.
+
 ## 2026-10-16 13:19 UTC
 
 - **Holdout: Dig In.** Select Grunts or Tankbusters and press <kbd>F</kbd>. They entrench behind sandbags and take 30% less damage and shoot 1 tile farther, but cannot move. Any order packs them up again.

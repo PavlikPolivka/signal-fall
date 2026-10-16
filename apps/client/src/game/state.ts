@@ -1,6 +1,6 @@
 import type { Role, Rules, StructureRule, Tab } from '@signal-fall/data';
 import { FX_SHIFT, KIND, type Command, type PlacedStructure, type PlacementView } from '@signal-fall/sim';
-import { E, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
+import { E, P_POWER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
 
 export type Mode =
   | 'normal'
@@ -9,6 +9,7 @@ export type Mode =
   | 'patrol'
   | 'guard'
   | 'ability'
+  | 'power'
   | 'repair'
   | 'sell'
   | 'buildMenu'
@@ -356,6 +357,11 @@ export class ClientState {
   }
 
   /** Explain why an action did nothing (shown in the top bar). */
+  /** Support power: -2 none, -1 unavailable, 0 ready, else ticks left. */
+  powerStatus(): number {
+    return this.cur ? this.cur.player(this.localPlayer, P_POWER) : -2;
+  }
+
   warn(text: string): void {
     const now = performance.now();
     this.alerts = this.alerts.filter((a) => a.text !== text);

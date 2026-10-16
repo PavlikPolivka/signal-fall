@@ -143,6 +143,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     const c = input?.cursor();
     return c && input ? input.placementAt(c.x, c.y) : null;
   };
+  renderer.cursorPoint = () => {
+    const c = input?.cursor();
+    return c && input ? input.simPoint(c.x, c.y) : null;
+  };
   renderUi();
   let fpsFrames = 0;
   let fpsStart = performance.now();

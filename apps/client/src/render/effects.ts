@@ -161,6 +161,7 @@ export class Effects {
       else if (kind === FX_EVENT.death) this.death(a, b, x, y);
       else if (kind === FX_EVENT.ability) this.ability(a, x, y, events[i + 6]!, events[i + 7]!);
       else if (kind === FX_EVENT.credits && this.isLocal(events[i + 3]!)) this.credits(a, x, y);
+      else if (kind === FX_EVENT.power) this.power(a, b, x, y);
     }
   }
 
@@ -342,6 +343,9 @@ export class Effects {
       for (let k = 1; k < 6; k++) this.spawn(this.glow, px + ((qx - px) * k) / 6, py + ((qy - py) * k) / 6, 8, { life: 0.3, scale0: 0.18, scale1: 0.05, tint: 0xc58cff });
     } else if (kind === 2) {
       this.spawn(this.glow, px, py, 10, { life: 0.8, scale0: 0.4, scale1: 1.4, tint: 0xc58cff, alpha: 0.7 });
+    } else if (kind === 5) {
+      // Uplink: a cyan signal pulse rising from the unit.
+      for (let k = 0; k < 3; k++) this.spawn(this.glow, px, py, 10 + k * 8, { life: 0.6 + k * 0.15, scale0: 0.2, scale1: 1.2, tint: 0x3ee6ff, alpha: 0.6, delay: k * 0.12 });
     } else if (kind === 4) {
       // Dig In: dust kicked up around the unit.
       for (let k = 0; k < 6; k++)
@@ -352,6 +356,23 @@ export class Effects {
       for (let k = 0; k <= 10; k++)
         this.spawn(this.hot, px + ((qx - px) * k) / 10, py + ((qy - py) * k) / 10, 14, { life: 0.4 + k * 0.03, scale0: 0.2, scale1: 0.08, tint: 0x3ee6ff });
       this.spawn(this.glow, qx, qy, 12, { life: 0.9, scale0: 0.5, scale1: 1.2, tint: 0x3ee6ff });
+    }
+  }
+
+  /** A support power going off: Jam is an expanding cyan ring of static, Awaken a violet bloom. */
+  private power(kind: number, radius: number, x: number, y: number): void {
+    const px = isoX(x / FX, y / FX);
+    const py = isoY(x / FX, y / FX);
+    const tint = kind === 1 ? 0x3ee6ff : 0xc58cff;
+    const r = (radius / FX) * 32 * Math.SQRT2;
+    this.spawn(this.hot, px, py, 6, { life: 0.35, scale0: 0.8, scale1: 2.2, tint });
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      this.spawn(this.glow, px + Math.cos(a) * r, py + Math.sin(a) * r * 0.5, 4, { life: 0.9, scale0: 0.5, scale1: 0.15, tint, alpha: 0.8, delay: 0.05 });
+    }
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      this.spawn(this.glow, px + Math.cos(a) * r * 0.5, py + Math.sin(a) * r * 0.25, 4, { life: 0.5, scale0: 0.35, scale1: 0.1, tint, alpha: 0.6 });
     }
   }
 

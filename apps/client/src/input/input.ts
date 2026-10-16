@@ -4,7 +4,7 @@ import { E } from '../protocol';
 import type { ClientState, Mode } from '../game/state';
 import type { Renderer } from '../render/renderer';
 import { bindings, matches, type Binding, type Context } from './keymap';
-import { roleNames } from '../game/names';
+import { roleName, roleNames } from '../game/names';
 
 /** Production tabs that stay open for several hotkeys in a row. */
 const UNIT_MENUS: string[] = ['infantryMenu', 'vehicleMenu', 'airMenu'];
@@ -40,7 +40,7 @@ const CURSORS = {
 export const STANCE_NAMES = ['Guard area', 'Hold ground', 'Aggressive', 'Hold fire'];
 
 /** Modes that wait for a target click. */
-const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability', 'repair', 'sell'];
+const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability', 'power', 'repair', 'sell'];
 
 /**
  * Keyboard and mouse handling. Every keyboard action goes through keymap.json;
@@ -299,7 +299,7 @@ export class Input {
       case 'ability': {
         // Phase fires at once; blink and Override need a target, so they enter targeting mode.
         // Instant abilities (phase, Dig In) fire right away; the rest need a click.
-        const phase = [...this.withAbility(units, 'phase'), ...this.withAbility(units, 'digIn')];
+        const phase = [...this.withAbility(units, 'phase'), ...this.withAbility(units, 'digIn'), ...this.withAbility(units, 'uplink')];
         if (phase.length > 0) s.send({ type: 'ability', units: phase });
         if (this.withAbility(units, 'blink').length > 0 || this.withAbility(units, 'override').length > 0) this.setMode('ability');
         else if (phase.length === 0 && units.length > 0) s.warn('No ability on the selected units');
@@ -334,7 +334,22 @@ export class Input {
       case 'sell':
         this.setMode(s.mode === action ? 'normal' : action);
         return;
+      case 'supportPower':
+        this.supportPower();
+        return;
     }
+  }
+
+  /** Q or the sidebar button: target the faction's support power, if it is ready. */
+  supportPower(): void {
+    const s = this.state;
+    const power = s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.power;
+    if (!power || s.spectator) return;
+    if (s.mode === 'power') return this.setMode('normal');
+    const status = s.powerStatus();
+    if (status === 0) this.setMode('power');
+    else if (status > 0) s.warn(`${power.name} is ready in ${Math.ceil(status / 20)} s`);
+    else s.warn(`${power.name} needs ${roleName(s.rules, s.players[s.localPlayer]!.faction, power.requires)} and power`);
   }
 
   setMode(mode: Mode): void {
@@ -544,7 +559,7 @@ export class Input {
   }
 
   /** Selected units that have an active ability of this kind and can use it now. */
-  withAbility(units: number[], kind: 'blink' | 'phase' | 'override' | 'digIn'): number[] {
+  withAbility(units: number[], kind: 'blink' | 'phase' | 'override' | 'digIn' | 'uplink'): number[] {
     const s = this.state;
     return units.filter((h) => {
       const rule = s.ruleOf(h);
@@ -582,6 +597,9 @@ export class Input {
         }
         break;
       }
+      case 'power':
+        s.send({ type: 'power', x: p.x, y: p.y });
+        break;
       case 'repair':
       case 'sell':
         if (h >= 0 && s.isOwn(h) && !s.isUnit(h)) s.send({ type: s.mode, target: h });

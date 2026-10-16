@@ -178,6 +178,8 @@ export class GameAudio {
         else if (a === KINETIC && Math.random() < 0.25) this.play('hit', x, y, 0.3);
       } else if (kind === FX_EVENT.ability) {
         this.play(a === 3 ? 'alarm' : a === 4 ? 'place' : 'energy', x, y, a === 3 ? 0.5 : 0.7);
+      } else if (kind === FX_EVENT.power) {
+        this.play('alarm', x, y, 0.8);
       } else if (kind === FX_EVENT.credits) {
         if (events[i + 3] === s.localPlayer && !s.spectator) this.play('coin', x, y, 0.6);
       } else if (kind === FX_EVENT.death) {

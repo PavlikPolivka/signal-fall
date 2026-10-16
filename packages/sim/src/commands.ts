@@ -45,6 +45,8 @@ export type Command =
   | { type: 'salvage'; units: number[]; target: number; queue?: boolean }
   /** Faction ability: blink, phase, override (M7). Optional target point or entity. */
   | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number }
+  /** Cast the faction's support power (Jam, Awaken) at a map point. */
+  | { type: 'power'; x: number; y: number }
   /** Research an upgrade (rules.upgrades index) at the tech center; one at a time. */
   | { type: 'research'; upgrade: number }
   | { type: 'cancelResearch' }

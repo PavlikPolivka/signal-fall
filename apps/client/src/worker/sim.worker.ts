@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
-import { KIND, Sim, inCoverage, type ScheduledCommand, type World } from '@signal-fall/sim';
+import { KIND, Sim, inCoverage, powerStatus, type ScheduledCommand, type World } from '@signal-fall/sim';
 import { STATS_INTERVAL, commandsByTick, createSim, sampleStats, type MatchStats, type Replay } from '../game/scenario';
 import {
   E,
@@ -11,6 +11,7 @@ import {
   ORDER_CODE,
   P,
   PLAYER_STRIDE,
+  P_POWER,
   PROD_STRIDE,
   QUEUE_SLOTS,
   BUILD_STRIDE,
@@ -76,6 +77,7 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
       a[o] = first !== undefined ? Math.floor((q.progress * 1000) / (world.rules.units[first]!.buildTicks * 100)) : 0;
       for (let k = 0; k < QUEUE_SLOTS; k++) a[o + 1 + k] = q.items[k] ?? -1;
     });
+    a[off + P_POWER] = powerStatus(world, p.index);
     off += PLAYER_STRIDE;
   }
   for (let s = 0; s < e.high; s++) {
@@ -111,7 +113,9 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
       (e.phasedUntil[s]! > world.tick ? ENT_FLAG.phased : 0) |
       (e.homeOwner[s]! >= 0 ? ENT_FLAG.overridden : 0) |
       (e.kind[s] === KIND.unit && inCoverage(world, s) ? ENT_FLAG.covered : 0) |
-      (e.dugInAt[s]! > 0 ? (world.tick >= e.dugInAt[s]! ? ENT_FLAG.dugIn : ENT_FLAG.digging) : 0);
+      (e.dugInAt[s]! > 0 ? (world.tick >= e.dugInAt[s]! ? ENT_FLAG.dugIn : ENT_FLAG.digging) : 0) |
+      (e.jammedUntil[s]! > world.tick ? ENT_FLAG.jammed : 0) |
+      (e.uplinkUntil[s]! > world.tick ? ENT_FLAG.uplink : 0);
     for (let k = 0; k < WAYPOINTS; k++) {
       const q = orders[k + 1];
       const p = q && 'x' in q ? q : q && q.type === 'patrol' ? { x: q.bx, y: q.by } : null;

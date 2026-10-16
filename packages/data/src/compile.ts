@@ -54,7 +54,13 @@ export type AbilityRule =
   | { kind: 'override'; range: number; duration: number; cooldown: number }
   | { kind: 'chain'; jumps: number; falloffPct: number }
   | { kind: 'sweep'; width: number }
-  | { kind: 'digIn'; setup: number; damageTakenPct: number; rangeBonus: number };
+  | { kind: 'digIn'; setup: number; damageTakenPct: number; rangeBonus: number }
+  | { kind: 'uplink'; radius: number; duration: number; cooldown: number };
+
+/** Compiled support power (radii Q10, times in ticks; Awaken's unit as a rule index). */
+export type SupportPowerRule =
+  | { kind: 'jam'; name: string; requires: Role; radius: number; duration: number; cooldown: number; fireRatePct: number }
+  | { kind: 'awaken'; name: string; requires: Role; unit: number; count: number; duration: number; cooldown: number; echoCost: number; reach: number };
 
 export interface UnitRule {
   kind: 'unit';
@@ -141,6 +147,8 @@ export interface FactionRule {
   overrideResistPct: number;
   shieldRegenDelay: number;
   shieldRegenPerSecond: number;
+  /** Support power, if the faction has one. */
+  power: SupportPowerRule | null;
   structures: number[];
   units: number[];
 }
@@ -233,6 +241,8 @@ export function compileRules(raw: RawData): Rules {
         return { kind: 'sweep', width: fx(a.width) };
       case 'digIn':
         return { kind: 'digIn', setup: ticks(a.setup), damageTakenPct: a.damageTakenPct, rangeBonus: fx(a.rangeBonus) };
+      case 'uplink':
+        return { kind: 'uplink', radius: fx(a.radius), duration: ticks(a.duration), cooldown: ticks(a.cooldown) };
     }
   };
 
@@ -290,6 +300,11 @@ export function compileRules(raw: RawData): Rules {
       overrideResistPct: m.overrideResistPct,
       shieldRegenDelay: m.shieldRegenDelay > 0 ? ticks(m.shieldRegenDelay) : 0,
       shieldRegenPerSecond: m.shieldRegenPerSecond,
+      power: !f.power
+        ? null
+        : f.power.kind === 'jam'
+          ? { ...f.power, radius: fx(f.power.radius), duration: ticks(f.power.duration), cooldown: ticks(f.power.cooldown) }
+          : { ...f.power, unit: unitRef(f.power.unit), duration: ticks(f.power.duration), cooldown: ticks(f.power.cooldown), reach: fx(f.power.reach) },
       structures: structures.filter((s) => s.faction === fi).map((s) => s.index),
       units: units.filter((u) => u.faction === fi).map((u) => u.index),
     };

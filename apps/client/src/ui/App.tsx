@@ -145,6 +145,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
           </span>
         </div>
       </div>
+      {faction.power && <PowerButton state={state} input={input} />}
       <nav class="tabs" data-testid="sidebar-tabs">
         {TABS.map((t) => (
           <button
@@ -468,8 +469,37 @@ const ABILITY_NAMES: Record<string, [string, string]> = {
   blink: ['Blink', 'Jump a short distance: press, then click where'],
   phase: ['Phase', 'Phase out: untouchable, but cannot shoot, for a few seconds'],
   override: ['Override', 'Take control of an enemy vehicle for a while: press, then click it'],
+  uplink: ['Uplink', 'Project network coverage around this unit for 15 s: faster fire, self-repair and Recompile wherever it goes'],
   digIn: ['Dig In', 'Entrench behind sandbags: takes 30% less damage and shoots 1 tile farther, but cannot move. Any order packs up'],
 };
+
+const POWER_INFO: Record<string, string> = {
+  jam: 'Jam: enemy weapons in the area fire 20% slower for 5 s. Holdout is air-gapped and immune',
+  awaken: 'Awaken: crystals of an Echo field rise as guardians that fight for you for 30 s',
+};
+
+/** The faction's support power: name, cooldown fill, Q; click (or Q) then click the map. */
+function PowerButton({ state, input }: { state: ClientState; input: Input }) {
+  const power = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]?.power;
+  if (!power) return null;
+  const status = state.powerStatus();
+  const total = power.cooldown;
+  const fill = status > 0 ? 1 - status / total : status === 0 ? 1 : 0;
+  const label = status === 0 ? 'Ready' : status > 0 ? `${Math.ceil(status / 20)} s` : `Needs ${roleName(state.rules, state.players[state.localPlayer]!.faction, power.requires)}`;
+  return (
+    <button
+      class={`power-btn ${status === 0 ? 'ready' : ''} ${state.mode === 'power' ? 'active' : ''}`}
+      data-testid="support-power"
+      title={`${POWER_INFO[power.kind] ?? power.name} (Q, then click the map)`}
+      onClick={() => input.supportPower()}
+    >
+      <i style={{ width: `${Math.round(fill * 100)}%` }} />
+      <b>{power.name}</b>
+      <span>{label}</span>
+      <kbd>Q</kbd>
+    </button>
+  );
+}
 
 /** Label for the ability button: the selection's ability and its shortest cooldown. */
 function abilityInfo(state: ClientState): { label: string; title: string } | null {
@@ -478,7 +508,7 @@ function abilityInfo(state: ClientState): { label: string; title: string } | nul
   for (const h of state.selectedUnits()) {
     const rule = state.ruleOf(h);
     if (rule.kind !== 'unit') continue;
-    const a = rule.abilities.find((x) => x.kind === 'blink' || x.kind === 'phase' || x.kind === 'override' || x.kind === 'digIn');
+    const a = rule.abilities.find((x) => x.kind === 'blink' || x.kind === 'phase' || x.kind === 'override' || x.kind === 'digIn' || x.kind === 'uplink');
     if (!a) continue;
     kind ??= a.kind;
     left = Math.min(left, state.field(h, E.abilityLeft));
@@ -692,7 +722,7 @@ function Hints({ state }: { state: ClientState }) {
   }
   const steps: [boolean, string][] = [
     [has('conyard'), 'Select your construction vehicle and press D to deploy your base.'],
-    [has('power'), 'Press B, then P, then click where power should go. It builds and places itself.'],
+    [has('power'), 'To build power, press B, then P, and click where it should go. It builds and places itself.'],
     [has('refinery'), 'Press B, then R for a refinery: it comes with a harvester that turns Echo into credits.'],
     [has('barracks') || has('factory'), 'Build a barracks (B, B) or a vehicle factory (B, F) to make an army.'],
     [army >= 5, "Train units: press I, then a unit's letter once per unit (I, G, G, G queues three). V for vehicles."],

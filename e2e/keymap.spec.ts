@@ -167,6 +167,11 @@ const checks: Record<string, Check> = {
   // The sandbox army is Holdout: its Grunts and Tankbusters dig in.
   ability: sends('ability'),
   stance: sends('stance'),
+  // The sandbox player is Holdout, which has no support power: the key is handled and does nothing.
+  supportPower: async (page, chord) => {
+    await page.keyboard.press(toKey(chord));
+    expect((await state(page)).mode).toBe('normal');
+  },
   buildMenu: async (page, chord) => {
     await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
     await page.keyboard.press(toKey(chord));

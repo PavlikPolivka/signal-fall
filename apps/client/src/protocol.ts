@@ -111,7 +111,9 @@ export const P = {
 export const QUEUE_SLOTS = 15;
 export const BUILD_STRIDE = 5;
 export const PROD_STRIDE = 1 + QUEUE_SLOTS;
-export const PLAYER_STRIDE = P.production + 3 * PROD_STRIDE;
+/** Support power: -2 none, -1 unavailable, 0 ready, else ticks left (after the production queues). */
+export const P_POWER = P.production + 3 * PROD_STRIDE;
+export const PLAYER_STRIDE = P_POWER + 1;
 
 export const E = {
   handle: 0,
@@ -152,7 +154,7 @@ export const E = {
 } as const;
 export const WAYPOINTS = 3;
 export const ENT_STRIDE = 36;
-export const ENT_FLAG = { phased: 1, overridden: 2, covered: 4, digging: 8, dugIn: 16 } as const;
+export const ENT_FLAG = { phased: 1, overridden: 2, covered: 4, digging: 8, dugIn: 16, jammed: 32, uplink: 64 } as const;
 
 export const PR = { ox: 0, oy: 1, x: 2, y: 3, type: 4, ticks: 5, total: 6 } as const;
 export const PROJ_STRIDE = 7;

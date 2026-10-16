@@ -64,6 +64,8 @@ export interface PlayerState {
   directives: import('./directives').Directives | null;
   /** Upgrade being researched (-1 none), paid continuously like construction. */
   research: { item: number; progress: number; spent: number };
+  /** Tick from which the faction's support power can be cast again. */
+  powerReady: number;
 }
 
 export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
@@ -99,11 +101,12 @@ export interface Projectile {
  * fire:   a = shooter kind, b = shooter rule index, (x, y) muzzle, (tx, ty) target point
  * impact: a = damage type, b = splash radius, (x, y) impact point
  * death:  a = entity kind, b = rule index, (x, y) where it died
- * ability: a = 1 blink / 2 phase / 3 override / 4 dig in, b = unit rule index, (x, y) from, (tx, ty) to
+ * ability: a = 1 blink / 2 phase / 3 override / 4 dig in / 5 uplink, b = unit rule index, (x, y) from, (tx, ty) to
+ * power:   a = 1 jam / 2 awaken, b = radius (Q10), owner cast it, (x, y) where
  * credits: a = amount, b = 1 recompile / 2 salvage, owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
-export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5 } as const;
+export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6 } as const;
 /** Why credits were gained (FX_EVENT.credits b). */
 export const CREDIT_REASON = { recompile: 1, salvage: 2 } as const;
 export const FX_STRIDE = 8;
@@ -213,6 +216,7 @@ export function createWorld(o: WorldOptions): World {
       trained: o.rules.units.map(() => 0),
       upgrades: o.rules.upgrades.map(() => 0),
       research: { item: -1, progress: 0, spent: 0 },
+      powerReady: 0,
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -262,6 +266,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.pushArray(p.trained);
     w.pushArray(p.upgrades);
     w.push(p.research.item);
+    w.push(p.powerReady);
     w.push(p.research.progress);
     w.push(p.research.spent);
     for (const b of p.build) {

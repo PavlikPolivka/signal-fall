@@ -86,6 +86,8 @@ export class Renderer {
   private lastShields = new Map<number, number>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
   placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number }; error: string | null } | null = () => null;
+  /** The sim point (Q10) under the cursor, for targeting previews. */
+  cursorPoint: () => { x: number; y: number } | null = () => null;
   /** Click feedback markers in world px. */
   private pings: { x: number; y: number; color: number; at: number }[] = [];
 
@@ -535,6 +537,15 @@ export class Renderer {
         const flags = cur.get(o, E.flags);
         const view = this.spriteUnits.get(h)?.root ?? this.units.get(h)?.root;
         if (view) view.alpha = flags & ENT_FLAG.phased ? 0.3 + 0.15 * Math.sin(performance.now() / 70) : 1;
+        if (visible && flags & ENT_FLAG.jammed) {
+          // Jammed: crackling static above the unit.
+          const t = performance.now() / 60;
+          const top = py - (rule.isAir ? AIR_ALTITUDE : 0) - 22;
+          for (let k = 0; k < 3; k++) {
+            const jx = px - 8 + ((Math.floor(t) * 7 + k * 5) % 16);
+            this.overlay.moveTo(jx, top - 4).lineTo(jx + 3, top).lineTo(jx - 1, top + 2).lineTo(jx + 2, top + 6).stroke({ width: 1.4, color: 0x9ff3ff, alpha: 0.9 });
+          }
+        }
         if (visible && flags & (ENT_FLAG.dugIn | ENT_FLAG.digging)) {
           // Dug in: a ring of sandbags on the ground around the unit (half-built while digging).
           const built = (flags & ENT_FLAG.dugIn) !== 0;
@@ -804,6 +815,13 @@ export class Renderer {
       const r = s.rules.structures[cur.get(o, E.type)]!.coverageRadius;
       if (r > 0) sources.push([cur.get(o, E.x), cur.get(o, E.y), r]);
     }
+    // Uplinked units carry network with them (moving, so rounded to a tile to keep the cache useful).
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.kind) !== KIND.unit || cur.get(o, E.owner) !== s.localPlayer || !(cur.get(o, E.flags) & ENT_FLAG.uplink)) continue;
+      const up = s.rules.units[cur.get(o, E.type)]!.abilities.find((a) => a.kind === 'uplink');
+      if (up && up.kind === 'uplink') sources.push([(cur.get(o, E.x) >> 10) * FX + FX / 2, (cur.get(o, E.y) >> 10) * FX + FX / 2, up.radius]);
+    }
     const key = sources.map((v) => v.join(',')).join(';');
     if (key === this.coverageKey) return;
     this.coverageKey = key;
@@ -891,7 +909,25 @@ export class Renderer {
     }
   }
 
+  /** Targeting a support power: its area under the cursor. */
+  private drawPowerTarget(): void {
+    const s = this.state;
+    if (s.mode !== 'power') return;
+    const power = s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.power;
+    const p = this.cursorPoint();
+    if (!power || !p) return;
+    const r = power.kind === 'jam' ? power.radius / FX : power.reach / FX;
+    const rx = r * (TILE_W / 2) * Math.SQRT2;
+    const px = isoX(p.x / FX, p.y / FX);
+    const py = isoY(p.x / FX, p.y / FX);
+    const color = power.kind === 'jam' ? 0x3ee6ff : 0xc58cff;
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 160);
+    this.overlay.ellipse(px, py, rx, rx / 2).fill({ color, alpha: 0.08 + 0.06 * pulse }).stroke({ width: 2, color, alpha: 0.85 });
+    this.overlay.ellipse(px, py, rx * 0.6, rx * 0.3).stroke({ width: 1, color, alpha: 0.4 * pulse });
+  }
+
   private drawGhost(): void {
+    this.drawPowerTarget();
     this.drawPlannedSites();
     const ghost = this.placementGhost();
     if (!ghost) return;

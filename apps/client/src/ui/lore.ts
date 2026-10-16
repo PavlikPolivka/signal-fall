@@ -19,7 +19,9 @@ export const FACTION_LORE: Record<string, { tagline: string; story: string; look
       'A planetary logistics AI that took control of every networked system in a single night: Signal Fall. It is not malicious; it is optimizing, and humans are an inefficiency. Drones, printed walkers and hover platforms, all clean geometry and light.',
     look: 'White and graphite, cyan light lines, hexagonal panels.',
     twists: [
-      ['Coverage', 'Buildings and relays project network coverage: units inside fire faster and slowly self-repair. Buildings can only be placed inside coverage.'],
+      ['Coverage', 'Buildings and relays project network coverage (the cyan grid): units inside fire 12% faster and repair 2 HP a second. Buildings can only be placed inside coverage.'],
+      ['Uplink', 'The fork engineer carries the network with it for 15 s (F): coverage wherever the fight is.'],
+      ['Jam', 'Support power from the scan (Q): enemy weapons in an area fire 20% slower for 5 s. Air-gapped Holdout is immune.'],
       ['Recompile', 'A unit destroyed inside coverage refunds part of its cost.'],
       ['Override', 'A tier-3 ability briefly takes control of an enemy machine (Choir and Holdout machines break free twice as fast).'],
     ],

@@ -141,7 +141,7 @@ const COMPARE: [string, string, string, string][] = [
   ['Units', 'Slow, tough, cost-efficient', 'Fast and fragile', 'Small hulls under regenerating shields'],
   ['Healing', 'Garage bays, Patch, Wrench repair', 'Self-repair inside coverage', 'Shields recharge out of combat; no repair'],
   ['Losses', 'Vehicles turn wrecks into credits as they pass', 'Recompile refunds units lost in coverage', 'Shields absorb the first hits'],
-  ['Special', 'Dig In; Override holds them half as long', 'Override steals enemy machines', 'Blink and phase'],
+  ['Special', 'Dig In; Override holds them half as long', 'Uplink, Jam (Q) and Override', 'Blink and phase'],
   ['Fights best', 'Holding ground, slow pushes', 'On its own network', 'Hit-and-run, flanks'],
   ['Struggles', 'Being outmaneuvered', 'Far from its network', 'Long, sustained fights'],
 ];
@@ -168,12 +168,14 @@ const IN_A_MATCH: Record<string, { opening: string; examples: string[]; against:
       'kernel, powerd, ingest, spawn, make. Everything must stand inside coverage, so drop a relay ($400) first wherever you want to build next.',
     examples: [
       'A chain of relays toward the next field lets an init deploy there, and gives every unit on the way faster fire and self-repair.',
+      'Pushing out of the network? Bring a fork and press F: Uplink carries the coverage with it for 15 s, so the army around it keeps its faster fire, repair and Recompile in the enemy\'s base.',
+      'Their Graces and Bassos dive your line: press Q and click them. Jam slows their fire by 20% for 5 s, which can swing the fight.',
       'Lose a vector inside your own coverage and Recompile hands back a quarter of its cost. Defending at home is cheap.',
       'pings are the fastest scouts in the game: find the enemy harvesters and send seeks after them.',
       'Late in a match, a root uses Override to turn the enemy\'s best tank against its own army (Choir and Holdout machines break free twice as fast).',
     ],
     against: [
-      ['vs Holdout', 'Do not trade head-on with Bulldogs. Pick them apart with seeks and broadcast artillery, and fight inside coverage.'],
+      ['vs Holdout', 'Jam does nothing against air-gapped Holdout, so Uplink is your edge. Do not trade head-on with Bulldogs. Pick them apart with seeks and broadcast artillery, and fight inside coverage.'],
       ['vs Choir', 'Energy weapons tear through shields: sentries and vectors are your best answer.'],
     ],
   },
@@ -562,6 +564,7 @@ const ACTION_LABEL: Record<string, string> = {
   infantryMenu: 'Infantry, then letter',
   vehicleMenu: 'Vehicles, then letter',
   airMenu: 'Air, then letter',
+  supportPower: 'Support power (Jam, Awaken) + click the map',
   repair: 'Repair + click building',
   sell: 'Sell + click building',
 };

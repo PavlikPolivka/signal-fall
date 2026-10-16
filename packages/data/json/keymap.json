@@ -34,6 +34,7 @@
     "infantryMenu": ["KeyI"],
     "vehicleMenu": ["KeyV"],
     "airMenu": ["KeyY"],
+    "supportPower": ["KeyQ"],
     "repair": ["Alt+KeyR"],
     "sell": ["Alt+KeyS"]
   },

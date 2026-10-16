@@ -93,7 +93,6 @@ function applyUpgrade(world: World, player: number, kind: string, bonus: number)
 /** Rebuild each coverage faction's coverage map from its structures. */
 export function coverageSystem(world: World): void {
   if (world.tick % COVERAGE_INTERVAL !== 0) return;
-  const m = world.map;
   const e = world.entities;
   for (const p of world.players) {
     const f = world.rules.factions[p.faction]!;
@@ -106,20 +105,31 @@ export function coverageSystem(world: World): void {
       const rule = world.rules.structures[e.type[s]!]!;
       if (rule.coverageRadius <= 0) continue;
       const r = pct(rule.coverageRadius, radiusPct);
-      const rt = (r >> FX_SHIFT) + 1;
       const cx = e.x[s]!;
       const cy = e.y[s]!;
-      const tx = cx >> FX_SHIFT;
-      const ty = cy >> FX_SHIFT;
-      for (let y = ty - rt; y <= ty + rt; y++)
-        for (let x = tx - rt; x <= tx + rt; x++) {
-          if (!inBounds(m, x, y)) continue;
-          const dx = (x << FX_SHIFT) + (FX_ONE >> 1) - cx;
-          const dy = (y << FX_SHIFT) + (FX_ONE >> 1) - cy;
-          if (ilength(dx, dy) <= r) cov[y * m.width + x] = 1;
-        }
+      markCoverage(world, cov, cx, cy, r);
+    }
+    // Uplinked units carry a bubble of network with them.
+    for (let s = 0; s < e.high; s++) {
+      if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit || e.owner[s] !== p.index || e.uplinkUntil[s]! <= world.tick) continue;
+      const up = world.rules.units[e.type[s]!]!.abilities.find((a) => a.kind === 'uplink');
+      if (up && up.kind === 'uplink') markCoverage(world, cov, e.x[s]!, e.y[s]!, up.radius);
     }
   }
+}
+
+function markCoverage(world: World, cov: Uint8Array, cx: number, cy: number, r: number): void {
+  const m = world.map;
+  const rt = (r >> FX_SHIFT) + 1;
+  const tx = cx >> FX_SHIFT;
+  const ty = cy >> FX_SHIFT;
+  for (let y = ty - rt; y <= ty + rt; y++)
+    for (let x = tx - rt; x <= tx + rt; x++) {
+      if (!inBounds(m, x, y)) continue;
+      const dx = (x << FX_SHIFT) + (FX_ONE >> 1) - cx;
+      const dy = (y << FX_SHIFT) + (FX_ONE >> 1) - cy;
+      if (ilength(dx, dy) <= r) cov[y * m.width + x] = 1;
+    }
 }
 
 /** Is entity slot s standing inside its owner's network coverage? */
@@ -136,8 +146,64 @@ export function inCoverage(world: World, s: number): boolean {
 /** Weapon cooldown for a shot from s: Halcyon fires faster inside its network. */
 export function cooldownFor(world: World, s: number, base: number): number {
   const f = world.rules.factions[world.players[world.entities.owner[s]!]!.faction]!;
-  if (f.coverageFireRatePct <= 0 || !inCoverage(world, s)) return base;
-  return Math.max(1, idiv(base * 100, 100 + f.coverageFireRatePct));
+  let cd = base;
+  if (f.coverageFireRatePct > 0 && inCoverage(world, s)) cd = Math.max(1, idiv(cd * 100, 100 + f.coverageFireRatePct));
+  // Jammed: fires slower (the jamming faction's power sets how much).
+  if (world.entities.jammedUntil[s]! > world.tick) cd = idiv(cd * 100, Math.max(1, 100 - jamSlowPct(world)));
+  return cd;
+}
+
+/** How much slower jammed weapons fire, percent (from whichever faction jams). */
+function jamSlowPct(world: World): number {
+  for (const f of world.rules.factions) if (f.power?.kind === 'jam') return f.power.fireRatePct;
+  return 0;
+}
+
+/** Does the player own a working (powered) structure of this role? */
+function hasRole(world: World, player: number, role: string): boolean {
+  const e = world.entities;
+  for (let s = 0; s < e.high; s++)
+    if (e.alive[s] === 1 && e.kind[s] === KIND.structure && e.owner[s] === player && world.rules.structures[e.type[s]!]!.role === role) return true;
+  return false;
+}
+
+/** Can the player cast its support power now (owns the building, cooldown over, power on)? */
+export function powerReady(world: World, player: number): boolean {
+  const p = world.players[player]!;
+  const power = world.rules.factions[p.faction]!.power;
+  return power !== null && !p.lowPower && world.tick >= p.powerReady && hasRole(world, player, power.requires);
+}
+
+/**
+ * Support power state for the UI: -2 the faction has none, -1 not available (no building or no
+ * power), 0 ready, otherwise ticks until ready.
+ */
+export function powerStatus(world: World, player: number): number {
+  const p = world.players[player]!;
+  const power = world.rules.factions[p.faction]!.power;
+  if (!power) return -2;
+  if (p.lowPower || !hasRole(world, player, power.requires)) return -1;
+  return Math.max(0, p.powerReady - world.tick);
+}
+
+/** Cast the player's support power at (x, y). */
+export function usePower(world: World, player: number, x: number, y: number): boolean {
+  if (!powerReady(world, player) || !inBounds(world.map, x >> FX_SHIFT, y >> FX_SHIFT)) return false;
+  const p = world.players[player]!;
+  const power = world.rules.factions[p.faction]!.power!;
+  const e = world.entities;
+  if (power.kind === 'jam') {
+    const team = p.team;
+    world.spatial.query(x, y, power.radius + FX_ONE, (s) => {
+      if (e.alive[s] !== 1 || (e.kind[s] !== KIND.unit && e.kind[s] !== KIND.structure) || teamOf(world, s) === team) return;
+      // Air-gapped machines and soldiers have no network to jam.
+      if (world.rules.factions[world.players[e.owner[s]!]!.faction]!.airGapped) return;
+      if (ilength(e.x[s]! - x, e.y[s]! - y) <= power.radius) e.jammedUntil[s] = world.tick + power.duration;
+    });
+    pushFx(world, FX_EVENT.power, 1, power.radius, player, x, y, 0, 0);
+  } else return false;
+  p.powerReady = world.tick + power.cooldown;
+  return true;
 }
 
 /** Once a second: network self-repair for units in coverage, Cantor shield restoration. */
@@ -271,6 +337,12 @@ export function useAbility(world: World, player: number, s: number, x: number, y
       e.pathGoal[s] = -1;
       e.hasGoal[s] = 0;
       e.abilityReady[s] = world.tick + a.cooldown;
+      return true;
+    }
+    if (a.kind === 'uplink') {
+      e.uplinkUntil[s] = world.tick + a.duration;
+      e.abilityReady[s] = world.tick + a.cooldown;
+      pushFx(world, FX_EVENT.ability, 5, e.type[s]!, player, e.x[s]!, e.y[s]!, 0, 0);
       return true;
     }
     if (a.kind === 'digIn') {
