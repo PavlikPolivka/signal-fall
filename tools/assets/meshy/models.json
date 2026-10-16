@@ -38,13 +38,16 @@
     },
     "flak_track": {
       "faction": "holdout",
-      "prompt": "Half-track anti-aircraft vehicle: wheels at the front, tracks at the rear, and a big quad-barrel anti-aircraft cannon turret on the rear bed with the four barrels pointing up.",
+      "prompt": "Half-track anti-aircraft vehicle: wheels at the front, tracks at the rear, and on the back a big turret with four long anti-aircraft gun barrels raised toward the sky, clearly visible.",
       "render": {
         "length": 2.7,
         "turret_cut": 0.55
       },
       "v1": {
         "note": "regenerated: did not match the unit"
+      },
+      "v2": {
+        "note": "anti-aircraft guns barely visible"
       }
     },
     "thumper": {
@@ -84,7 +87,13 @@
     },
     "holdfast": {
       "faction": "holdout",
-      "prompt": "Construction yard: welded workshop hall with a gantry crane, stacked steel beams and materials, concrete pad, square footprint."
+      "prompt": "Construction yard: a big rectangular industrial warehouse building with a pitched corrugated metal roof, large roller doors, welded and riveted steel walls, stacked crates and steel beams around it, standing on a concrete pad.",
+      "v1": {
+        "note": "mostly a gantry frame, no building"
+      },
+      "v2": {
+        "note": "crane and two panels again: any crane wording takes over"
+      }
     },
     "dynamo": {
       "faction": "holdout",
@@ -220,7 +229,10 @@
     },
     "make": {
       "faction": "halcyon",
-      "prompt": "Vehicle fabricator: a hall with hexagonal roof panels, a large cyan-framed bay door, overhead crane."
+      "prompt": "Vehicle factory building: one large solid white hangar hall with hexagonal roof panels, solid walls, and a big cyan-framed bay door at the front, standing on a concrete pad. A single building, not a crane.",
+      "v1": {
+        "note": "only an overhead crane, no building"
+      }
     },
     "scan": {
       "faction": "halcyon",

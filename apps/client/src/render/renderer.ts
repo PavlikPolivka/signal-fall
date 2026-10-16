@@ -50,6 +50,7 @@ export class Renderer {
   /** Halcyon's network coverage, always shown to its own player; rebuilt when structures change. */
   private readonly coverageGfx = new Graphics();
   private coverageKey = '';
+  private lastFrameAt = performance.now();
   /** Enemy structures as last seen: footprint, so a ghost can outlive the building until the spot is seen again. */
   private structFootprints = new Map<number, { x0: number; y0: number; w: number; h: number; owner: number }>();
   /** All sprite shadows, under every unit and building. */
@@ -506,6 +507,10 @@ export class Renderer {
     this.world.position.set(this.width / 2 - this.camera.x * this.camera.zoom, this.height / 2 - this.camera.y * this.camera.zoom);
 
     const alpha = Math.min(1, (performance.now() - s.curAt) / 50);
+    const nowMs = performance.now();
+    const frameDt = Math.min(0.1, (nowMs - this.lastFrameAt) / 1000);
+    this.lastFrameAt = nowMs;
+    const burning = new Set<number>();
     const prev = s.prev;
     const seen = new Set<number>();
     const selected = new Set(s.selection);
@@ -571,6 +576,11 @@ export class Renderer {
         if (sview) {
           sview.tint = unpowered ? 0x7a7a8a : ghost ? 0x8a8f99 : 0xffffff;
           sview.alpha = ghost ? 0.6 : 1;
+        }
+        // Damaged buildings smoke, badly damaged ones burn (not ghosts: their health is unknown).
+        if (visible && !ghost) {
+          this.effects.burn(h, px, py, srule.footprintW, hpFrac, frameDt);
+          burning.add(h);
         }
         if (visible && unpowered && Math.floor(performance.now() / 500) % 2 === 0) {
           const by = py - 64;
@@ -726,6 +736,7 @@ export class Renderer {
       this.rendered.delete(h);
     }
     this.deaths = this.deaths.filter((d) => d.update());
+    this.effects.burnKeep(burning);
     for (const h of this.lastShields.keys()) if (!seen.has(h)) this.lastShields.delete(h);
 
     // Projectiles: tracer dots interpolated between origin and impact.

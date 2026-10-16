@@ -359,6 +359,38 @@ export class Effects {
     }
   }
 
+  /** Seconds since each burning building last emitted (keyed by entity handle). */
+  private burnClock = new Map<number, number>();
+
+  /**
+   * A damaged building smokes, and below a third of its health it burns: flames licking at a few
+   * spots and black smoke rising. More damage, more fire. `w` is the footprint width in tiles.
+   */
+  burn(h: number, px: number, py: number, w: number, hp: number, dt: number): void {
+    if (hp >= 0.6) return;
+    const severity = (0.6 - hp) / 0.6; // 0 just hurt .. 1 nearly dead
+    const t = (this.burnClock.get(h) ?? 0) + dt;
+    const every = 0.6 - 0.35 * severity;
+    if (t < every) {
+      this.burnClock.set(h, t);
+      return;
+    }
+    this.burnClock.set(h, 0);
+    const spread = w * 18;
+    const x = px + (Math.random() - 0.5) * spread;
+    const y = py - 10 - Math.random() * w * 10;
+    this.spawn(this.smoke, x, y, 6, { life: 1.3 + severity, scale0: 0.2 + 0.08 * w, scale1: 0.5 + 0.22 * w, tint: hp < 0.33 ? 0x34302b : 0x7a756e, alpha: 0.38, vz: 22, add: false });
+    if (hp < 0.33) {
+      for (let k = 0; k < 2; k++)
+        this.spawn(this.hot, x + (Math.random() - 0.5) * 8, y + 2, 4, { life: 0.35 + Math.random() * 0.3, scale0: 0.25 + 0.1 * w, scale1: 0.05, tint: k ? 0xff9a2a : 0xffd27a, vz: 30 });
+    }
+  }
+
+  /** Forget burn timers of buildings no longer on screen. */
+  burnKeep(alive: Set<number>): void {
+    for (const h of this.burnClock.keys()) if (!alive.has(h)) this.burnClock.delete(h);
+  }
+
   /** A support power going off: Jam is an expanding cyan ring of static, Awaken a violet bloom. */
   private power(kind: number, radius: number, x: number, y: number): void {
     const px = isoX(x / FX, y / FX);

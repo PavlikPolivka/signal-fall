@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-16 21:10 UTC
+
+- **Buildings burn:** damaged buildings smoke, and badly damaged ones catch fire. More damage, more fire.
+- **New models** for the Holdout construction yard (a warehouse instead of a bare crane frame), the Halcyon vehicle fabricator (a real hangar instead of two lines) and the Holdout Flak Track (now with its anti-aircraft turret).
+
 ## 2026-10-16 20:22 UTC
 
 - **Crystal Choir soldiers:** Graces, Staccatos and Cantors are now violet crystal beings with glowing cores, carrying their team color on their shards.
