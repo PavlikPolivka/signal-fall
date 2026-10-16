@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-16 20:22 UTC
+
+- **Crystal Choir soldiers:** Graces, Staccatos and Cantors are now violet crystal beings with glowing cores, carrying their team color on their shards.
+
 ## 2026-10-16 19:41 UTC
 
 - **Grunts fixed:** no more hands stuck to their legs, and rifles no longer cross their faces. Soldiers hold their weapons pointing forward.

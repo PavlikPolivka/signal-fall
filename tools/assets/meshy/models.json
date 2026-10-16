@@ -5,7 +5,7 @@
     "choir": "Stylized-realistic real-time strategy game unit, chunky readable silhouette seen from above. Alien crystalline faction: floating violet crystal shards around a glowing amber core, resonant harmonic forms, translucent facets. No insignia, no stars, no text. Bright emerald green glowing accent panels.",
     "holdout_infantry": "Stylized-realistic real-time strategy game character, full body, sturdy readable proportions, clean silhouette. Post-apocalyptic human resistance soldier: olive drab fatigues, combat helmet, boots. No insignia, no text. Bright magenta tactical vest and bright magenta shoulder pads.",
     "halcyon_infantry": "Stylized-realistic real-time strategy game character, full body, humanoid combat robot, readable silhouette. Clean white and graphite composite armor plates, glowing cyan light lines, visor eye slit. No text. Bright magenta chest plate and bright magenta shoulder plates.",
-    "choir_infantry": "Stylized-realistic real-time strategy game character, full body, humanoid alien made of floating violet crystal shards around a glowing amber core, readable silhouette. Bright emerald green crystal chest and bright emerald green shoulder crystals."
+    "choir_infantry": "Stylized real-time strategy game character, full body, readable silhouette. A humanoid figure built entirely from separate floating faceted violet crystal shards with small gaps between them, a glowing amber crystal core in the chest, no skin, no clothing, no face, translucent glowing facets. Bright emerald green glowing crystal shards on the shoulders and chest."
   },
   "models": {
     "bulldog": {
@@ -452,30 +452,49 @@
     },
     "grace": {
       "faction": "choir_infantry",
-      "prompt": "Graceful slender crystal warrior standing in a T-pose with arms straight out to the sides.",
+      "prompt": "Slender graceful crystal warrior standing in a T-pose with arms straight out to the sides, long crystal blade shards on the forearms.",
       "pose_mode": "t-pose",
       "kind": "infantry",
       "render": {
         "weapon": "none"
+      },
+      "v1": {
+        "note": "smooth alien humanoid, not crystalline enough"
       }
     },
     "staccato": {
       "faction": "choir_infantry",
-      "prompt": "Heavy crystal warrior standing in a T-pose with arms straight out to the sides, large crystal shoulder blades.",
+      "prompt": "Heavy bulky warrior made of violet crystal standing in a T-pose with arms straight out to the sides, huge violet crystal shoulder shards, thick violet crystal legs. Mostly violet and amber, only a few small green shards.",
       "pose_mode": "t-pose",
       "kind": "infantry",
       "render": {
         "weapon": "none"
+      },
+      "v1": {
+        "note": "smooth alien humanoid, not crystalline enough"
+      },
+      "v2": {
+        "note": "almost all green (the team key)"
       }
     },
     "cantor": {
       "faction": "choir_infantry",
-      "prompt": "Tall robed crystal singer standing in a T-pose with arms straight out to the sides, a halo of amber shards over the head.",
+      "prompt": "Tall violet crystal figure in a strict T-pose: both arms raised straight out horizontally to the sides, hands far from the body, legs apart. A long flowing robe of violet crystal shards, a floating halo of amber shards above the head. Mostly violet and amber, only a few small green shards.",
       "pose_mode": "t-pose",
       "kind": "infantry",
       "render": {
         "weapon": "none"
-      }
+      },
+      "v1": {
+        "note": "smooth alien humanoid, not crystalline enough"
+      },
+      "v2": {
+        "note": "silver humanoid, not a T-pose"
+      },
+      "v3": {
+        "note": "violet, but one hand on the face (would fuse in the rig)"
+      },
+      "ai_model": "meshy-6"
     }
   }
 }

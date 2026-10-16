@@ -88,7 +88,8 @@ def _orient(obj, length=None, footprint=None):
 KEYS = {
     # (hue from, hue full, hue full until, hue to): magenta for Holdout and Halcyon, green for Choir.
     "magenta": (0.78, 0.84, 0.985, 1.0),
-    "green": (0.22, 0.27, 0.40, 0.45),
+    # Choir: green through cyan (their accent shards come out either way).
+    "green": (0.22, 0.27, 0.52, 0.56),
 }
 _key = KEYS["magenta"]
 
@@ -346,6 +347,8 @@ def build(sid, spec, procedural):
 
         _CFG = json.load(open(os.path.join(HERE, "..", "meshy", "models.json")))["models"]
     entry = _CFG.get(sid, {})
+    if entry.get("disabled"):
+        return procedural()
     cfg = dict(entry.get("render", {}))
     if spec.get("kind") == "infantry":
         if entry and has_character(sid):

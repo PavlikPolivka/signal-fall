@@ -21,6 +21,14 @@ CI owns the balance numbers. The `balance` job runs `pnpm -s headless balance-re
 - For changes that can move win rates (unit and structure stats, costs, economy constants, AI code or data, placement, mapgen, combat), check locally before pushing: `pnpm -s headless balance --a holdout:hard --b choir:hard --matches 100`.
 - Note what you tuned and why in `docs/balance/README.md` (the tuning log).
 
+## 3D models (Meshy)
+
+Generated models cost credits, so never lose one:
+- Prompts live in `tools/assets/meshy/models.json`, and task IDs in `tools/assets/meshy/tasks/`. Commit both with every generation.
+- Compact copies in `tools/assets/meshy/models/` are committed; the sprite pipeline renders from these.
+- Full originals land in `tools/assets/build/meshy/`, which git ignores. After generating, add them to the `models-originals` GitHub Release: `gh release upload models-originals <zip>`. Use zips under 1.9 GB.
+- Keep replaced versions (`<id>_vN.*`) and note why in `models.json`.
+
 ## Other rules
 
 - Commit and push to `main` per feature. Track progress in README and `docs/`, not in Obsidian.
