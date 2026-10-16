@@ -389,7 +389,7 @@
     },
     "grunt": {
       "faction": "holdout_infantry",
-      "prompt": "Infantry rifleman in a strict T-pose: both arms raised straight out horizontally to the sides, palms down, empty hands, nothing held. Rifle strapped to the backpack. Wearing a bright magenta tactical vest and bright magenta shoulder pads over olive fatigues.",
+      "prompt": "Rifleman soldier standing in a T-pose with arms straight out to the sides, backpack, nothing on the back but the backpack, empty hands.",
       "pose_mode": "t-pose",
       "kind": "infantry",
       "v1": {
@@ -400,6 +400,9 @@
       },
       "v2": {
         "note": "held the rifle (no T-pose), no magenta"
+      },
+      "v3": {
+        "note": "A-pose with arms against the body: the rig fused hands to thighs"
       }
     },
     "tankbuster": {

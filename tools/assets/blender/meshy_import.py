@@ -253,7 +253,7 @@ def _frame_times(anim, count, length):
 
 # Hand-held prop per weapon: (length, width, height) as a share of the character's height, and color.
 WEAPONS = {
-    "rifle": ((0.6, 0.05, 0.06), "2a2a28"),
+    "rifle": ((0.55, 0.03, 0.04), "1f1f1e"),
     "launcher": ((0.7, 0.11, 0.11), "4a5030"),
     "tool": ((0.3, 0.05, 0.05), "6e6e66"),
 }
@@ -304,11 +304,14 @@ def load_character(sid, *, height=0.42, weapon="rifle", key="magenta"):
         bpy.context.view_layer.update()
         rh = arm.matrix_world @ arm.pose.bones["RightHand"].head
         lh = arm.matrix_world @ arm.pose.bones["LeftHand"].head
-        d = lh - rh
-        if d.length < 1e-4:
-            d = Vector((1, 0, 0))
-        d.normalize()
-        center = rh + d * (height * 0.18)
+        # Held at the hands, pointing where the soldier faces (not hand to hand: that line can cross
+        # the face), tipped toward the left hand's height.
+        fwd = holder.parent.matrix_world.to_quaternion() @ Vector((1, 0, 0)) if holder.parent else Vector((1, 0, 0))
+        fwd.z = 0
+        fwd.normalize()
+        grip = (rh + lh) / 2
+        d = (fwd + Vector((0, 0, (lh.z - rh.z) / max(1e-4, height) * 0.5))).normalized()
+        center = grip + fwd * (height * 0.12)
         gun.matrix_world = Matrix.Translation(center) @ d.to_track_quat("X", "Z").to_matrix().to_4x4()
     actions = {a.name: a for a in bpy.data.actions}
     arm.animation_data_create()

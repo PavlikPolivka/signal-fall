@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-16 19:41 UTC
+
+- **Grunts fixed:** no more hands stuck to their legs, and rifles no longer cross their faces. Soldiers hold their weapons pointing forward.
+
 ## 2026-10-16 19:15 UTC
 
 - **Click what you see:** units are clickable anywhere on their new, bigger models.
