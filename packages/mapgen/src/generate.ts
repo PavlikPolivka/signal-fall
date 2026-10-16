@@ -51,7 +51,7 @@ const OBSTACLE_THRESHOLD: Record<TerrainStyle, number> = { open: 700, normal: 64
 /** Moisture below which tiles become water, out of 1024. */
 const WATER_THRESHOLD: Record<Biome, number> = { city: 330, wasteland: 300, crystal: 310 };
 /** [field radius, crystals at the center] per resource level. */
-const FIELD: Record<Resources, [number, number]> = { low: [3, 9], normal: [3, 12], rich: [4, 14] };
+const FIELD: Record<Resources, [number, number]> = { low: [4, 10], normal: [5, 12], rich: [6, 14] };
 const DECO_PCT: Record<Biome, number> = { city: 9, wasteland: 5, crystal: 6 };
 /** Chance of a river (2- and 4-player maps). */
 const RIVER_PCT: Record<Biome, number> = { city: 45, wasteland: 35, crystal: 45 };

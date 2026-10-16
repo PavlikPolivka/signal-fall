@@ -1,8 +1,10 @@
 import { useState } from 'preact/hooks';
 import { ARMOR, DAMAGE, type FactionRule, type Rules, type StructureRule, type UnitRule } from '@signal-fall/data';
+import { CHOIR_ECHO_RANGE, CHOIR_ECHO_REACH, CHOIR_SEED_GROW_PCT, CHOIR_SEED_REACH, CHOIR_SEED_START_PCT } from '@signal-fall/sim';
 import { chordLabel } from '../input/keymap';
 import { roleNames } from '../game/names';
 import { FACTION_LORE } from './lore';
+import { BalanceReport } from './Balance';
 
 const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
 const DAMAGE_LABEL = ['Kinetic', 'Explosive', 'Energy', 'Flak', 'Siege'];
@@ -23,15 +25,17 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 
-type Tab = 'story' | 'factions' | 'units' | 'buildings' | 'howto' | 'controls';
+type Tab = 'story' | 'factions' | 'compare' | 'units' | 'buildings' | 'howto' | 'controls' | 'balance';
 
 const TABS: [Tab, string][] = [
   ['story', 'Story'],
   ['factions', 'Factions'],
+  ['compare', 'Differences'],
   ['units', 'Units'],
   ['buildings', 'Buildings'],
   ['howto', 'How to play'],
   ['controls', 'Controls'],
+  ['balance', 'Balance'],
 ];
 
 export function Codex({ rules, onClose }: { rules: Rules; onClose: () => void }) {
@@ -65,10 +69,12 @@ export function Codex({ rules, onClose }: { rules: Rules; onClose: () => void })
         <div class="codex-body">
           {tab === 'story' && <Story />}
           {tab === 'factions' && <Factions rules={rules} />}
+          {tab === 'compare' && <Compare />}
           {tab === 'units' && <Units rules={rules} faction={rules.factions[faction]!} />}
           {tab === 'buildings' && <Buildings rules={rules} faction={rules.factions[faction]!} />}
           {tab === 'howto' && <HowTo rules={rules} />}
           {tab === 'controls' && <Controls rules={rules} />}
+          {tab === 'balance' && <BalanceReport rules={rules} />}
         </div>
       </div>
     </div>
@@ -124,6 +130,117 @@ function Factions({ rules }: { rules: Rules }) {
         );
       })}
     </div>
+  );
+}
+
+/** Side by side: how the three factions differ, row by row. */
+const COMPARE: [string, string, string, string][] = [
+  ['Builds', 'Next to the base, step by step', 'Anywhere inside network coverage', 'Grown near Echo or Choir structures'],
+  ['Expands with', 'Homestead (deploys a new base)', 'init, or relays pushing coverage out', 'Overture, or a far seed beside a field'],
+  ['Harvester', 'Mule: slow, tough, biggest load', 'fetch: fastest harvester', 'Refrain: shields over a light hull'],
+  ['Units', 'Slow, tough, cost-efficient', 'Fast and fragile', 'Small hulls under regenerating shields'],
+  ['Healing', 'Garage bays, Patch, Wrench repair', 'Self-repair inside coverage', 'Shields recharge out of combat; no repair'],
+  ['Losses', 'Wrecks can be salvaged for credits', 'Recompile refunds units lost in coverage', 'Shields absorb the first hits'],
+  ['Special', 'Air-gapped: immune to Override', 'Override steals enemy machines', 'Blink and phase'],
+  ['Fights best', 'Holding ground, slow pushes', 'On its own network', 'Hit-and-run, flanks'],
+  ['Struggles', 'Being outmaneuvered', 'Far from its network', 'Long, sustained fights'],
+];
+
+/** One faction in a match: how a game typically goes, with real units and buildings. */
+const IN_A_MATCH: Record<string, { opening: string; examples: string[]; against: [string, string][] }> = {
+  holdout: {
+    opening:
+      'Dynamo, Smelter, Bunkhouse, Motor Pool. Each building has to sit within a few tiles of another, so the base creeps toward the next field like a wall.',
+    examples: [
+      'A Bulldog column with a Patch behind it keeps rolling: the Patch repairs the tanks while they fight, and damaged ones drive back to a Garage.',
+      'After a big fight, send a Wrench (or a Mule) over the wrecks: every wreck on the field, yours or theirs, turns into credits.',
+      'A Halcyon root tries Override on your Ironclad and nothing happens. Holdout machines have no network to take.',
+      'Thumpers out-range every base defense: park them behind a Pillbox line and shell the enemy base from safety.',
+    ],
+    against: [
+      ['vs Halcyon', 'Fight away from its relays. Kill the relays and its army loses faster fire and self-repair.'],
+      ['vs Choir', 'Bullets glance off shields, so lean on explosives: Tankbusters, Bulldogs and Thumpers. Keep the pressure on, since shields only recharge once the fighting stops.'],
+    ],
+  },
+  halcyon: {
+    opening:
+      'kernel, powerd, ingest, spawn, make. Everything must stand inside coverage, so drop a relay ($400) first wherever you want to build next.',
+    examples: [
+      'A chain of relays toward the next field lets an init deploy there, and gives every unit on the way faster fire and self-repair.',
+      'Lose a vector inside your own coverage and Recompile hands back a quarter of its cost. Defending at home is cheap.',
+      'pings are the fastest scouts in the game: find the enemy harvesters and send seeks after them.',
+      'Late in a match, a root uses Override to turn the enemy\'s best tank against its own army (Choir resist, Holdout is immune).',
+    ],
+    against: [
+      ['vs Holdout', 'Do not trade head-on with Bulldogs. Pick them apart with seeks and broadcast artillery, and fight inside coverage.'],
+      ['vs Choir', 'Energy weapons tear through shields: sentries and vectors are your best answer.'],
+    ],
+  },
+  choir: {
+    opening:
+      'Opus, Bell, Coda, Loft, Pit. Structures grow near Echo or other Choir buildings: they take longer than the others to build, but cost less.',
+    examples: [
+      'A Glissando scouts a far field and stays there: with your unit beside it, the field can take a far seed. The new Coda grows from a quarter of its strength, so keep the Glissando around until it has.',
+      'Graces blink onto enemy artillery, kill it and blink out. Their shields recharge before the next raid.',
+      'A Basso about to die phases out, comes back a moment later, and its shields refill while it waits.',
+      'A Chord beside a field makes the Echo there regrow twice as fast. Sit on it and the field almost never runs dry.',
+    ],
+    against: [
+      ['vs Holdout', 'Bullets glance off your shields: hit fast and leave before the Patches and Garages repair the damage.'],
+      ['vs Halcyon', 'Its energy weapons cut through shields. Strike outside its coverage, where it neither fires faster nor repairs.'],
+    ],
+  },
+};
+
+function Compare() {
+  const names = ['Holdout', 'Halcyon', 'Choir'];
+  const ids = ['holdout', 'halcyon', 'choir'];
+  return (
+    <article class="prose compare">
+      <h2>How the factions differ</h2>
+      <p class="lead">One resource, three ways to play. All three follow the same rules whether a player or the AI commands them.</p>
+      <table class="md-table compare-table">
+        <thead>
+          <tr>
+            <th />
+            {names.map((n, i) => (
+              <th class={`f-${ids[i]}`}>{n}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {COMPARE.map(([row, ...cells]) => (
+            <tr>
+              <th>{row}</th>
+              {cells.map((c) => (
+                <td>{c}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {ids.map((id, i) => {
+        const m = IN_A_MATCH[id]!;
+        return (
+          <section class={`f-${id}`}>
+            <h2>{names[i]} in a match</h2>
+            <p>
+              <b>Opening.</b> {m.opening}
+            </p>
+            <ul>
+              {m.examples.map((e) => (
+                <li>{e}</li>
+              ))}
+            </ul>
+            {m.against.map(([vs, tip]) => (
+              <p class="muted">
+                <b>{vs}:</b> {tip}
+              </p>
+            ))}
+          </section>
+        );
+      })}
+    </article>
   );
 }
 
@@ -247,8 +364,8 @@ function HowTo({ rules }: { rules: Rules }) {
       <h3>The sidebar</h3>
       <ul>
         <li>
-          <b>Build</b> (<kbd>B</kbd>) — base structures: power, refinery, barracks, factory, radar, tech. Click to start building, click again when READY to
-          place it. One structure at a time.
+          <b>Build</b> (<kbd>B</kbd>) — base structures: power, refinery, barracks, factory, radar, tech. Click a building, then click where it should go:
+          it builds and places itself when done. Clicking it again instead starts it without a spot, to place when READY. One structure at a time.
         </li>
         <li>
           <b>Defense</b> (<kbd>N</kbd>) — turrets, anti-air and walls; built in parallel with structures.
@@ -262,6 +379,7 @@ function HowTo({ rules }: { rules: Rules }) {
           produced.
         </li>
       </ul>
+      <BuildingRules rules={rules} />
       <h3>Power</h3>
       <p>
         Every building produces or uses power. When usage exceeds production you are in <b>low power</b>: building and production run at{' '}
@@ -357,6 +475,58 @@ function HowTo({ rules }: { rules: Rules }) {
         shows saved accounts.
       </p>
     </article>
+  );
+}
+
+const tiles = (fx: number) => Math.round((fx / 1024) * 10) / 10;
+
+/** Where each faction may build, how to expand, and what refineries are for. */
+function BuildingRules({ rules }: { rules: Rules }) {
+  const by = (p: FactionRule['placement']) => rules.factions.find((f) => f.placement === p)!;
+  const holdout = by('adjacent');
+  const halcyon = by('coverage');
+  const choir = by('growth');
+  const radii = (f: FactionRule, key: 'coverageRadius' | 'growthRadius') =>
+    f.structures
+      .map((i) => rules.structures[i]!)
+      .filter((s) => s[key] > 0)
+      .map((s) => `${s.name} ${tiles(s[key])}`)
+      .join(', ');
+  const conyard = (f: FactionRule) => f.structures.map((i) => rules.structures[i]!).find((s) => s.role === 'conyard')!.name;
+  const refinery = (f: FactionRule) => rules.structures[f.structures.find((i) => rules.structures[i]!.role === 'refinery')!]!;
+  return (
+    <>
+      <h3>Where you can build</h3>
+      <p>Every faction builds by its own rule. The same rules apply to players and to the AI.</p>
+      <ul>
+        <li>
+          <b>{holdout.name}</b> — next to the base: a new building must be within {holdout.adjacencyRange} tiles of one you already have. Grow the base
+          step by step toward where you want to be.
+        </li>
+        <li>
+          <b>{halcyon.name}</b> — inside network coverage: within reach of a building that projects it ({radii(halcyon, 'coverageRadius')} tiles). Cheap
+          relays push coverage outward.
+        </li>
+        <li>
+          <b>{choir.name}</b> — grown, not built: near a structure that spreads growth ({radii(choir, 'growthRadius')} tiles), or within{' '}
+          {CHOIR_ECHO_RANGE} tiles of Echo. Echo within {CHOIR_ECHO_REACH} tiles of your own structures grows as usual. A farther field needs the chorus
+          there: one of your units within {CHOIR_SEED_REACH} tiles of the spot. Such a <b>far seed</b> starts at {CHOIR_SEED_START_PCT}% health and grows{' '}
+          {CHOIR_SEED_GROW_PCT}% a second to full strength, so guard it while it grows.
+        </li>
+      </ul>
+      <h3>Expanding</h3>
+      <p>
+        Fields run dry and regrow slowly, so a base that stays home runs out of money. To take another field, build a construction vehicle at the factory
+        and deploy it (<kbd>D</kbd>) beside the field: it becomes a new construction yard ({rules.factions.map(conyard).join(', ')}), and the
+        building rules above start from there. The {choir.name} can also grow straight onto a far field with a far seed.
+      </p>
+      <h3>Refineries and harvesters</h3>
+      <p>
+        A refinery (${Math.min(...rules.factions.map((f) => refinery(f).cost))}–${Math.max(...rules.factions.map((f) => refinery(f).cost))}) comes with one free harvester. Harvesters
+        unload at the nearest refinery, so a second refinery pays off only beside a different field, where it cuts the drive. On the same field, another
+        harvester is cheaper. About three harvesters keep one refinery busy; more just queue to unload.
+      </p>
+    </>
   );
 }
 

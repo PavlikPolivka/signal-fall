@@ -7,6 +7,17 @@ import { upgradePct } from './systems/faction';
 
 /** How far from an Echo tile Choir may grow structures, in tiles. */
 export const CHOIR_ECHO_RANGE = 3;
+/**
+ * Echo within this many tiles of one of its own structures grows as usual. Farther fields
+ * need the chorus there: an own unit within CHOIR_SEED_REACH of the spot. Such a far seed
+ * starts weak and grows to full strength (see `growSystem`).
+ */
+export const CHOIR_ECHO_REACH = 16;
+/** How close an own unit must stand to sing up a far seed, in tiles. */
+export const CHOIR_SEED_REACH = 6;
+/** A far seed starts at this percent of its HP and grows this percent per second. */
+export const CHOIR_SEED_START_PCT = 25;
+export const CHOIR_SEED_GROW_PCT = 2;
 
 export interface PlacedStructure {
   owner: number;
@@ -29,6 +40,8 @@ export interface PlacementView {
   unitOn(tx: number, ty: number): boolean;
   /** Percent multiplier on network coverage radius (Extended Relays). */
   coveragePct: number;
+  /** Positions (fixed point) of the player's own units, for Choir far seeds. */
+  ownUnits: { x: number; y: number }[];
 }
 
 export type PlacementError = 'blocked' | 'tooFar' | 'noCoverage' | 'noGrowth';
@@ -37,7 +50,7 @@ export const PLACEMENT_MESSAGES: Record<PlacementError, string> = {
   blocked: 'Blocked',
   tooFar: 'Must be built next to your base',
   noCoverage: 'Must be inside network coverage',
-  noGrowth: 'Must grow near Echo or Choir structures',
+  noGrowth: 'Must grow near Choir structures, or near Echo where your units stand',
 };
 
 /** Why `rule` cannot go with its footprint origin at (tx, ty), or null if it can. */
@@ -95,16 +108,36 @@ export function placementError(
     }
     case 'growth': {
       for (const s of own) if (s.rule.growthRadius > 0 && centerDist(s) <= s.rule.growthRadius) return null;
-      const r = CHOIR_ECHO_RANGE;
-      for (let y = ty - r; y < ty + h + r; y++) {
-        for (let x = tx - r; x < tx + w + r; x++) {
-          if (x < 0 || y < 0 || x >= view.width || y >= view.height) continue;
-          if (view.echo[y * view.width + x]! > 0) return null;
-        }
-      }
-      return 'noGrowth';
+      if (!nearEcho(view, rule, tx, ty)) return 'noGrowth';
+      if (own.some((s) => centerDist(s) <= CHOIR_ECHO_REACH * FX_ONE)) return null;
+      const reach = CHOIR_SEED_REACH * FX_ONE;
+      return view.ownUnits.some((u) => ilength(u.x - cx, u.y - cy) <= reach) ? null : 'noGrowth';
     }
   }
+}
+
+function nearEcho(view: PlacementView, rule: StructureRule, tx: number, ty: number): boolean {
+  const r = CHOIR_ECHO_RANGE;
+  for (let y = ty - r; y < ty + rule.footprintH + r; y++) {
+    for (let x = tx - r; x < tx + rule.footprintW + r; x++) {
+      if (x < 0 || y < 0 || x >= view.width || y >= view.height) continue;
+      if (view.echo[y * view.width + x]! > 0) return true;
+    }
+  }
+  return false;
+}
+
+/** True if a valid growth placement at (tx, ty) is a far seed: no own structure within CHOIR_ECHO_REACH. */
+export function isFarSeed(view: PlacementView, player: number, faction: FactionRule, rule: StructureRule, tx: number, ty: number): boolean {
+  if (faction.placement !== 'growth') return false;
+  const cx = (tx << FX_SHIFT) + ((rule.footprintW * FX_ONE) >> 1);
+  const cy = (ty << FX_SHIFT) + ((rule.footprintH * FX_ONE) >> 1);
+  for (const s of view.structures) {
+    if (s.owner !== player) continue;
+    const d = ilength(cx - ((s.tx << FX_SHIFT) + ((s.rule.footprintW * FX_ONE) >> 1)), cy - ((s.ty << FX_SHIFT) + ((s.rule.footprintH * FX_ONE) >> 1)));
+    if ((s.rule.growthRadius > 0 && d <= s.rule.growthRadius) || d <= CHOIR_ECHO_REACH * FX_ONE) return false;
+  }
+  return true;
 }
 
 /** Placement view of the live sim world. `ignoreUnit` lets a deploying unit stand on its own spot. */
@@ -113,8 +146,10 @@ export function worldPlacementView(world: World, player: number, ignoreUnit = -1
   const m = world.map;
   const structures: PlacedStructure[] = [];
   const units = new Uint8Array(m.width * m.height);
+  const ownUnits: { x: number; y: number }[] = [];
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1) continue;
+    if (e.kind[s] === KIND.unit && e.owner[s] === player) ownUnits.push({ x: e.x[s]!, y: e.y[s]! });
     if (e.kind[s] === KIND.structure) {
       structures.push({ owner: e.owner[s]!, rule: world.rules.structures[e.type[s]!]!, tx: e.tileX[s]!, ty: e.tileY[s]! });
     } else if (e.kind[s] === KIND.unit && s !== ignoreUnit && !world.rules.units[e.type[s]!]!.isAir) {
@@ -131,6 +166,7 @@ export function worldPlacementView(world: World, player: number, ignoreUnit = -1
     structures,
     unitOn: (x, y) => units[y * m.width + x] === 1,
     coveragePct: coveragePctFor(world, player),
+    ownUnits,
   };
 }
 

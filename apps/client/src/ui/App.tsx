@@ -572,7 +572,7 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
         {rule.kind === 'structure' && (
           <div class="muted">
             Power {rule.power > 0 ? `+${rule.power}` : rule.power}
-            {state.field(h, E.repairing) === 1 ? ' · repairing' : ''}
+            {state.field(h, E.repairing) === 1 ? ' · repairing' : state.field(h, E.repairing) === 2 ? ' · growing' : ''}
           </div>
         )}
       </div>
@@ -862,7 +862,12 @@ function EndScreen({ state }: { state: ClientState }) {
             Save replay
           </button>
         )}
-        <button onClick={() => (location.href = location.pathname)}>New skirmish</button>
+        <button onClick={() => (location.href = `${location.pathname}?menu=skirmish`)} data-testid="end-new-skirmish">
+          New skirmish
+        </button>
+        <button onClick={() => (location.href = location.pathname)} data-testid="end-menu">
+          Main menu
+        </button>
       </div>
     </div>
   );

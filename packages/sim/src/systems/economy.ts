@@ -5,6 +5,7 @@ import { removeEntity, spawnUnit } from '../spawn';
 import { distToBody } from '../query';
 import { tileAt } from '../map';
 import { upgradePct } from './faction';
+import { CHOIR_SEED_GROW_PCT } from '../placement';
 import type { PlayerState, World } from '../world';
 
 /** Ticks between crystals while harvesting. */
@@ -457,7 +458,11 @@ export function repairSystem(world: World): void {
     if (e.alive[s] !== 1) continue;
     if (e.kind[s] === KIND.structure) {
       const rule = world.rules.structures[e.type[s]!]!;
-      if (e.repairing[s] === 1) {
+      if (e.repairing[s] === 2) {
+        // A Choir far seed growing to full strength, for free.
+        e.hp[s] = Math.min(e.maxHp[s]!, e.hp[s]! + Math.max(1, pct(e.maxHp[s]!, CHOIR_SEED_GROW_PCT)));
+        if (e.hp[s] === e.maxHp[s]) e.repairing[s] = 0;
+      } else if (e.repairing[s] === 1) {
         const p = world.players[e.owner[s]!]!;
         const missing = e.maxHp[s]! - e.hp[s]!;
         if (missing <= 0) e.repairing[s] = 0;

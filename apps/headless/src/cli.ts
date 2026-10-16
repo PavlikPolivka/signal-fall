@@ -29,6 +29,13 @@ Commands:
          --out <file>      CSV path (default stdout summary only)
          --min-win <pct>   exit 1 unless side A wins at least this percent
          --max-win <pct>   exit 1 if side A wins more than this percent
+  balance-report  Every faction pairing (Hard vs Hard) and Hard vs Easy per faction: writes
+         balance.json (CI publishes it; the game's Codex shows it) and the CSVs.
+         Exits 1 outside 45-55% per pairing or under 90% Hard vs Easy.
+         --matches <n>     matches per pairing (default 300)
+         --easy <n>        Hard vs Easy matches per faction (default 200)
+         --out <file>      JSON path (default balance.json)
+         --csv <dir>       where the CSVs go (default .)
 `;
 
 function main(argv: string[]): number {
@@ -65,6 +72,10 @@ function main(argv: string[]): number {
   }
   if (command === 'balance') {
     void balance(rest);
+    return 0;
+  }
+  if (command === 'balance-report') {
+    void balanceReport(rest);
     return 0;
   }
   process.stdout.write(USAGE);
@@ -118,4 +129,88 @@ async function balance(args: string[]): Promise<void> {
   if (min !== undefined && pctA < Number(min)) process.exitCode = 1;
   const max = values['max-win'];
   if (max !== undefined && pctA > Number(max)) process.exitCode = 1;
+}
+
+const UNIT_TOP = 3;
+
+/**
+ * Every faction pairing (Hard vs Hard) plus Hard vs Easy per faction. Writes balance.json, which CI
+ * publishes and the game's Codex shows, and a CSV per run. Exits 1 outside the 45-55% / 90% gates.
+ */
+async function balanceReport(args: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args,
+    options: {
+      matches: { type: 'string', default: '300' },
+      easy: { type: 'string', default: '200' },
+      out: { type: 'string', default: 'balance.json' },
+      csv: { type: 'string', default: '.' },
+    },
+  });
+  const factions: FactionId[] = ['holdout', 'halcyon', 'choir'];
+  const pct = (n: number, of: number) => Math.round((n * 1000) / Math.max(1, of)) / 10;
+  const run = async (sides: [Side, Side], matches: number) => {
+    const outcomes = await runParallel(batchSpecs({ matches, sides, size: 'M', seed: 1, maxMinutes: 30 }));
+    writeFileSync(`${values.csv}/balance-${sides[0].faction}-${sides[0].difficulty}-${sides[1].faction}-${sides[1].difficulty}.csv`, toCsv(sides, outcomes));
+    return outcomes;
+  };
+  let ok = true;
+  const pairings = [];
+  for (let i = 0; i < factions.length; i++) {
+    for (let j = i + 1; j < factions.length; j++) {
+      const sides: [Side, Side] = [
+        { faction: factions[i]!, difficulty: 'hard' },
+        { faction: factions[j]!, difficulty: 'hard' },
+      ];
+      const outcomes = await run(sides, Number(values.matches));
+      const s = summarize(sides, outcomes);
+      const winPct = pct(s.winsA, outcomes.length);
+      if (winPct < 45 || winPct > 55) ok = false;
+      const side = (k: 0 | 1) => {
+        const units = new Map<string, number>();
+        const strategies: Record<string, { wins: number; matches: number }> = {};
+        for (const o of outcomes) {
+          for (const p of o.units[k].split(' ')) {
+            const [u, n] = p.split(':');
+            if (u && n) units.set(u, (units.get(u) ?? 0) + Number(n));
+          }
+          const st = (strategies[o.strategies[k]] ??= { wins: 0, matches: 0 });
+          st.matches++;
+          if (o.winner === k) st.wins++;
+        }
+        return {
+          faction: sides[k].faction,
+          harvested: Math.round(outcomes.reduce((t, o) => t + o.harvested[k], 0) / outcomes.length),
+          topUnits: [...units.entries()].sort((x, y) => y[1] - x[1]).slice(0, UNIT_TOP).map(([u]) => u),
+          strategies,
+        };
+      };
+      pairings.push({ a: side(0), b: side(1), winsA: s.winsA, winsB: s.winsB, draws: s.draws, winPctA: winPct, avgMinutes: s.avgMinutes });
+      console.log(`${sides[0].faction} vs ${sides[1].faction}: ${s.winsA}-${s.winsB} (${s.draws} draws) · A wins ${winPct}%`);
+    }
+  }
+  const easy = [];
+  for (const f of factions) {
+    const sides: [Side, Side] = [
+      { faction: f, difficulty: 'hard' },
+      { faction: f, difficulty: 'easy' },
+    ];
+    const outcomes = await run(sides, Number(values.easy));
+    const winPct = pct(summarize(sides, outcomes).winsA, outcomes.length);
+    if (winPct < 90) ok = false;
+    easy.push({ faction: f, winPct, matches: outcomes.length });
+    console.log(`${f} hard vs easy: ${winPct}%`);
+  }
+  const report = {
+    commit: process.env.GITHUB_SHA ?? null,
+    date: new Date().toISOString(),
+    matchesPerPairing: Number(values.matches),
+    gate: { min: 45, max: 55, easyMin: 90 },
+    ok,
+    pairings,
+    easy,
+  };
+  writeFileSync(values.out, JSON.stringify(report, null, 2) + '\n');
+  console.log(ok ? 'balance OK' : 'balance outside the gates');
+  if (!ok) process.exitCode = 1;
 }

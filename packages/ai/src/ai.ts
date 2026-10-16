@@ -10,6 +10,7 @@ import {
   teamOf,
   ilength,
   placementError,
+  footprintBlocked,
   pct,
   visibleTo,
   worldPlacementView,
@@ -20,6 +21,7 @@ import {
   type World,
 } from '@signal-fall/sim';
 import { PROFILES, type Difficulty, type DifficultyProfile } from './difficulty';
+import { STRATEGIES, STRATEGY_POOL, type Strategy } from './strategy';
 
 const MINUTE = 1200;
 /** Forget enemies not seen for this long. */
@@ -30,6 +32,12 @@ const UNDER_ATTACK_TICKS = 40;
 const ADVANTAGE_X10 = 20;
 /** More harvesters than this just crowd the fields. */
 const MAX_HARVESTERS = 8;
+/** Credits that count as piling up: time for more production. */
+const FLOAT_CREDITS = 2500;
+/** Most barracks and most factories the AI builds. */
+const MAX_PRODUCTION = 3;
+/** Most of each support unit (no weapon) alive or queued. */
+const SUPPORT_CAP = 2;
 /** Max commands per think, even with APM budget saved up. */
 const MAX_ACTIONS_PER_THINK = 6;
 const AIR_ARMOR = ARMOR.indexOf('air');
@@ -49,6 +57,8 @@ interface Sighting {
   structure: boolean;
   harvester: boolean;
   armed: boolean;
+  /** Share of its life (percent) that is shields, which take damage by type differently. */
+  shieldShare: number;
 }
 
 interface Own {
@@ -70,8 +80,15 @@ interface Own {
 export class AiPlayer implements Brain {
   readonly player: number;
   readonly difficulty: Difficulty;
-  private readonly d: DifficultyProfile;
-  private readonly profile: AiProfile;
+  private d: DifficultyProfile;
+  private profile: AiProfile;
+  /** This match's plan, picked on the first think (seeded, so replays reproduce it). */
+  strategy: Strategy = STRATEGIES.balanced;
+  private strategyChosen = false;
+  /** Expansion: the construction vehicle on its way, and where to. */
+  private expander = -1;
+  private expandTarget: { x: number; y: number } | null = null;
+  private expandStuck = 0;
   private readonly enemyStarts: { x: number; y: number }[];
   private readonly home: { x: number; y: number };
 
@@ -115,6 +132,7 @@ export class AiPlayer implements Brain {
     this.cmds = [];
     const allowed = idiv(this.d.apm * world.tick, MINUTE) - this.actionsUsed;
     this.budget = Math.min(MAX_ACTIONS_PER_THINK, allowed);
+    if (!this.strategyChosen) this.chooseStrategy(world);
     this.remember(world);
     if (this.directed) this.plan = world.players[this.player]!.directives ?? { posture: 'defend' };
     this.peakEnemyArmy = Math.max(this.knownEnemyArmy(world), this.peakEnemyArmy - idiv(this.peakEnemyArmy, 100));
@@ -122,6 +140,7 @@ export class AiPlayer implements Brain {
 
     this.deploy(world, own);
     if (this.recover(world, own)) return this.cmds;
+    this.expand(world, own);
     this.placeReady(world, own);
     this.construct(world, own);
     this.produce(world, own);
@@ -172,6 +191,7 @@ export class AiPlayer implements Brain {
         structure: !isUnit,
         harvester: urule ? urule.abilities.some((a) => a.kind === 'harvest') : false,
         armed: urule ? urule.weapon !== null : srule!.weapon !== null,
+        shieldShare: urule && urule.shields > 0 ? idiv(urule.shields * 100, urule.shields + urule.hp) : 0,
       });
     }
     // Forget what's stale, and what we can now see is gone (its last-known spot is visible but it isn't there).
@@ -188,6 +208,194 @@ export class AiPlayer implements Brain {
     const out: Sighting[] = [];
     for (const m of this.memory.values()) if (world.tick - m.firstSeen >= this.d.reactionTicks) out.push(m);
     return out;
+  }
+
+  /** Pick this match's strategy and fold it into the profile and difficulty numbers. */
+  private chooseStrategy(world: World): void {
+    this.strategyChosen = true;
+    if (this.directed) return;
+    const pool = STRATEGY_POOL[this.difficulty]!;
+    const st = STRATEGIES[pool[world.aiRng[this.player]!.int(pool.length)]!];
+    this.strategy = st;
+    const base = this.d;
+    this.d = {
+      ...base,
+      firstWave: idiv(base.firstWave * st.firstWavePct, 100),
+      waveGrowth: idiv(base.waveGrowth * st.waveGrowthPct, 100),
+      firstAttackTick: Math.max(2 * MINUTE + idiv(MINUTE, 2), base.firstAttackTick + st.attackDelay),
+      harass: base.harass || (st.harass && this.difficulty !== 'easy'),
+      maxRefineries: base.maxRefineries + st.extraRefineries,
+      defenses: base.defenses + st.extraDefenses.length,
+    };
+    const rules = world.rules;
+    this.profile = {
+      ...this.profile,
+      opening: st.opening(this.profile.opening),
+      defenses: [...this.profile.defenses, ...st.extraDefenses],
+      maxRefineries: this.profile.maxRefineries + st.extraRefineries,
+      army: this.profile.army.map(([id, w]) => [id, Math.max(0, idiv(w * st.weightPct(rules.units[rules.unitIndex.get(id)!]!), 100))] as [string, number]),
+    };
+    this.nextWaveTick = this.d.firstAttackTick;
+  }
+
+  /**
+   * Expansion (Normal and up): once the strategy says so, build a construction vehicle, drive it
+   * to the best Echo field we do not hold and nobody hostile is known near, deploy it there, and
+   * the next refinery goes up beside it.
+   */
+  private expand(world: World, own: Own): void {
+    if (this.directed || this.difficulty === 'easy' || own.conyards.length === 0) return;
+    const e = world.entities;
+    const p = world.players[this.player]!;
+    const faction = world.rules.factions[p.faction]!;
+    const cv = world.rules.units[faction.constructionUnit]!;
+    // An expander on its way: deploy on arrival, give up if it cannot get there.
+    if (this.expander >= 0) {
+      const s = e.resolve(this.expander);
+      if (s < 0 || !this.expandTarget) {
+        this.expander = -1;
+        return;
+      }
+      const d = ilength(e.x[s]! - this.expandTarget.x, e.y[s]! - this.expandTarget.y);
+      if (d <= 3 * FX_ONE || (this.expandStuck > 30 && e.orders[s]!.length === 0)) {
+        this.act({ type: 'deploy', units: [this.expander] });
+        // If the spot is blocked the deploy does nothing: step aside and try again.
+        if ((world.tick + this.player) % 50 === 0) this.act({ type: 'move', units: [this.expander], x: this.expandTarget.x + FX_ONE * 2, y: this.expandTarget.y });
+        this.expandStuck++;
+        return;
+      }
+      if (e.orders[s]!.length === 0) {
+        this.expandStuck++;
+        this.act({ type: 'move', units: [this.expander], x: this.expandTarget.x, y: this.expandTarget.y });
+      }
+      return;
+    }
+    // A fresh construction vehicle (beyond the one we deployed at the start) becomes the expander.
+    const spare = own.constructionUnits[0];
+    if (spare !== undefined && own.conyards.length > 0) {
+      const target = this.expansionSite(world, own);
+      if (!target) return;
+      this.expander = e.handle(spare);
+      this.expandTarget = target;
+      this.expandStuck = 0;
+      this.act({ type: 'move', units: [this.expander], x: target.x, y: target.y });
+      return;
+    }
+    // Time to expand? Only with a factory, some money and room for another refinery.
+    if (world.tick < this.strategy.expandAt || this.count(own, 'factory') === 0) return;
+    if (this.count(own, 'refinery') >= Math.min(this.profile.maxRefineries, this.d.maxRefineries)) return;
+    if (own.conyards.length >= 3) return;
+    const vq = p.production[1]!;
+    if (vq.items.includes(cv.index) || !cv.requires.every((r) => this.count(own, r) > 0)) return;
+    if (!this.expansionSite(world, own)) return;
+    this.act({ type: 'train', item: cv.index, count: 1 });
+  }
+
+  /** Echo clusters on the map: centers (Q10) and how much they hold, coarse grid (cached per second). */
+  private clusterCache: { tick: number; list: { x: number; y: number; echo: number }[] } = { tick: -1, list: [] };
+  private echoClusters(world: World): { x: number; y: number; echo: number }[] {
+    if (world.tick - this.clusterCache.tick < 20 && this.clusterCache.tick >= 0) return this.clusterCache.list;
+    const m = world.map;
+    const list: { x: number; y: number; echo: number }[] = [];
+    const step = 4;
+    for (let ty = step; ty < m.height - step; ty += step)
+      for (let tx = step; tx < m.width - step; tx += step) {
+        let echo = 0;
+        for (let y = ty - 3; y <= ty + 3; y++) for (let x = tx - 3; x <= tx + 3; x++) echo += m.echo[y * m.width + x]!;
+        if (echo >= 120) list.push({ x: (tx << FX_SHIFT) + FX_HALF, y: (ty << FX_SHIFT) + FX_HALF, echo });
+      }
+    this.clusterCache = { tick: world.tick, list };
+    return list;
+  }
+
+  /** A field no refinery of ours serves (none within 10 tiles), that we can build beside from where we are. */
+  private refineryField(world: World, own: Own): { x: number; y: number } | null {
+    const e = world.entities;
+    const refineries = own.byRole.get('refinery') ?? [];
+    const rule = world.rules.structures[world.rules.factions[world.players[this.player]!.faction]!.structures.map((i) => world.rules.structures[i]!).find((r) => r.role === 'refinery')!.index]!;
+    const faction = world.rules.factions[world.players[this.player]!.faction]!;
+    const view = worldPlacementView(world, this.player);
+    let best: { x: number; y: number } | null = null;
+    let bestScore = -0x7fffffff;
+    for (const c of this.echoClusters(world)) {
+      if (refineries.some((r) => ilength(e.x[r]! - c.x, e.y[r]! - c.y) < 10 * FX_ONE)) continue;
+
+      // Reachable: some spot within 5 tiles of the field passes our placement rules.
+      const cx = c.x >> FX_SHIFT;
+      const cy = c.y >> FX_SHIFT;
+      let ok = false;
+      for (let dy = -5; dy <= 5 && !ok; dy++)
+        for (let dx = -5; dx <= 5 && !ok; dx++) if (placementError(view, this.player, faction, rule, cx + dx, cy + dy) === null) ok = true;
+      if (!ok) continue;
+      const home = ilength((this.home.x << FX_SHIFT) - c.x, (this.home.y << FX_SHIFT) - c.y) >> FX_SHIFT;
+      const score = c.echo - home * 6;
+      if (score > bestScore) {
+        bestScore = score;
+        best = { x: c.x, y: c.y };
+      }
+    }
+    return best;
+  }
+
+  /** Richest Echo cluster away from our structures and from enemies we know about, nearest home first. */
+  private expansionSite(world: World, own: Own): { x: number; y: number } | null {
+    const field = this.expansionField(world, own);
+    if (!field) return null;
+    // Deploy beside the field, never on it: the nearest spot (toward home) where the yard fits.
+    const p = world.players[this.player]!;
+    const cv = world.rules.units[world.rules.factions[p.faction]!.constructionUnit]!;
+    const ability = cv.abilities.find((a) => a.kind === 'deploy');
+    const yardRule = ability && ability.kind === 'deploy' ? world.rules.structures[world.rules.structureIndex.get(ability.into)!]! : null;
+    if (!yardRule) return null;
+    const view = worldPlacementView(world, this.player);
+    const fx = field.x >> FX_SHIFT;
+    const fy = field.y >> FX_SHIFT;
+    let best: { x: number; y: number } | null = null;
+    let bestD = 0x7fffffff;
+    for (let dy = -9; dy <= 9; dy++)
+      for (let dx = -9; dx <= 9; dx++) {
+        const r2 = dx * dx + dy * dy;
+        if (r2 < 9 || r2 > 81) continue;
+        const tx = fx + dx - (yardRule.footprintW >> 1);
+        const ty = fy + dy - (yardRule.footprintH >> 1);
+        if (footprintBlocked(view, yardRule, tx, ty)) continue;
+        const d = r2 * 4 + ilength(this.home.x - (fx + dx), this.home.y - (fy + dy));
+        if (d < bestD) {
+          bestD = d;
+          best = { x: ((fx + dx) << FX_SHIFT) + FX_HALF, y: ((fy + dy) << FX_SHIFT) + FX_HALF };
+        }
+      }
+    return best;
+  }
+
+  private expansionField(world: World, own: Own): { x: number; y: number } | null {
+    const m = world.map;
+    const e = world.entities;
+    let best: { x: number; y: number } | null = null;
+    let bestScore = -0x7fffffff;
+    const step = 4;
+    for (let ty = step; ty < m.height - step; ty += step) {
+      for (let tx = step; tx < m.width - step; tx += step) {
+        let echo = 0;
+        for (let y = ty - 3; y <= ty + 3; y++) for (let x = tx - 3; x <= tx + 3; x++) echo += m.echo[y * m.width + x]!;
+        if (echo < 120) continue;
+        const px = (tx << FX_SHIFT) + FX_HALF;
+        const py = (ty << FX_SHIFT) + FX_HALF;
+        // Already ours: a structure within 10 tiles.
+        if (own.structures.some((s) => ilength(e.x[s]! - px, e.y[s]! - py) < 10 * FX_ONE)) continue;
+        // Hostile: a known enemy structure within 14 tiles.
+        let hostile = false;
+        for (const mem of this.memory.values()) if (mem.structure && ilength(mem.x - px, mem.y - py) < 14 * FX_ONE) hostile = true;
+        if (hostile) continue;
+        const home = ilength((this.home.x << FX_SHIFT) - px, (this.home.y << FX_SHIFT) - py) >> FX_SHIFT;
+        const score = echo - home * 6;
+        if (score > bestScore) {
+          bestScore = score;
+          best = { x: px, y: py };
+        }
+      }
+    }
+    return best;
   }
 
   private survey(world: World): Own {
@@ -251,6 +459,7 @@ export class AiPlayer implements Brain {
 
   private deploy(world: World, own: Own): void {
     if (own.conyards.length > 0 || own.constructionUnits.length === 0) return;
+    // (Later construction vehicles are expanders, see expand().)
     const s = own.constructionUnits[0]!;
     this.act({ type: 'deploy', units: [world.entities.handle(s)] });
   }
@@ -323,13 +532,33 @@ export class AiPlayer implements Brain {
       if (this.count(own, role) < seen.get(role)!) return role;
     }
     const refineries = this.count(own, 'refinery');
-    if (refineries < Math.min(this.profile.maxRefineries, this.d.maxRefineries) && world.tick > refineries * 3 * MINUTE && p.credits < 3000) return 'refinery';
+    // One refinery per Echo field: the first at home, more only beside a field no refinery of ours serves
+    // (another refinery at the same field gains nothing: unloading is quick, more harvesters are cheaper).
+    const capAll = Math.min(this.profile.maxRefineries, this.d.maxRefineries);
+    if (refineries === 0) return 'refinery';
+    if (refineries < capAll && world.tick > refineries * 2 * MINUTE && p.credits < 3000 && this.refineryField(world, own)) return 'refinery';
     // Tech is a luxury: only with spare money or once the game has gone long.
     if (this.d.retreat && p.credits < 1500 && world.tick < 8 * MINUTE) return null;
     for (const role of this.profile.later) {
       if (this.count(own, role) === 0) return role;
     }
+    // Money piling up means production is the bottleneck: another barracks or factory
+    // (extra ones speed up their tab), alternating, up to a few of each.
+    if (p.credits >= FLOAT_CREDITS) {
+      const barracks = this.count(own, 'barracks');
+      const factories = this.count(own, 'factory');
+      if (factories <= barracks && factories < MAX_PRODUCTION) return 'factory';
+      if (barracks < MAX_PRODUCTION) return 'barracks';
+    }
     return null;
+  }
+
+  /** Own units of one type, alive or queued. */
+  private countUnits(world: World, own: Own, type: number, p: World['players'][number]): number {
+    let n = 0;
+    for (const u of own.units) if (world.entities.type[u] === type) n++;
+    for (const q of p.production) for (const i of q.items) if (i === type) n++;
+    return n;
   }
 
   private nextDefense(world: World, own: Own): Role | null {
@@ -375,18 +604,26 @@ export class AiPlayer implements Brain {
   /** Pick a spot: refineries near Echo, defenses toward the enemy, everything else around the yard with a gap. */
   private findSpot(world: World, own: Own, rule: StructureRule): { tx: number; ty: number } | null {
     const e = world.entities;
-    const yard = own.conyards[own.conyards.length - 1] ?? own.structures[0];
+    // Refineries go up at the newest yard (an expansion); everything else stays at home.
+    const yard = (rule.role === 'refinery' ? own.conyards[own.conyards.length - 1] : own.conyards[0]) ?? own.structures[0];
     if (yard === undefined) return null;
     const faction = world.rules.factions[world.players[this.player]!.faction]!;
     const view = worldPlacementView(world, this.player);
     let ax = e.x[yard]! >> FX_SHIFT;
     let ay = e.y[yard]! >> FX_SHIFT;
     if (rule.role === 'refinery') {
-      const echo = nearestEcho(world, ax, ay, 20);
-      if (echo >= 0) {
-        // Halfway between the yard and the field keeps it in build range.
-        ax = idiv(ax + (echo % world.map.width), 2);
-        ay = idiv(ay + idiv(echo, world.map.width), 2);
+      // Beside a field we do not serve yet (the home field for the first one).
+      const field = this.count(own, 'refinery') === 0 ? null : this.refineryField(world, own);
+      if (field) {
+        ax = field.x >> FX_SHIFT;
+        ay = field.y >> FX_SHIFT;
+      } else {
+        const echo = nearestEcho(world, ax, ay, 20);
+        if (echo >= 0) {
+          // Halfway between the yard and the field keeps it in build range.
+          ax = idiv(ax + (echo % world.map.width), 2);
+          ay = idiv(ay + idiv(echo, world.map.width), 2);
+        }
       }
     }
     // Direction to the enemy, so layouts are the same relative to the front for every start.
@@ -457,7 +694,9 @@ export class AiPlayer implements Brain {
     const candidates = mix
       .map(([id, weight]) => ({ rule: world.rules.units[world.rules.unitIndex.get(id)!]!, weight }))
       .filter((c) => c.weight > 0)
-      .filter((c) => ok(c.rule));
+      .filter((c) => ok(c.rule))
+      // Support units (no weapon: repair trucks, engineers) back an army, two of each is plenty.
+      .filter((c) => c.rule.weapon !== null || this.countUnits(world, own, c.rule.index, p) < SUPPORT_CAP);
     if (candidates.length === 0) return;
     for (const tab of ['infantry', 'vehicles', 'air'] as const) {
       const q = p.production[tab === 'infantry' ? 0 : tab === 'vehicles' ? 1 : 2]!;
@@ -475,13 +714,17 @@ export class AiPlayer implements Brain {
     const armorValue = new Array<number>(ARMOR.length).fill(0);
     let total = 0;
     let air = 0;
+    // Value-weighted shield share of the enemy army: shields change how well each damage type works.
+    let shielded = 0;
     for (const m of this.known(world)) {
       if (m.structure || !m.armed) continue;
       if (m.armor === AIR_ARMOR) air += m.cost;
       if (this.directed ? this.plan.adapt !== true : !this.d.counter) continue;
       armorValue[m.armor]! += m.cost;
       total += m.cost;
+      shielded += m.cost * m.shieldShare;
     }
+    const shieldShare = total > 0 ? idiv(shielded, total) : 0;
     const weights = pool.map((c) => {
       // Anti-air only once enemy aircraft have shown up.
       if (c.rule.weapon && !c.rule.weapon.targetsGround && air === 0) return 0;
@@ -492,6 +735,8 @@ export class AiPlayer implements Brain {
         const canHit = a === 3 ? c.rule.weapon.targetsAir : c.rule.weapon.targetsGround;
         if (canHit) eff += armorValue[a]! * world.rules.damageMatrix[c.rule.weapon.type * ARMOR.length + a]!;
       }
+      const vsShields = world.rules.constants.shieldDamagePct[c.rule.weapon.type]!;
+      eff = idiv(eff * (100 - shieldShare + idiv(shieldShare * vsShields, 100)), 100);
       return Math.max(1, idiv(c.weight * idiv(eff, total) * idiv(eff, total), 100));
     });
     let sum = 0;
@@ -652,8 +897,17 @@ export class AiPlayer implements Brain {
       }
     }
     if (best) return { x: best.x, y: best.y };
-    const start = this.enemyStarts[this.waveIndex % this.enemyStarts.length]!;
-    return { x: (start.x << FX_SHIFT) + FX_HALF, y: (start.y << FX_SHIFT) + FX_HALF };
+    // No buildings known: their start first, until we have seen it.
+    const fog = world.fog[this.player]!;
+    for (const st of this.enemyStarts) if ((fog[st.y * world.map.width + st.x]! & 2) === 0) return { x: (st.x << FX_SHIFT) + FX_HALF, y: (st.y << FX_SHIFT) + FX_HALF };
+    // Then any enemy seen lately (stragglers, a lone construction vehicle).
+    let unit: Sighting | null = null;
+    for (const m of this.memory.values()) if (!m.structure && (!unit || m.lastSeen > unit.lastSeen)) unit = m;
+    if (unit) return { x: unit.x, y: unit.y };
+    // Nothing known at all: sweep the map, enemy starts first, then a grid of points.
+    const sweep = [...this.enemyStarts, ...SWEEP.map(([u, v]) => ({ x: idiv(world.map.width * u, 8), y: idiv(world.map.height * v, 8) }))];
+    const spot = sweep[idiv(world.tick, 600) % sweep.length]!;
+    return { x: (spot.x << FX_SHIFT) + FX_HALF, y: (spot.y << FX_SHIFT) + FX_HALF };
   }
 
   private waves(world: World, own: Own): void {
@@ -730,6 +984,11 @@ export class AiPlayer implements Brain {
     }
   }
 }
+
+/** Points (eighths of the map) a hunting wave sweeps when it knows no enemy. */
+const SWEEP: [number, number][] = [
+  [4, 4], [2, 2], [6, 2], [6, 6], [2, 6], [4, 1], [7, 4], [4, 7], [1, 4],
+];
 
 /** Nearest tile with Echo within `radius` of (tx, ty) (map knowledge is shared in the lobby). */
 function nearestEcho(world: World, tx: number, ty: number, radius: number): number {

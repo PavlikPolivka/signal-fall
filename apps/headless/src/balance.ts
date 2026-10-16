@@ -26,6 +26,8 @@ export interface MatchOutcome {
   harvested: [number, number];
   /** "unit:count" pairs per side, most built first. */
   units: [string, string];
+  /** The strategy each side's AI picked. */
+  strategies: [string, string];
 }
 
 const BIOMES: Biome[] = ['wasteland', 'city', 'crystal'];
@@ -42,7 +44,7 @@ export function playMatch(spec: MatchSpec): MatchOutcome {
     map,
     players: order.map((side, team) => ({ faction: FACTIONS.indexOf(spec.sides[side]!.faction), team })),
   });
-  order.forEach((side, slot) => attachAi(sim, slot, spec.sides[side]!.difficulty, map.starts));
+  const ais = order.map((side, slot) => attachAi(sim, slot, spec.sides[side]!.difficulty, map.starts));
   const limit = spec.maxMinutes * 1200;
   const w = sim.world;
   while (!w.ended && sim.tick < limit) sim.run(200);
@@ -60,6 +62,7 @@ export function playMatch(spec: MatchSpec): MatchOutcome {
     minutes: Math.round((sim.tick / 1200) * 10) / 10,
     harvested: [w.players[slotOf(0)]!.harvested, w.players[slotOf(1)]!.harvested],
     units: [usage(slotOf(0)), usage(slotOf(1))],
+    strategies: [ais[slotOf(0)]!.strategy.name, ais[slotOf(1)]!.strategy.name],
   };
 }
 
@@ -76,10 +79,10 @@ export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: M
 
 export function toCsv(sides: [Side, Side], outcomes: MatchOutcome[]): string {
   const name = (s: Side) => `${s.faction}:${s.difficulty}`;
-  const rows = [['seed', 'side_a', 'side_b', 'winner', 'minutes', 'harvested_a', 'harvested_b', 'units_a', 'units_b'].join(',')];
+  const rows = [['seed', 'side_a', 'side_b', 'winner', 'minutes', 'harvested_a', 'harvested_b', 'units_a', 'units_b', 'strategy_a', 'strategy_b'].join(',')];
   for (const o of outcomes) {
     rows.push(
-      [o.seed, name(sides[0]), name(sides[1]), o.winner < 0 ? 'draw' : name(sides[o.winner]!), o.minutes, o.harvested[0], o.harvested[1], `"${o.units[0]}"`, `"${o.units[1]}"`].join(','),
+      [o.seed, name(sides[0]), name(sides[1]), o.winner < 0 ? 'draw' : name(sides[o.winner]!), o.minutes, o.harvested[0], o.harvested[1], `"${o.units[0]}"`, `"${o.units[1]}"`, o.strategies[0], o.strategies[1]].join(','),
     );
   }
   return rows.join('\n') + '\n';

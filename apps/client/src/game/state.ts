@@ -285,9 +285,11 @@ export class ClientState {
     const cur = this.cur!;
     const structures: PlacedStructure[] = [];
     const units = new Uint8Array(this.width * this.height);
+    const ownUnits: { x: number; y: number }[] = [];
     for (let i = 0; i < cur.entityCount; i++) {
       const o = cur.ent(i);
       const kind = cur.get(o, E.kind);
+      if (kind === KIND.unit && cur.get(o, E.owner) === this.localPlayer) ownUnits.push({ x: cur.get(o, E.x), y: cur.get(o, E.y) });
       if (kind === KIND.structure) {
         // Enemy structures only count where the player has explored.
         const rule: StructureRule = this.rules.structures[cur.get(o, E.type)]!;
@@ -306,6 +308,7 @@ export class ClientState {
       structures,
       unitOn: (x, y) => units[y * this.width + x] === 1,
       coveragePct: 100,
+      ownUnits,
     };
   }
 

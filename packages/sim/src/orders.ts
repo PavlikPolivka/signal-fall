@@ -1,7 +1,7 @@
 import type { Command, ScheduledCommand } from './commands';
-import { FX_ONE, FX_SHIFT, clamp, idiv } from './fx';
+import { FX_ONE, FX_SHIFT, clamp, idiv, pct } from './fx';
 import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from './entities';
-import { placementError, footprintBlocked, worldPlacementView } from './placement';
+import { CHOIR_SEED_START_PCT, isFarSeed, placementError, footprintBlocked, worldPlacementView } from './placement';
 import { teamOf } from './query';
 import { formationSlots } from './formation';
 import { removeEntity, spawnStructure } from './spawn';
@@ -215,7 +215,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
     }
     case 'repair': {
       const t = e.resolve(cmd.target);
-      if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;
+      if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player || e.repairing[t] === 2) return;
       e.repairing[t] = e.repairing[t] === 1 || e.hp[t]! >= e.maxHp[t]! ? 0 : 1;
       return;
     }
@@ -303,9 +303,17 @@ function place(world: World, player: number, category: 'structures' | 'defenses'
   if (q.item < 0 || !q.ready) return false;
   const rule = world.rules.structures[q.item]!;
   const faction = world.rules.factions[p.faction]!;
-  if (placementError(worldPlacementView(world, player), player, faction, rule, tx, ty) !== null) return false;
+  const view = worldPlacementView(world, player);
+  if (placementError(view, player, faction, rule, tx, ty) !== null) return false;
+  const far = isFarSeed(view, player, faction, rule, tx, ty);
   const h = spawnStructure(world, rule.index, player, tx, ty);
   if (h < 0) return false;
+  if (far) {
+    // A far seed starts weak and grows (repairing = 2, see repairSystem).
+    const e = world.entities;
+    e.hp[h & 0xffff] = Math.max(1, pct(e.maxHp[h & 0xffff]!, CHOIR_SEED_START_PCT));
+    e.repairing[h & 0xffff] = 2;
+  }
   q.item = -1;
   q.progress = 0;
   q.spent = 0;

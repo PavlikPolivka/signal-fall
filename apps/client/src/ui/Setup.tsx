@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { Rules } from '@signal-fall/data';
 import type { Difficulty } from '@signal-fall/ai';
 import { Codex } from './Codex';
+import { Changes } from './Changes';
 import { Logo } from './Logo';
 import { MenuVideo } from './Video';
 import { parseReplay, type Replay } from '../game/scenario';
@@ -72,7 +73,12 @@ export function Setup({
   /** Watch a replay file. */
   onReplay: (r: Replay) => void;
 }) {
-  const [skirmish, setSkirmish] = useState(false);
+  // `?menu=skirmish` (New skirmish on the end screen) opens the skirmish setup directly.
+  const [skirmish, setSkirmish] = useState(() => new URLSearchParams(location.search).get('menu') === 'skirmish');
+  useEffect(() => {
+    if (location.search.includes('menu=')) history.replaceState(null, '', location.pathname);
+  }, []);
+  const [changes, setChanges] = useState(false);
   const [replayError, setReplayError] = useState<string | null>(null);
   const [codex, setCodex] = useState(false);
   const [credits, setCredits] = useState(false);
@@ -90,6 +96,7 @@ export function Setup({
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setCodex(false);
+      setChanges(false);
       setCredits(false);
       setAccountOpen(false);
       setStatsOpen(false);
@@ -130,6 +137,9 @@ export function Setup({
           <button onClick={() => setCodex(true)} data-testid="open-codex">
             Codex
           </button>
+          <button onClick={() => setChanges(true)} data-testid="open-changes">
+            What's new
+          </button>
           <label class="file-btn" data-testid="watch-replay">
             Watch a replay
             <input type="file" accept=".json,application/json" onChange={(e) => void openReplay((e.currentTarget as HTMLInputElement).files?.[0])} />
@@ -152,6 +162,7 @@ export function Setup({
         {replayError && <p class="mp-status">{replayError}</p>}
       </div>
       {codex && <Codex rules={rules} onClose={() => setCodex(false)} />}
+      {changes && <Changes onClose={() => setChanges(false)} />}
       {credits && <Credits onClose={() => setCredits(false)} />}
       {accountOpen && <Account onClose={() => setAccountOpen(false)} onChange={setMe} />}
       {statsOpen && <Stats rules={rules} onClose={() => setStatsOpen(false)} />}

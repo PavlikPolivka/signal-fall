@@ -3,7 +3,7 @@
   "opening": ["power", "refinery", "barracks", "refinery", "power", "factory", "radar", "special"],
   "later": ["power", "tech", "airfield", "power"],
   "defenses": ["defense", "defense", "antiAir", "heavyDefense"],
-  "harvestersPerRefinery": 2,
+  "harvestersPerRefinery": 3,
   "maxRefineries": 4,
   "scout": "glissando",
   "raider": "glissando",

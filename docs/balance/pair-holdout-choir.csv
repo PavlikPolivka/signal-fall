@@ -1,301 +1,101 @@
-seed,side_a,side_b,winner,minutes,harvested_a,harvested_b,units_a,units_b
-1,holdout:hard,choir:hard,holdout:hard,14.3,53575,39025,"grunt:55 tankbuster:18 bulldog:14 hornet:6 mule:5 patch:5 thumper:3","grace:46 staccato:12 basso:10 refrain:5 crescendo:4"
-2,holdout:hard,choir:hard,holdout:hard,5.5,19325,15400,"grunt:28 tankbuster:11 bulldog:7 thumper:3 mule:2","staccato:15 grace:13 basso:4 refrain:2 crescendo:2"
-3,holdout:hard,choir:hard,choir:hard,15.3,59400,73400,"grunt:55 tankbuster:24 bulldog:15 patch:9 hornet:8 mule:6 flak_track:1 thumper:1","grace:65 staccato:29 basso:22 aria:10 refrain:4 falsetto:4 crescendo:4 requiem:1"
-4,holdout:hard,choir:hard,choir:hard,14.3,28640,51400,"grunt:26 tankbuster:14 bulldog:7 mule:6 thumper:1","grace:46 staccato:21 basso:12 aria:6 refrain:4 crescendo:4 requiem:2"
-5,holdout:hard,choir:hard,holdout:hard,10.2,33475,24900,"grunt:33 tankbuster:20 bulldog:12 mule:3 thumper:3 patch:1","grace:28 staccato:13 basso:8 refrain:3 crescendo:1"
-6,holdout:hard,choir:hard,holdout:hard,9.3,28975,26825,"grunt:34 tankbuster:14 bulldog:10 mule:3 thumper:3","grace:29 staccato:15 basso:9 refrain:3 crescendo:2"
-7,holdout:hard,choir:hard,holdout:hard,13,41325,23100,"grunt:31 tankbuster:22 bulldog:10 mule:6 thumper:3 patch:1","grace:24 staccato:11 basso:9 refrain:2"
-8,holdout:hard,choir:hard,choir:hard,8.8,20650,25550,"grunt:25 tankbuster:11 bulldog:5 mule:4 thumper:2","grace:21 staccato:18 basso:5 crescendo:4 refrain:3"
-9,holdout:hard,choir:hard,holdout:hard,7.5,26625,19850,"grunt:38 tankbuster:12 bulldog:10 thumper:4 mule:3","grace:23 staccato:12 basso:8 refrain:2 crescendo:1"
-10,holdout:hard,choir:hard,choir:hard,9.3,16375,30800,"grunt:24 tankbuster:8 bulldog:5 mule:3 thumper:1","grace:30 staccato:18 basso:9 crescendo:4 refrain:3"
-11,holdout:hard,choir:hard,holdout:hard,7.2,23475,19750,"grunt:21 tankbuster:18 bulldog:10 mule:2 thumper:2","grace:21 staccato:13 basso:6 refrain:3 crescendo:1"
-12,holdout:hard,choir:hard,holdout:hard,7.2,26175,16150,"grunt:21 tankbuster:21 bulldog:10 thumper:3 mule:2","grace:20 staccato:10 basso:6 refrain:2"
-13,holdout:hard,choir:hard,holdout:hard,7.8,27050,21275,"grunt:28 tankbuster:18 bulldog:10 mule:3 thumper:3","grace:25 staccato:12 basso:8 refrain:2 crescendo:1"
-14,holdout:hard,choir:hard,choir:hard,7.5,19550,23800,"grunt:25 tankbuster:11 bulldog:6 mule:3 thumper:2","grace:26 staccato:14 basso:9 refrain:2 crescendo:2"
-15,holdout:hard,choir:hard,holdout:hard,8.2,30475,27250,"grunt:32 tankbuster:19 bulldog:11 mule:3 thumper:3 patch:2","grace:26 staccato:18 basso:9 refrain:3 crescendo:3"
-16,holdout:hard,choir:hard,choir:hard,9,28750,32725,"grunt:28 tankbuster:19 bulldog:9 mule:4 thumper:4","grace:38 staccato:16 basso:9 crescendo:6 refrain:3"
-17,holdout:hard,choir:hard,choir:hard,23.5,65425,79510,"grunt:54 tankbuster:29 bulldog:12 hornet:11 patch:10 mule:6 thumper:3 flak_track:1 ironclad:1","grace:76 staccato:24 basso:17 aria:13 falsetto:7 refrain:6 requiem:3 crescendo:1"
-18,holdout:hard,choir:hard,holdout:hard,7.3,26825,22775,"grunt:29 tankbuster:17 bulldog:8 patch:4 mule:3 thumper:2","grace:23 staccato:14 basso:7 refrain:2 crescendo:2"
-19,holdout:hard,choir:hard,holdout:hard,7.2,28200,21875,"grunt:27 tankbuster:20 bulldog:12 thumper:3 mule:2","grace:23 staccato:12 basso:7 refrain:2 crescendo:1"
-20,holdout:hard,choir:hard,choir:hard,7.7,19925,22400,"grunt:23 tankbuster:13 bulldog:5 thumper:4 mule:2","grace:29 staccato:11 basso:7 refrain:3 crescendo:2"
-21,holdout:hard,choir:hard,holdout:hard,19.8,71225,51700,"grunt:46 tankbuster:37 hornet:14 patch:11 bulldog:10 flak_track:7 mule:5 thumper:2 ironclad:1","grace:48 staccato:20 basso:11 refrain:8 aria:5 crescendo:2 requiem:1"
-22,holdout:hard,choir:hard,choir:hard,7.5,22625,23800,"grunt:23 tankbuster:15 bulldog:9 mule:2 thumper:2","grace:31 staccato:11 basso:10 refrain:2 crescendo:1"
-23,holdout:hard,choir:hard,choir:hard,19.8,90150,91900,"grunt:73 tankbuster:35 hornet:20 bulldog:18 patch:10 mule:8 flak_track:4 thumper:3 ironclad:1","grace:85 staccato:27 basso:18 aria:17 falsetto:9 refrain:7 requiem:3 crescendo:2"
-24,holdout:hard,choir:hard,holdout:hard,8.3,31175,26675,"grunt:33 tankbuster:19 bulldog:16 mule:3","grace:36 basso:12 staccato:11 refrain:2 crescendo:1"
-25,holdout:hard,choir:hard,choir:hard,5.8,13525,14150,"grunt:19 tankbuster:7 bulldog:3 mule:2 thumper:2","grace:18 staccato:10 basso:3 refrain:2 crescendo:2"
-26,holdout:hard,choir:hard,choir:hard,5.7,14000,17500,"grunt:19 tankbuster:9 bulldog:6 mule:2","grace:23 staccato:10 basso:6 refrain:2 crescendo:1"
-27,holdout:hard,choir:hard,choir:hard,8.7,27975,30500,"grunt:24 tankbuster:19 bulldog:9 mule:3 thumper:3 patch:1","grace:27 staccato:20 basso:9 refrain:4 crescendo:3"
-28,holdout:hard,choir:hard,choir:hard,10,22675,29275,"grunt:33 tankbuster:7 bulldog:5 patch:4 mule:3 thumper:1","grace:34 staccato:13 basso:10 refrain:3 crescendo:2"
-29,holdout:hard,choir:hard,holdout:hard,7.8,21450,15575,"grunt:22 tankbuster:14 bulldog:7 mule:3 thumper:2","grace:16 staccato:11 basso:4 refrain:2 crescendo:1"
-30,holdout:hard,choir:hard,choir:hard,8,13050,24605,"grunt:15 tankbuster:9 bulldog:3 mule:2 thumper:1","grace:30 staccato:11 basso:9 refrain:3"
-31,holdout:hard,choir:hard,holdout:hard,7.3,25900,22475,"grunt:34 tankbuster:13 bulldog:12 mule:2 thumper:2","grace:21 staccato:15 basso:5 crescendo:4 refrain:2"
-32,holdout:hard,choir:hard,holdout:hard,6,16800,12375,"grunt:26 tankbuster:8 bulldog:8 mule:2","staccato:13 grace:8 refrain:2 crescendo:2 basso:1"
-33,holdout:hard,choir:hard,holdout:hard,7.3,27375,22425,"grunt:40 tankbuster:12 bulldog:11 patch:3 mule:2 thumper:2","grace:31 staccato:9 basso:7 crescendo:3 refrain:2"
-34,holdout:hard,choir:hard,choir:hard,13.2,51525,53150,"grunt:48 tankbuster:27 bulldog:19 patch:6 mule:4 hornet:2 flak_track:1 thumper:1","grace:50 staccato:18 basso:12 aria:6 refrain:4 crescendo:4 requiem:2"
-35,holdout:hard,choir:hard,holdout:hard,7,24475,18250,"grunt:32 tankbuster:13 bulldog:8 thumper:5 mule:2","grace:20 staccato:12 basso:6 refrain:3"
-36,holdout:hard,choir:hard,holdout:hard,7,25425,19525,"grunt:21 tankbuster:19 bulldog:10 mule:2 thumper:2","grace:20 staccato:14 basso:6 refrain:3 crescendo:1"
-37,holdout:hard,choir:hard,choir:hard,6.3,14075,17025,"grunt:22 tankbuster:7 bulldog:4 mule:3 thumper:1","grace:21 staccato:11 basso:6 refrain:2 crescendo:1"
-38,holdout:hard,choir:hard,choir:hard,23.3,70175,85650,"grunt:75 tankbuster:21 patch:13 hornet:12 bulldog:11 thumper:7 mule:4 flak_track:4","grace:79 staccato:27 aria:18 falsetto:14 basso:13 refrain:8 crescendo:4 requiem:1"
-39,holdout:hard,choir:hard,holdout:hard,5.5,19875,14125,"grunt:22 tankbuster:14 bulldog:9 mule:2 thumper:1","staccato:14 grace:12 basso:5 refrain:2"
-40,holdout:hard,choir:hard,choir:hard,7.8,16650,23100,"grunt:21 tankbuster:10 bulldog:6 mule:2 thumper:1","grace:30 staccato:11 basso:10 refrain:2"
-41,holdout:hard,choir:hard,choir:hard,8.7,18400,21175,"grunt:26 tankbuster:8 bulldog:7 mule:3","grace:25 staccato:11 basso:6 refrain:3 crescendo:1"
-42,holdout:hard,choir:hard,choir:hard,8,16950,21050,"grunt:24 tankbuster:8 bulldog:5 mule:2 thumper:2","grace:19 staccato:15 basso:5 refrain:3 crescendo:2"
-43,holdout:hard,choir:hard,holdout:hard,11.2,45290,35575,"grunt:53 tankbuster:19 bulldog:14 patch:5 mule:4 thumper:4","grace:29 staccato:20 basso:9 refrain:4 crescendo:2 requiem:1"
-44,holdout:hard,choir:hard,choir:hard,9.7,29625,35975,"grunt:35 tankbuster:13 bulldog:7 patch:5 mule:3 thumper:1 ironclad:1","grace:38 staccato:18 basso:12 crescendo:4 refrain:3"
-45,holdout:hard,choir:hard,choir:hard,6.5,13400,18375,"grunt:21 tankbuster:7 mule:2 bulldog:2 thumper:2 patch:1","grace:18 staccato:14 basso:7 refrain:2"
-46,holdout:hard,choir:hard,choir:hard,23,65325,75175,"grunt:44 tankbuster:34 bulldog:15 hornet:12 patch:9 mule:6 thumper:3","grace:63 staccato:25 basso:15 aria:13 refrain:7 falsetto:6 crescendo:3 requiem:1"
-47,holdout:hard,choir:hard,choir:hard,8.3,22525,24075,"grunt:23 tankbuster:15 bulldog:7 thumper:3 mule:2","grace:20 staccato:17 basso:9 refrain:3"
-48,holdout:hard,choir:hard,choir:hard,5.8,12600,16100,"grunt:12 tankbuster:12 bulldog:3 mule:2 thumper:1","grace:16 staccato:14 basso:5 refrain:2 crescendo:2"
-49,holdout:hard,choir:hard,holdout:hard,6.8,24875,20350,"grunt:33 tankbuster:12 bulldog:7 thumper:5 mule:2","grace:28 staccato:9 basso:4 crescendo:4 refrain:2"
-50,holdout:hard,choir:hard,choir:hard,8.2,20700,24450,"grunt:20 tankbuster:14 bulldog:5 thumper:3 mule:2 patch:2","grace:33 staccato:11 basso:6 crescendo:4 refrain:3"
-51,holdout:hard,choir:hard,holdout:hard,7,26250,19600,"grunt:39 bulldog:12 tankbuster:11 thumper:3 mule:2","grace:23 staccato:10 basso:5 refrain:2 crescendo:2"
-52,holdout:hard,choir:hard,holdout:hard,8,30650,24775,"grunt:45 tankbuster:13 bulldog:10 patch:6 mule:3 thumper:2","grace:28 staccato:14 basso:8 refrain:4 crescendo:1"
-53,holdout:hard,choir:hard,choir:hard,7.8,21775,25000,"grunt:29 tankbuster:12 bulldog:7 mule:3 thumper:2","grace:26 staccato:15 basso:8 refrain:3 crescendo:2"
-54,holdout:hard,choir:hard,choir:hard,5.8,15625,18700,"grunt:26 tankbuster:7 bulldog:6 mule:2 thumper:1","grace:25 staccato:10 basso:7 refrain:2 crescendo:1"
-55,holdout:hard,choir:hard,choir:hard,14,40925,44650,"grunt:36 tankbuster:22 bulldog:12 mule:4 thumper:4 patch:2","grace:46 staccato:13 basso:12 aria:6 refrain:5 crescendo:2"
-56,holdout:hard,choir:hard,holdout:hard,7.2,23800,19900,"grunt:32 tankbuster:13 bulldog:8 thumper:5 mule:2","grace:27 staccato:10 basso:5 refrain:3 crescendo:2"
-57,holdout:hard,choir:hard,choir:hard,8.2,24700,27275,"grunt:26 tankbuster:16 bulldog:6 thumper:4 mule:3 patch:1","grace:31 staccato:16 basso:7 crescendo:5 refrain:3"
-58,holdout:hard,choir:hard,choir:hard,7.5,21060,25225,"grunt:27 tankbuster:12 bulldog:6 thumper:3 mule:2 patch:2","grace:32 staccato:12 basso:10 refrain:2 crescendo:2"
-59,holdout:hard,choir:hard,holdout:hard,7,25750,19700,"grunt:30 tankbuster:16 bulldog:10 thumper:4 mule:2","grace:14 staccato:14 basso:4 refrain:2 crescendo:1"
-60,holdout:hard,choir:hard,choir:hard,13.2,41975,51345,"grunt:48 tankbuster:14 bulldog:9 thumper:5 patch:5 mule:4 hornet:2","grace:52 staccato:18 basso:10 crescendo:8 refrain:4 aria:4 requiem:1"
-61,holdout:hard,choir:hard,holdout:hard,7.2,26025,20050,"grunt:30 tankbuster:16 bulldog:9 thumper:4 mule:3","grace:29 staccato:10 basso:7 refrain:2 crescendo:2"
-62,holdout:hard,choir:hard,choir:hard,14.2,44225,49225,"grunt:45 tankbuster:20 bulldog:13 mule:4 thumper:4 patch:3 hornet:2","grace:42 staccato:22 basso:16 refrain:4 aria:4 crescendo:3"
-63,holdout:hard,choir:hard,holdout:hard,12.7,40600,33575,"grunt:35 tankbuster:23 bulldog:12 thumper:6 mule:3 patch:1","grace:38 staccato:14 basso:11 refrain:4 crescendo:2"
-64,holdout:hard,choir:hard,holdout:hard,9.7,39500,34175,"grunt:35 tankbuster:25 patch:12 bulldog:8 mule:3 thumper:3","grace:33 staccato:20 basso:10 refrain:4 crescendo:4"
-65,holdout:hard,choir:hard,choir:hard,10.7,37125,42000,"grunt:34 tankbuster:24 patch:9 bulldog:8 thumper:4 mule:3","grace:41 staccato:21 basso:15 refrain:3 crescendo:2 requiem:1"
-66,holdout:hard,choir:hard,choir:hard,8,17205,22550,"grunt:22 tankbuster:11 bulldog:5 mule:3 thumper:1","grace:22 staccato:15 basso:8 refrain:3"
-67,holdout:hard,choir:hard,choir:hard,7,21600,23275,"grunt:21 tankbuster:16 bulldog:9 mule:2 thumper:2","grace:32 staccato:10 basso:10 refrain:2 crescendo:1"
-68,holdout:hard,choir:hard,holdout:hard,11.8,42125,28375,"grunt:43 tankbuster:18 bulldog:12 patch:4 mule:3 thumper:2 hornet:2 ironclad:1","grace:30 staccato:14 basso:7 refrain:3 crescendo:3"
-69,holdout:hard,choir:hard,choir:hard,8.7,29125,30800,"grunt:34 tankbuster:17 bulldog:11 thumper:4 mule:3","grace:36 staccato:15 basso:13 refrain:3 crescendo:1"
-70,holdout:hard,choir:hard,choir:hard,8,17225,23850,"grunt:21 tankbuster:10 bulldog:4 mule:3 thumper:2","grace:28 staccato:11 basso:7 crescendo:3 refrain:2"
-71,holdout:hard,choir:hard,holdout:hard,7,24150,20200,"grunt:25 tankbuster:16 bulldog:12 mule:2 patch:1","grace:21 staccato:14 basso:5 refrain:3 crescendo:2"
-72,holdout:hard,choir:hard,choir:hard,7.5,16150,26050,"grunt:26 tankbuster:8 bulldog:7 mule:2 thumper:1","grace:27 staccato:14 basso:8 crescendo:3 refrain:2"
-73,holdout:hard,choir:hard,holdout:hard,7.7,25200,20600,"grunt:30 tankbuster:14 bulldog:9 mule:3 thumper:3","grace:28 staccato:10 basso:5 crescendo:4 refrain:2"
-74,holdout:hard,choir:hard,holdout:hard,7.3,25900,21000,"grunt:26 tankbuster:18 bulldog:12 mule:2 thumper:2","grace:20 staccato:13 basso:5 refrain:3 requiem:1"
-75,holdout:hard,choir:hard,choir:hard,9.7,14150,28650,"grunt:23 tankbuster:6 bulldog:6 mule:2","grace:25 staccato:17 basso:8 refrain:3 crescendo:2"
-76,holdout:hard,choir:hard,choir:hard,9.5,24175,33095,"grunt:33 tankbuster:10 bulldog:6 patch:4 mule:2 thumper:2","grace:35 staccato:17 basso:13 refrain:3 crescendo:2"
-77,holdout:hard,choir:hard,holdout:hard,7.2,27325,22700,"grunt:28 tankbuster:16 bulldog:10 mule:2 thumper:2 patch:1","grace:24 staccato:15 basso:6 crescendo:4 refrain:2"
-78,holdout:hard,choir:hard,choir:hard,12.7,25800,40050,"grunt:37 tankbuster:9 bulldog:6 thumper:4 mule:3 patch:2","grace:34 staccato:20 basso:10 refrain:4 crescendo:3 requiem:1"
-79,holdout:hard,choir:hard,choir:hard,8.5,13050,23075,"grunt:22 tankbuster:6 bulldog:4 mule:2 thumper:1","grace:30 staccato:10 basso:7 refrain:3 crescendo:2"
-80,holdout:hard,choir:hard,holdout:hard,7.5,26000,16225,"grunt:27 tankbuster:17 bulldog:10 thumper:3 mule:2","grace:21 staccato:10 basso:3 crescendo:3 refrain:2"
-81,holdout:hard,choir:hard,holdout:hard,7.3,28725,22675,"grunt:34 tankbuster:15 bulldog:13 mule:3 thumper:1","grace:30 basso:10 staccato:9 refrain:2"
-82,holdout:hard,choir:hard,choir:hard,8.2,19300,21975,"grunt:21 tankbuster:13 bulldog:8 mule:2 thumper:1","grace:27 staccato:12 basso:4 crescendo:4 refrain:3"
-83,holdout:hard,choir:hard,choir:hard,7.3,23575,24710,"grunt:22 tankbuster:18 bulldog:11 mule:2 thumper:1","grace:30 staccato:13 basso:9 refrain:2 crescendo:2"
-84,holdout:hard,choir:hard,choir:hard,7.2,19875,22825,"grunt:28 tankbuster:10 bulldog:4 thumper:4 mule:3","grace:29 staccato:12 basso:9 refrain:2 crescendo:1"
-85,holdout:hard,choir:hard,choir:hard,8,21190,25725,"grunt:22 tankbuster:14 bulldog:6 mule:2 thumper:2 patch:2","grace:30 staccato:13 basso:8 refrain:3 crescendo:2"
-86,holdout:hard,choir:hard,choir:hard,8.5,17850,21825,"grunt:26 tankbuster:9 bulldog:6 mule:3 thumper:1","grace:25 staccato:12 basso:7 refrain:3 crescendo:1"
-87,holdout:hard,choir:hard,choir:hard,16.2,67760,75740,"grunt:69 tankbuster:21 bulldog:18 hornet:12 patch:7 mule:6 thumper:4","grace:61 staccato:32 basso:18 aria:11 falsetto:7 refrain:6 crescendo:5"
-88,holdout:hard,choir:hard,choir:hard,10.7,26925,31750,"grunt:21 tankbuster:19 bulldog:10 mule:3 thumper:1","grace:28 staccato:16 basso:10 refrain:3 crescendo:1 aria:1"
-89,holdout:hard,choir:hard,choir:hard,7.5,21025,24775,"grunt:24 tankbuster:12 bulldog:6 patch:4 mule:2","grace:35 staccato:10 basso:10 refrain:2 crescendo:1"
-90,holdout:hard,choir:hard,choir:hard,8.7,26175,28675,"grunt:28 tankbuster:17 bulldog:11 mule:3 thumper:1","grace:31 staccato:16 basso:10 refrain:3 crescendo:2"
-91,holdout:hard,choir:hard,choir:hard,10.8,22225,35200,"grunt:30 tankbuster:7 bulldog:6 mule:5","grace:40 staccato:14 basso:10 refrain:4 crescendo:3"
-92,holdout:hard,choir:hard,holdout:hard,7,24925,18775,"grunt:22 tankbuster:17 bulldog:7 thumper:3 mule:2 patch:2","grace:23 staccato:12 basso:5 crescendo:3 refrain:2"
-93,holdout:hard,choir:hard,choir:hard,7.5,24225,25050,"grunt:29 tankbuster:15 bulldog:9 thumper:4 mule:2","grace:34 basso:11 staccato:10 refrain:2"
-94,holdout:hard,choir:hard,holdout:hard,12.3,40000,30825,"grunt:38 tankbuster:20 bulldog:11 mule:4 thumper:3 patch:1 ironclad:1","grace:30 staccato:17 basso:12 refrain:3 crescendo:1"
-95,holdout:hard,choir:hard,holdout:hard,7,24375,16800,"grunt:35 tankbuster:11 bulldog:9 thumper:4 mule:2","grace:22 staccato:10 basso:5 refrain:2 crescendo:1"
-96,holdout:hard,choir:hard,holdout:hard,9,30550,26275,"grunt:36 tankbuster:15 bulldog:15 mule:3","grace:31 staccato:13 basso:10 refrain:3 crescendo:1"
-97,holdout:hard,choir:hard,choir:hard,7,19525,24075,"grunt:24 tankbuster:11 bulldog:4 mule:3 thumper:3 patch:1","grace:22 staccato:17 basso:8 refrain:2 crescendo:2"
-98,holdout:hard,choir:hard,holdout:hard,7.3,25900,19375,"grunt:36 tankbuster:12 bulldog:12 mule:2 thumper:2","grace:27 staccato:9 basso:7 refrain:3"
-99,holdout:hard,choir:hard,holdout:hard,7.5,24050,18900,"grunt:37 tankbuster:9 bulldog:9 mule:3 thumper:3","grace:27 staccato:9 basso:6 refrain:2 crescendo:2"
-100,holdout:hard,choir:hard,choir:hard,7.3,22400,25250,"grunt:29 tankbuster:13 bulldog:8 thumper:4 mule:2","grace:31 staccato:12 basso:9 refrain:2 crescendo:2"
-101,holdout:hard,choir:hard,holdout:hard,7.3,22525,15775,"grunt:25 tankbuster:14 bulldog:10 mule:2 thumper:1","grace:18 staccato:12 basso:5 refrain:2 crescendo:1"
-102,holdout:hard,choir:hard,choir:hard,11.2,28005,39600,"grunt:26 tankbuster:14 bulldog:8 patch:5 mule:3","grace:39 staccato:19 basso:11 crescendo:4 refrain:3 requiem:1"
-103,holdout:hard,choir:hard,holdout:hard,8.3,33525,27950,"grunt:39 tankbuster:17 bulldog:12 thumper:4 mule:3 patch:1","grace:25 staccato:18 basso:10 refrain:3 crescendo:1"
-104,holdout:hard,choir:hard,choir:hard,5.8,14475,18575,"grunt:21 tankbuster:8 bulldog:6 mule:2","grace:17 staccato:15 basso:6 refrain:2 crescendo:2"
-105,holdout:hard,choir:hard,choir:hard,7,22475,25175,"grunt:23 tankbuster:16 bulldog:11 mule:2 thumper:1","grace:36 basso:10 staccato:9 refrain:2 crescendo:2"
-106,holdout:hard,choir:hard,holdout:hard,8.7,26575,20875,"grunt:25 tankbuster:18 bulldog:9 mule:3 thumper:3","grace:28 staccato:10 refrain:4 basso:3 crescendo:3"
-107,holdout:hard,choir:hard,choir:hard,8.2,19550,22700,"grunt:27 tankbuster:9 bulldog:5 mule:3 thumper:2","grace:29 staccato:11 basso:9 refrain:3"
-108,holdout:hard,choir:hard,holdout:hard,7.8,27300,23380,"grunt:29 tankbuster:17 bulldog:12 mule:2 thumper:2","grace:18 staccato:16 basso:6 refrain:2 crescendo:1 requiem:1"
-109,holdout:hard,choir:hard,holdout:hard,7.3,26925,21150,"grunt:36 tankbuster:12 bulldog:12 mule:2 thumper:1 patch:1","grace:22 staccato:14 basso:7 refrain:2 crescendo:2"
-110,holdout:hard,choir:hard,holdout:hard,8.2,29150,24575,"grunt:29 tankbuster:20 bulldog:13 mule:3 thumper:2","grace:35 staccato:8 basso:7 refrain:3 crescendo:2"
-111,holdout:hard,choir:hard,choir:hard,10.5,28000,36950,"grunt:18 tankbuster:18 bulldog:7 mule:3 patch:2 thumper:1","grace:48 staccato:12 basso:10 crescendo:6 refrain:3"
-112,holdout:hard,choir:hard,holdout:hard,7,24625,20850,"grunt:27 tankbuster:16 bulldog:7 thumper:6 mule:2","grace:21 staccato:15 basso:4 crescendo:4 refrain:3"
-113,holdout:hard,choir:hard,holdout:hard,7.2,28725,21300,"grunt:45 bulldog:12 tankbuster:11 thumper:4 mule:3","grace:24 staccato:13 basso:9 refrain:2"
-114,holdout:hard,choir:hard,holdout:hard,5.7,16525,9350,"grunt:23 tankbuster:10 bulldog:6 mule:2 thumper:2","grace:10 staccato:10 refrain:2 basso:1 crescendo:1"
-115,holdout:hard,choir:hard,holdout:hard,5.3,19525,13825,"grunt:25 tankbuster:12 bulldog:7 mule:2 thumper:2 patch:1","grace:21 staccato:7 refrain:2 basso:2 crescendo:2"
-116,holdout:hard,choir:hard,holdout:hard,5.5,18225,13650,"grunt:16 tankbuster:16 bulldog:8 mule:2 thumper:1","grace:17 staccato:9 basso:3 refrain:2 crescendo:1"
-117,holdout:hard,choir:hard,holdout:hard,7.3,26475,21025,"grunt:38 tankbuster:11 bulldog:11 thumper:3 mule:2","grace:30 staccato:9 basso:7 refrain:2 crescendo:2"
-118,holdout:hard,choir:hard,choir:hard,7.2,21925,24300,"grunt:25 tankbuster:14 bulldog:8 mule:3 thumper:2","grace:23 staccato:17 basso:7 crescendo:4 refrain:2"
-119,holdout:hard,choir:hard,holdout:hard,8.7,33785,27230,"grunt:43 tankbuster:15 bulldog:14 mule:3 thumper:3 patch:1","grace:35 staccato:13 basso:7 refrain:4 crescendo:4"
-120,holdout:hard,choir:hard,holdout:hard,7.3,25250,22550,"grunt:34 tankbuster:12 bulldog:10 mule:2 thumper:2 patch:2","grace:21 staccato:16 basso:10 refrain:2"
-121,holdout:hard,choir:hard,holdout:hard,7.5,25900,21050,"grunt:28 tankbuster:16 bulldog:11 mule:2 thumper:2","grace:22 staccato:12 basso:8 refrain:2"
-122,holdout:hard,choir:hard,choir:hard,10.5,28950,32200,"grunt:30 tankbuster:17 bulldog:9 thumper:4 mule:3","grace:40 staccato:11 basso:9 crescendo:4 refrain:3"
-123,holdout:hard,choir:hard,holdout:hard,5.8,17600,4825,"grunt:25 tankbuster:10 bulldog:7 mule:2 thumper:1","grace:11 staccato:6 refrain:2"
-124,holdout:hard,choir:hard,choir:hard,16,48575,52950,"grunt:41 tankbuster:24 bulldog:10 patch:9 hornet:5 mule:4 thumper:3","grace:55 staccato:16 basso:16 refrain:5 aria:5 crescendo:2"
-125,holdout:hard,choir:hard,holdout:hard,7.2,21450,20000,"grunt:28 tankbuster:12 bulldog:9 mule:2 thumper:2","grace:17 staccato:16 basso:4 refrain:3 crescendo:3"
-126,holdout:hard,choir:hard,choir:hard,8.3,19200,21675,"grunt:27 tankbuster:9 bulldog:6 mule:3 thumper:1","grace:29 staccato:10 basso:6 refrain:3 crescendo:2"
-127,holdout:hard,choir:hard,holdout:hard,11.8,41100,31975,"grunt:32 tankbuster:19 bulldog:10 mule:4 hornet:4 patch:3 ironclad:1","grace:28 staccato:20 basso:8 refrain:6 crescendo:2"
-128,holdout:hard,choir:hard,holdout:hard,10.2,31875,20875,"grunt:24 tankbuster:21 bulldog:7 patch:5 mule:3 thumper:2","grace:27 staccato:10 basso:6 refrain:3 crescendo:2"
-129,holdout:hard,choir:hard,choir:hard,8,18450,25350,"grunt:33 bulldog:8 tankbuster:5 mule:3","grace:28 staccato:13 basso:8 refrain:3 crescendo:2"
-130,holdout:hard,choir:hard,holdout:hard,7,26850,20225,"grunt:22 tankbuster:18 bulldog:9 mule:2 thumper:1 patch:1 ironclad:1","grace:32 staccato:8 basso:6 refrain:3 crescendo:2"
-131,holdout:hard,choir:hard,choir:hard,8.7,18850,21975,"grunt:17 tankbuster:11 bulldog:3 mule:2 patch:2 thumper:1","grace:27 staccato:11 crescendo:7 refrain:2 basso:1"
-132,holdout:hard,choir:hard,holdout:hard,6.7,24200,12025,"grunt:27 tankbuster:15 bulldog:11 mule:2 thumper:2","grace:13 staccato:11 basso:3 refrain:2 crescendo:1"
-133,holdout:hard,choir:hard,choir:hard,7.5,21400,23800,"grunt:31 tankbuster:10 bulldog:10 mule:2 thumper:1","grace:21 staccato:16 basso:8 refrain:2 crescendo:2"
-134,holdout:hard,choir:hard,holdout:hard,8.3,31825,25550,"grunt:40 tankbuster:15 bulldog:14 mule:3 thumper:2","grace:29 staccato:15 basso:6 crescendo:5 refrain:3"
-135,holdout:hard,choir:hard,choir:hard,8,22400,22025,"grunt:32 tankbuster:10 bulldog:8 thumper:3 mule:2","grace:18 staccato:16 basso:5 crescendo:3 refrain:2"
-136,holdout:hard,choir:hard,holdout:hard,7.2,27000,16100,"grunt:36 tankbuster:13 bulldog:12 mule:2 patch:2 thumper:1","grace:14 staccato:12 basso:3 refrain:2 crescendo:2"
-137,holdout:hard,choir:hard,choir:hard,8.3,19675,23075,"grunt:23 tankbuster:12 bulldog:7 mule:2 thumper:2","grace:27 staccato:12 basso:8 refrain:3 crescendo:1"
-138,holdout:hard,choir:hard,holdout:hard,7.5,23250,19800,"grunt:34 bulldog:11 tankbuster:10 mule:2 thumper:1","grace:33 basso:7 staccato:6 refrain:2 crescendo:1"
-139,holdout:hard,choir:hard,holdout:hard,9.5,29520,22300,"grunt:33 tankbuster:15 bulldog:9 mule:3 thumper:3 patch:2","grace:24 staccato:13 refrain:4 crescendo:4 basso:3"
-140,holdout:hard,choir:hard,choir:hard,7.8,19850,22775,"grunt:21 tankbuster:13 bulldog:4 mule:3 thumper:3","grace:30 staccato:10 basso:9 refrain:2"
-141,holdout:hard,choir:hard,holdout:hard,7.2,24575,20100,"grunt:28 tankbuster:12 bulldog:8 patch:3 mule:2 thumper:1","grace:25 staccato:11 basso:5 crescendo:3 refrain:2"
-142,holdout:hard,choir:hard,holdout:hard,9,35000,20825,"grunt:40 tankbuster:16 bulldog:9 patch:6 mule:3 thumper:3","grace:20 staccato:13 crescendo:4 basso:3 refrain:2"
-143,holdout:hard,choir:hard,holdout:hard,9.7,40275,33010,"grunt:35 tankbuster:26 bulldog:14 patch:7 mule:3 thumper:1","grace:37 staccato:16 basso:14 refrain:3 crescendo:1"
-144,holdout:hard,choir:hard,holdout:hard,8.3,32375,26250,"grunt:47 bulldog:14 tankbuster:12 mule:3 thumper:3","grace:28 staccato:16 basso:8 refrain:3 crescendo:3"
-145,holdout:hard,choir:hard,choir:hard,9.2,29025,32425,"grunt:31 tankbuster:16 bulldog:10 mule:4 thumper:2 patch:2","grace:33 staccato:18 basso:15 refrain:3"
-146,holdout:hard,choir:hard,holdout:hard,8,23050,18375,"grunt:26 tankbuster:14 bulldog:10 mule:3","grace:24 staccato:10 basso:4 crescendo:3 refrain:2"
-147,holdout:hard,choir:hard,choir:hard,8.5,20300,25725,"grunt:30 tankbuster:6 bulldog:5 mule:3 thumper:1 patch:1","grace:32 staccato:12 basso:7 refrain:3 crescendo:3"
-148,holdout:hard,choir:hard,choir:hard,7.5,18475,24980,"grunt:30 tankbuster:8 bulldog:5 mule:3 thumper:3","grace:32 staccato:9 basso:9 refrain:2 crescendo:1"
-149,holdout:hard,choir:hard,holdout:hard,7.3,26560,21800,"grunt:38 tankbuster:12 bulldog:12 thumper:3 mule:2","grace:20 staccato:17 basso:5 crescendo:4 refrain:2"
-150,holdout:hard,choir:hard,holdout:hard,5.5,20050,13325,"grunt:20 tankbuster:14 bulldog:7 mule:2 patch:2 thumper:1","staccato:15 grace:9 refrain:2 basso:2 crescendo:2"
-151,holdout:hard,choir:hard,choir:hard,16.2,65750,73975,"grunt:63 tankbuster:28 bulldog:14 patch:10 thumper:7 hornet:7 mule:6 flak_track:1","grace:69 staccato:27 basso:17 aria:12 crescendo:10 falsetto:5 refrain:4"
-152,holdout:hard,choir:hard,choir:hard,13,48775,53175,"grunt:48 tankbuster:24 bulldog:19 mule:4 thumper:3 patch:2","grace:41 staccato:27 basso:19 refrain:4 aria:4 crescendo:3"
-153,holdout:hard,choir:hard,holdout:hard,7.2,26325,19725,"grunt:21 tankbuster:20 bulldog:11 mule:2 thumper:2","grace:25 staccato:11 basso:5 refrain:3 crescendo:2"
-154,holdout:hard,choir:hard,holdout:hard,7.5,24050,21950,"grunt:26 tankbuster:16 bulldog:11 mule:2 thumper:1","grace:30 staccato:12 basso:7 refrain:2 crescendo:2"
-155,holdout:hard,choir:hard,holdout:hard,12,48600,34450,"grunt:45 tankbuster:23 bulldog:13 patch:7 mule:4 thumper:3 hornet:3","grace:43 staccato:14 basso:9 refrain:5 crescendo:4"
-156,holdout:hard,choir:hard,holdout:hard,5.7,19250,15250,"grunt:29 tankbuster:10 bulldog:9 mule:2 thumper:1","grace:14 staccato:13 basso:5 refrain:2"
-157,holdout:hard,choir:hard,choir:hard,8.2,22050,23850,"grunt:27 tankbuster:12 bulldog:9 mule:3 thumper:1","grace:29 staccato:12 basso:8 refrain:3 crescendo:2"
-158,holdout:hard,choir:hard,holdout:hard,7.3,25900,19700,"grunt:40 tankbuster:10 bulldog:9 thumper:4 mule:3","grace:18 staccato:15 basso:7 refrain:3"
-159,holdout:hard,choir:hard,holdout:hard,7.2,26850,19450,"grunt:26 tankbuster:19 bulldog:11 thumper:3 mule:2","grace:27 staccato:9 basso:7 refrain:3"
-160,holdout:hard,choir:hard,choir:hard,8.3,20700,23825,"grunt:20 tankbuster:13 bulldog:6 mule:2 thumper:2","grace:30 staccato:11 basso:8 refrain:2 crescendo:2"
-161,holdout:hard,choir:hard,holdout:hard,6.8,24800,16625,"grunt:25 tankbuster:16 bulldog:10 mule:2 thumper:2 patch:1","grace:24 staccato:9 refrain:3 basso:3 crescendo:3"
-162,holdout:hard,choir:hard,holdout:hard,8.7,30475,23925,"grunt:36 tankbuster:17 bulldog:11 thumper:4 mule:3","grace:23 staccato:14 basso:9 refrain:2"
-163,holdout:hard,choir:hard,holdout:hard,7.3,26200,23100,"grunt:27 tankbuster:17 bulldog:12 mule:2 thumper:1 patch:1","grace:28 staccato:15 basso:9 refrain:2 crescendo:1"
-164,holdout:hard,choir:hard,choir:hard,17.5,65750,72350,"grunt:59 tankbuster:28 bulldog:18 hornet:10 patch:9 mule:5 thumper:2 ironclad:1","grace:64 staccato:24 basso:19 aria:12 refrain:4 falsetto:4 crescendo:2 requiem:2"
-165,holdout:hard,choir:hard,holdout:hard,5.5,20650,14025,"grunt:26 tankbuster:12 bulldog:9 mule:2 thumper:1","grace:19 staccato:7 basso:3 refrain:2 crescendo:1"
-166,holdout:hard,choir:hard,choir:hard,12.3,38325,52950,"grunt:41 tankbuster:16 bulldog:9 patch:5 thumper:4 mule:3 hornet:1","grace:49 staccato:19 basso:13 aria:6 refrain:4 requiem:3 crescendo:1"
-167,holdout:hard,choir:hard,choir:hard,8.2,21325,23000,"grunt:27 tankbuster:12 bulldog:5 thumper:5 mule:2","grace:26 staccato:14 basso:6 refrain:3 crescendo:3"
-168,holdout:hard,choir:hard,holdout:hard,7,26425,19975,"grunt:28 tankbuster:17 bulldog:13 mule:2 thumper:1","grace:28 staccato:9 basso:4 refrain:3 crescendo:3"
-169,holdout:hard,choir:hard,holdout:hard,7.5,28850,22800,"grunt:24 tankbuster:22 bulldog:9 patch:4 mule:3 thumper:2","grace:26 staccato:13 basso:8 refrain:2 crescendo:2"
-170,holdout:hard,choir:hard,choir:hard,12,39725,40555,"grunt:46 tankbuster:18 bulldog:15 patch:4 mule:3 thumper:2","grace:40 staccato:19 basso:10 refrain:6 crescendo:4"
-171,holdout:hard,choir:hard,choir:hard,16.2,61250,69350,"grunt:64 tankbuster:24 bulldog:14 thumper:7 patch:6 hornet:6 mule:5 ironclad:1","grace:65 staccato:26 basso:20 aria:9 refrain:5 crescendo:5 falsetto:2 requiem:1"
-172,holdout:hard,choir:hard,choir:hard,11.5,33725,39800,"grunt:36 tankbuster:14 bulldog:8 patch:5 mule:4 thumper:1 hornet:1","grace:39 staccato:16 basso:14 refrain:3 crescendo:1 aria:1"
-173,holdout:hard,choir:hard,choir:hard,8.2,18000,27500,"grunt:21 tankbuster:12 bulldog:5 mule:3 thumper:3","grace:28 staccato:17 basso:10 refrain:3 crescendo:2"
-174,holdout:hard,choir:hard,choir:hard,7.2,15900,25025,"grunt:14 tankbuster:13 bulldog:6 mule:2","grace:29 staccato:14 basso:9 crescendo:3 refrain:2"
-175,holdout:hard,choir:hard,holdout:hard,10.5,42055,32975,"grunt:42 tankbuster:21 bulldog:13 patch:7 mule:3 thumper:2 hornet:1","grace:25 staccato:22 basso:10 refrain:4 crescendo:2"
-176,holdout:hard,choir:hard,holdout:hard,7.5,23800,21875,"grunt:29 tankbuster:14 thumper:7 bulldog:5 mule:2","grace:30 staccato:10 refrain:4 basso:4 crescendo:3"
-177,holdout:hard,choir:hard,choir:hard,7.8,13375,24475,"grunt:14 tankbuster:11 bulldog:4 mule:2 thumper:1","grace:35 staccato:9 basso:6 crescendo:4 refrain:3"
-178,holdout:hard,choir:hard,choir:hard,7.8,12850,24250,"grunt:22 tankbuster:5 bulldog:4 mule:2 thumper:1","grace:26 staccato:15 basso:9 refrain:3 crescendo:1"
-179,holdout:hard,choir:hard,holdout:hard,8.2,24900,21325,"grunt:34 tankbuster:12 bulldog:11 mule:3 thumper:1","grace:24 staccato:13 basso:4 crescendo:4 refrain:3"
-180,holdout:hard,choir:hard,choir:hard,7.7,22530,23900,"grunt:23 tankbuster:15 bulldog:9 mule:2 thumper:2","staccato:19 grace:18 basso:6 refrain:3 crescendo:3"
-181,holdout:hard,choir:hard,holdout:hard,7.2,24575,19750,"grunt:29 tankbuster:15 bulldog:11 mule:2 thumper:2","grace:24 staccato:12 basso:5 refrain:3 crescendo:2"
-182,holdout:hard,choir:hard,choir:hard,8,17825,23800,"grunt:21 tankbuster:10 bulldog:5 mule:2 thumper:2","grace:24 staccato:14 basso:7 refrain:3 crescendo:2"
-183,holdout:hard,choir:hard,choir:hard,20,77850,80000,"grunt:72 tankbuster:27 hornet:18 bulldog:15 patch:15 mule:6 thumper:3 ironclad:1","grace:80 staccato:21 aria:16 basso:14 falsetto:13 refrain:4 crescendo:4 requiem:2"
-184,holdout:hard,choir:hard,choir:hard,8.5,21200,25925,"grunt:23 tankbuster:14 bulldog:6 thumper:4 mule:2","grace:31 staccato:13 basso:5 crescendo:5 refrain:3"
-185,holdout:hard,choir:hard,choir:hard,8.8,11750,21450,"grunt:21 tankbuster:6 bulldog:4 mule:2","grace:26 staccato:11 basso:4 refrain:3 crescendo:3"
-186,holdout:hard,choir:hard,choir:hard,19.7,54600,67025,"grunt:41 tankbuster:26 bulldog:12 patch:8 hornet:7 mule:6 thumper:1","grace:70 staccato:17 basso:14 aria:11 falsetto:8 refrain:4 crescendo:4 requiem:1"
-187,holdout:hard,choir:hard,holdout:hard,7.8,29375,25325,"grunt:39 tankbuster:14 bulldog:14 mule:3 thumper:1","grace:21 staccato:19 basso:10 refrain:2 crescendo:1"
-188,holdout:hard,choir:hard,choir:hard,7.5,23600,25400,"grunt:32 tankbuster:13 bulldog:11 mule:2 thumper:1","grace:27 staccato:15 basso:7 crescendo:5 refrain:2"
-189,holdout:hard,choir:hard,choir:hard,7,20400,24225,"grunt:29 tankbuster:11 bulldog:9 mule:2 thumper:2","grace:33 staccato:11 basso:7 crescendo:4 refrain:2"
-190,holdout:hard,choir:hard,choir:hard,12.3,26550,45525,"grunt:30 tankbuster:14 bulldog:9 mule:5 thumper:1","grace:43 staccato:19 basso:14 refrain:5 crescendo:3 aria:3"
-191,holdout:hard,choir:hard,choir:hard,12.8,47625,51075,"grunt:40 tankbuster:26 bulldog:12 thumper:6 mule:4 patch:4 hornet:2","grace:44 staccato:24 basso:18 refrain:4 crescendo:3 aria:2"
-192,holdout:hard,choir:hard,holdout:hard,8.2,26950,21350,"grunt:32 tankbuster:13 bulldog:8 patch:4 mule:2 thumper:2","grace:21 staccato:14 basso:7 refrain:2 crescendo:2"
-193,holdout:hard,choir:hard,holdout:hard,7.3,28000,21400,"grunt:35 tankbuster:15 bulldog:10 mule:3 thumper:3 patch:2","grace:26 staccato:12 basso:6 refrain:3 crescendo:2"
-194,holdout:hard,choir:hard,holdout:hard,7,25350,22775,"grunt:31 tankbuster:15 bulldog:7 patch:6 mule:2 thumper:2","grace:25 staccato:16 basso:6 crescendo:4 refrain:2"
-195,holdout:hard,choir:hard,holdout:hard,9,27025,21700,"grunt:31 tankbuster:15 bulldog:8 thumper:4 mule:3","grace:22 staccato:14 refrain:4 basso:3 crescendo:3"
-196,holdout:hard,choir:hard,holdout:hard,8.8,34385,25525,"grunt:40 tankbuster:18 bulldog:16 mule:3 thumper:2","grace:24 staccato:17 basso:7 refrain:3 crescendo:3"
-197,holdout:hard,choir:hard,holdout:hard,7,25425,20125,"grunt:26 tankbuster:17 bulldog:10 thumper:3 mule:2","grace:27 staccato:10 basso:6 refrain:3 crescendo:1"
-198,holdout:hard,choir:hard,holdout:hard,9,35260,21525,"grunt:33 tankbuster:22 bulldog:13 patch:4 mule:3 thumper:1","grace:27 staccato:13 basso:5 crescendo:5 refrain:2"
-199,holdout:hard,choir:hard,holdout:hard,11.7,41150,36150,"grunt:42 tankbuster:20 bulldog:13 mule:4 thumper:4 patch:2","grace:38 staccato:17 basso:11 crescendo:4 refrain:3"
-200,holdout:hard,choir:hard,choir:hard,6.5,12600,16100,"grunt:21 tankbuster:6 bulldog:5 mule:2","grace:19 staccato:12 basso:6 refrain:2"
-201,holdout:hard,choir:hard,choir:hard,15.5,53750,66375,"grunt:47 tankbuster:19 bulldog:13 patch:8 hornet:7 mule:5","grace:68 staccato:21 basso:14 aria:10 crescendo:6 refrain:5 falsetto:5 requiem:1"
-202,holdout:hard,choir:hard,holdout:hard,7,24475,18325,"grunt:27 tankbuster:16 bulldog:12 mule:2 thumper:1","staccato:17 grace:14 refrain:4 basso:3 crescendo:2"
-203,holdout:hard,choir:hard,holdout:hard,8.5,29200,25150,"grunt:24 tankbuster:20 bulldog:10 mule:4 thumper:2","grace:32 staccato:12 basso:7 refrain:3 crescendo:3"
-204,holdout:hard,choir:hard,choir:hard,7.2,22475,26150,"grunt:26 tankbuster:14 bulldog:11 mule:2 thumper:1","grace:29 staccato:14 basso:11 refrain:2 crescendo:1"
-205,holdout:hard,choir:hard,holdout:hard,7.5,24775,22375,"grunt:29 tankbuster:15 bulldog:10 thumper:3 mule:2","grace:30 staccato:10 basso:9 refrain:2 crescendo:1"
-206,holdout:hard,choir:hard,holdout:hard,7.2,26600,20825,"grunt:33 tankbuster:15 bulldog:14 mule:2 thumper:1","grace:22 staccato:13 basso:8 refrain:3"
-207,holdout:hard,choir:hard,holdout:hard,7.3,26625,21375,"grunt:35 tankbuster:14 bulldog:11 thumper:3 mule:2","grace:28 staccato:10 basso:8 refrain:2 crescendo:1"
-208,holdout:hard,choir:hard,choir:hard,8.2,25700,27250,"grunt:29 tankbuster:16 bulldog:9 thumper:4 mule:2","grace:30 staccato:15 basso:11 refrain:3 crescendo:1"
-209,holdout:hard,choir:hard,holdout:hard,7.3,28000,22900,"grunt:34 tankbuster:16 bulldog:12 thumper:3 mule:2","grace:25 staccato:14 basso:8 refrain:2 crescendo:2"
-210,holdout:hard,choir:hard,choir:hard,7.5,23800,25200,"grunt:28 tankbuster:15 bulldog:10 thumper:3 mule:2","grace:28 staccato:14 basso:10 refrain:2 crescendo:1"
-211,holdout:hard,choir:hard,draw,30,133375,129725,"grunt:120 tankbuster:38 hornet:36 patch:27 bulldog:22 flak_track:10 mule:5 thumper:4 ironclad:1","grace:100 staccato:41 aria:31 basso:23 refrain:15 crescendo:7 falsetto:6 requiem:2"
-212,holdout:hard,choir:hard,choir:hard,6.2,10750,16325,"grunt:12 tankbuster:9 mule:2 bulldog:2 thumper:1","grace:22 staccato:8 basso:5 refrain:2 crescendo:1"
-213,holdout:hard,choir:hard,choir:hard,7.2,20200,24400,"grunt:25 tankbuster:12 bulldog:8 mule:3 thumper:1","grace:22 staccato:14 basso:6 refrain:2 crescendo:1 requiem:1"
-214,holdout:hard,choir:hard,holdout:hard,8.7,28775,22350,"grunt:35 tankbuster:15 bulldog:10 thumper:4 mule:3","grace:25 staccato:13 basso:7 refrain:3 crescendo:2"
-215,holdout:hard,choir:hard,holdout:hard,8.2,22725,11300,"grunt:30 tankbuster:11 bulldog:8 mule:3 thumper:2","grace:20 staccato:6 basso:3 refrain:2"
-216,holdout:hard,choir:hard,choir:hard,8,19825,21525,"grunt:30 tankbuster:9 bulldog:7 thumper:3 mule:2","grace:27 staccato:11 basso:7 refrain:2 crescendo:2"
-217,holdout:hard,choir:hard,choir:hard,8.3,16450,21825,"grunt:22 tankbuster:8 mule:4 bulldog:4","grace:27 staccato:11 basso:6 refrain:3 crescendo:2"
-218,holdout:hard,choir:hard,holdout:hard,9,36900,27125,"grunt:44 tankbuster:19 bulldog:16 mule:3 thumper:3 patch:1","grace:29 staccato:14 basso:8 refrain:4 crescendo:3"
-219,holdout:hard,choir:hard,choir:hard,8.3,19725,24725,"grunt:28 tankbuster:9 bulldog:7 mule:2 thumper:2","grace:31 staccato:11 basso:10 refrain:3"
-220,holdout:hard,choir:hard,choir:hard,8.2,10500,22950,"grunt:15 tankbuster:7 bulldog:3 mule:2","grace:21 staccato:16 basso:8 refrain:3 crescendo:1"
-221,holdout:hard,choir:hard,holdout:hard,7.2,24500,18675,"grunt:26 tankbuster:17 bulldog:9 thumper:4 mule:2","grace:24 staccato:11 basso:5 crescendo:3 refrain:2"
-222,holdout:hard,choir:hard,choir:hard,8.3,11900,23875,"grunt:19 tankbuster:6 mule:2 bulldog:2 thumper:2","grace:33 staccato:10 basso:7 refrain:3 crescendo:3"
-223,holdout:hard,choir:hard,holdout:hard,5.5,19175,13725,"grunt:26 tankbuster:12 bulldog:8 mule:2 thumper:2","grace:13 staccato:13 basso:4 refrain:2 crescendo:1"
-224,holdout:hard,choir:hard,choir:hard,10.5,10925,30275,"tankbuster:12 grunt:7 mule:2 bulldog:2 thumper:1","grace:30 staccato:13 basso:9 refrain:3 crescendo:1 aria:1"
-225,holdout:hard,choir:hard,choir:hard,7.2,22825,23700,"grunt:27 tankbuster:14 bulldog:9 patch:4 mule:2","grace:30 staccato:12 basso:10 refrain:2 crescendo:1"
-226,holdout:hard,choir:hard,choir:hard,5.8,11500,14700,"grunt:13 tankbuster:9 thumper:3 mule:2 bulldog:1","grace:18 staccato:9 basso:4 refrain:2 crescendo:1"
-227,holdout:hard,choir:hard,holdout:hard,7.2,26975,21750,"grunt:29 tankbuster:16 bulldog:11 mule:3 patch:2","grace:19 staccato:17 basso:8 refrain:2 crescendo:1"
-228,holdout:hard,choir:hard,holdout:hard,7.2,25900,18700,"grunt:25 tankbuster:17 bulldog:9 mule:2 thumper:2 patch:2","grace:19 staccato:9 refrain:3 basso:3 crescendo:1"
-229,holdout:hard,choir:hard,choir:hard,7.7,23250,23775,"grunt:27 tankbuster:14 bulldog:7 thumper:5 mule:2","grace:30 staccato:12 basso:7 refrain:3 crescendo:3"
-230,holdout:hard,choir:hard,holdout:hard,7.3,26025,16625,"grunt:33 tankbuster:14 bulldog:13 mule:2 thumper:1","grace:19 staccato:12 basso:4 refrain:2 crescendo:2"
-231,holdout:hard,choir:hard,choir:hard,8.3,18800,23475,"grunt:25 tankbuster:9 bulldog:5 mule:3 thumper:1 patch:1","grace:29 staccato:12 basso:8 refrain:3 crescendo:1"
-232,holdout:hard,choir:hard,holdout:hard,9.2,35100,26950,"grunt:50 bulldog:15 tankbuster:13 mule:3 thumper:3 patch:1","grace:30 staccato:14 basso:9 crescendo:3 refrain:2"
-233,holdout:hard,choir:hard,holdout:hard,5.3,18585,15025,"grunt:21 tankbuster:13 bulldog:7 mule:2 thumper:2","grace:14 staccato:13 basso:3 refrain:2 crescendo:2"
-234,holdout:hard,choir:hard,choir:hard,8,11400,21950,"grunt:13 tankbuster:9 bulldog:4 mule:2","grace:28 staccato:11 basso:6 refrain:3 crescendo:2"
-235,holdout:hard,choir:hard,holdout:hard,5.5,19100,14000,"tankbuster:17 grunt:15 bulldog:7 mule:2 thumper:2","grace:18 staccato:10 crescendo:3 refrain:2 basso:2"
-236,holdout:hard,choir:hard,choir:hard,10.8,36900,42995,"grunt:46 tankbuster:17 bulldog:14 thumper:5 mule:3","grace:51 staccato:15 basso:13 refrain:4 crescendo:3 requiem:1"
-237,holdout:hard,choir:hard,choir:hard,7.3,22025,25550,"grunt:19 tankbuster:16 bulldog:4 thumper:3 patch:3 mule:2","grace:35 staccato:10 basso:10 refrain:3 crescendo:1"
-238,holdout:hard,choir:hard,choir:hard,17.8,44975,57600,"grunt:37 tankbuster:21 bulldog:11 mule:4 thumper:4 patch:4 hornet:3","grace:49 staccato:23 basso:13 aria:8 refrain:5 falsetto:3 crescendo:2 requiem:2"
-239,holdout:hard,choir:hard,choir:hard,9,18375,14250,"grunt:29 tankbuster:7 bulldog:4 mule:3 thumper:3","grace:19 staccato:8 basso:4 refrain:2"
-240,holdout:hard,choir:hard,holdout:hard,10.2,35200,26750,"grunt:36 tankbuster:19 bulldog:13 mule:3 patch:3 thumper:2","grace:22 staccato:18 basso:8 refrain:3 crescendo:2"
-241,holdout:hard,choir:hard,holdout:hard,7.8,29400,25175,"grunt:34 tankbuster:17 bulldog:13 mule:3 thumper:2","grace:27 staccato:15 basso:10 refrain:2 crescendo:1"
-242,holdout:hard,choir:hard,choir:hard,7.5,24375,25950,"grunt:30 tankbuster:14 bulldog:13 mule:2","grace:36 staccato:11 basso:8 crescendo:5 refrain:2"
-243,holdout:hard,choir:hard,holdout:hard,9.7,31000,22925,"grunt:33 tankbuster:17 bulldog:11 mule:3 thumper:2 patch:2","grace:30 staccato:10 basso:5 refrain:3 crescendo:3"
-244,holdout:hard,choir:hard,choir:hard,7.7,21525,22025,"grunt:31 tankbuster:9 bulldog:6 mule:3 thumper:2 patch:2","grace:23 staccato:14 basso:7 refrain:2 crescendo:2"
-245,holdout:hard,choir:hard,choir:hard,9.3,24800,28750,"grunt:27 tankbuster:15 bulldog:9 mule:4 thumper:1","grace:29 staccato:16 basso:10 refrain:3 crescendo:2"
-246,holdout:hard,choir:hard,holdout:hard,8.5,24875,17550,"grunt:24 tankbuster:16 bulldog:11 mule:3","grace:15 staccato:13 basso:5 refrain:3"
-247,holdout:hard,choir:hard,choir:hard,8.3,19300,23875,"grunt:25 tankbuster:10 bulldog:5 thumper:3 mule:2","grace:34 staccato:9 basso:7 refrain:3 crescendo:2"
-248,holdout:hard,choir:hard,choir:hard,6.8,20750,23970,"grunt:24 tankbuster:14 bulldog:7 mule:3 thumper:2","grace:27 staccato:13 basso:8 refrain:2 crescendo:2"
-249,holdout:hard,choir:hard,holdout:hard,7.2,26475,16850,"grunt:28 tankbuster:16 bulldog:10 thumper:3 mule:2 patch:1","grace:20 staccato:11 basso:7 refrain:2"
-250,holdout:hard,choir:hard,choir:hard,11.3,34325,44650,"grunt:28 tankbuster:23 bulldog:7 thumper:5 patch:5 mule:4","grace:43 staccato:18 basso:10 refrain:4 crescendo:3 aria:3 requiem:2"
-251,holdout:hard,choir:hard,holdout:hard,7.5,25650,17725,"grunt:38 tankbuster:11 patch:8 bulldog:5 thumper:3 mule:2","grace:24 staccato:10 basso:5 refrain:2 crescendo:2"
-252,holdout:hard,choir:hard,choir:hard,9.2,13085,26240,"tankbuster:13 grunt:12 bulldog:4 mule:2 thumper:1","grace:24 staccato:15 basso:8 refrain:3 crescendo:1"
-253,holdout:hard,choir:hard,holdout:hard,7.2,24425,16950,"grunt:23 tankbuster:17 bulldog:7 thumper:5 mule:2","grace:33 basso:5 staccato:4 refrain:2 crescendo:2"
-254,holdout:hard,choir:hard,choir:hard,17.5,48495,57225,"grunt:44 tankbuster:22 bulldog:11 mule:6 thumper:4 patch:4 hornet:3","grace:42 staccato:25 basso:18 aria:8 falsetto:4 refrain:3 crescendo:1"
-255,holdout:hard,choir:hard,choir:hard,23.2,79775,82975,"grunt:65 tankbuster:29 bulldog:18 patch:16 hornet:15 mule:5 flak_track:2","grace:64 staccato:33 basso:18 aria:15 falsetto:8 crescendo:7 refrain:5"
-256,holdout:hard,choir:hard,choir:hard,12,37075,41075,"grunt:30 tankbuster:19 bulldog:9 patch:5 mule:3 thumper:2 hornet:2","grace:37 staccato:20 basso:14 refrain:4 crescendo:2"
-257,holdout:hard,choir:hard,holdout:hard,5.7,20175,15400,"grunt:30 tankbuster:11 bulldog:8 thumper:3 mule:2","grace:15 staccato:13 basso:5 refrain:2 crescendo:1"
-258,holdout:hard,choir:hard,choir:hard,7.2,19975,25010,"grunt:18 tankbuster:16 bulldog:5 mule:3 thumper:3","grace:33 staccato:11 basso:8 crescendo:4 refrain:2"
-259,holdout:hard,choir:hard,holdout:hard,7,24775,19350,"grunt:34 tankbuster:13 bulldog:8 thumper:5 mule:2","grace:25 staccato:7 basso:5 refrain:2 crescendo:1"
-260,holdout:hard,choir:hard,holdout:hard,7.7,28275,24225,"grunt:31 tankbuster:17 bulldog:13 mule:2 thumper:2 patch:1","grace:26 staccato:15 basso:7 refrain:3 crescendo:3"
-261,holdout:hard,choir:hard,choir:hard,20.5,58650,74100,"grunt:60 tankbuster:21 patch:11 bulldog:10 hornet:7 mule:5 flak_track:3 thumper:1 ironclad:1","grace:63 staccato:28 basso:20 aria:13 crescendo:6 refrain:5 falsetto:1 requiem:1"
-262,holdout:hard,choir:hard,choir:hard,11.8,33750,45275,"grunt:29 tankbuster:18 bulldog:8 patch:5 mule:3 thumper:2 hornet:1","grace:38 staccato:23 basso:11 refrain:4 crescendo:2 requiem:2 aria:1"
-263,holdout:hard,choir:hard,choir:hard,6,1650,12450,"grunt:9 tankbuster:3 mule:1","grace:20 staccato:7 basso:4 refrain:2"
-264,holdout:hard,choir:hard,holdout:hard,7.2,24475,20125,"grunt:32 tankbuster:13 bulldog:10 thumper:3 mule:2","grace:25 staccato:11 basso:5 refrain:3 crescendo:2"
-265,holdout:hard,choir:hard,choir:hard,14.5,38975,46800,"grunt:35 tankbuster:20 bulldog:12 mule:4 thumper:2 patch:2","grace:36 staccato:23 basso:9 refrain:5 crescendo:3 aria:3 requiem:2"
-266,holdout:hard,choir:hard,holdout:hard,5.7,17800,13450,"grunt:22 tankbuster:12 bulldog:9 mule:2","grace:14 staccato:11 basso:3 refrain:2 crescendo:1"
-267,holdout:hard,choir:hard,holdout:hard,7.3,26050,13400,"grunt:29 tankbuster:16 bulldog:11 mule:3 thumper:2","grace:17 staccato:10 basso:4 refrain:2 crescendo:1"
-268,holdout:hard,choir:hard,choir:hard,7.3,16275,23900,"grunt:19 tankbuster:11 bulldog:6 mule:2 thumper:1","grace:30 staccato:12 basso:10 refrain:2 crescendo:1"
-269,holdout:hard,choir:hard,choir:hard,12.3,31575,41150,"grunt:37 tankbuster:13 bulldog:7 mule:6 thumper:3 patch:1","grace:47 staccato:14 basso:14 refrain:4 crescendo:2 aria:1"
-270,holdout:hard,choir:hard,holdout:hard,8.5,32950,28850,"grunt:43 tankbuster:14 bulldog:9 thumper:4 patch:4 mule:3","grace:37 staccato:13 basso:11 refrain:3 crescendo:2"
-271,holdout:hard,choir:hard,holdout:hard,8.7,26625,19225,"grunt:36 tankbuster:12 bulldog:11 mule:3 thumper:2","grace:24 staccato:11 refrain:4 crescendo:3 basso:2"
-272,holdout:hard,choir:hard,holdout:hard,7.5,25850,22025,"grunt:32 tankbuster:14 bulldog:7 patch:4 thumper:3 mule:2","grace:26 staccato:13 basso:8 refrain:2 crescendo:2"
-273,holdout:hard,choir:hard,choir:hard,8.2,21600,23300,"grunt:27 tankbuster:12 bulldog:10 mule:2 thumper:1","grace:26 staccato:13 basso:7 refrain:3 crescendo:2"
-274,holdout:hard,choir:hard,choir:hard,8,14000,22850,"grunt:18 tankbuster:8 bulldog:3 mule:2 thumper:1 patch:1","grace:17 staccato:17 basso:6 crescendo:3 refrain:2"
-275,holdout:hard,choir:hard,holdout:hard,5.8,20250,13900,"grunt:21 tankbuster:12 bulldog:4 mule:2 thumper:2 patch:1 ironclad:1","grace:17 staccato:9 basso:3 refrain:2 crescendo:1"
-276,holdout:hard,choir:hard,holdout:hard,10,39925,28325,"grunt:46 tankbuster:18 bulldog:10 patch:8 thumper:4 mule:3","grace:32 staccato:14 basso:9 refrain:4 crescendo:3"
-277,holdout:hard,choir:hard,choir:hard,23.8,112150,115025,"grunt:93 tankbuster:38 hornet:29 bulldog:27 patch:12 flak_track:9 mule:7 thumper:1","grace:94 staccato:36 basso:25 aria:24 falsetto:16 refrain:8 crescendo:4"
-278,holdout:hard,choir:hard,choir:hard,7.3,22455,23875,"grunt:24 tankbuster:13 bulldog:7 thumper:3 mule:2","grace:21 staccato:17 basso:10 refrain:2 crescendo:1"
-279,holdout:hard,choir:hard,holdout:hard,7,27200,17025,"grunt:24 tankbuster:20 bulldog:12 mule:2 thumper:2","grace:16 staccato:14 basso:4 crescendo:3 refrain:2"
-280,holdout:hard,choir:hard,choir:hard,14.3,50175,60725,"grunt:45 tankbuster:22 bulldog:13 patch:10 hornet:5 mule:4","grace:46 staccato:26 basso:13 aria:9 refrain:5 crescendo:3 falsetto:2 requiem:2"
-281,holdout:hard,choir:hard,holdout:hard,9.5,29600,13475,"grunt:31 tankbuster:16 bulldog:12 mule:4","grace:20 staccato:8 basso:4 refrain:2 crescendo:1"
-282,holdout:hard,choir:hard,holdout:hard,8.2,22875,18550,"grunt:32 tankbuster:11 bulldog:9 mule:3 thumper:2","grace:21 staccato:11 basso:5 refrain:3 crescendo:1"
-283,holdout:hard,choir:hard,holdout:hard,7.2,25975,21025,"grunt:27 tankbuster:18 bulldog:9 thumper:5 mule:2","grace:21 staccato:16 basso:5 refrain:3 crescendo:3"
-284,holdout:hard,choir:hard,choir:hard,8,18475,23000,"grunt:23 tankbuster:11 bulldog:6 mule:3 thumper:1","grace:28 staccato:12 basso:7 crescendo:3 refrain:2"
-285,holdout:hard,choir:hard,holdout:hard,5.5,18900,14525,"grunt:23 tankbuster:12 bulldog:8 mule:2 thumper:1","grace:15 staccato:12 basso:4 refrain:2 crescendo:1"
-286,holdout:hard,choir:hard,holdout:hard,8.2,27825,25375,"grunt:35 tankbuster:15 bulldog:11 mule:3 thumper:3","grace:26 staccato:16 basso:6 crescendo:4 refrain:3"
-287,holdout:hard,choir:hard,holdout:hard,9.3,37550,30225,"grunt:42 tankbuster:18 bulldog:14 mule:3 thumper:3 patch:3","grace:36 staccato:15 basso:13 refrain:4"
-288,holdout:hard,choir:hard,choir:hard,7,16675,24850,"grunt:18 tankbuster:12 bulldog:6 mule:2 patch:2","grace:27 staccato:15 basso:9 refrain:2 crescendo:2"
-289,holdout:hard,choir:hard,holdout:hard,7.2,26125,19600,"grunt:31 tankbuster:15 patch:8 bulldog:7 mule:2 thumper:1","staccato:17 grace:15 basso:7 refrain:2 crescendo:1"
-290,holdout:hard,choir:hard,holdout:hard,7.8,21950,3925,"grunt:37 bulldog:8 tankbuster:7 mule:3 thumper:2","grace:9 staccato:6 refrain:1"
-291,holdout:hard,choir:hard,holdout:hard,7.2,24500,19360,"grunt:33 tankbuster:13 bulldog:8 thumper:5 mule:2","grace:18 staccato:15 basso:7 refrain:2 crescendo:1"
-292,holdout:hard,choir:hard,choir:hard,18.2,70675,88275,"grunt:62 tankbuster:27 patch:15 hornet:14 bulldog:13 thumper:5 mule:4 flak_track:1","grace:79 staccato:30 basso:22 aria:16 refrain:8 falsetto:4 crescendo:4 requiem:2"
-293,holdout:hard,choir:hard,choir:hard,7.2,22350,24775,"grunt:20 tankbuster:17 bulldog:9 mule:2 thumper:2","grace:31 staccato:12 basso:10 refrain:2 crescendo:1"
-294,holdout:hard,choir:hard,holdout:hard,9,33950,27225,"grunt:44 tankbuster:16 bulldog:12 thumper:6 mule:3","grace:28 staccato:15 basso:10 refrain:3 crescendo:1"
-295,holdout:hard,choir:hard,holdout:hard,7.2,26600,21600,"grunt:22 tankbuster:21 bulldog:13 mule:2 thumper:1","grace:23 staccato:14 basso:8 refrain:2 crescendo:2"
-296,holdout:hard,choir:hard,holdout:hard,11.8,43675,39425,"tankbuster:31 grunt:26 patch:13 bulldog:7 mule:4 thumper:2 hornet:1","grace:45 staccato:15 basso:11 refrain:5 crescendo:3"
-297,holdout:hard,choir:hard,choir:hard,7.8,14725,23100,"grunt:21 tankbuster:9 bulldog:3 thumper:3 mule:2","grace:22 staccato:16 basso:8 refrain:3 crescendo:1"
-298,holdout:hard,choir:hard,choir:hard,5.8,14975,19100,"grunt:20 tankbuster:9 bulldog:4 mule:2 thumper:1 patch:1","grace:21 staccato:14 basso:6 refrain:2 crescendo:2"
-299,holdout:hard,choir:hard,choir:hard,8.3,16925,20950,"grunt:17 tankbuster:12 mule:3 thumper:3 bulldog:2","grace:29 staccato:9 crescendo:4 refrain:3 basso:3"
-300,holdout:hard,choir:hard,choir:hard,7.5,24100,26500,"grunt:34 tankbuster:11 bulldog:10 patch:3 mule:2 thumper:1","grace:25 staccato:16 basso:8 refrain:3 crescendo:2"
+seed,side_a,side_b,winner,minutes,harvested_a,harvested_b,units_a,units_b,strategy_a,strategy_b
+1,holdout:hard,choir:hard,choir:hard,13.3,102975,140700,"grunt:71 tankbuster:35 bulldog:21 hornet:16 flak_track:10 mule:6 thumper:4 patch:2 homestead:2 ironclad:1","grace:83 staccato:52 basso:42 aria:27 refrain:7 crescendo:4 requiem:3 falsetto:1 overture:1",turtle,balanced
+2,holdout:hard,choir:hard,choir:hard,6,26675,32625,"grunt:26 tankbuster:10 mule:6 bulldog:3 patch:2 hornet:1","grace:24 staccato:14 refrain:7 basso:3 aria:2 crescendo:1",rush,balanced
+3,holdout:hard,choir:hard,holdout:hard,12.7,124700,87175,"grunt:94 tankbuster:35 hornet:31 bulldog:20 thumper:14 flak_track:7 mule:6 patch:3 homestead:2","grace:49 staccato:23 refrain:11 aria:7 basso:5 overture:3 falsetto:2 crescendo:2 requiem:2",rush,tech
+4,holdout:hard,choir:hard,choir:hard,11.3,80925,111315,"grunt:58 tankbuster:34 bulldog:18 mule:10 hornet:10 thumper:4 patch:2 homestead:1","grace:62 staccato:39 basso:24 aria:18 refrain:9 falsetto:4 crescendo:3 overture:2 requiem:1",rush,balanced
+5,holdout:hard,choir:hard,choir:hard,12.7,106075,141275,"grunt:61 tankbuster:39 hornet:22 bulldog:19 flak_track:9 mule:6 thumper:4 patch:3 homestead:3","grace:113 staccato:34 basso:30 aria:28 falsetto:22 crescendo:10 refrain:6",rush,rush
+6,holdout:hard,choir:hard,choir:hard,9.7,72800,89475,"grunt:45 tankbuster:29 bulldog:11 hornet:10 mule:9 thumper:3 patch:2 homestead:2","grace:60 staccato:30 basso:23 aria:13 refrain:6 falsetto:5 crescendo:4",balanced,rush
+7,holdout:hard,choir:hard,choir:hard,8.2,57825,72375,"grunt:38 tankbuster:24 bulldog:10 hornet:8 mule:6 thumper:3 patch:2 ironclad:1 homestead:1","grace:41 staccato:27 basso:14 aria:9 refrain:8 crescendo:2 overture:1",balanced,turtle
+8,holdout:hard,choir:hard,choir:hard,20.3,175685,189425,"grunt:98 tankbuster:73 bulldog:49 hornet:38 flak_track:11 mule:10 thumper:6 patch:4 homestead:3","grace:107 staccato:56 basso:43 aria:43 falsetto:16 refrain:7 crescendo:6 requiem:5 overture:2",rush,raider
+9,holdout:hard,choir:hard,choir:hard,11.5,75950,121315,"grunt:49 tankbuster:20 hornet:13 bulldog:11 mule:10 flak_track:3 patch:2 homestead:2 thumper:1","grace:74 staccato:38 aria:23 basso:19 refrain:6 falsetto:6 crescendo:6 requiem:4 overture:3",raider,tech
+10,holdout:hard,choir:hard,holdout:hard,12.2,131135,56620,"grunt:92 tankbuster:40 bulldog:33 hornet:29 flak_track:14 mule:6 thumper:6 patch:2 ironclad:1 homestead:1","grace:34 staccato:20 aria:8 refrain:7 basso:7 crescendo:2 overture:2 falsetto:1",raider,raider
+11,holdout:hard,choir:hard,choir:hard,12.2,80385,124600,"grunt:53 tankbuster:26 hornet:11 bulldog:9 thumper:8 mule:7 flak_track:5 patch:3 homestead:2","grace:76 staccato:37 basso:37 aria:25 falsetto:7 refrain:6 crescendo:6",turtle,rush
+12,holdout:hard,choir:hard,holdout:hard,5.5,34250,20925,"grunt:33 tankbuster:13 mule:6 bulldog:3 thumper:3 patch:2","grace:17 staccato:13 refrain:6 basso:1 crescendo:1",raider,rush
+13,holdout:hard,choir:hard,choir:hard,11.5,83625,136875,"grunt:61 tankbuster:28 bulldog:16 hornet:12 mule:6 thumper:4 patch:3 flak_track:2 homestead:2","grace:80 staccato:42 basso:31 aria:23 crescendo:11 refrain:6 falsetto:4 overture:2 requiem:1",turtle,tech
+14,holdout:hard,choir:hard,choir:hard,12,74360,120475,"grunt:52 tankbuster:30 hornet:16 bulldog:14 mule:7 thumper:6 patch:3 homestead:1","grace:70 staccato:44 aria:27 basso:23 falsetto:11 refrain:6 crescendo:5 requiem:2 overture:1",rush,balanced
+15,holdout:hard,choir:hard,holdout:hard,10.2,89425,72005,"grunt:64 tankbuster:32 bulldog:20 hornet:16 mule:6 flak_track:4 thumper:4 patch:2 homestead:2","grace:48 staccato:18 basso:10 refrain:9 crescendo:5 aria:4",rush,rush
+16,holdout:hard,choir:hard,choir:hard,9.3,70950,103150,"grunt:50 tankbuster:26 bulldog:14 hornet:11 mule:6 thumper:2 patch:2 homestead:2 flak_track:1","grace:75 basso:31 staccato:30 aria:16 refrain:6 crescendo:3 falsetto:2",balanced,rush
+17,holdout:hard,choir:hard,choir:hard,19.2,169225,204450,"grunt:84 tankbuster:83 bulldog:35 hornet:26 mule:14 flak_track:5 thumper:5 ironclad:3 homestead:3 patch:2","grace:118 staccato:76 basso:47 aria:39 crescendo:11 falsetto:9 requiem:9 refrain:7 overture:2",tech,tech
+18,holdout:hard,choir:hard,holdout:hard,13.5,163800,107905,"grunt:128 tankbuster:53 bulldog:49 hornet:34 thumper:8 mule:6 ironclad:4 flak_track:2 patch:2 homestead:2","grace:64 staccato:50 refrain:16 basso:8 overture:4 crescendo:3 falsetto:1 aria:1 requiem:1",balanced,tech
+19,holdout:hard,choir:hard,choir:hard,8.8,65205,74950,"grunt:52 tankbuster:17 hornet:12 bulldog:10 mule:6 thumper:2 patch:2 ironclad:1 homestead:1","grace:45 staccato:29 basso:12 aria:9 refrain:7 falsetto:5 overture:2 crescendo:1",raider,tech
+20,holdout:hard,choir:hard,choir:hard,11.8,88560,116375,"tankbuster:42 grunt:40 bulldog:15 hornet:15 mule:10 thumper:4 flak_track:2 patch:2 homestead:2","grace:91 basso:35 staccato:26 aria:22 refrain:8 crescendo:7 falsetto:5",tech,rush
+21,holdout:hard,choir:hard,choir:hard,10.5,67175,97300,"grunt:42 tankbuster:26 hornet:9 mule:8 bulldog:8 flak_track:2 patch:2 homestead:2 thumper:1 ironclad:1","grace:82 staccato:24 basso:20 aria:19 crescendo:10 refrain:6 falsetto:2 overture:1",turtle,balanced
+22,holdout:hard,choir:hard,choir:hard,19.8,112725,268000,"grunt:81 tankbuster:36 bulldog:13 mule:12 hornet:12 patch:5 homestead:4 thumper:2","grace:128 staccato:56 basso:50 aria:40 crescendo:16 falsetto:7 refrain:6 requiem:3 overture:2",turtle,balanced
+23,holdout:hard,choir:hard,holdout:hard,7.5,60300,41000,"grunt:40 tankbuster:25 bulldog:13 hornet:8 mule:6 patch:2 ironclad:1 homestead:1","grace:32 staccato:17 refrain:7 basso:6 crescendo:1 overture:1",raider,balanced
+24,holdout:hard,choir:hard,choir:hard,5.5,27300,32550,"grunt:19 tankbuster:14 mule:6 bulldog:3 thumper:1 hornet:1","grace:25 staccato:18 refrain:6 basso:6 crescendo:1",rush,raider
+25,holdout:hard,choir:hard,choir:hard,19.8,78350,268200,"grunt:39 tankbuster:36 bulldog:17 hornet:13 mule:6 patch:2 homestead:2 flak_track:1 thumper:1 ironclad:1","grace:106 staccato:52 basso:45 aria:32 crescendo:11 refrain:6 falsetto:2 overture:2 requiem:1",tech,balanced
+26,holdout:hard,choir:hard,holdout:hard,10.7,120355,85075,"grunt:82 tankbuster:43 bulldog:27 hornet:21 flak_track:15 mule:6 thumper:4 patch:2 homestead:2 ironclad:1","grace:60 staccato:18 aria:16 basso:13 refrain:6 crescendo:5 overture:3 requiem:1",raider,raider
+27,holdout:hard,choir:hard,choir:hard,5.8,26825,40075,"grunt:30 tankbuster:12 mule:6 bulldog:4 patch:3 thumper:1","grace:26 staccato:21 refrain:7 basso:4 crescendo:3 overture:1",rush,balanced
+28,holdout:hard,choir:hard,holdout:hard,15.2,152425,108665,"grunt:115 tankbuster:51 bulldog:33 hornet:33 thumper:19 flak_track:14 mule:6 patch:2 homestead:2","grace:63 staccato:47 refrain:13 aria:9 basso:5 overture:4 falsetto:1 crescendo:1 requiem:1",rush,tech
+29,holdout:hard,choir:hard,choir:hard,10.5,78255,107500,"grunt:42 tankbuster:37 hornet:16 bulldog:12 mule:7 thumper:5 flak_track:3 patch:2 homestead:2","grace:69 staccato:33 aria:19 basso:16 refrain:6 falsetto:6 crescendo:6 requiem:3 overture:1",tech,tech
+30,holdout:hard,choir:hard,choir:hard,7.8,19725,62745,"grunt:20 tankbuster:11 mule:5 bulldog:2 thumper:1 patch:1","grace:50 staccato:20 basso:15 refrain:6 crescendo:6 aria:5",rush,rush
+31,holdout:hard,choir:hard,holdout:hard,10,101300,51710,"tankbuster:46 grunt:36 bulldog:19 hornet:19 mule:6 thumper:4 homestead:3 patch:2","grace:50 staccato:16 basso:9 refrain:6 overture:2 crescendo:1 requiem:1",tech,raider
+32,holdout:hard,choir:hard,draw,30,363750,57400,"grunt:148 flak_track:41 tankbuster:36 hornet:30 bulldog:25 thumper:9 mule:6 patch:2 homestead:1","grace:44 staccato:22 basso:11 refrain:7 overture:2 crescendo:1 aria:1",raider,tech
+33,holdout:hard,choir:hard,choir:hard,7.3,31200,55300,"grunt:28 tankbuster:12 mule:7 bulldog:3 patch:2 thumper:1 hornet:1","grace:35 staccato:21 basso:9 aria:7 refrain:6 crescendo:3 overture:1",balanced,raider
+34,holdout:hard,choir:hard,choir:hard,6.5,37500,55275,"grunt:28 tankbuster:22 bulldog:8 mule:7 patch:2 homestead:1","grace:38 staccato:26 basso:13 refrain:6 crescendo:5 aria:3",balanced,rush
+35,holdout:hard,choir:hard,choir:hard,10.2,70285,89895,"grunt:44 tankbuster:25 hornet:11 mule:8 bulldog:8 thumper:3 patch:2 homestead:2 flak_track:1","grace:75 basso:24 staccato:20 aria:14 refrain:8 falsetto:2 crescendo:2 overture:1",turtle,rush
+36,holdout:hard,choir:hard,choir:hard,13.3,107000,156350,"grunt:66 tankbuster:34 hornet:23 bulldog:14 mule:11 flak_track:7 thumper:6 patch:3 homestead:2 ironclad:1","grace:95 staccato:53 basso:44 aria:28 falsetto:9 refrain:8 crescendo:5 overture:1",balanced,rush
+37,holdout:hard,choir:hard,choir:hard,8.8,53925,82110,"grunt:44 tankbuster:19 bulldog:9 mule:8 hornet:4 thumper:2 patch:2 homestead:1","grace:60 staccato:24 basso:22 aria:11 crescendo:9 refrain:6",turtle,rush
+38,holdout:hard,choir:hard,choir:hard,12.8,90500,134950,"grunt:53 tankbuster:32 hornet:15 mule:11 bulldog:11 flak_track:3 patch:3 homestead:3","grace:113 staccato:34 aria:26 basso:22 falsetto:18 crescendo:11 refrain:6 overture:2 requiem:1",turtle,raider
+39,holdout:hard,choir:hard,holdout:hard,13.3,123900,84300,"grunt:109 bulldog:31 tankbuster:29 hornet:28 flak_track:11 mule:6 thumper:4 patch:2 homestead:2","grace:44 staccato:25 refrain:9 basso:8 crescendo:5 aria:2 falsetto:1 overture:1",rush,turtle
+40,holdout:hard,choir:hard,choir:hard,8.5,54100,74350,"grunt:42 tankbuster:22 bulldog:13 mule:6 thumper:6 hornet:6 patch:2","grace:45 staccato:31 basso:13 aria:8 refrain:7 crescendo:5 falsetto:4 overture:1",rush,tech
+41,holdout:hard,choir:hard,choir:hard,15.7,63525,155225,"grunt:57 tankbuster:22 bulldog:16 hornet:10 mule:7 thumper:3 patch:2 homestead:1","grace:113 staccato:42 basso:36 aria:33 crescendo:10 falsetto:8 refrain:7 requiem:3 overture:2",rush,balanced
+42,holdout:hard,choir:hard,choir:hard,15.3,114845,175300,"grunt:83 tankbuster:38 bulldog:17 mule:13 hornet:7 homestead:5 patch:3 flak_track:2 thumper:2","grace:122 staccato:49 basso:47 aria:31 crescendo:10 refrain:6 falsetto:3 requiem:2 overture:2",tech,balanced
+43,holdout:hard,choir:hard,choir:hard,14.5,109140,166705,"grunt:64 tankbuster:39 hornet:16 bulldog:15 mule:9 homestead:4 patch:3 ironclad:3 thumper:1","grace:129 staccato:52 basso:52 aria:29 falsetto:10 crescendo:9 refrain:8",balanced,rush
+44,holdout:hard,choir:hard,choir:hard,11.5,91960,104100,"grunt:61 tankbuster:30 hornet:21 bulldog:18 mule:6 flak_track:4 patch:4 thumper:2 homestead:2","grace:68 staccato:31 aria:20 basso:15 falsetto:9 refrain:6 crescendo:5 overture:2",rush,turtle
+45,holdout:hard,choir:hard,holdout:hard,15,167850,67225,"grunt:122 tankbuster:43 flak_track:39 hornet:33 bulldog:22 mule:6 thumper:6 patch:2 homestead:2","grace:52 staccato:25 basso:11 refrain:8 crescendo:4 falsetto:3 aria:1 overture:1",balanced,rush
+46,holdout:hard,choir:hard,holdout:hard,15.8,166400,88400,"grunt:105 tankbuster:61 bulldog:49 hornet:31 flak_track:14 mule:6 thumper:4 patch:2","grace:37 staccato:29 basso:11 refrain:10 aria:9 crescendo:1 overture:1",rush,rush
+47,holdout:hard,choir:hard,choir:hard,15.8,105825,204525,"grunt:61 tankbuster:42 hornet:16 bulldog:15 mule:8 flak_track:7 thumper:6 homestead:4 patch:3 ironclad:1","grace:111 staccato:82 aria:41 basso:39 crescendo:11 falsetto:10 requiem:8 refrain:6 overture:4",tech,tech
+48,holdout:hard,choir:hard,choir:hard,10.3,71050,104300,"grunt:33 tankbuster:33 bulldog:9 hornet:8 mule:7 thumper:3 homestead:3 patch:2","grace:78 staccato:25 aria:19 basso:13 crescendo:7 refrain:6 falsetto:5 requiem:3 overture:2",tech,raider
+49,holdout:hard,choir:hard,choir:hard,12.5,90325,133275,"grunt:48 tankbuster:30 hornet:13 mule:12 bulldog:10 thumper:4 patch:3 homestead:3 flak_track:1","grace:90 staccato:39 aria:23 basso:20 falsetto:15 refrain:7 crescendo:6 requiem:4 overture:2",turtle,tech
+50,holdout:hard,choir:hard,choir:hard,10.3,60650,112800,"grunt:36 tankbuster:26 mule:10 hornet:9 bulldog:4 thumper:4 patch:2 homestead:1","grace:76 staccato:32 basso:24 aria:19 crescendo:7 refrain:6 falsetto:4 requiem:2 overture:2",turtle,raider
+51,holdout:hard,choir:hard,choir:hard,9.5,70025,95010,"grunt:52 tankbuster:19 hornet:14 bulldog:13 mule:6 patch:2 homestead:2 thumper:1","grace:73 staccato:22 basso:16 aria:13 refrain:7 falsetto:6 crescendo:3 requiem:2 overture:1",balanced,turtle
+52,holdout:hard,choir:hard,choir:hard,13.5,62700,178500,"grunt:49 tankbuster:25 bulldog:12 mule:8 hornet:7 thumper:3 patch:2 flak_track:1 homestead:1","grace:103 staccato:69 basso:39 aria:36 crescendo:14 falsetto:12 refrain:6 requiem:3 overture:2",turtle,tech
+53,holdout:hard,choir:hard,holdout:hard,8.7,69325,31825,"grunt:43 tankbuster:31 bulldog:17 hornet:13 mule:6 thumper:4 patch:2","grace:27 staccato:17 refrain:8 basso:4",rush,turtle
+54,holdout:hard,choir:hard,choir:hard,13,73950,156215,"grunt:58 tankbuster:25 bulldog:12 hornet:10 mule:7 thumper:5 flak_track:2 patch:2 homestead:2","grace:91 staccato:54 basso:40 aria:31 crescendo:9 refrain:6 falsetto:3 overture:3 requiem:2",turtle,raider
+55,holdout:hard,choir:hard,choir:hard,15.5,96825,165875,"grunt:69 tankbuster:29 bulldog:19 hornet:19 mule:8 flak_track:8 thumper:3 patch:2 homestead:2 ironclad:1","grace:112 staccato:55 basso:43 aria:32 crescendo:12 refrain:6 falsetto:4 requiem:3 overture:2",raider,raider
+56,holdout:hard,choir:hard,holdout:hard,12.5,118010,82100,"grunt:70 tankbuster:46 bulldog:26 hornet:24 flak_track:10 thumper:7 mule:6 ironclad:3 patch:2 homestead:1","grace:52 staccato:22 basso:15 aria:10 refrain:8 overture:3 crescendo:1",raider,balanced
+57,holdout:hard,choir:hard,choir:hard,13.7,87825,154675,"grunt:57 tankbuster:32 bulldog:12 hornet:10 mule:8 homestead:3 flak_track:2 thumper:2 patch:2","grace:107 basso:38 staccato:36 aria:34 falsetto:20 refrain:8 crescendo:6 overture:1",turtle,rush
+58,holdout:hard,choir:hard,choir:hard,8.2,41000,63215,"grunt:26 tankbuster:18 mule:7 bulldog:3 hornet:3 patch:2 thumper:1 homestead:1","grace:49 staccato:26 basso:15 refrain:7 aria:6 crescendo:5 falsetto:1",raider,rush
+59,holdout:hard,choir:hard,holdout:hard,12.3,140400,77000,"grunt:87 tankbuster:54 bulldog:37 hornet:30 mule:6 thumper:6 ironclad:4 patch:2 homestead:2","grace:24 staccato:24 refrain:9 basso:6 aria:1 overture:1",balanced,raider
+60,holdout:hard,choir:hard,choir:hard,15.2,142425,180365,"grunt:104 tankbuster:42 bulldog:29 hornet:27 mule:10 flak_track:9 thumper:5 patch:4 homestead:3 ironclad:1","grace:114 staccato:68 basso:45 aria:33 falsetto:12 refrain:9 crescendo:8 requiem:2 overture:2",balanced,tech
+61,holdout:hard,choir:hard,choir:hard,11.7,68125,141150,"grunt:44 tankbuster:26 bulldog:13 hornet:10 mule:6 flak_track:6 patch:2 homestead:1","grace:106 staccato:35 basso:31 aria:30 crescendo:12 refrain:6 falsetto:6 requiem:1 overture:1",turtle,balanced
+62,holdout:hard,choir:hard,choir:hard,22.3,216225,273470,"grunt:158 tankbuster:71 hornet:53 bulldog:50 flak_track:39 mule:10 thumper:7 patch:3 homestead:3 ironclad:1","grace:174 staccato:83 aria:57 basso:55 falsetto:12 crescendo:12 refrain:11 requiem:9 overture:6",balanced,tech
+63,holdout:hard,choir:hard,choir:hard,10.5,55420,108145,"grunt:44 tankbuster:21 bulldog:10 mule:6 hornet:5 thumper:2 patch:2 homestead:2","grace:65 staccato:43 basso:25 aria:18 crescendo:8 refrain:6 falsetto:3 requiem:1 overture:1",balanced,balanced
+64,holdout:hard,choir:hard,choir:hard,10,70825,108475,"grunt:49 tankbuster:29 bulldog:15 hornet:14 mule:8 thumper:5 patch:2","grace:68 staccato:37 aria:18 basso:17 falsetto:13 refrain:7 crescendo:4 requiem:1 overture:1",rush,turtle
+65,holdout:hard,choir:hard,choir:hard,14,84155,179900,"grunt:45 tankbuster:33 bulldog:12 hornet:11 mule:8 homestead:3 flak_track:2 thumper:2 patch:2 ironclad:1","grace:88 staccato:65 basso:34 aria:28 falsetto:13 crescendo:7 refrain:6 overture:3 requiem:2",tech,tech
+66,holdout:hard,choir:hard,choir:hard,15.3,124625,166760,"grunt:56 tankbuster:48 hornet:21 bulldog:16 mule:14 flak_track:3 patch:3 homestead:3 thumper:2 ironclad:1","grace:131 staccato:39 basso:38 aria:35 crescendo:9 refrain:8 falsetto:8 requiem:4 overture:2",balanced,balanced
+67,holdout:hard,choir:hard,choir:hard,20.8,205600,222050,"grunt:141 tankbuster:86 hornet:45 bulldog:41 flak_track:30 mule:12 thumper:5 patch:3 ironclad:3 homestead:2","grace:163 staccato:59 aria:59 basso:52 falsetto:15 crescendo:13 refrain:9 requiem:5 overture:1",raider,raider
+68,holdout:hard,choir:hard,choir:hard,20,186025,198850,"grunt:91 tankbuster:76 hornet:33 bulldog:27 mule:15 flak_track:15 homestead:6 ironclad:5 patch:3 thumper:2","grace:107 staccato:59 aria:52 basso:43 falsetto:32 refrain:7 crescendo:6 requiem:3 overture:2",tech,balanced
+69,holdout:hard,choir:hard,choir:hard,8,48600,79065,"grunt:35 tankbuster:20 mule:7 hornet:7 bulldog:5 patch:4 thumper:2 homestead:1","grace:56 staccato:25 basso:20 aria:9 refrain:6 falsetto:2 crescendo:2 overture:2",balanced,balanced
+70,holdout:hard,choir:hard,holdout:hard,16.5,184250,74410,"grunt:107 tankbuster:64 bulldog:38 hornet:31 flak_track:11 thumper:11 mule:6 ironclad:3 patch:2 homestead:2","grace:54 staccato:22 basso:11 refrain:9 aria:6 crescendo:3 overture:3",balanced,balanced
+71,holdout:hard,choir:hard,choir:hard,10.7,59785,108825,"grunt:49 tankbuster:15 bulldog:13 hornet:10 mule:6 flak_track:2 thumper:2 patch:2 homestead:1","grace:73 staccato:29 basso:26 aria:20 refrain:7 crescendo:6 requiem:1 overture:1",raider,turtle
+72,holdout:hard,choir:hard,holdout:hard,7.2,50825,34825,"grunt:51 tankbuster:13 bulldog:8 hornet:8 mule:6 thumper:4 patch:2 homestead:1","grace:22 staccato:18 refrain:7 falsetto:2 basso:1 crescendo:1 overture:1",balanced,tech
+73,holdout:hard,choir:hard,choir:hard,11.2,81530,103700,"grunt:62 tankbuster:24 bulldog:11 hornet:10 mule:9 thumper:4 patch:4 homestead:3 flak_track:2","grace:83 staccato:29 aria:22 basso:20 crescendo:8 falsetto:7 refrain:6 overture:1",balanced,balanced
+74,holdout:hard,choir:hard,choir:hard,19,105500,221585,"grunt:72 tankbuster:36 hornet:16 mule:10 bulldog:9 homestead:5 thumper:3 patch:3 flak_track:1 ironclad:1","grace:140 staccato:37 aria:31 basso:27 falsetto:17 crescendo:16 refrain:9 requiem:2 overture:1",balanced,turtle
+75,holdout:hard,choir:hard,holdout:hard,9.8,96940,61375,"grunt:59 tankbuster:33 bulldog:22 hornet:15 mule:7 thumper:5 patch:2 ironclad:2 homestead:2","grace:43 staccato:27 refrain:7 basso:6",balanced,balanced
+76,holdout:hard,choir:hard,choir:hard,10.5,78915,102530,"grunt:52 tankbuster:29 bulldog:19 hornet:15 mule:7 thumper:5 patch:2 flak_track:1 homestead:1","grace:73 staccato:31 basso:21 aria:16 refrain:7 crescendo:5 falsetto:3 requiem:2 overture:1",rush,turtle
+77,holdout:hard,choir:hard,choir:hard,12.7,90000,138150,"grunt:54 tankbuster:38 bulldog:13 hornet:10 mule:7 flak_track:5 homestead:4 thumper:2 patch:2 ironclad:1","grace:122 aria:27 falsetto:25 staccato:23 basso:21 crescendo:9 refrain:6 overture:2 requiem:1",tech,balanced
+78,holdout:hard,choir:hard,choir:hard,13.2,74125,147525,"grunt:70 tankbuster:24 bulldog:20 hornet:13 mule:7 thumper:4 patch:2 flak_track:1 homestead:1","grace:95 staccato:49 basso:33 aria:29 falsetto:11 crescendo:8 refrain:6 requiem:3 overture:2",balanced,balanced
+79,holdout:hard,choir:hard,choir:hard,12.5,83265,150800,"grunt:66 tankbuster:21 hornet:18 bulldog:11 mule:7 thumper:4 homestead:3 patch:2 flak_track:1 ironclad:1","grace:86 staccato:61 basso:35 aria:25 crescendo:11 refrain:6 falsetto:6 requiem:2 overture:2",balanced,tech
+80,holdout:hard,choir:hard,choir:hard,9.5,64130,103375,"grunt:46 tankbuster:24 mule:10 bulldog:9 hornet:4 flak_track:2 patch:2 homestead:2 thumper:1","grace:70 staccato:30 basso:26 aria:21 crescendo:9 refrain:6 falsetto:1",tech,rush
+81,holdout:hard,choir:hard,choir:hard,12.2,79225,142245,"grunt:52 tankbuster:25 hornet:14 bulldog:10 mule:8 patch:3 thumper:2 homestead:2 flak_track:1 ironclad:1","grace:108 staccato:34 basso:33 aria:27 falsetto:10 crescendo:10 refrain:6 requiem:2 overture:2",turtle,raider
+82,holdout:hard,choir:hard,choir:hard,11.3,76550,111625,"grunt:57 tankbuster:22 bulldog:16 hornet:16 mule:9 thumper:4 flak_track:2 patch:2 homestead:1","grace:74 staccato:32 basso:24 aria:20 falsetto:7 refrain:6 crescendo:6 requiem:1 overture:1",rush,turtle
+83,holdout:hard,choir:hard,choir:hard,10.7,98185,119700,"grunt:56 tankbuster:33 bulldog:23 hornet:15 mule:6 homestead:3 thumper:2 patch:2","grace:69 staccato:39 basso:35 aria:21 crescendo:7 refrain:6 falsetto:2 overture:1",turtle,turtle
+84,holdout:hard,choir:hard,holdout:hard,13.2,132350,112175,"grunt:117 tankbuster:33 hornet:31 bulldog:27 flak_track:12 thumper:12 mule:6 patch:3 homestead:2","grace:82 staccato:21 aria:17 basso:16 refrain:11 crescendo:4 falsetto:3 overture:3",balanced,turtle
+85,holdout:hard,choir:hard,choir:hard,15.7,83375,153325,"grunt:63 tankbuster:31 bulldog:23 hornet:15 mule:6 flak_track:3 thumper:2 patch:2 homestead:1","grace:104 staccato:41 basso:40 aria:35 crescendo:11 refrain:6 falsetto:3 requiem:2 overture:1",rush,turtle
+86,holdout:hard,choir:hard,choir:hard,12,91850,117825,"grunt:66 tankbuster:31 hornet:19 bulldog:17 mule:7 thumper:3 patch:3 homestead:3 flak_track:1 ironclad:1","grace:76 staccato:37 aria:24 basso:16 falsetto:11 crescendo:9 refrain:8 requiem:1 overture:1",raider,turtle
+87,holdout:hard,choir:hard,holdout:hard,8.8,76300,51800,"grunt:46 tankbuster:32 hornet:16 bulldog:15 mule:6 flak_track:4 thumper:4 patch:2 homestead:1","grace:44 staccato:17 basso:8 refrain:7 crescendo:6 aria:4",rush,rush
+88,holdout:hard,choir:hard,choir:hard,13,60675,132905,"grunt:41 tankbuster:28 bulldog:11 mule:10 hornet:6 thumper:3 patch:1 homestead:1","grace:83 basso:39 staccato:38 aria:25 refrain:8 crescendo:8 falsetto:1 overture:1",tech,rush
+89,holdout:hard,choir:hard,holdout:hard,18.8,229500,139645,"grunt:133 tankbuster:76 bulldog:51 hornet:45 flak_track:12 thumper:10 mule:7 ironclad:6 patch:2 homestead:2","grace:62 staccato:33 aria:18 basso:12 refrain:10 falsetto:6 crescendo:2 requiem:2 overture:2",turtle,tech
+90,holdout:hard,choir:hard,choir:hard,11.3,78025,121275,"grunt:58 tankbuster:31 hornet:16 bulldog:13 mule:6 flak_track:6 thumper:4 patch:3 ironclad:1 homestead:1","grace:80 staccato:34 basso:29 aria:24 refrain:6 falsetto:5 crescendo:5 overture:2 requiem:1",balanced,raider
+91,holdout:hard,choir:hard,choir:hard,13.2,111975,166825,"grunt:70 tankbuster:37 bulldog:21 hornet:17 mule:9 thumper:4 flak_track:3 homestead:3 patch:2 ironclad:1","grace:89 staccato:64 basso:35 aria:29 falsetto:8 crescendo:8 refrain:7 requiem:4 overture:3",balanced,tech
+92,holdout:hard,choir:hard,choir:hard,9.2,51475,91000,"grunt:30 tankbuster:23 bulldog:10 mule:7 hornet:5 patch:2 thumper:1 homestead:1","grace:63 staccato:26 basso:21 aria:13 crescendo:9 refrain:6 overture:2",balanced,balanced
+93,holdout:hard,choir:hard,holdout:hard,16.3,205925,118625,"grunt:155 tankbuster:63 hornet:40 bulldog:36 flak_track:30 thumper:13 mule:7 ironclad:3 patch:2 homestead:2","grace:54 staccato:33 aria:16 refrain:9 basso:7 crescendo:4 overture:4 falsetto:2 requiem:2",turtle,tech
+94,holdout:hard,choir:hard,choir:hard,8.3,51450,65275,"grunt:41 tankbuster:18 bulldog:9 mule:6 hornet:6 patch:2 thumper:1 homestead:1","grace:52 staccato:21 basso:13 aria:9 crescendo:7 refrain:6",raider,rush
+95,holdout:hard,choir:hard,choir:hard,12.5,81895,141485,"grunt:54 tankbuster:29 mule:11 hornet:11 bulldog:5 patch:3 homestead:3 thumper:2","grace:84 basso:42 staccato:41 aria:31 crescendo:10 refrain:6 falsetto:2 overture:2",tech,balanced
+96,holdout:hard,choir:hard,choir:hard,13.5,87200,156900,"grunt:62 tankbuster:35 bulldog:16 hornet:12 mule:6 thumper:5 patch:2 homestead:2 ironclad:1","grace:95 staccato:59 basso:37 aria:30 crescendo:13 refrain:7 falsetto:3 requiem:3 overture:1",raider,tech
+97,holdout:hard,choir:hard,choir:hard,11.7,62825,126645,"grunt:41 tankbuster:29 bulldog:14 hornet:10 mule:7 thumper:3 patch:2 homestead:1","grace:84 staccato:43 basso:30 aria:21 crescendo:9 refrain:7 falsetto:7 overture:1",balanced,turtle
+98,holdout:hard,choir:hard,choir:hard,12.8,132450,150275,"grunt:69 tankbuster:52 bulldog:29 hornet:26 mule:8 thumper:6 flak_track:5 patch:3 ironclad:2 homestead:1","grace:103 staccato:52 basso:35 aria:27 crescendo:12 falsetto:10 refrain:6 requiem:1 overture:1",turtle,turtle
+99,holdout:hard,choir:hard,holdout:hard,16.5,169235,133875,"grunt:108 tankbuster:50 bulldog:39 hornet:34 flak_track:17 thumper:10 mule:8 homestead:3 patch:2 ironclad:1","grace:93 staccato:32 aria:26 basso:22 refrain:12 falsetto:4 overture:4 crescendo:2",turtle,balanced
+100,holdout:hard,choir:hard,choir:hard,13.3,125025,150075,"grunt:78 tankbuster:43 bulldog:26 hornet:22 mule:9 flak_track:7 thumper:3 homestead:3 patch:2","grace:112 staccato:35 basso:31 aria:31 falsetto:17 crescendo:9 refrain:6 requiem:2 overture:2",balanced,balanced

@@ -248,7 +248,7 @@ export function compileRules(raw: RawData): Rules {
   for (const f of factionDefs) {
     const fi = factionIndex(f.id);
     for (const s of f.structures) {
-      const rule = compileStructure(s, fi, structures.length, fx, ticks, weapon);
+      const rule = compileStructure(s, fi, structures.length, fx, ticks, weapon, raw.constants.structureHpPct);
       structureIndex.set(s.id, rule.index);
       structures.push(rule);
     }
@@ -354,6 +354,7 @@ function compileStructure(
   fx: (n: number) => number,
   ticks: (n: number) => number,
   weapon: (w: WeaponDef | undefined) => WeaponRule | null,
+  hpPct: number,
 ): StructureRule {
   return {
     kind: 'structure',
@@ -368,7 +369,7 @@ function compileStructure(
     tier: s.tier,
     cost: s.cost,
     buildTicks: ticks(s.buildTime),
-    hp: s.hp,
+    hp: Math.round((s.hp * hpPct) / 100),
     power: s.power,
     footprintW: s.footprint[0],
     footprintH: s.footprint[1],

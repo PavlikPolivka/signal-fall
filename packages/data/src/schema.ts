@@ -219,6 +219,8 @@ export const constantsSchema = z
     echoCellCap: z.number().int().positive(),
     echoRegrowSeconds: z.number().positive(),
     lowPowerSpeedPct: pct,
+    /** Every structure's hit points, percent of its listed value (bases hold while help arrives). */
+    structureHpPct: z.number().int().min(10).max(1000),
     sellRefundPct: pct,
     repairCostPct: pct,
     repairHpPctPerSecond: pct,

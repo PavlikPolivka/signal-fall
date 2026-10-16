@@ -799,6 +799,26 @@ table.matrix td.lo {
   background: rgba(239, 68, 68, 0.12);
   color: var(--bad);
 }
+table.md-table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+table.md-table th,
+table.md-table td {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+.changes-dialog {
+  width: min(760px, 100%);
+}
+.changes h2 {
+  font-size: 15px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
 .controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1538,6 +1558,9 @@ table.matrix td.lo {
 }
 .home-actions .start {
   margin-top: 0;
+  /* Same size as Multiplayer (beats `.setup .start`). */
+  padding: 14px 18px;
+  font-size: 18px;
 }
 .home-actions .mp-btn {
   background: rgba(10, 12, 18, 0.6);
@@ -1647,7 +1670,16 @@ table.matrix td.lo {
 }
 .home .setup-links {
   justify-content: flex-start;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  width: max-content;
   gap: 4px 16px;
+}
+@media (max-width: 700px) {
+  .home .setup-links {
+    flex-wrap: wrap;
+    width: auto;
+  }
 }
 .setup-map {
   overflow: hidden;
@@ -1832,4 +1864,22 @@ table.matrix td.lo {
   background: #fff;
   border-color: #dadce0;
   color: #1f1f1f;
+}
+
+.compare-table th[class^='f-'] {
+  color: var(--accent);
+}
+.compare-table tbody th {
+  text-align: left;
+  white-space: nowrap;
+  color: var(--muted, #9aa);
+}
+.compare section {
+  margin-top: 8px;
+}
+.balance td.good {
+  color: var(--good);
+}
+.balance td.bad {
+  color: var(--bad);
 }

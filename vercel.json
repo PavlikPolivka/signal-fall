@@ -43,5 +43,10 @@
       "destination": "/play/",
       "permanent": true
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "balance-data": false
+    }
+  }
 }

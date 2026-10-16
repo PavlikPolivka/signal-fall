@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FX_ONE, FX_SHIFT } from '../src/fx';
 import { HARVEST, KIND } from '../src/entities';
 import { createMatch, grantBase, testMap } from '../src/match';
-import { placementError, worldPlacementView } from '../src/placement';
+import { isFarSeed, placementError, worldPlacementView } from '../src/placement';
 import type { Sim } from '../src/sim';
 import { spawnStructure, spawnUnit } from '../src/spawn';
 import { computeFacts } from '../src/systems/economy';
@@ -133,7 +133,39 @@ describe('deploy and build', () => {
     const bell = rules.structures[structure('bell')]!;
     expect(placementError(view, 0, choir, bell, 30, 30)).toBe('noGrowth');
     w.map.echo[33 * 40 + 33] = 5;
-    expect(placementError(worldPlacementView(w, 0), 0, choir, bell, 30, 30)).toBeNull();
+    // Echo far from every own structure: a far seed needs an own unit near the spot.
+    expect(placementError(worldPlacementView(w, 0), 0, choir, bell, 30, 30)).toBe('noGrowth');
+    spawnUnit(w, unit('grunt'), 0, 32 * FX_ONE, 32 * FX_ONE);
+    const seeded = worldPlacementView(w, 0);
+    expect(placementError(seeded, 0, choir, bell, 30, 30)).toBeNull();
+    expect(isFarSeed(seeded, 0, choir, bell, 30, 30)).toBe(true);
+    // Echo close to an own structure grows as usual.
+    w.map.echo[12 * 40 + 12] = 5;
+    expect(placementError(view, 0, choir, bell, 10, 10)).toBeNull();
+    expect(isFarSeed(view, 0, choir, bell, 10, 10)).toBe(false);
+  });
+
+  it('a far seed starts weak and grows to full strength', () => {
+    const sim = makeSim({ size: 40 });
+    const w = sim.world;
+    const p = w.players[1]!; // Choir
+    p.credits = 10000;
+    w.map.echo[33 * 40 + 33] = 5;
+    spawnUnit(w, unit('grunt'), 1, 32 * FX_ONE, 32 * FX_ONE);
+    const bell = structure('bell');
+    const q = p.build[0]!;
+    q.item = bell;
+    q.ready = true;
+    cmd(sim, 1, { type: 'place', category: 'structures', tx: 30, ty: 30 });
+    sim.step();
+    const e = w.entities;
+    let s = -1;
+    for (let i = 0; i < e.high; i++) if (e.alive[i] === 1 && e.kind[i] === KIND.structure && e.type[i] === bell) s = i;
+    expect(s).toBeGreaterThanOrEqual(0);
+    expect(e.hp[s]!).toBeLessThan(e.maxHp[s]!);
+    for (let i = 0; i < 60 * w.rules.constants.tickRate; i++) sim.step();
+    expect(e.hp[s]).toBe(e.maxHp[s]);
+    expect(e.repairing[s]).toBe(0);
   });
 });
 

@@ -25,13 +25,6 @@ jobs:
         run: pnpm headless run --seed 1 --ticks 10000
       - name: Sim benchmark
         run: pnpm headless bench
-      - name: AI acceptance (Hard beats Easy in >= 90% of 200 matches)
-        run: pnpm headless balance --matches 200 --size M --min-win 90 --out balance-hard-easy.csv
-      - name: Faction balance (every pairing 45-55% over 300 Hard matches)
-        run: |
-          pnpm headless balance --a holdout:hard --b halcyon:hard --matches 300 --min-win 45 --max-win 55 --out balance-holdout-halcyon.csv
-          pnpm headless balance --a holdout:hard --b choir:hard --matches 300 --min-win 45 --max-win 55 --out balance-holdout-choir.csv
-          pnpm headless balance --a halcyon:hard --b choir:hard --matches 300 --min-win 45 --max-win 55 --out balance-halcyon-choir.csv
       - name: Build and initial-load size budget (15 MB)
         run: pnpm build && pnpm size
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
@@ -42,8 +35,42 @@ jobs:
           name: playwright
           path: |
             test-results/
-            balance-*.csv
           retention-days: 7
+
+  balance:
+    # Every faction pairing, 300 Hard AI matches each, plus Hard vs Easy. The results go to the
+    # balance-data branch (main only), where the game's Codex reads them, whether or not they pass.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Balance (each pairing 45-55%, Hard beats Easy >= 90%)
+        id: balance
+        run: pnpm -s headless balance-report --out "$GITHUB_WORKSPACE/balance.json" --csv "$GITHUB_WORKSPACE"
+      - name: Publish results for the game
+        if: always() && github.ref == 'refs/heads/main' && hashFiles('balance.json') != ''
+        run: |
+          mkdir publish && cp balance.json publish/
+          echo '{ "git": { "deploymentEnabled": false } }' > publish/vercel.json
+          cd publish
+          git init -q -b balance-data
+          git add -A && git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "Balance for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" balance-data
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: balance
+          path: |
+            balance.json
+            balance-*.csv
+          retention-days: 14
 
   backend:
     # Supabase stack in Docker: migrations, row level security, the TURN function, and

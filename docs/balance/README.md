@@ -1,15 +1,9 @@
 # Balance
 
-Hard AI vs Hard AI, 300 matches per pairing on medium maps (sides alternate start positions, biomes rotate).
-CI re-runs this and fails outside 45–55%.
-
-| Pairing | Result | A wins |
-|---|---|---|
-| Holdout vs Halcyon | 137–160, 3 draws | 45.7% |
-| Holdout vs Choir | 148–151, 1 draw | 49.3% |
-| Halcyon vs Choir | 155–142, 3 draws | 51.7% |
-
-Hard beats Easy 98.5% (Holdout), 99.5% (Halcyon), 97% (Choir) over 200 matches each.
+The current numbers are published by CI: the `balance` job runs `pnpm -s headless balance-report` (300 Hard
+matches per pairing, plus Hard vs Easy). It fails outside 45–55% or under 90%, and on `main` it pushes
+`balance.json` to the `balance-data` branch, which the game's Codex reads live (Balance tab). The CSVs are in the
+job's artifacts.
 
 ## Tuning log (M7)
 
@@ -27,3 +21,17 @@ Tools: `apps/headless/src/trace.ts` (per-minute economy/army trace), `trace2.ts`
   resonance and bullets glance off it; this tunes Halcyon–Choir and Holdout–Choir without touching Holdout–Halcyon.
 - Reinforcements now fan out to free spots around the rally point; that favored Halcyon's network (Holdout
   fell to 42%), so network self-repair is 2 HP/s (was 3) and the in-network fire-rate bonus 12% (was 15%).
+
+## Economy rework (2026-10-16)
+
+Richer Echo fields, refineries priced above harvesters, AI strategies and expansions. All of these are the same rules for every side.
+
+- The Mule carries 900 a trip (was 700). Holdout went from 22–40% to 47–61% against Halcyon.
+- AI fixes that apply to every faction. The losing AI was found sitting on $9,000–24,000 of unspent credits:
+  - It now builds extra barracks and factories when credits pile up.
+  - Rush keeps its second refinery and builds its radar last, instead of never (Holdout won 0 of 22 games on rush).
+  - It keeps at most two of each support unit. Holdout used to build about 14 Patches a match.
+  - Counter-picks account for shields.
+- Choir far seeds replace the 16-tile reach limit on Echo growth.
+- Measured, not the cause: Choir harvests the same as Holdout through minute 9; its larger totals come from longer games it wins. Kinetic damage against shields at 85% and a Chord nerf made no difference, so both were reverted.
+- Open: Choir wins about 70% against both other factions. In equal-cost tier-3 fights, Basso masses beat vectors; Holdout wins its core duels against Choir but loses whole matches.
