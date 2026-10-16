@@ -1,9 +1,13 @@
 # What's new
 
-## Coming in the next release
+## 2026-10-16 14:46 UTC
 
 - **Halcyon: Uplink.** Select a fork, Halcyon's engineer, and press <kbd>F</kbd>. For 15 seconds it carries a bubble of network coverage with it, so the units around it keep their faster fire, repair and Recompile in the enemy's base. It recharges for 90 seconds.
 - **Halcyon: Jam**, the first support power. Once you have a scan, press <kbd>Q</kbd> (or the new button above the build tabs) and click the map. Enemy weapons in the area fire 20% slower for 5 seconds. It recharges for 90 seconds. Air-gapped Holdout is immune.
+- **Choir: escapes on their own.** A badly hurt Choir unit under fire now phases out or blinks away by itself, for players and the AI alike. You no longer need perfect micro to play Choir.
+- **Choir: Chorus.** Choir units harmonize: each Choir unit within 3 tiles adds 2% damage, up to +6%. Violet threads show who is singing together.
+- **Choir: Awaken**, a support power from the Chord. Press <kbd>Q</kbd> and click an Echo field near your structures: two shard guardians rise from its crystals and fight for 20 seconds. It costs some of the field's crystals and recharges for 2½ minutes.
+- **Energy weapons hit Choir shields harder again:** 160% damage (was 140%).
 - **Easy and Normal AI** no longer use abilities or support powers, like a player who doesn't micro. Hard and Brutal use them all.
 
 ## 2026-10-16 13:19 UTC

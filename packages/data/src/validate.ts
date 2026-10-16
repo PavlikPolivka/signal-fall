@@ -50,13 +50,15 @@ export function validateRaw(raw: RawData): string[] {
       const prev = unitKeys.get(k);
       if (prev) err(where(`hotkey ${k} used by ${prev} and ${u.id}`));
       unitKeys.set(k, u.id);
-      if (!u.requires.includes(PRODUCER[u.tab])) err(where(`unit ${u.id} must require ${PRODUCER[u.tab]}`));
+      if (!u.summoned && !u.requires.includes(PRODUCER[u.tab])) err(where(`unit ${u.id} must require ${PRODUCER[u.tab]}`));
+      if (u.sprite && !f.units.some((o) => o.id === u.sprite)) err(where(`unit ${u.id} borrows art from unknown unit ${u.sprite}`));
       if (u.tier === 3 && !u.requires.includes('tech')) err(where(`tier 3 unit ${u.id} must require tech`));
       if (u.weapon?.targets === 'air' && u.weapon.type !== 'flak') err(where(`air-only weapon on ${u.id} should be flak`));
       if ((u.armor === 'air') !== (u.tab === 'air')) err(where(`unit ${u.id}: air armor iff air tab`));
     }
 
     const unit = (id: string) => f.units.find((u) => u.id === id);
+    if (f.power?.kind === 'awaken' && !unit(f.power.unit)?.summoned) err(where(`Awaken unit ${f.power.unit} must be a summoned unit`));
     const conyard = f.structures.find((s) => s.role === 'conyard');
     const cu = unit(f.constructionUnit);
     const deploy = cu?.abilities.find((a) => a.kind === 'deploy');

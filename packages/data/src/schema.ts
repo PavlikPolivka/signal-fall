@@ -116,6 +116,10 @@ export const unitSchema = z
     abilities: z.array(abilitySchema).default([]),
     requires: z.array(z.enum(ROLES)).default([]),
     role: z.string().min(1),
+    /** Summoned by a power, never trained: not in the build menus or the roster. */
+    summoned: z.boolean().default(false),
+    /** Draw with another unit's art (summoned units have none of their own). */
+    sprite: id.optional(),
   })
   .strict();
 
@@ -182,6 +186,10 @@ export const factionMechanicsSchema = z
     overrideResistPct: pct.default(0),
     shieldRegenDelay: z.number().nonnegative().default(0),
     shieldRegenPerSecond: z.number().int().nonnegative().default(0),
+    /** Chorus: each own unit of this faction within chorusRadius tiles adds this much damage, up to chorusMax units. */
+    chorusPct: pct.default(0),
+    chorusMax: z.number().int().nonnegative().default(0),
+    chorusRadius: z.number().nonnegative().default(0),
   })
   .strict();
 

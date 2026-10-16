@@ -3,7 +3,7 @@ import { FX_ONE } from '../src/fx';
 import { KIND } from '../src/entities';
 import { Sim } from '../src/sim';
 import { spawnStructure, spawnUnit } from '../src/spawn';
-import { cooldownFor, inCoverage } from '../src/systems/faction';
+import { chorusPct, cooldownFor, inCoverage, isPhased } from '../src/systems/faction';
 import { damage } from '../src/systems/combat';
 import { inWeaponRange, isDugIn } from '../src/query';
 import { CREDIT_REASON, FX_EVENT, FX_STRIDE } from '../src/world';
@@ -109,6 +109,37 @@ describe('support powers', () => {
     expect(s2.world.entities.jammedUntil[grunt]).toBe(0);
   });
 
+  it('Awaken needs a Chord and Echo near own structures; two shards rise, cost crystals, and fade after 20 s', () => {
+    const s = sim(CHOIR, HOLDOUT);
+    const w = s.world;
+    const m = w.map;
+    spawnStructure(w, structure('opus'), 0, 2, 2);
+    spawnStructure(w, structure('bell'), 0, 6, 2);
+    spawnStructure(w, structure('chord'), 0, 2, 6);
+    s.run(1);
+    const shards = () => {
+      let n = 0;
+      for (let i = 0; i < w.entities.high; i++) if (w.entities.alive[i] === 1 && w.entities.type[i] === unit('shard') && w.entities.kind[i] === KIND.unit) n++;
+      return n;
+    };
+    for (let y = 24; y <= 26; y++) for (let x = 24; x <= 26; x++) m.echo[y * m.width + x] = 10;
+    cmd(s, 0, { type: 'power', x: at(25), y: at(25) });
+    s.run(1);
+    expect(shards()).toBe(0); // Echo, but far from our structures
+    spawnStructure(w, structure('bell'), 0, 18, 18);
+    cmd(s, 0, { type: 'power', x: at(10), y: at(10) });
+    s.run(1);
+    expect(shards()).toBe(0); // near our base, but no Echo
+    cmd(s, 0, { type: 'power', x: at(25), y: at(25) });
+    s.run(1);
+    expect(shards()).toBe(2);
+    let crystals = 0;
+    for (let y = 24; y <= 26; y++) for (let x = 24; x <= 26; x++) crystals += m.echo[y * m.width + x]!;
+    expect(crystals).toBe(90 - 24);
+    s.run(20 * 21);
+    expect(shards()).toBe(0);
+  });
+
   it('Uplink: a fork projects coverage around itself for a while', () => {
     const s = sim(HALCYON, HOLDOUT);
     const h = spawnUnit(s.world, unit('fork'), 0, at(25), at(25));
@@ -124,6 +155,31 @@ describe('support powers', () => {
 });
 
 describe('active abilities', () => {
+  it('Chorus: Choir units near each other deal more damage, up to four allies', () => {
+    const s = sim(CHOIR, HOLDOUT);
+    const w = s.world;
+    const g = slot(spawnUnit(w, unit('grace'), 0, at(10), at(10)));
+    s.run(10);
+    expect(chorusPct(w, g)).toBe(0);
+    for (let k = 0; k < 6; k++) spawnUnit(w, unit('grace'), 0, at(11), at(9) + k * 300);
+    s.run(10);
+    expect(chorusPct(w, g)).toBe(6);
+  });
+
+  it('autocast: a badly hurt Basso under fire phases out on its own (players too)', () => {
+    const s = sim(CHOIR, HOLDOUT);
+    const w = s.world;
+    const e = w.entities;
+    const b = slot(spawnUnit(w, unit('basso'), 0, at(10), at(10)));
+    s.run(1);
+    e.shields[b] = 0;
+    e.hp[b] = 50;
+    e.lastHitTick[b] = w.tick;
+    s.run(5);
+    expect(isPhased(w, b)).toBe(true);
+  });
+
+
   it('Dig In: sets up, then takes 30% less damage and shoots 1 tile farther; any order packs up', () => {
     const s = sim(HOLDOUT, HALCYON);
     const h = spawnUnit(s.world, unit('grunt'), 0, at(5), at(5));

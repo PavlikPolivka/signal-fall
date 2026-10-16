@@ -141,7 +141,7 @@ const COMPARE: [string, string, string, string][] = [
   ['Units', 'Slow, tough, cost-efficient', 'Fast and fragile', 'Small hulls under regenerating shields'],
   ['Healing', 'Garage bays, Patch, Wrench repair', 'Self-repair inside coverage', 'Shields recharge out of combat; no repair'],
   ['Losses', 'Vehicles turn wrecks into credits as they pass', 'Recompile refunds units lost in coverage', 'Shields absorb the first hits'],
-  ['Special', 'Dig In; Override holds them half as long', 'Uplink, Jam (Q) and Override', 'Blink and phase'],
+  ['Special', 'Dig In; Override holds them half as long', 'Uplink, Jam (Q) and Override', 'Blink, phase, Chorus and Awaken (Q)'],
   ['Fights best', 'Holding ground, slow pushes', 'On its own network', 'Hit-and-run, flanks'],
   ['Struggles', 'Being outmaneuvered', 'Far from its network', 'Long, sustained fights'],
 ];
@@ -185,8 +185,9 @@ const IN_A_MATCH: Record<string, { opening: string; examples: string[]; against:
     examples: [
       'A Glissando scouts a far field and stays there: with your unit beside it, the field can take a far seed. The new Coda grows from a quarter of its strength, so keep the Glissando around until it has.',
       'Graces blink onto enemy artillery, kill it and blink out. Their shields recharge before the next raid.',
-      'A Basso about to die phases out, comes back a moment later, and its shields refill while it waits.',
-      'A Chord beside a field makes the Echo there regrow twice as fast. Sit on it and the field almost never runs dry.',
+      'A Basso about to die phases out on its own, comes back a moment later, and its shields refill while it waits.',
+      'A Chord beside a field makes the Echo there regrow faster, and unlocks Awaken: an enemy Mule creeps onto your field, you press Q and click, and two shards rise out of the crystals around it.',
+      'Keep the army together: every Choir unit near another one hits 2% harder (up to +6%). Spread out against artillery, bunch up for the charge.',
     ],
     against: [
       ['vs Holdout', 'Bullets glance off your shields: hit fast and leave before the Patches and Garages repair the damage.'],

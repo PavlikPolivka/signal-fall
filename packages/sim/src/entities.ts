@@ -124,6 +124,8 @@ export class Entities {
   jammedUntil!: Int32Array;
   /** Uplink: projects network coverage around itself until this tick. */
   uplinkUntil!: Int32Array;
+  /** Chorus: own units of the same faction nearby (capped), each adding damage. */
+  chorus!: Uint8Array;
   /** Overridden units: owner to return to, -1 if not overridden. */
   homeOwner!: Int8Array;
   /** Overridden units: tick control returns to `homeOwner`. */
@@ -196,6 +198,7 @@ export class Entities {
     this.dugInAt = re(this.dugInAt, (n) => new Int32Array(n));
     this.jammedUntil = re(this.jammedUntil, (n) => new Int32Array(n));
     this.uplinkUntil = re(this.uplinkUntil, (n) => new Int32Array(n));
+    this.chorus = re(this.chorus, (n) => new Uint8Array(n));
     this.homeOwner = re(this.homeOwner, (n) => new Int8Array(n));
     this.overrideUntil = re(this.overrideUntil, (n) => new Int32Array(n));
     this.capacity = capacity;
@@ -247,6 +250,7 @@ export class Entities {
     this.dugInAt[slot] = 0;
     this.jammedUntil[slot] = 0;
     this.uplinkUntil[slot] = 0;
+    this.chorus[slot] = 0;
     this.homeOwner[slot] = -1;
     this.overrideUntil[slot] = 0;
     this.orders[slot] = [];
@@ -330,6 +334,7 @@ export class Entities {
       w.push(this.dugInAt[s]!);
       w.push(this.jammedUntil[s]!);
       w.push(this.uplinkUntil[s]!);
+      w.push(this.chorus[s]!);
       w.push(this.homeOwner[s]!);
       w.push(this.overrideUntil[s]!);
       const orders = this.orders[s]!;

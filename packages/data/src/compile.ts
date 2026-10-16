@@ -85,6 +85,10 @@ export interface UnitRule {
   requires: Role[];
   /** One-line role description for the UI. */
   role: string;
+  /** Summoned by a power, never trained. */
+  summoned: boolean;
+  /** Unit id whose art draws this unit. */
+  sprite: string;
 }
 
 export interface StructureRule {
@@ -147,6 +151,9 @@ export interface FactionRule {
   overrideResistPct: number;
   shieldRegenDelay: number;
   shieldRegenPerSecond: number;
+  chorusPct: number;
+  chorusMax: number;
+  chorusRadius: number;
   /** Support power, if the faction has one. */
   power: SupportPowerRule | null;
   structures: number[];
@@ -300,13 +307,16 @@ export function compileRules(raw: RawData): Rules {
       overrideResistPct: m.overrideResistPct,
       shieldRegenDelay: m.shieldRegenDelay > 0 ? ticks(m.shieldRegenDelay) : 0,
       shieldRegenPerSecond: m.shieldRegenPerSecond,
+      chorusPct: m.chorusPct,
+      chorusMax: m.chorusMax,
+      chorusRadius: fx(m.chorusRadius),
       power: !f.power
         ? null
         : f.power.kind === 'jam'
           ? { ...f.power, radius: fx(f.power.radius), duration: ticks(f.power.duration), cooldown: ticks(f.power.cooldown) }
           : { ...f.power, unit: unitRef(f.power.unit), duration: ticks(f.power.duration), cooldown: ticks(f.power.cooldown), reach: fx(f.power.reach) },
       structures: structures.filter((s) => s.faction === fi).map((s) => s.index),
-      units: units.filter((u) => u.faction === fi).map((u) => u.index),
+      units: units.filter((u) => u.faction === fi && !u.summoned).map((u) => u.index),
     };
   });
 
@@ -435,5 +445,7 @@ function compileUnit(
     abilities: u.abilities.map(ability),
     requires: u.requires,
     role: u.role,
+    summoned: u.summoned,
+    sprite: u.sprite ?? u.id,
   };
 }

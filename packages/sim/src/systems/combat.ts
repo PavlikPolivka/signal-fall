@@ -4,7 +4,7 @@ import { KIND } from '../entities';
 import { armorOf, canTarget, costOf, digInOf, distToBody, inWeaponRange, isAir, isDugIn, teamOf, weaponOf } from '../query';
 import { removeEntity } from '../spawn';
 import { spawnWreck } from './economy';
-import { cooldownFor, isPhased, recompileRefund, upgradePct } from './faction';
+import { chorusPct, cooldownFor, isPhased, recompileRefund, upgradePct } from './faction';
 import { FX_EVENT, pushFx, type Projectile, type World } from '../world';
 
 const ENERGY = DAMAGE.indexOf('energy');
@@ -53,7 +53,7 @@ export function weaponSystem(world: World): void {
       target: e.handle(t),
       x: e.x[t]!,
       y: e.y[t]!,
-      damage: pct(weapon.damage, 100 + vetPct * e.rank[s]! + upgradePct(world, e.owner[s]!, 'damagePct')),
+      damage: pct(weapon.damage, 100 + vetPct * e.rank[s]! + upgradePct(world, e.owner[s]!, 'damagePct') + chorusPct(world, s)),
       type: weapon.type,
       splash: weapon.splash,
       hitsGround: weapon.targetsGround,

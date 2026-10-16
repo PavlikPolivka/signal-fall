@@ -432,7 +432,7 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
                   title={state.ruleOf(h).name}
                   onClick={() => state.select([h])}
                 >
-                  <Icon state={state} faction={state.rules.factions[state.ruleOf(h).faction]!.id} id={state.ruleOf(h).id} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
+                  <Icon state={state} faction={state.rules.factions[state.ruleOf(h).faction]!.id} id={artId(state.ruleOf(h))} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
                   {!state.art.has(state.rules.factions[state.ruleOf(h).faction]!.id) && <span>{state.ruleOf(h).name.slice(0, 3)}</span>}
                   <i style={{ width: `${hp * 100}%` }} />
                 </button>
@@ -473,9 +473,12 @@ const ABILITY_NAMES: Record<string, [string, string]> = {
   digIn: ['Dig In', 'Entrench behind sandbags: takes 30% less damage and shoots 1 tile farther, but cannot move. Any order packs up'],
 };
 
+/** Which art draws a unit or structure (summoned units borrow another unit's). */
+const artId = (rule: { kind: string; id: string; sprite?: string }) => (rule.kind === 'unit' && rule.sprite ? rule.sprite : rule.id);
+
 const POWER_INFO: Record<string, string> = {
   jam: 'Jam: enemy weapons in the area fire 20% slower for 5 s. Holdout is air-gapped and immune',
-  awaken: 'Awaken: crystals of an Echo field rise as guardians that fight for you for 30 s',
+  awaken: 'Awaken: two shards rise from an Echo field near your structures and fight for you for 20 s',
 };
 
 /** The faction's support power: name, cooldown fill, Q; click (or Q) then click the map. */
@@ -586,7 +589,7 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
   return (
     <div class="one">
       <div class="portrait" style={{ '--team': hex(TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!) }}>
-        <Icon state={state} faction={faction.id} id={rule.id} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
+        <Icon state={state} faction={faction.id} id={artId(rule)} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
       </div>
       <div>
         <div class={`title ${faction.monospaceNames ? 'mono' : ''}`}>

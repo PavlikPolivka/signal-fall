@@ -9,8 +9,12 @@
     "placement": "growth",
     "overrideResistPct": 50,
     "shieldRegenDelay": 7,
-    "shieldRegenPerSecond": 8
+    "shieldRegenPerSecond": 8,
+    "chorusPct": 2,
+    "chorusMax": 3,
+    "chorusRadius": 3
   },
+  "power": { "kind": "awaken", "name": "Awaken", "requires": "special", "unit": "shard", "count": 2, "duration": 20, "cooldown": 150, "echoCost": 24, "reach": 3 },
   "structures": [
     { "id": "opus", "name": "Opus", "role": "conyard", "description": "The Opus. Grows every structure; Choir structures grow slower but cost less.", "tier": 1, "cost": 2800, "buildTime": 24, "hp": 2400, "power": 10, "footprint": [3, 3], "sight": 6, "growthRadius": 8 },
     {"id": "bell", "name": "Bell", "role": "power", "description": "Resonance bell. Produces power.", "key": "P", "category": "structures", "tier": 1, "cost": 270, "buildTime": 10, "hp": 700, "power": 100, "footprint": [2, 2], "sight": 4, "growthRadius": 4},
@@ -37,6 +41,7 @@
     { "id": "crescendo", "name": "Crescendo", "key": "C", "tab": "vehicles", "tier": 2, "armor": "medium", "cost": 1045, "buildTime": 11, "hp": 120, "shields": 120, "speed": 1.6, "sight": 6, "radius": 0.5, "role": "Artillery", "requires": ["factory", "radar"], "weapon": { "damage": 85, "type": "siege", "range": 10, "minRange": 3, "cooldown": 3.5, "targets": "ground", "splash": 1, "projectileSpeed": 8 } },
     { "id": "aria", "name": "Aria", "key": "A", "tab": "air", "tier": 2, "armor": "air", "cost": 1100, "buildTime": 12, "hp": 150, "shields": 150, "speed": 3.8, "sight": 8, "radius": 0.5, "role": "Air harass, blink", "requires": ["airfield"], "weapon": { "damage": 22, "type": "energy", "range": 4.5, "cooldown": 0.6, "targets": "ground" }, "abilities": [{ "kind": "blink", "range": 5, "cooldown": 14 }] },
     { "id": "requiem", "name": "Requiem", "key": "Q", "tab": "vehicles", "tier": 3, "armor": "heavy", "cost": 2420, "buildTime": 20, "hp": 1000, "shields": 1000, "speed": 1.2, "sight": 7, "radius": 0.9, "role": "Sweeping beam, area damage", "requires": ["factory", "tech"], "weapon": { "damage": 70, "type": "energy", "range": 6.5, "cooldown": 1.6, "targets": "ground", "splash": 1.2 }, "abilities": [{ "kind": "sweep", "width": 1.2 }] },
+    { "id": "shard", "name": "Shard", "key": "K", "tab": "infantry", "tier": 1, "armor": "light", "cost": 150, "buildTime": 1, "hp": 70, "shields": 60, "speed": 1.8, "sight": 6, "radius": 0.3, "role": "Echo guardian, risen by Awaken for 20 s", "weapon": { "damage": 13, "type": "energy", "range": 4.5, "cooldown": 0.6, "targets": "both" }, "summoned": true, "sprite": "grace" },
     { "id": "overture", "name": "Overture", "key": "O", "tab": "vehicles", "tier": 1, "armor": "heavy", "cost": 2800, "buildTime": 20, "hp": 700, "shields": 700, "speed": 1.0, "sight": 6, "radius": 0.9, "role": "Construction unit: grows a new base", "requires": ["factory", "refinery"], "abilities": [{ "kind": "deploy", "into": "opus" }] }
   ]
 }

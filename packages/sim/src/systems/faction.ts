@@ -2,6 +2,7 @@ import { FX_ONE, FX_SHIFT, idiv, ilength, pct } from '../fx';
 import { KIND, NO_ENTITY } from '../entities';
 import { inBounds } from '../map';
 import { teamOf } from '../query';
+import { removeEntity, spawnUnit } from '../spawn';
 import { CREDIT_REASON, FX_EVENT, pushFx, type World } from '../world';
 import type { PlayerFacts } from './economy';
 import { requirementsMet } from './economy';
@@ -159,6 +160,16 @@ function jamSlowPct(world: World): number {
   return 0;
 }
 
+/** Awaken works on fields within this distance of one of the caster's structures. */
+export const AWAKEN_HOME_RANGE = 14 * FX_ONE;
+
+export function nearOwnStructure(world: World, player: number, x: number, y: number, range: number): boolean {
+  const e = world.entities;
+  for (let s = 0; s < e.high; s++)
+    if (e.alive[s] === 1 && e.kind[s] === KIND.structure && e.owner[s] === player && ilength(e.x[s]! - x, e.y[s]! - y) <= range) return true;
+  return false;
+}
+
 /** Does the player own a working (powered) structure of this role? */
 function hasRole(world: World, player: number, role: string): boolean {
   const e = world.entities;
@@ -201,7 +212,32 @@ export function usePower(world: World, player: number, x: number, y: number): bo
       if (ilength(e.x[s]! - x, e.y[s]! - y) <= power.radius) e.jammedUntil[s] = world.tick + power.duration;
     });
     pushFx(world, FX_EVENT.power, 1, power.radius, player, x, y, 0, 0);
-  } else return false;
+  } else {
+    // Awaken: needs Echo near the point, on our own ground; crystals rise as guardians for a while.
+    if (!nearOwnStructure(world, player, x, y, AWAKEN_HOME_RANGE)) return false;
+    const m = world.map;
+    const r = power.reach >> FX_SHIFT;
+    const cx = x >> FX_SHIFT;
+    const cy = y >> FX_SHIFT;
+    const tiles: number[] = [];
+    for (let ty = cy - r; ty <= cy + r; ty++)
+      for (let tx = cx - r; tx <= cx + r; tx++) if (inBounds(m, tx, ty) && m.echo[ty * m.width + tx]! > 0) tiles.push(ty * m.width + tx);
+    if (tiles.length === 0) return false;
+    let cost = power.echoCost;
+    for (let k = 0; cost > 0 && k < tiles.length * 12; k++) {
+      const t = tiles[k % tiles.length]!;
+      if (m.echo[t]! > 0) {
+        m.echo[t]!--;
+        cost--;
+      }
+    }
+    for (let k = 0; k < power.count; k++) {
+      const t = tiles[idiv(k * tiles.length, power.count)]!;
+      const h = spawnUnit(world, power.unit, player, ((t % m.width) << FX_SHIFT) + (FX_ONE >> 1), (idiv(t, m.width) << FX_SHIFT) + (FX_ONE >> 1));
+      if (h >= 0) e.expires[h & 0xffff] = world.tick + power.duration;
+    }
+    pushFx(world, FX_EVENT.power, 2, power.reach, player, x, y, 0, 0);
+  }
   p.powerReady = world.tick + power.cooldown;
   return true;
 }
@@ -271,6 +307,8 @@ export function chordRegrowSystem(world: World): void {
 /** Expire phase-outs and Overrides. */
 export function abilitySystem(world: World): void {
   const e = world.entities;
+  const chorus = world.tick % CHORUS_INTERVAL === 0;
+  const autocast = world.tick % AUTOCAST_INTERVAL === 0;
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit) continue;
     if (e.homeOwner[s]! >= 0 && world.tick >= e.overrideUntil[s]!) {
@@ -278,7 +316,70 @@ export function abilitySystem(world: World): void {
       e.homeOwner[s] = -1;
       releaseControl(world, s);
     }
+    // Summoned units (Awaken) fade when their time is up.
+    if (e.expires[s]! > 0 && world.tick >= e.expires[s]!) {
+      removeEntity(world, s);
+      continue;
+    }
+    if (chorus) updateChorus(world, s);
+    if (autocast) autocastEscape(world, s);
   }
+}
+
+const CHORUS_INTERVAL = 10;
+const AUTOCAST_INTERVAL = 4;
+/** Autocast escapes fire below this share of life (hull + shields), percent, while under fire. */
+const ESCAPE_LIFE_PCT = 35;
+
+/** Chorus: count own armed units of the same faction within range (capped). */
+function updateChorus(world: World, s: number): void {
+  const e = world.entities;
+  const f = world.rules.factions[world.players[e.owner[s]!]!.faction]!;
+  if (f.chorusPct <= 0 || !world.rules.units[e.type[s]!]!.weapon) {
+    e.chorus[s] = 0;
+    return;
+  }
+  let n = 0;
+  const owner = e.owner[s]!;
+  world.spatial.query(e.x[s]!, e.y[s]!, f.chorusRadius, (o) => {
+    if (o === s || n >= f.chorusMax || e.kind[o] !== KIND.unit || e.owner[o] !== owner || !world.rules.units[e.type[o]!]!.weapon) return;
+    if (ilength(e.x[o]! - e.x[s]!, e.y[o]! - e.y[s]!) <= f.chorusRadius) n++;
+  });
+  e.chorus[s] = n;
+}
+
+/** Extra damage percent from Chorus. */
+export function chorusPct(world: World, s: number): number {
+  const n = world.entities.chorus[s]!;
+  if (n === 0) return 0;
+  return n * world.rules.factions[world.players[world.entities.owner[s]!]!.faction]!.chorusPct;
+}
+
+/**
+ * Autocast for everyone, players and AI alike: a badly hurt unit under fire uses its escape
+ * (phase out, or blink away from whoever hit it last) as soon as it is ready.
+ */
+function autocastEscape(world: World, s: number): void {
+  const e = world.entities;
+  if (world.tick < e.abilityReady[s]! || e.lastHitTick[s]! < 0 || world.tick - e.lastHitTick[s]! > 20) return;
+  const life = e.hp[s]! + e.shields[s]!;
+  if (life * 100 >= (e.maxHp[s]! + e.maxShields[s]!) * ESCAPE_LIFE_PCT) return;
+  const rule = world.rules.units[e.type[s]!]!;
+  const a = rule.abilities.find((x) => x.kind === 'phase' || x.kind === 'blink');
+  if (!a) return;
+  if (a.kind === 'phase') {
+    useAbility(world, e.owner[s]!, s, -1, -1, -1);
+    return;
+  }
+  if (a.kind !== 'blink') return;
+  const from = e.resolve(e.lastAttacker[s]!);
+  let dx = from >= 0 ? e.x[s]! - e.x[from]! : 0;
+  let dy = from >= 0 ? e.y[s]! - e.y[from]! : 0;
+  const d = ilength(dx, dy);
+  if (d === 0) return;
+  dx = idiv(dx * a.range, d);
+  dy = idiv(dy * a.range, d);
+  useAbility(world, e.owner[s]!, s, e.x[s]! + dx, e.y[s]! + dy, -1);
 }
 
 function releaseControl(world: World, s: number): void {

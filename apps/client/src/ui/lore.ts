@@ -35,7 +35,9 @@ export const FACTION_LORE: Record<string, { tagline: string; story: string; look
     twists: [
       ['Grown structures', 'Buildings grow near Echo fields or other Choir structures; they build slower but cost less.'],
       ['Shards, not hulls', 'Units have regenerating shields over a small health pool. Shields recharge out of combat; there is no repair. Bullets glance off shields, but energy weapons tear through them.'],
-      ['Phase', 'Many units can blink (press F, then click where) or phase out (F) for a moment.'],
+      ['Phase', 'Many units can blink (press F, then click where) or phase out (F) for a moment. Badly hurt under fire, they do it on their own.'],
+      ['Chorus', 'Choir units harmonize: each one within 3 tiles adds 2% damage, up to +6%. Thin violet threads show who is singing together.'],
+      ['Awaken', 'Support power from the Chord (Q): click an Echo field near your structures and two shard guardians rise from its crystals to fight for 20 s.'],
     ],
     play: 'Mobile, hit-and-run, punishes poor positioning; weak to sustained burst damage.',
   },

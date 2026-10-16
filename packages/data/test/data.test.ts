@@ -29,7 +29,8 @@ describe('bundled data', () => {
   it('has three factions with full rosters', () => {
     const rules = defaultRules();
     expect(rules.factions.map((f) => f.id)).toEqual(['holdout', 'halcyon', 'choir']);
-    expect(rules.units).toHaveLength(12 + 11 + 11);
+    expect(rules.units).toHaveLength(12 + 11 + 11 + 1); // + the summoned Choir shard
+    for (const f of rules.factions) expect(f.units.every((i) => !rules.units[i]!.summoned)).toBe(true);
     for (const f of rules.factions) expect(f.structures).toHaveLength(13);
   });
 

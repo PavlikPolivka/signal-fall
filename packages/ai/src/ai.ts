@@ -7,7 +7,9 @@ import {
   canResearch,
   computeFacts,
   inCoverage,
+  nearOwnStructure,
   powerReady,
+  AWAKEN_HOME_RANGE,
   idiv,
   teamOf,
   ilength,
@@ -1062,16 +1064,10 @@ export function abilityOrders(world: World, player: number, home: { x: number; y
     const life = e.hp[s]! + e.shields[s]!;
     const max = e.maxHp[s]! + e.maxShields[s]!;
     const hurt = life * 100 < max * 40 && e.lastHitTick[s]! >= 0 && world.tick - e.lastHitTick[s]! < 20;
-    if (ability.kind === 'phase') {
-      if (hurt) out.push({ type: 'ability', units: [h] });
-      continue;
-    }
+    // Escapes when badly hurt are autocast by the sim for everyone (players too).
+    if (ability.kind === 'phase') continue;
     if (ability.kind === 'blink') {
-      if (hurt) {
-        // Away from the fight, toward home.
-        out.push({ type: 'ability', units: [h], x: (home.x << FX_SHIFT) + FX_HALF, y: (home.y << FX_SHIFT) + FX_HALF });
-        continue;
-      }
+      if (hurt) continue;
       const t = e.resolve(e.target[s]!);
       if (t >= 0 && rule.weapon && ilength(e.x[t]! - e.x[s]!, e.y[t]! - e.y[s]!) > rule.weapon.range + 2 * FX_ONE)
         out.push({ type: 'ability', units: [h], x: e.x[t]!, y: e.y[t]! });
@@ -1106,9 +1102,35 @@ const POWER_MIN_TARGETS = 4;
 export function powerOrder(world: World, player: number, army: number[]): Command | null {
   if ((world.tick + player) % 20 !== 0 || !powerReady(world, player)) return null;
   const power = world.rules.factions[world.players[player]!.faction]!.power;
-  if (!power || power.kind !== 'jam') return null;
+  if (!power) return null;
   const e = world.entities;
   const team = world.players[player]!.team;
+  if (power.kind === 'awaken') {
+    // Awaken an Echo field where enemies are: fighting our army there, or harvesting it.
+    const m = world.map;
+    const echoNear = (x: number, y: number) => {
+      const r = power.reach >> FX_SHIFT;
+      for (let ty = (y >> FX_SHIFT) - r; ty <= (y >> FX_SHIFT) + r; ty++)
+        for (let tx = (x >> FX_SHIFT) - r; tx <= (x >> FX_SHIFT) + r; tx++)
+          if (tx >= 0 && ty >= 0 && tx < m.width && ty < m.height && m.echo[ty * m.width + tx]! > 0) return true;
+      return false;
+    };
+    let pick: { x: number; y: number; n: number } | null = null;
+    const consider = (x: number, y: number, n: number) => {
+      if (n >= 1 && (!pick || n > pick.n) && echoNear(x, y) && nearOwnStructure(world, player, x, y, AWAKEN_HOME_RANGE)) pick = { x, y, n };
+    };
+    for (let o = 0; o < e.high; o++) {
+      if (e.alive[o] !== 1 || e.kind[o] !== KIND.unit || teamOf(world, o) === team || !visibleTo(world, player, o)) continue;
+      const harvester = world.rules.units[e.type[o]!]!.abilities.some((a) => a.kind === 'harvest');
+      if (harvester) consider(e.x[o]!, e.y[o]!, 2);
+    }
+    for (const s of army) {
+      const t = e.resolve(e.target[s]!);
+      if (t >= 0 && visibleTo(world, player, t)) consider(e.x[t]!, e.y[t]!, 3);
+    }
+    const best = pick as { x: number; y: number; n: number } | null;
+    return best ? { type: 'power', x: best.x, y: best.y } : null;
+  }
   let best: { x: number; y: number; n: number } | null = null;
   for (const s of army) {
     const t = e.resolve(e.target[s]!);

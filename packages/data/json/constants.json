@@ -16,5 +16,5 @@
   "veterancyHpPct": 10,
   "wreckLifetime": 60,
   "upgradeLevels": 2,
-  "shieldDamagePct": { "kinetic": 85, "energy": 140 }
+  "shieldDamagePct": { "kinetic": 85, "energy": 160 }
 }

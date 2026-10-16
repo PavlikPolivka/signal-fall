@@ -477,6 +477,7 @@ export class Renderer {
     this.overlay.clear();
     this.fx.clear();
     this.drawCoverage();
+    this.drawChorus();
     const salvage = !s.spectator && (s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.salvagePct ?? 0) > 0;
 
     for (let i = 0; i < cur.entityCount; i++) {
@@ -529,7 +530,7 @@ export class Renderer {
         const rule = s.rules.units[cur.get(o, E.type)]!;
         const shape = SHAPES[rule.armor]!;
         const firing = cur.get(o, E.target) >= 0;
-        if (!this.updateUnitSprite(h, rule.id, px, py, color, cur.get(o, E.facing), cur.get(o, E.vx), cur.get(o, E.vy), firing, visible, false))
+        if (!this.updateUnitSprite(h, rule.sprite, px, py, color, cur.get(o, E.facing), cur.get(o, E.vx), cur.get(o, E.vy), firing, visible, false))
           this.updateUnit(h, shape, rule.weapon !== null, px, py, color, cur.get(o, E.facing), visible);
         if (visible) this.rendered.set(h, { x: px, y: py, air: rule.isAir, shape });
         else this.rendered.delete(h);
@@ -792,6 +793,37 @@ export class Renderer {
         this.echoSprites.set(i, sp);
       }
       sp.texture = tex;
+    }
+  }
+
+  /** Choir Chorus: thin violet threads between armed Choir units close enough to harmonize. */
+  private drawChorus(): void {
+    const s = this.state;
+    const cur = s.cur;
+    if (!cur) return;
+    const pts: { x: number; y: number; owner: number; r: number }[] = [];
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.kind) !== KIND.unit) continue;
+      const rule = s.rules.units[cur.get(o, E.type)]!;
+      const f = s.rules.factions[rule.faction]!;
+      if (f.chorusPct <= 0 || !rule.weapon || rule.isAir || !this.visibleEntity(cur.get(o, E.handle))) continue;
+      pts.push({ x: cur.get(o, E.x), y: cur.get(o, E.y), owner: cur.get(o, E.owner), r: f.chorusRadius });
+    }
+    const t = performance.now() / 600;
+    for (let a = 0; a < pts.length; a++) {
+      const p = pts[a]!;
+      let links = 0;
+      for (let b = a + 1; b < pts.length && links < 4; b++) {
+        const q = pts[b]!;
+        if (q.owner !== p.owner || Math.hypot(q.x - p.x, q.y - p.y) > p.r) continue;
+        links++;
+        const ax = isoX(p.x / FX, p.y / FX);
+        const ay = isoY(p.x / FX, p.y / FX) - 8;
+        const bx = isoX(q.x / FX, q.y / FX);
+        const by = isoY(q.x / FX, q.y / FX) - 8;
+        this.fx.moveTo(ax, ay).lineTo(bx, by).stroke({ width: 1, color: 0xc58cff, alpha: 0.18 + 0.12 * Math.sin(t + a) });
+      }
     }
   }
 

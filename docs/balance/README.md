@@ -64,3 +64,22 @@ Richer Echo fields, refineries priced above harvesters, AI strategies and expans
 - Normal reverted to 2 harvesters per refinery, and extra production buildings are Hard-only: a player was losing to
   Normal. Hard beats Normal 80–86%. Normal vs Normal is lopsided for Choir (24% vs Holdout) because Normal uses no
   abilities. That is now on the balance page; the planned fix is to autocast Choir's escape abilities for everyone.
+
+## Halcyon and Choir abilities (2026-10-16)
+
+Each change was measured by running with one feature removed (150 matches per pairing).
+
+- **Halcyon coverage bonus** at 20% fire rate and 4 HP/s, with Uplink on vectors: Halcyon won 73–85%. Back to 12% and 2 HP/s.
+- **Uplink** alone was worth about 13 points against Holdout and 20 against Choir, because uplinked units also get
+  Recompile. It is now on the fork only, so the AI (which builds no forks) doesn't use it. It stays a deliberate
+  player tool.
+- **Jam** settled at 20% slower fire for 5 s, radius 3, 90 s cooldown. Its effect sits inside the noise (Halcyon vs
+  Choir 54–56%).
+- **Choir autocast escapes** (phase or blink when below 35% life under fire) were neutral for the Hard AI, which
+  already escaped. The point is fairness: players get the same escapes without micro.
+- **Awaken** at 3 shards for 30 s, castable anywhere, was worth about 15 points because the AI used it on enemy
+  harvesters. It is now 2 weaker shards for 20 s, a 150 s cooldown, and only on fields within 14 tiles of the caster's
+  structures.
+- **Chorus** at 5% per ally up to +20% was worth about 8–10 points, and even 3% up to +9% was too much. It is now 2% up
+  to +6%.
+- **Energy vs shields** went back up to 160%, which only affects Halcyon vs Choir.
