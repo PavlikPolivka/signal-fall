@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-16 12:25 UTC
+
+- **See your network.** Halcyon players always see their coverage as a faint cyan grid with a bright edge. Inside it, units fire faster and repair themselves.
+- **See your refunds.** A unit lost inside the network shows "+$" where it fell as Recompile pays back part of its cost, with a coin sound.
+- **See your scrap.** Holdout players see a glinting marker on every wreck worth salvaging, and "+$" when a Wrench collects it.
+- **Clearer tips.** The first-match tips explain place-first building and queuing units by tapping their key.
+
 ## 2026-10-16 12:13 UTC
 
 - **Faction balance.** Every match-up is now within a few points of even (Hard AI against Hard AI, 300 matches each).

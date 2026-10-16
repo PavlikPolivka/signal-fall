@@ -691,10 +691,10 @@ function Hints({ state }: { state: ClientState }) {
   }
   const steps: [boolean, string][] = [
     [has('conyard'), 'Select your construction vehicle and press D to deploy your base.'],
-    [has('power'), 'Press B, then P to build power. When it is READY, click the map to place it.'],
+    [has('power'), 'Press B, then P, then click where power should go. It builds and places itself.'],
     [has('refinery'), 'Press B, then R for a refinery: it comes with a harvester that turns Echo into credits.'],
     [has('barracks') || has('factory'), 'Build a barracks (B, B) or a vehicle factory (B, F) to make an army.'],
-    [army >= 5, 'Train units: I for infantry, V for vehicles. Shift+click queues five.'],
+    [army >= 5, "Train units: press I, then a unit's letter once per unit (I, G, G, G queues three). V for vehicles."],
     [false, 'Select your army (drag a box or Ctrl+A) and click an enemy or the ground to attack. Destroy every enemy building to win.'],
   ];
   const next = steps.findIndex(([done]) => !done);

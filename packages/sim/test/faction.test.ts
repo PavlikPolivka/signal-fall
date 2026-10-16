@@ -4,6 +4,7 @@ import { KIND } from '../src/entities';
 import { Sim } from '../src/sim';
 import { spawnStructure, spawnUnit } from '../src/spawn';
 import { inCoverage } from '../src/systems/faction';
+import { CREDIT_REASON, FX_EVENT, FX_STRIDE } from '../src/world';
 import { at, rules, structure, unit } from './helpers';
 
 const HOLDOUT = 0;
@@ -67,6 +68,11 @@ describe('Halcyon network coverage', () => {
     s.world.entities.hp[u] = 0;
     s.run(1);
     expect(s.world.players[0]!.credits - before).toBe((rules.units[unit('vector')]!.cost * 25) / 100);
+    // ...and tells the client, so it can show "+$250" where the unit fell.
+    const fx = s.world.fx;
+    let shown = -1;
+    for (let i = 0; i < fx.length; i += FX_STRIDE) if (fx[i] === FX_EVENT.credits && fx[i + 2] === CREDIT_REASON.recompile) shown = fx[i + 1]!;
+    expect(shown).toBe((rules.units[unit('vector')]!.cost * 25) / 100);
   });
 });
 

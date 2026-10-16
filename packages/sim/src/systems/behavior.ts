@@ -3,7 +3,7 @@ import { ARMOR } from '@signal-fall/data';
 import { FX_HALF, FX_ONE, clamp, idiv, ilength, pct } from '../fx';
 import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from '../entities';
 import { acquireTarget, armorOf, bestTarget, canTarget, distToBody, inWeaponRange, isAir, targetScore, teamOf, visibleTo, weaponOf, STICKY_BONUS } from '../query';
-import type { GroupInfo, World } from '../world';
+import { CREDIT_REASON, FX_EVENT, pushFx, type GroupInfo, type World } from '../world';
 import { removeEntity } from '../spawn';
 import { salvageValue } from './economy';
 
@@ -367,7 +367,9 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
         return;
       }
       if (ilength(e.x[t]! - e.x[s]!, e.y[t]! - e.y[s]!) <= CONTACT) {
-        world.players[e.owner[s]!]!.credits += salvageValue(world, e.owner[s]!, t);
+        const value = salvageValue(world, e.owner[s]!, t);
+        world.players[e.owner[s]!]!.credits += value;
+        pushFx(world, FX_EVENT.credits, value, CREDIT_REASON.salvage, e.owner[s]!, e.x[t]!, e.y[t]!, 0, 0);
         removeEntity(world, t);
         completeOrder(world, s);
       } else setGoal(world, s, e.x[t]!, e.y[t]!);

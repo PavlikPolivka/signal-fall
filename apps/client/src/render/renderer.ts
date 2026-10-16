@@ -47,6 +47,9 @@ export class Renderer {
   private readonly terrainLayer = new Container();
   private readonly echoLayer = new Graphics();
   private readonly decals = new Graphics();
+  /** Halcyon's network coverage, always shown to its own player; rebuilt when structures change. */
+  private readonly coverageGfx = new Graphics();
+  private coverageKey = '';
   /** All sprite shadows, under every unit and building. */
   private readonly shadows = new Container();
   private readonly ground = new Container();
@@ -87,7 +90,7 @@ export class Renderer {
   private pings: { x: number; y: number; color: number; at: number }[] = [];
 
   constructor(private readonly state: ClientState) {
-    this.effects = new Effects(state.rules, this.particles, this.scorchLayer, (x, y) => this.worthDrawing(x, y));
+    this.effects = new Effects(state.rules, this.particles, this.scorchLayer, (x, y) => this.worthDrawing(x, y), (owner) => !state.spectator && owner === state.localPlayer);
   }
 
   /** A sim point (Q10) on or near the screen and visible to the local player. */
@@ -106,7 +109,7 @@ export class Renderer {
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;
-    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.decals, this.shadows, this.ground, this.fx, this.air, this.particles, this.fogLayer, this.overlay);
+    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.coverageGfx, this.decals, this.shadows, this.ground, this.fx, this.air, this.particles, this.fogLayer, this.overlay);
     this.app.stage.addChild(this.world, this.screen);
     this.makeTextures();
   }
@@ -471,6 +474,8 @@ export class Renderer {
     this.decals.clear();
     this.overlay.clear();
     this.fx.clear();
+    this.drawCoverage();
+    const salvage = !s.spectator && (s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.salvagePct ?? 0) > 0;
 
     for (let i = 0; i < cur.entityCount; i++) {
       const o = cur.ent(i);
@@ -497,6 +502,14 @@ export class Renderer {
           this.units.get(h)!.root.alpha = 0.8;
         }
         if (visible) this.rendered.set(h, { x: px, y: py, air: false, shape: SHAPES[rule.armor]! });
+        // Salvage you can see: a glinting scrap marker on every wreck the player's faction can cash in.
+        if (visible && salvage) {
+          const t = performance.now() / 1000 + (h % 7);
+          const glint = 0.55 + 0.45 * Math.sin(t * 3);
+          const my = py - 20 - 2 * Math.sin(t * 2);
+          this.overlay.poly([px, my - 6, px + 5, my, px, my + 6, px - 5, my]).fill({ color: 0xffd75a, alpha: 0.35 + 0.5 * glint }).stroke({ width: 1, color: 0x3a2a08, alpha: 0.8 });
+          this.overlay.circle(px + 6, my - 6, 1.2 + glint).fill({ color: 0xfff6c8, alpha: glint });
+        }
         continue;
       }
       if (kind === KIND.structure) {
@@ -757,6 +770,66 @@ export class Renderer {
       }
       sp.texture = tex;
     }
+  }
+
+  /**
+   * Halcyon's network: a faint cyan grid over every covered tile with a brighter edge, so the
+   * player always sees where units fire faster and self-repair (and where Recompile pays).
+   */
+  private drawCoverage(): void {
+    const s = this.state;
+    const cur = s.cur;
+    const faction = s.rules.factions[s.players[s.localPlayer]?.faction ?? 0];
+    if (!cur || s.spectator || !faction || faction.placement !== 'coverage') {
+      if (this.coverageKey !== '') this.coverageGfx.clear();
+      this.coverageKey = '';
+      return;
+    }
+    const sources: [number, number, number][] = [];
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.kind) !== KIND.structure || cur.get(o, E.owner) !== s.localPlayer) continue;
+      const r = s.rules.structures[cur.get(o, E.type)]!.coverageRadius;
+      if (r > 0) sources.push([cur.get(o, E.x), cur.get(o, E.y), r]);
+    }
+    const key = sources.map((v) => v.join(',')).join(';');
+    if (key === this.coverageKey) return;
+    this.coverageKey = key;
+    const w = this.state.width;
+    const h = this.state.height;
+    const covered = new Uint8Array(w * h);
+    for (const [cx, cy, r] of sources) {
+      const r2 = (r / FX) * (r / FX);
+      const x0 = Math.max(0, Math.floor((cx - r) / FX));
+      const x1 = Math.min(w - 1, Math.ceil((cx + r) / FX));
+      const y0 = Math.max(0, Math.floor((cy - r) / FX));
+      const y1 = Math.min(h - 1, Math.ceil((cy + r) / FX));
+      for (let y = y0; y <= y1; y++)
+        for (let x = x0; x <= x1; x++) {
+          const dx = x + 0.5 - cx / FX;
+          const dy = y + 0.5 - cy / FX;
+          if (dx * dx + dy * dy <= r2) covered[y * w + x] = 1;
+        }
+    }
+    const g = this.coverageGfx;
+    g.clear();
+    const at = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && covered[y * w + x] === 1;
+    const color = 0x3ee6ff;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (!at(x, y)) continue;
+        const t = [isoX(x, y), isoY(x, y)] as const;
+        const r = [isoX(x + 1, y), isoY(x + 1, y)] as const;
+        const b = [isoX(x + 1, y + 1), isoY(x + 1, y + 1)] as const;
+        const l = [isoX(x, y + 1), isoY(x, y + 1)] as const;
+        g.poly([...t, ...r, ...b, ...l]).fill({ color, alpha: 0.035 }).stroke({ width: 1, color, alpha: 0.07 });
+        // The network's edge, brighter.
+        const edge = (ax: readonly number[], bx: readonly number[]) => g.moveTo(ax[0]!, ax[1]!).lineTo(bx[0]!, bx[1]!).stroke({ width: 1.5, color, alpha: 0.4 });
+        if (!at(x, y - 1)) edge(t, r);
+        if (!at(x + 1, y)) edge(r, b);
+        if (!at(x, y + 1)) edge(b, l);
+        if (!at(x - 1, y)) edge(l, t);
+      }
   }
 
   /**

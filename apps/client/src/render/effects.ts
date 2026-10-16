@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { DAMAGE, type Rules } from '@signal-fall/data';
 import { FX_EVENT, FX_STRIDE, KIND } from '@signal-fall/sim';
 import { isoX, isoY } from '../game/iso';
@@ -97,6 +97,12 @@ interface Beam {
 /** Beam colors by faction index (Holdout tracers, Halcyon cyan, Choir violet). */
 const FACTION_BEAM = [0xffd27a, 0x5cecff, 0xc58cff];
 
+/** A floating "+$N" over where credits came from. */
+interface Popup {
+  text: Text;
+  age: number;
+}
+
 interface Scorch {
   sprite: Sprite;
   age: number;
@@ -115,6 +121,7 @@ export class Effects {
   private readonly free: Sprite[] = [];
   private readonly scorches: Scorch[] = [];
   private readonly beams: Beam[] = [];
+  private readonly popups: Popup[] = [];
   /** Beams, arcs and tracers, redrawn every frame (additive). */
   private readonly beamGfx = new Graphics();
   private last = performance.now();
@@ -129,6 +136,8 @@ export class Effects {
     private readonly ground: Container,
     /** Is a sim point (Q10) worth drawing: on screen and visible to the player. */
     private readonly visible: (x: number, y: number) => boolean,
+    /** Is this player the one watching (credit popups are only for them). */
+    private readonly isLocal: (owner: number) => boolean = () => false,
   ) {
     this.beamGfx.blendMode = 'add';
     this.layer.addChild(this.beamGfx);
@@ -151,6 +160,7 @@ export class Effects {
       else if (kind === FX_EVENT.impact) this.impact(a, b, x, y, events[i + 6]!, events[i + 7]!);
       else if (kind === FX_EVENT.death) this.death(a, b, x, y);
       else if (kind === FX_EVENT.ability) this.ability(a, x, y, events[i + 6]!, events[i + 7]!);
+      else if (kind === FX_EVENT.credits && this.isLocal(events[i + 3]!)) this.credits(a, x, y);
     }
   }
 
@@ -341,6 +351,19 @@ export class Effects {
     }
   }
 
+  /** "+$N" rising and fading where Recompile or salvage paid out. */
+  private credits(amount: number, x: number, y: number): void {
+    const text = new Text({
+      text: `+$${amount}`,
+      style: { fontFamily: 'system-ui, sans-serif', fontSize: 15, fontWeight: '700', fill: 0xffd75a, stroke: { color: 0x1a1406, width: 3 } },
+    });
+    text.anchor.set(0.5, 1);
+    text.position.set(isoX(x / FX, y / FX), isoY(x / FX, y / FX) - 18);
+    this.layer.addChild(text);
+    this.popups.push({ text, age: 0 });
+    this.spawn(this.glow, text.x, text.y + 18, 6, { life: 0.5, scale0: 0.3, scale1: 0.8, tint: 0xffd75a, alpha: 0.6 });
+  }
+
   /** Fireball, hot core, smoke, sparks. `scale` 1 = vehicle-sized. */
   private explosion(px: number, py: number, scale: number, smokeMul: number, delay = 0): void {
     this.spawn(this.hot, px, py, 6 * scale, { life: 0.12, scale0: 0.6 * scale, scale1: 1.1 * scale, tint: 0xfff2c0, delay });
@@ -438,6 +461,16 @@ export class Effects {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     this.drawBeams(dt);
+    for (let i = this.popups.length - 1; i >= 0; i--) {
+      const p = this.popups[i]!;
+      p.age += dt;
+      p.text.y -= 22 * dt;
+      p.text.alpha = Math.min(1, 3 * (1.4 - p.age));
+      if (p.age >= 1.4) {
+        p.text.destroy();
+        this.popups.splice(i, 1);
+      }
+    }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]!;
       if (p.delay > 0) {

@@ -35,6 +35,7 @@ const LIMITS: Record<string, [number, number]> = {
   flak: [50, 4],
   energy: [50, 4],
   hit: [70, 3],
+  coin: [90, 2],
   boom: [80, 4],
   bigBoom: [200, 2],
 };
@@ -177,6 +178,8 @@ export class GameAudio {
         else if (a === KINETIC && Math.random() < 0.25) this.play('hit', x, y, 0.3);
       } else if (kind === FX_EVENT.ability) {
         this.play(a === 3 ? 'alarm' : 'energy', x, y, a === 3 ? 0.5 : 0.7);
+      } else if (kind === FX_EVENT.credits) {
+        if (events[i + 3] === s.localPlayer && !s.spectator) this.play('coin', x, y, 0.6);
       } else if (kind === FX_EVENT.death) {
         if (a === KIND.structure) this.play('bigBoom', x, y, 1);
         else if (a === KIND.unit && this.rules.units[b]?.tab !== 'infantry') this.play('boom', x, y, 0.85);

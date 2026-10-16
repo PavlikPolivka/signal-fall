@@ -53,6 +53,12 @@ export const SFX: Record<string, Layer[]> = {
     { wave: 'square', f0: 1400, f1: 380, filter: { type: 'lowpass', f0: 4000, f1: 1200 }, gain: 0.3, decay: 0.16 },
     { wave: 'sine', f0: 2600, f1: 900, gain: 0.25, decay: 0.12 },
   ],
+  /** Credits from Recompile or salvage: two bright metallic ticks. */
+  coin: [
+    { wave: 'triangle', f0: 1760, gain: 0.22, decay: 0.12 },
+    { wave: 'triangle', f0: 2640, gain: 0.18, decay: 0.18, at: 0.07 },
+    { wave: 'noise', f0: 0, filter: { type: 'highpass', f0: 5000 }, gain: 0.06, decay: 0.03 },
+  ],
   hit: [{ wave: 'noise', f0: 0, filter: { type: 'highpass', f0: 2800 }, gain: 0.35, decay: 0.035 }],
   boom: [
     { wave: 'noise', f0: 0, filter: { type: 'lowpass', f0: 2400, f1: 140, q: 0.6 }, gain: 1, decay: 0.75 },

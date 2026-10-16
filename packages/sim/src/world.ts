@@ -100,9 +100,12 @@ export interface Projectile {
  * impact: a = damage type, b = splash radius, (x, y) impact point
  * death:  a = entity kind, b = rule index, (x, y) where it died
  * ability: a = 1 blink / 2 phase / 3 override, b = unit rule index, (x, y) from, (tx, ty) to
+ * credits: a = amount, b = 1 recompile / 2 salvage, owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
-export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4 } as const;
+export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5 } as const;
+/** Why credits were gained (FX_EVENT.credits b). */
+export const CREDIT_REASON = { recompile: 1, salvage: 2 } as const;
 export const FX_STRIDE = 8;
 /** Events kept when nobody drains them (headless runs). */
 const FX_CAP = FX_STRIDE * 4096;

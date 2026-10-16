@@ -2,7 +2,7 @@ import { FX_ONE, FX_SHIFT, idiv, ilength, pct } from '../fx';
 import { KIND, NO_ENTITY } from '../entities';
 import { inBounds } from '../map';
 import { teamOf } from '../query';
-import { FX_EVENT, pushFx, type World } from '../world';
+import { CREDIT_REASON, FX_EVENT, pushFx, type World } from '../world';
 import type { PlayerFacts } from './economy';
 import { requirementsMet } from './economy';
 
@@ -168,7 +168,9 @@ export function recompileRefund(world: World, s: number): void {
   if (f.recompileRefundPct <= 0 || !inCoverage(world, s)) return;
   // Deep Recompile replaces the base refund.
   const deep = upgradePct(world, p.index, 'recompileRefundPct');
-  p.credits += pct(world.rules.units[e.type[s]!]!.cost, deep > 0 ? deep : f.recompileRefundPct);
+  const refund = pct(world.rules.units[e.type[s]!]!.cost, deep > 0 ? deep : f.recompileRefundPct);
+  p.credits += refund;
+  pushFx(world, FX_EVENT.credits, refund, CREDIT_REASON.recompile, p.index, e.x[s]!, e.y[s]!, 0, 0);
 }
 
 /** Choir Chords: Echo near them regrows faster (runs every tick, cheap: only near Chords). */
