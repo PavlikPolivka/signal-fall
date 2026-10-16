@@ -70,8 +70,12 @@ export class Input {
     window.addEventListener('keyup', (e) => {
       this.held.delete(e.code);
       this.state.shiftHeld = e.shiftKey;
+      this.state.altHeld = e.altKey;
     });
-    window.addEventListener('blur', () => this.held.clear());
+    window.addEventListener('blur', () => {
+      this.held.clear();
+      this.state.altHeld = false;
+    });
     canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     window.addEventListener('pointermove', (e) => this.onPointerMove(e));
     window.addEventListener('pointerup', (e) => this.onPointerUp(e));
@@ -159,6 +163,7 @@ export class Input {
   private onKeyDown(e: KeyboardEvent): void {
     if (e.target instanceof HTMLInputElement) return;
     this.state.shiftHeld = e.shiftKey;
+    this.state.altHeld = e.altKey;
     this.held.add(e.code);
     if (e.repeat && !e.code.startsWith('Arrow')) return;
     const contexts = this.activeContexts();
@@ -825,6 +830,36 @@ export class Input {
       if (cur.get(o, E.owner) === this.state.localPlayer && pred(h)) return h;
     }
     return undefined;
+  }
+
+  /** Own harvesters doing nothing, and own armed units with no orders and nothing to shoot. */
+  idleUnits(): { harvesters: number[]; army: number[] } {
+    const s = this.state;
+    const harvesters: number[] = [];
+    const army: number[] = [];
+    for (const h of this.allOwnUnits()) {
+      if (s.field(h, E.orderCount) !== 0) continue;
+      if (this.isHarvester(h)) {
+        if (s.field(h, E.hstate) === 0) harvesters.push(h);
+      } else if (this.isArmy(h) && s.field(h, E.target) < 0) army.push(h);
+    }
+    return { harvesters, army };
+  }
+
+  /** Top bar: select idle harvesters (cycling one at a time) or the whole idle army, and look at them. */
+  selectIdle(kind: 'harvesters' | 'army'): void {
+    const s = this.state;
+    const list = this.idleUnits()[kind];
+    if (list.length === 0) return;
+    if (kind === 'harvesters') return this.run('selectIdleHarvesters', 0);
+    s.select(list);
+    let x = 0;
+    let y = 0;
+    for (const h of list) {
+      x += s.field(h, E.x);
+      y += s.field(h, E.y);
+    }
+    this.renderer.centerOnSim(Math.round(x / list.length), Math.round(y / list.length));
   }
 
   isHarvester(h: number): boolean {

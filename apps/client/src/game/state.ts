@@ -109,6 +109,8 @@ export class ClientState {
   spectator = false;
   /** Shift is down: show queued waypoints of selected units. */
   shiftHeld = false;
+  /** Alt held: show every health bar. */
+  altHeld = false;
   /** Recent hits on own units/buildings, for minimap pings. */
   hits: { x: number; y: number; time: number }[] = [];
   /** Sidebar item under the cursor and the button's screen top. */

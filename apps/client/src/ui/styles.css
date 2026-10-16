@@ -1923,3 +1923,56 @@ table.md-table td {
   background: var(--accent);
   color: #111;
 }
+
+.idle-btn {
+  margin-left: 10px;
+  padding: 1px 8px;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.idle-btn.warn {
+  color: #facc15;
+  border-color: rgba(250, 204, 21, 0.5);
+}
+.idle-btn:hover {
+  color: var(--text);
+}
+
+.tabs button {
+  position: relative;
+}
+.tab-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 13px;
+  padding: 0 3px;
+  font-size: 9px;
+  line-height: 13px;
+  color: #111;
+  background: var(--accent);
+  border-radius: 8px;
+}
+.tab-idle {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #facc15;
+  animation: tab-idle 1.2s ease-in-out infinite;
+}
+@keyframes tab-idle {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-idle {
+    animation: none;
+  }
+}

@@ -17,21 +17,21 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 4 | V | A different announcer per faction: Holdout radio operator, Halcyon calm synthetic, Choir harmonic whisper | 4 | S |
 | 5 | E | Bigger, regrowing Echo fields; more fields across the map, so matches have a mid-game | 5 | S |
 | 6 | E | Expansion fields worth taking: richer fields away from the base, a second refinery near them pays off | 5 | S |
-| 7 | U | Queue counts on build icons, and a progress clock on the icon itself (not only in the queue) | 4 | XS |
+| 7 ✅ | U | Queue counts on build icons, and a progress clock on the icon itself (not only in the queue) | 4 | XS |
 | 8 | C | Shift+click / Shift+key queues 5, Ctrl queues until cancelled ("infinite" repeat production) | 4 | S |
 | 9 | C | Right-click a production icon to remove one; Shift+right-click clears that unit's queue | 4 | XS |
 | 10 | U | "Unit ready" / "Construction complete" are spoken, not just text; text notices stack and fade | 4 | XS |
 | 11 | C | Rally points per factory by right-clicking the ground with the factory selected (also on units/Echo: harvesters go harvest) | 4 | XS |
-| 12 | U | Idle harvester and idle army counters in the top bar, click to jump | 4 | XS |
+| 12 ✅ | U | Idle harvester and idle army counters in the top bar, click to jump | 4 | XS |
 | 13 | E | Harvesters auto-return to work and auto-pick the next field when one runs dry (with a notice) | 4 | S |
-| 14 | U | Clear low-power state: buildings dim, a power bar that turns red, the announcer says it | 4 | XS |
+| 14 ✅ | U | Clear low-power state: buildings dim, a power bar that turns red, the announcer says it | 4 | XS |
 | 15 | C | Double-click a building to select all of that type on screen (factories, for shared rally) | 3 | XS |
 | 16 | U | Hover a unit or building: health, owner, veterancy, what it is good against (already partly) | 3 | XS |
 | 17 | C | Space jumps to the last alert; repeated Space cycles older alerts | 3 | XS |
 | 18 | C | Ctrl+click a unit adds/removes it from selection; Shift+drag adds to selection | 3 | XS |
 | 19 | U | Selection panel: portraits grouped by type with counts; click a group to narrow the selection | 4 | S |
-| 20 | G | Health bars only when hurt or selected (cleaner screen), toggle to always show (Alt) | 3 | XS |
-| 21 | U | Under-attack pings on the minimap (red pulse) | 4 | XS |
+| 20 ✅ | G | Health bars only when hurt or selected (cleaner screen), toggle to always show (Alt) | 3 | XS |
+| 21 ✅ | U | Under-attack pings on the minimap (red pulse) | 4 | XS |
 | 22 | V | Unit acknowledgements ("Moving out", "On it") per faction, short and rate-limited | 4 | S |
 | 23 | C | Attack-move as the default right-click option when holding A is clumsy: A then left-click, plus Ctrl+right-click = attack-move | 3 | XS |
 | 24 | U | Credits counter ticks smoothly; income per minute shown on hover | 3 | XS |
@@ -58,12 +58,12 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 40 | V | Music that follows the battle (already layered) with a faction theme per side | 3 | M |
 | 41 | V | Positional sound for combat and a mix that ducks music under announcer lines | 3 | S |
 | 42 | U | Tooltips with full stats for every button, delay 400 ms, Shift shows numbers | 3 | S |
-| 43 | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
+| 43 ✅ | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
 | 44 | C | Control-group bar: shows each group's main unit and count; double-tap centers | 3 | S |
 | 45 | C | Camera bookmarks (F1–F4 save with Ctrl, jump with F-key) | 3 | XS |
 | 46 | C | Formation move with right-drag (draw a line, units spread along it) | 3 | M |
 | 47 | U | Minimap: unit dots by size, structures as squares, click-drag to move the camera, right-click to order | 4 | S |
-| 48 | U | Fog-of-war shows last-seen buildings as ghosts | 4 | S |
+| 48 ✅ | U | Fog-of-war shows last-seen buildings as ghosts | 4 | S |
 | 49 | U | Pause menu shows objectives, faction tips and the keymap at a glance | 3 | XS |
 | 50 | O | Interactive tutorial (5 short steps) for players new to RTS | 4 | M |
 | 51 | O | Skirmish presets ("Quick match", "Long game", "Rush") and a "same as last time" button | 3 | XS |

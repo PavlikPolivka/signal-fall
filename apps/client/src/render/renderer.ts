@@ -50,6 +50,8 @@ export class Renderer {
   /** Halcyon's network coverage, always shown to its own player; rebuilt when structures change. */
   private readonly coverageGfx = new Graphics();
   private coverageKey = '';
+  /** Enemy structures as last seen: footprint, so a ghost can outlive the building until the spot is seen again. */
+  private structFootprints = new Map<number, { x0: number; y0: number; w: number; h: number; owner: number }>();
   /** All sprite shadows, under every unit and building. */
   private readonly shadows = new Container();
   private readonly ground = new Container();
@@ -186,7 +188,8 @@ export class Renderer {
     let found = -1;
     let foundDepth = -Infinity;
     for (const h of [...this.structures.keys(), ...this.spriteStructures.keys()]) {
-      if (!this.visibleEntity(h)) continue;
+      // Ghosts of buildings already gone cannot be picked.
+      if (s.cur?.index.get(h) === undefined || !this.visibleEntity(h)) continue;
       const rule = s.ruleOf(h);
       if (rule.kind !== 'structure') continue;
       const cx = s.field(h, E.x) / FX;
@@ -204,6 +207,30 @@ export class Renderer {
       }
     }
     return found;
+  }
+
+  /** Is any tile of this footprint in sight right now? */
+  private footprintInSight(x0: number, y0: number, w: number, h: number): boolean {
+    const s = this.state;
+    if (!s.fog || s.spectator) return true;
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (x >= 0 && y >= 0 && x < s.width && y < s.height && s.fog[y * s.width + x]! & 1) return true;
+    return false;
+  }
+
+  /**
+   * An enemy building gone from the snapshot stays as a ghost until its spot is in sight again:
+   * the player only learns it is gone by looking.
+   */
+  private keepGhost(h: number, root: { tint: number; alpha: number }): boolean {
+    const f = this.structFootprints.get(h);
+    if (!f || f.owner === this.state.localPlayer || this.footprintInSight(f.x0, f.y0, f.w, f.h)) {
+      this.structFootprints.delete(h);
+      return false;
+    }
+    root.tint = 0x8a8f99;
+    root.alpha = 0.6;
+    this.rendered.delete(h);
+    return true;
   }
 
   /** Is the entity visible to the local player (own, or in a visible fog tile)? */
@@ -478,6 +505,8 @@ export class Renderer {
     this.fx.clear();
     this.drawCoverage();
     this.drawChorus();
+    const lowPower = !s.spectator && s.lowPower;
+    const ghosts = new Set<number>();
     const salvage = !s.spectator && (s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.salvagePct ?? 0) > 0;
 
     for (let i = 0; i < cur.entityCount; i++) {
@@ -521,6 +550,23 @@ export class Renderer {
         if (!this.updateStructureSprite(h, srule.id, px, py, py + isoY(srule.footprintW / 2, srule.footprintH / 2), color, hpFrac, cur.get(o, E.facing), visible, cur.tick))
           this.updateStructure(h, cur.get(o, E.type), px, py, color, visible);
         this.rendered.set(h, { x: px, y: py, air: false, shape: null });
+        // Low power: our buildings that draw power go dim, with a blinking red bolt.
+        // Enemy buildings out of sight are last-seen ghosts: faded, grey, no health bar.
+        const sview = this.spriteStructures.get(h)?.root ?? this.structures.get(h)?.root;
+        const unpowered = owner === s.localPlayer && lowPower && srule.power < 0;
+        const x0 = Math.floor(cur.get(o, E.x) / FX - srule.footprintW / 2);
+        const y0 = Math.floor(cur.get(o, E.y) / FX - srule.footprintH / 2);
+        this.structFootprints.set(h, { x0, y0, w: srule.footprintW, h: srule.footprintH, owner });
+        const ghost = visible && owner !== s.localPlayer && !this.footprintInSight(x0, y0, srule.footprintW, srule.footprintH);
+        if (ghost) ghosts.add(h);
+        if (sview) {
+          sview.tint = unpowered ? 0x7a7a8a : ghost ? 0x8a8f99 : 0xffffff;
+          sview.alpha = ghost ? 0.6 : 1;
+        }
+        if (visible && unpowered && Math.floor(performance.now() / 500) % 2 === 0) {
+          const by = py - 64;
+          this.overlay.poly([px + 2, by - 8, px - 4, by + 1, px, by + 1, px - 2, by + 8, px + 4, by - 1, px, by - 1]).fill({ color: 0xff4d4d }).stroke({ width: 1, color: 0x2a0606 });
+        }
         if (visible && cur.get(o, E.repairing) === 1) {
           const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
           this.overlay.rect(px - 2, py - 70, 4, 12).fill({ color: 0x4ade80, alpha: pulse });
@@ -625,7 +671,7 @@ export class Renderer {
         if (before !== undefined && sh < before) this.effects.shieldHit(px, py - lift - (kind === KIND.structure ? 30 : 10), kind === KIND.structure ? 2.2 : 0.8);
         this.lastShields.set(h, sh);
       }
-      if (isSel || hp < maxHp || sh < maxSh) {
+      if ((isSel || hp < maxHp || sh < maxSh || s.altHeld) && !ghosts.has(h)) {
         const w = kind === KIND.structure ? 48 : 22;
         const top = py - lift - (kind === KIND.structure ? 56 : 20);
         const frac = Math.max(0, hp / maxHp);
@@ -651,7 +697,7 @@ export class Renderer {
       this.rendered.delete(h);
     }
     for (const [h, v] of this.structures) {
-      if (seen.has(h)) continue;
+      if (seen.has(h) || this.keepGhost(h, v.root)) continue;
       v.root.destroy();
       this.structures.delete(h);
       this.rendered.delete(h);
@@ -665,7 +711,7 @@ export class Renderer {
       this.rendered.delete(h);
     }
     for (const [h, v] of this.spriteStructures) {
-      if (seen.has(h)) continue;
+      if (seen.has(h) || this.keepGhost(h, v.root)) continue;
       v.destroy();
       this.spriteStructures.delete(h);
       this.rendered.delete(h);

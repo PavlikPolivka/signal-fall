@@ -81,9 +81,20 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
   const time = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   const alert = state.alerts[state.alerts.length - 1];
   const fresh = alert && performance.now() - alert.time < 6000;
+  const idle = state.cur && !state.spectator ? input.idleUnits() : { harvesters: [], army: [] };
   return (
     <header class="topbar">
       <span class="timer" data-testid="timer">{time}</span>
+      {idle.harvesters.length > 0 && (
+        <button class="idle-btn warn" data-testid="idle-harvesters" title="Idle harvesters: click (or E) to jump to one" onClick={() => input.selectIdle('harvesters')}>
+          {idle.harvesters.length} idle harvester{idle.harvesters.length > 1 ? 's' : ''}
+        </button>
+      )}
+      {idle.army.length > 0 && (
+        <button class="idle-btn" data-testid="idle-army" title="Army units with no orders: click to select them and look" onClick={() => input.selectIdle('army')}>
+          {idle.army.length} idle
+        </button>
+      )}
       <span class={`alert ${fresh ? 'on' : ''} ${alert?.kind ?? ''}`} data-testid="alert">
         {fresh ? alert.text : ''}
       </span>
@@ -147,17 +158,26 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       </div>
       {faction.power && <PowerButton state={state} input={input} />}
       <nav class="tabs" data-testid="sidebar-tabs">
-        {TABS.map((t) => (
-          <button
-            class={state.sidebarTab === t.id ? 'active' : ''}
-            data-tab={t.id}
-            title={`${t.label} (${t.key}, then the item's letter)`}
-            onClick={() => ((state.sidebarTab = t.id), state.changed())}
-          >
-            <span>{t.label}</span>
-            <kbd>{t.key}</kbd>
-          </button>
-        ))}
+        {TABS.map((t) => {
+          // Badge: how much is queued on the tab; a dot when its producer stands idle.
+          const unitTab = t.id === 'infantry' ? 0 : t.id === 'vehicles' ? 1 : t.id === 'air' ? 2 : -1;
+          const producer = unitTab < 0 ? 'conyard' : unitTab === 0 ? 'barracks' : unitTab === 1 ? 'factory' : 'airfield';
+          const queued = !cur ? 0 : unitTab >= 0 ? cur.productionQueue(state.localPlayer, unitTab).items.length : cur.buildQueue(state.localPlayer, t.id === 'structures' ? 0 : 1).item >= 0 ? 1 : 0;
+          const idle = queued === 0 && (roles.get(producer) ?? 0) > 0 && t.id !== 'defenses';
+          return (
+            <button
+              class={`${state.sidebarTab === t.id ? 'active' : ''} ${idle ? 'idle' : ''}`}
+              data-tab={t.id}
+              title={`${t.label} (${t.key}, then the item's letter)${idle ? ': nothing in production' : queued ? `: ${queued} queued` : ''}`}
+              onClick={() => ((state.sidebarTab = t.id), state.changed())}
+            >
+              <span>{t.label}</span>
+              <kbd>{t.key}</kbd>
+              {queued > 0 && <b class="tab-badge">{queued}</b>}
+              {idle && <i class="tab-idle" />}
+            </button>
+          );
+        })}
       </nav>
       {MENU_MODES.includes(state.mode) && (
         <div class="hint" data-testid="menu-hint">

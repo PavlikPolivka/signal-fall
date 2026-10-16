@@ -1,5 +1,13 @@
 # What's new
 
+## 2026-10-16 15:44 UTC
+
+- **Idle counters** in the top bar: "2 idle harvesters" (click, or <kbd>E</kbd>, to jump to one) and your idle army (click to select it all and look).
+- **Production at a glance:** each sidebar tab shows how many items are queued, and a pulsing dot when its barracks or factory stands idle.
+- **Low power you can see:** buildings that need power go dim and blink a red bolt.
+- **Fog ghosts:** enemy buildings out of sight show as faded grey ghosts where you last saw them, with no health bar. You learn one is gone only by looking again.
+- **Hold <kbd>Alt</kbd>** to show every health bar.
+
 ## 2026-10-16 14:46 UTC
 
 - **Halcyon: Uplink.** Select a fork, Halcyon's engineer, and press <kbd>F</kbd>. For 15 seconds it carries a bubble of network coverage with it, so the units around it keep their faster fire, repair and Recompile in the enemy's base. It recharges for 90 seconds.
