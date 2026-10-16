@@ -44,7 +44,7 @@ float edge(float w, float n) {
 void main() {
   // Screen-space texture coordinates keep the textures undistorted by the iso projection.
   vec2 px = vec2(${TILE_W / 2}.0 * (vTile.x - vTile.y), ${TILE_H / 2}.0 * (vTile.x + vTile.y));
-  vec2 tuv = px / 512.0;
+  vec2 tuv = px / 320.0;
   vec4 splat = texture(uSplat, vTile / uMapSize);
   float n = texture(uNoise, px / 340.0).r;
   float n2 = texture(uNoise, px / 97.0 + 0.37).r;
@@ -98,7 +98,7 @@ float cliffAt(vec2 t) { return texture(uCliffMask, t / uMapSize).a; }
 void main() {
   if (cliffAt(vTile) < 0.5) discard;
   vec2 px = vec2(${TILE_W / 2}.0 * (vTile.x - vTile.y), ${TILE_H / 2}.0 * (vTile.x + vTile.y));
-  vec2 tuv = px / 512.0;
+  vec2 tuv = px / 320.0;
   float n = texture(uNoise, px / 210.0).r;
   vec3 col = mix(texture(uRough, tuv * 1.1 + 0.3).rgb, texture(uGround, tuv * 0.9).rgb, smoothstep(0.3, 0.7, n)) * 1.06;
   // Lighter lip along the drop on every exposed edge.
@@ -150,17 +150,21 @@ export class TerrainLayer {
     const load = async (name: string) => {
       const tex = (await Assets.load(`${base}${name}`)) as Texture;
       tex.source.style.addressMode = 'repeat';
+      // Mipmaps: photo textures shimmer when zoomed out without them.
+      tex.source.style.mipmapFilter = 'linear';
+      tex.source.autoGenerateMipmaps = true;
       tex.source.style.update();
+      tex.source.updateMipmaps();
       return tex;
     };
     const [ground, ground2, rough, water, road, plaza, cliff, noise] = await Promise.all([
-      load(`${biome}/ground.png`),
-      load(`${biome}/ground2.png`),
-      load(`${biome}/rough.png`),
+      load(`${biome}/ground.jpg`),
+      load(`${biome}/ground2.jpg`),
+      load(`${biome}/rough.jpg`),
       load(`${biome}/water.png`),
-      load(`${biome}/road.png`),
-      load(`${biome}/plaza.png`),
-      load(`${biome}/cliff.png`),
+      load(`${biome}/road.jpg`),
+      load(`${biome}/plaza.jpg`),
+      load(`${biome}/cliff.jpg`),
       load('noise.png'),
     ]);
     const splatTexture = (fill: (x: number, y: number, i: number, out: Uint8ClampedArray, o: number) => void, linear: boolean) => {

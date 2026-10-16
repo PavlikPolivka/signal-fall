@@ -3,7 +3,9 @@
  *
  *   pnpm --filter @signal-fall/assets terrain
  *
- * Writes apps/client/public/assets/terrain/<biome>/{ground,ground2,rough,water,road,plaza,cliff}.png
+ * Writes apps/client/public/assets/terrain/<biome>/water.png plus the shared blend noise. The ground, rough,
+ * road, plaza and cliff textures are photo textures now (terrain-photo.ts); PROCEDURAL=1 writes the old
+ * generated ones as <slot>.png too.
  * (512x512, tileable; cliff is 512x256, tileable horizontally) plus a shared blend-noise texture. Gritty look: layered
  * periodic noise, pebbles, cracks and stains.
  */
@@ -266,18 +268,22 @@ async function blendNoise(file: string): Promise<void> {
   await sharp(px, { raw: { width: N, height: N, channels: 1 } }).png({ compressionLevel: 9 }).toFile(file);
 }
 
+const ALL = process.env.PROCEDURAL === '1';
 let seed = 1;
 for (const [biome, looks] of Object.entries(BIOMES)) {
   const dir = join(OUT, biome);
   mkdirSync(dir, { recursive: true });
-  await ground(looks.ground, seed++, join(dir, 'ground.png'));
-  await ground(looks.ground2, seed++, join(dir, 'ground2.png'));
-  await ground(looks.rough, seed++, join(dir, 'rough.png'));
-  await water(looks.water, seed++, join(dir, 'water.png'));
+  // Seeds advance either way, so water comes out the same.
+  const s0 = seed;
+  seed += 7;
+  if (ALL) await ground(looks.ground, s0, join(dir, 'ground.png'));
+  if (ALL) await ground(looks.ground2, s0 + 1, join(dir, 'ground2.png'));
+  if (ALL) await ground(looks.rough, s0 + 2, join(dir, 'rough.png'));
+  await water(looks.water, s0 + 3, join(dir, 'water.png'));
   const extra = EXTRA[biome]!;
-  await ground(extra.road, seed++, join(dir, 'road.png'));
-  await plaza(extra.plaza, seed++, join(dir, 'plaza.png'));
-  await cliff(extra.cliff, seed++, join(dir, 'cliff.png'));
+  if (ALL) await ground(extra.road, s0 + 4, join(dir, 'road.png'));
+  if (ALL) await plaza(extra.plaza, s0 + 5, join(dir, 'plaza.png'));
+  if (ALL) await cliff(extra.cliff, s0 + 6, join(dir, 'cliff.png'));
   console.log('terrain', biome);
 }
 await blendNoise(join(OUT, 'noise.png'));

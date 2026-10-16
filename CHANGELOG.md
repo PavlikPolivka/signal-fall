@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-16 15:50 UTC
+
+- **New terrain.** Real photo textures for every biome: dry earth and sandy gravel in the wasteland, worn concrete, asphalt and rubble in the city, violet-tinted rock in the crystal fields. They are graded darker than the units so the fighting stays readable, and stay crisp when you zoom out.
+
 ## 2026-10-16 15:44 UTC
 
 - **Idle counters** in the top bar: "2 idle harvesters" (click, or <kbd>E</kbd>, to jump to one) and your idle army (click to select it all and look).
