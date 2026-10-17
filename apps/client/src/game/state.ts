@@ -432,12 +432,14 @@ export interface Settings {
   scrollSpeed: number;
   /** Reduced: fewer smoke and spark particles (slower machines, calmer screen). */
   effects: 'full' | 'reduced';
+  /** Graphics quality: Balanced hides ground clutter and prop shadows, Performance also renders at lower resolution with simpler terrain. */
+  graphics: 'high' | 'balanced' | 'performance';
   /** First-match tips in the corner. */
   hints: boolean;
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', hints: true };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true };
 
 export function loadSettings(): Settings {
   try {

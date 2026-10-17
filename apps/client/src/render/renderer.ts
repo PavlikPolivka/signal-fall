@@ -4,6 +4,7 @@ import { E, ENT_FLAG, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
 import { SpriteLibrary } from './sprites';
+import { Culler } from './culler';
 import { TerrainLayer } from './terrain';
 import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
 import { Effects } from './effects';
@@ -58,7 +59,13 @@ export class Renderer {
   private structFootprints = new Map<number, { x0: number; y0: number; w: number; h: number; owner: number }>();
   /** All sprite shadows, under every unit and building. */
   private readonly shadows = new Container();
+  /** Shadows of map props (hidden on the lower graphics settings). */
+  private readonly propShadows = new Container();
+  /** Small ground clutter: drawn under units, never depth-sorted. */
+  private readonly flat = new Container();
   private readonly ground = new Container();
+  /** Static map sprites are only in the scene graph near the screen. */
+  private readonly culler = new Culler();
   private readonly air = new Container();
   private readonly fx = new Graphics();
   /** Particle effects (flashes, fire, smoke) and scorch marks. */
@@ -114,13 +121,28 @@ export class Renderer {
   }
 
   async init(host: HTMLElement): Promise<void> {
-    await this.app.init({ resizeTo: host, background: 0x0b0d10, antialias: true, preference: 'webgl' });
+    await this.app.init({ resizeTo: host, background: 0x0b0d10, antialias: true, autoDensity: true, preference: 'webgl' });
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;
-    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.coverageGfx, this.decals, this.shadows, this.ground, this.fx, this.air, this.particles, this.fogLayer, this.overlay);
+    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.coverageGfx, this.decals, this.propShadows, this.shadows, this.flat, this.ground, this.fx, this.air, this.particles, this.fogLayer, this.overlay);
     this.app.stage.addChild(this.world, this.screen);
     this.makeTextures();
+  }
+
+  /**
+   * Graphics quality. Balanced drops ground clutter and prop shadows; Performance also renders at 75%
+   * resolution and uses the cheap terrain shader.
+   */
+  setGraphics(q: 'high' | 'balanced' | 'performance'): void {
+    this.flat.visible = q === 'high';
+    this.propShadows.visible = q === 'high';
+    this.terrain.setLite(q === 'performance');
+    const res = q === 'performance' ? 0.75 : 1;
+    if (this.app.renderer && this.app.renderer.resolution !== res) {
+      this.app.renderer.resolution = res;
+      this.app.resize();
+    }
   }
 
   get width(): number {
@@ -325,6 +347,8 @@ export class Renderer {
     const top = this.terrain.topDecor;
     ground.removeChildren();
     top.removeChildren();
+    this.culler.clear();
+    this.echoSprites.clear();
     const hash = (x: number, y: number, k: number) => {
       let h = Math.imul(x + 1, 374761393) + Math.imul(y + 1, 668265263) + Math.imul(k, 982451653);
       h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -346,14 +370,14 @@ export class Renderer {
         sp.anchor.set(0.5);
         sp.position.set(px, py);
         sp.scale.set(scale * flip, scale);
-        (layer === this.ground ? this.shadows : layer).addChild(sp);
+        this.culler.add(sp, layer === this.ground || layer === this.flat ? this.propShadows : layer, px, py);
       }
       const sp = new Sprite(tex);
       sp.anchor.set(0.5);
       sp.position.set(px, py);
       sp.scale.set(scale * flip, scale);
       sp.zIndex = py;
-      layer.addChild(sp);
+      this.culler.add(sp, layer, px, py);
     };
     this.drawLandmarks(place);
     // Rock outcrops that aren't copses become big formations; city ruins become buildings.
@@ -381,7 +405,7 @@ export class Renderer {
           continue;
         }
         if ((mesa(x - 1, y) || mesa(x, y - 1)) && hash(x, y, 8) < 0.3) {
-          place(s.biome === 'crystal' ? `clutter_crystal_${4 + Math.floor(hash(x, y, 9) * 2)}` : `deco_rubble_${Math.floor(hash(x, y, 9) * 3)}`, this.ground, cx - 6 + hash(x, y, 10) * 12, cy - 4, 0.9, 1, false);
+          place(s.biome === 'crystal' ? `clutter_crystal_${4 + Math.floor(hash(x, y, 9) * 2)}` : `deco_rubble_${Math.floor(hash(x, y, 9) * 3)}`, this.flat, cx - 6 + hash(x, y, 10) * 12, cy - 4, 0.9, 1, false);
         }
         // Wasteland rock outcrops turn into copses where a coarse noise says so.
         if (s.terrain[i] === TERRAIN.rock && grove(x, y)) {
@@ -416,7 +440,7 @@ export class Renderer {
             const n = CLUTTER_VARIANTS[s.biome]!;
             const jx = (hash(x, y, 12) - 0.5) * 0.7;
             const jy = (hash(x, y, 13) - 0.5) * 0.7;
-            place(`${kind}_${Math.floor(hash(x, y, 14) * n)}`, this.ground, isoX(x + 0.5 + jx, y + 0.5 + jy), isoY(x + 0.5 + jx, y + 0.5 + jy), 0.85 + hash(x, y, 15) * 0.3, hash(x, y, 16) < 0.5 ? -1 : 1, true);
+            place(`${kind}_${Math.floor(hash(x, y, 14) * n)}`, this.flat, isoX(x + 0.5 + jx, y + 0.5 + jy), isoY(x + 0.5 + jx, y + 0.5 + jy), 0.85 + hash(x, y, 15) * 0.3, hash(x, y, 16) < 0.5 ? -1 : 1, true);
           }
           continue;
         }
@@ -591,6 +615,9 @@ export class Renderer {
     if (!cur) return;
     this.world.scale.set(this.camera.zoom);
     this.world.position.set(this.width / 2 - this.camera.x * this.camera.zoom, this.height / 2 - this.camera.y * this.camera.zoom);
+    const hw = this.width / 2 / this.camera.zoom;
+    const hh = this.height / 2 / this.camera.zoom;
+    this.culler.update(this.camera.x - hw, this.camera.y - hh, this.camera.x + hw, this.camera.y + hh);
 
     const alpha = Math.min(1, (performance.now() - s.curAt) / 50);
     const nowMs = performance.now();
@@ -943,6 +970,7 @@ export class Renderer {
       let sp = this.echoSprites.get(i);
       if (n === 0) {
         if (sp) {
+          this.culler.remove(sp);
           sp.destroy();
           this.echoSprites.delete(i);
         }
@@ -957,6 +985,7 @@ export class Renderer {
       const nb = (s.echo[i + 1] ?? 0) + (s.echo[i - 1] ?? 0) + (s.echo[i + s.width] ?? 0) + (s.echo[i - s.width] ?? 0);
       if ((r >>> 7) % 10 < 4 && nb > 0) {
         if (sp) {
+          this.culler.remove(sp);
           sp.destroy();
           this.echoSprites.delete(i);
         }
@@ -980,7 +1009,7 @@ export class Renderer {
         sp.zIndex = py - 2;
         const k = 0.78 + ((r >>> 18) % 100) / 230;
         sp.scale.set(((r >>> 25) & 1) === 1 ? -k : k, k);
-        this.ground.addChild(sp);
+        this.culler.add(sp, this.ground, px, py);
         this.echoSprites.set(i, sp);
       }
       sp.texture = tex;

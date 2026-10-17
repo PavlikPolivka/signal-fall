@@ -58,6 +58,8 @@ uniform vec2 uLightSize;
 uniform float uTime;
 uniform float uBridge;
 uniform float uRoughGain;
+/** 1 on the Performance graphics setting: one sample per texture, no detail relief. */
+uniform float uLite;
 uniform vec3 uWaterTint;
 
 const vec3 SUN = vec3(${SUN_DIR.map((v) => v.toFixed(4)).join(', ')});
@@ -87,45 +89,67 @@ void main() {
   float n2 = texture(uNoise, px / 97.0 + 0.37).r;
 
   // Two differently scaled copies of each texture, blended by large-scale noise, hide the repeat.
-  float big = texture(uNoise, px / 900.0 + 0.13).r;
   vec2 tuv2 = mat2(0.8, -0.6, 0.6, 0.8) * tuv * 0.57 + 0.31;
-  float bw = smoothstep(0.35, 0.65, big);
-  vec3 col = mix(texture(uGround, tuv).rgb, texture(uGround, tuv2).rgb, bw);
-  vec3 rel = mix(texture(uGroundN, tuv).rgb, texture(uGroundN, tuv2).rgb, bw);
-  vec3 g2 = mix(texture(uGround2, tuv * 0.83 + 0.21).rgb, texture(uGround2, tuv2 * 1.1).rgb, smoothstep(0.35, 0.65, n));
-  col = mix(col, g2, edge(m1.b, n));
+  vec3 col;
+  vec3 rel;
+  if (uLite > 0.5) {
+    col = texture(uGround, tuv).rgb;
+    rel = vec3(0.5, 0.5, 0.5);
+  } else {
+    float bw = smoothstep(0.35, 0.65, texture(uNoise, px / 900.0 + 0.13).r);
+    col = mix(texture(uGround, tuv).rgb, texture(uGround, tuv2).rgb, bw);
+    rel = mix(texture(uGroundN, tuv).rgb, texture(uGroundN, tuv2).rgb, bw);
+  }
+  // Each layer below is only sampled where its mask can reach (the masks are zero on most of the map):
+  // the skipped branches would blend in with weight 0, so the picture is the same at a fraction of the cost.
+  float e2 = edge(m1.b, n);
+  if (e2 > 0.0 && uLite < 0.5) {
+    vec3 g2 = mix(texture(uGround2, tuv * 0.83 + 0.21).rgb, texture(uGround2, tuv2 * 1.1).rgb, smoothstep(0.35, 0.65, n));
+    col = mix(col, g2, e2);
+  }
 
   // Rough ground blends in by height.
-  vec2 ruv = tuv * 1.17;
-  vec3 rough = texture(uRough, ruv).rgb * uRoughGain;
-  vec3 roughN = texture(uRoughN, ruv).rgb;
-  float wr = hblend(m1.r + (n2 - 0.5) * 0.35, rel.b, roughN.b);
-  col = mix(col, rough, wr);
-  rel = mix(rel, roughN, wr);
+  if (m1.r > 0.0) {
+    vec2 ruv = tuv * 1.17;
+    vec3 rough = texture(uRough, ruv).rgb * uRoughGain;
+    vec3 roughN = texture(uRoughN, ruv).rgb;
+    float wr = hblend(m1.r + (n2 - 0.5) * 0.35, rel.b, roughN.b);
+    col = mix(col, rough, wr);
+    rel = mix(rel, roughN, wr);
+  }
 
   // Roads: worn edges with a lighter shoulder line, then the surface.
-  vec3 road = mix(texture(uRoad, tuv * 0.9).rgb, texture(uRoad, tuv2).rgb, 0.4);
-  float rw = m2.r + (n2 - 0.5) * 0.18;
-  col = mix(col, col * 1.18 + 0.03, smoothstep(0.22, 0.32, rw) * (1.0 - smoothstep(0.4, 0.5, rw)) * 0.8);
-  float roadW = smoothstep(0.4, 0.5, rw);
-  col = mix(col, road, roadW);
-  rel = mix(rel, texture(uRoadN, tuv * 0.9).rgb, roadW);
+  if (m2.r > 0.1) {
+    vec3 road = mix(texture(uRoad, tuv * 0.9).rgb, texture(uRoad, tuv2).rgb, 0.4);
+    float rw = m2.r + (n2 - 0.5) * 0.18;
+    col = mix(col, col * 1.18 + 0.03, smoothstep(0.22, 0.32, rw) * (1.0 - smoothstep(0.4, 0.5, rw)) * 0.8);
+    float roadW = smoothstep(0.4, 0.5, rw);
+    col = mix(col, road, roadW);
+    rel = mix(rel, texture(uRoadN, tuv * 0.9).rgb, roadW);
+  }
   // Plaza paving is sampled in tile space so the slabs follow the iso grid.
-  vec3 paving = texture(uPlaza, vTile * 0.25).rgb * (0.9 + 0.2 * n);
-  float pw = edge(m2.b, n * 0.6 + 0.2);
-  col = mix(col, paving, pw);
-  rel = mix(rel, vec3(0.5, 0.5, 0.5), pw * 0.7);
+  if (m2.b > 0.2) {
+    vec3 paving = texture(uPlaza, vTile * 0.25).rgb * (0.9 + 0.2 * n);
+    float pw = edge(m2.b, n * 0.6 + 0.2);
+    col = mix(col, paving, pw);
+    rel = mix(rel, vec3(0.5, 0.5, 0.5), pw * 0.7);
+  }
 
   // Obstacle bases: rough, darker ground under rocks and ruins.
-  vec3 obN = texture(uRoughN, tuv * 1.4 + 0.5).rgb;
-  float ob = hblend(m1.a + (n - 0.5) * 0.4, rel.b, obN.b);
-  col = mix(col, texture(uRough, tuv * 1.4 + 0.5).rgb * 0.8 * uRoughGain, ob);
-  rel = mix(rel, obN, ob);
+  if (m1.a > 0.0) {
+    vec3 obN = texture(uRoughN, tuv * 1.4 + 0.5).rgb;
+    float ob = hblend(m1.a + (n - 0.5) * 0.4, rel.b, obN.b);
+    col = mix(col, texture(uRough, tuv * 1.4 + 0.5).rgb * 0.8 * uRoughGain, ob);
+    rel = mix(rel, obN, ob);
+  }
 
   // Echo fields: the ground around the crystals is stained a dark teal with faint glowing veins.
   float stain = smoothstep(0.1, 0.7, m2.a + (n2 - 0.5) * 0.5);
-  float vn = texture(uNoise, px / 180.0 + 0.71).r;
-  float vein = smoothstep(0.485, 0.5, vn) * (1.0 - smoothstep(0.5, 0.515, vn));
+  float vein = 0.0;
+  if (stain > 0.0) {
+    float vn = texture(uNoise, px / 180.0 + 0.71).r;
+    vein = smoothstep(0.485, 0.5, vn) * (1.0 - smoothstep(0.5, 0.515, vn));
+  }
   col = mix(col, col * vec3(0.62, 0.86, 0.9) + vec3(0.0, 0.03, 0.04), stain * 0.8);
 
   // Macro shape from the height field; slopes show bare rock, mapped on the screen so faces aren't stretched.
@@ -133,15 +157,17 @@ void main() {
   nm.z = sqrt(max(0.02, 1.0 - dot(nm.xy, nm.xy)));
   float steep = 1.0 - smoothstep(0.5, 0.8, nm.z);
   vec2 cuv = vScreen / vec2(300.0, 240.0);
-  vec3 cliff = mix(texture(uCliff, cuv).rgb, texture(uCliff, cuv * 0.61 + 0.3).rgb, 0.35) * 1.2;
-  col = mix(col, cliff, steep);
-  rel = mix(rel, texture(uCliffN, cuv).rgb, steep);
+  if (steep > 0.0) {
+    vec3 cliff = mix(texture(uCliff, cuv).rgb, texture(uCliff, cuv * 0.61 + 0.3).rgb, 0.35) * 1.2;
+    col = mix(col, cliff, steep);
+    rel = mix(rel, texture(uCliffN, cuv).rgb, steep);
+  }
 
   // Lighting: the macro normal tilted by the material's own relief (texture axes run along the screen).
   vec2 d = rel.rg * 2.0 - 1.0;
   vec2 dw = d.x * vec2(0.7071, -0.7071) + d.y * vec2(-0.7071, -0.7071);
   vec3 N = normalize(nm + vec3(dw * 1.3, 0.0));
-  float cloud = 1.0 - 0.32 * smoothstep(0.42, 0.72, texture(uNoise, px / 2600.0 + uTime * vec2(0.0035, 0.0012)).r);
+  float cloud = uLite > 0.5 ? 1.0 : 1.0 - 0.32 * smoothstep(0.42, 0.72, texture(uNoise, px / 2600.0 + uTime * vec2(0.0035, 0.0012)).r);
   float sun = max(dot(N, SUN), 0.0) * light.b * cloud;
   float amb = (0.5 + 0.15 * N.z) * light.a;
   // Flat open ground in sunlight comes out at about 1.0, the brightness the textures were graded for.
@@ -149,41 +175,45 @@ void main() {
 
   col += vec3(0.03, 0.18, 0.2) * vein * stain * (0.5 + 0.5 * sin(uTime * 1.3 + n * 9.0));
 
-  // Water: depth from the blurred water mask, darker deep middle, foam line, sun glints on the ripples.
-  float deep = 0.0;
-  for (int k = 0; k < 8; k++) {
-    float a = float(k) * 0.785;
-    deep += texture(uMask1, mt + vec2(cos(a), sin(a)) * (1.5 + float(k - k / 2 * 2) * 2.0) / uMapSize).g;
-  }
-  deep *= 0.125;
   float wet = smoothstep(0.08, 0.45, m1.g + (n - 0.5) * 0.3);
   col *= 1.0 - wet * 0.35;
-  float ws = edge(m1.g, n2);
-  vec2 flow = vec2(uTime * 0.012, uTime * 0.007);
-  float r1 = texture(uNoise, px / 60.0 + flow * 3.0).r;
-  float r2 = texture(uNoise, px / 45.0 - flow * 2.3 + 0.5).r;
-  vec3 shallowW = mix(vec3(0.2, 0.32, 0.31), uWaterTint, 0.35);
-  vec3 deepW = mix(vec3(0.02, 0.06, 0.09), uWaterTint * 0.25, 0.3);
-  vec3 water = mix(shallowW, deepW, smoothstep(0.3, 0.9, deep));
-  water = mix(water, col * 0.75, (1.0 - smoothstep(0.25, 0.65, deep)) * 0.4);
-  // A broad sheen where the ripples face the sun, no sparkle noise.
-  vec3 wn = normalize(vec3((r1 - 0.5) * 0.7, (r2 - 0.5) * 0.7, 1.0));
-  float spec = pow(max(dot(wn, normalize(SUN + VIEW)), 0.0), 10.0);
-  water *= 0.9 + 0.2 * r1;
-  water += vec3(1.0, 0.95, 0.85) * spec * 0.12 * light.b * cloud;
-  float g = m1.g + (n2 - 0.5) * 0.25;
-  float foam = smoothstep(0.28, 0.42, g) * (1.0 - smoothstep(0.48, 0.62, g));
-  foam *= 0.6 + 0.4 * sin(uTime * 1.7 + n2 * 14.0);
-  water = mix(water, vec3(0.78, 0.8, 0.76) * (0.6 + 0.4 * light.b), foam * 0.7);
-  col = mix(col, water, max(ws, foam * 0.8));
-  // Crossings: a shallow ford with wet stones, or in the city a concrete causeway.
-  float ford = edge(m2.g, n2);
-  // Shallow wet gravel: the bed shows through a thin sheet of water with ripples catching the light.
-  vec3 bed = texture(uRough, tuv * 1.6 + 0.2).rgb * uRoughGain * (amb * 0.9 + sun * 0.6);
-  vec3 shallow = mix(bed * 0.7, shallowW, 0.3 + 0.2 * r2);
-  shallow += vec3(0.75, 0.8, 0.78) * smoothstep(0.6, 0.72, r1 * 0.6 + r2 * 0.4) * 0.22;
-  vec3 deck = mix(texture(uPlaza, vTile * 0.25).rgb * 0.85, road, 0.5) * (0.6 + 0.4 * light.b);
-  col = mix(col, mix(shallow, deck, uBridge), ford);
+  // Water, shores and fords (the masks are zero everywhere else).
+  if (m1.g > 0.0 || m2.g > 0.0) {
+    // Water: depth from the blurred water mask, darker deep middle, foam line, sun glints on the ripples.
+    float deep = 0.0;
+    for (int k = 0; k < 8; k++) {
+      float a = float(k) * 0.785;
+      deep += texture(uMask1, mt + vec2(cos(a), sin(a)) * (1.5 + float(k - k / 2 * 2) * 2.0) / uMapSize).g;
+    }
+    deep *= 0.125;
+    float ws = edge(m1.g, n2);
+    vec2 flow = vec2(uTime * 0.012, uTime * 0.007);
+    float r1 = texture(uNoise, px / 60.0 + flow * 3.0).r;
+    float r2 = texture(uNoise, px / 45.0 - flow * 2.3 + 0.5).r;
+    vec3 shallowW = mix(vec3(0.2, 0.32, 0.31), uWaterTint, 0.35);
+    vec3 deepW = mix(vec3(0.02, 0.06, 0.09), uWaterTint * 0.25, 0.3);
+    vec3 water = mix(shallowW, deepW, smoothstep(0.3, 0.9, deep));
+    water = mix(water, col * 0.75, (1.0 - smoothstep(0.25, 0.65, deep)) * 0.4);
+    // A broad sheen where the ripples face the sun, no sparkle noise.
+    vec3 wn = normalize(vec3((r1 - 0.5) * 0.7, (r2 - 0.5) * 0.7, 1.0));
+    float spec = pow(max(dot(wn, normalize(SUN + VIEW)), 0.0), 10.0);
+    water *= 0.9 + 0.2 * r1;
+    water += vec3(1.0, 0.95, 0.85) * spec * 0.12 * light.b * cloud;
+    float g = m1.g + (n2 - 0.5) * 0.25;
+    float foam = smoothstep(0.28, 0.42, g) * (1.0 - smoothstep(0.48, 0.62, g));
+    foam *= 0.6 + 0.4 * sin(uTime * 1.7 + n2 * 14.0);
+    water = mix(water, vec3(0.78, 0.8, 0.76) * (0.6 + 0.4 * light.b), foam * 0.7);
+    col = mix(col, water, max(ws, foam * 0.8));
+    // Crossings: a shallow ford with wet stones, or in the city a concrete causeway.
+    float ford = edge(m2.g, n2);
+    // Shallow wet gravel: the bed shows through a thin sheet of water with ripples catching the light.
+    vec3 bed = texture(uRough, tuv * 1.6 + 0.2).rgb * uRoughGain * (amb * 0.9 + sun * 0.6);
+    vec3 shallow = mix(bed * 0.7, shallowW, 0.3 + 0.2 * r2);
+    shallow += vec3(0.75, 0.8, 0.78) * smoothstep(0.6, 0.72, r1 * 0.6 + r2 * 0.4) * 0.22;
+    vec3 road = mix(texture(uRoad, tuv * 0.9).rgb, texture(uRoad, tuv2).rgb, 0.4);
+    vec3 deck = mix(texture(uPlaza, vTile * 0.25).rgb * 0.85, road, 0.5) * (0.6 + 0.4 * light.b);
+    col = mix(col, mix(shallow, deck, uBridge), ford);
+  }
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -263,6 +293,7 @@ export class TerrainLayer {
   private echoSet = false;
   /** Cliff lift in screen px on the RES grid, for placing props. */
   private lift: Float32Array = new Float32Array(0);
+  private lite = false;
 
   /** Ground-level decals (craters) drawn over the terrain. */
   readonly groundDecor = new Container();
@@ -459,6 +490,7 @@ export class TerrainLayer {
           uMapSize: { value: [width, height], type: 'vec2<f32>' },
           uLightSize: { value: [gw, gh], type: 'vec2<f32>' },
           uTime: { value: 0, type: 'f32' },
+          uLite: { value: this.lite ? 1 : 0, type: 'f32' },
           uBridge: { value: biome === 'city' ? 1 : 0, type: 'f32' },
           // Rough patches keep their texture but not a much darker tone than the ground around them.
           uRoughGain: { value: Math.min(1.6, Math.max(1, (0.85 * luma(t.ground!)) / Math.max(0.01, luma(t.rough!)))), type: 'f32' },
@@ -530,6 +562,12 @@ export class TerrainLayer {
     const [w, h] = this.size;
     for (let i = 0; i < w * h; i++) data[i * 4 + 3] = Math.min(255, (echo[i] ?? 0) * 40);
     this.mask2.update();
+  }
+
+  /** Performance graphics: the cheap terrain shader path. */
+  setLite(lite: boolean): void {
+    this.lite = lite;
+    if (this.shader) (this.shader.resources.terrainUniforms as { uniforms: { uLite: number } }).uniforms.uLite = lite ? 1 : 0;
   }
 
   update(): void {

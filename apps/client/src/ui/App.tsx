@@ -1015,6 +1015,21 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             </button>
           ))}
         </div>
+        <div class="seg-row" title="Lower settings run faster on older computers">
+          <span>Graphics</span>
+          {(['high', 'balanced', 'performance'] as const).map((v) => (
+            <button
+              class={state.settings.graphics === v ? 'active' : ''}
+              data-testid={`setting-graphics-${v}`}
+              onClick={() => {
+                state.settings.graphics = v;
+                state.applySettings();
+              }}
+            >
+              {v === 'high' ? 'High' : v === 'balanced' ? 'Balanced' : 'Performance'}
+            </button>
+          ))}
+        </div>
         <div class="seg-row">
           <span>Hints</span>
           {[true, false].map((v) => (

@@ -104,6 +104,7 @@ state.spectator = spectate !== null;
 state.applySettings = () => {
   saveSettings(state.settings);
   renderer.effects.reduced = state.settings.effects === 'reduced';
+  renderer.setGraphics(state.settings.graphics);
   state.changed();
 };
 state.saveReplay = () => post({ type: 'saveReplay' });
@@ -138,6 +139,7 @@ let input: Input | null = null;
 
 async function mountGame(host: HTMLDivElement): Promise<void> {
   await renderer.init(host);
+  renderer.setGraphics(state.settings.graphics);
   input = new Input(state, renderer, renderer.app.canvas);
   renderer.placementGhost = () => {
     const c = input?.cursor();

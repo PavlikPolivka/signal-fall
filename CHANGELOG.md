@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-17 23:23 UTC
+
+- **Smoother play:** scenery far off screen is no longer drawn, and the ground is cheaper to draw. Frame rate holds up much better when armies are on the move, especially on bigger maps.
+- **Graphics setting:** in Settings, choose **High** (everything), **Balanced** (no small ground clutter or scenery shadows) or **Performance** (also renders at lower resolution with simpler ground) for older or slower computers.
+- **City streets:** big blocks of ruins are cut by narrow streets, so cities read as city blocks with lanes between them. Infantry and vehicles can use the new lanes as shortcuts.
+
 ## 2026-10-17 21:12 UTC
 
 - **Echo fields** look like crystal pushed up through the ground: clusters lean, loose shards lie around them, sizes vary, and towering mother crystals rise from the heart of rich fields. The tallest go as the field is mined out.
