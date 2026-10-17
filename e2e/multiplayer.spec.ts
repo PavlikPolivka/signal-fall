@@ -38,8 +38,10 @@ test('two clients play a networked match over a lossy link without desync', asyn
   test.setTimeout(240_000);
   // Online (Supabase signaling): two separate browser profiles, like two players. Offline: two tabs of one profile.
   const online = !!process.env.SUPABASE_URL;
-  const hostContext = await browser.newContext();
-  const guestContext = online ? await browser.newContext() : hostContext;
+  // Small windows: on CI the pages render in software, and full-size frames starve the lockstep loop.
+  const small = { viewport: { width: 640, height: 400 } };
+  const hostContext = await browser.newContext(small);
+  const guestContext = online ? await browser.newContext(small) : hostContext;
   const host = await hostContext.newPage();
   const guest = await guestContext.newPage();
   for (const p of [host, guest]) p.on('pageerror', (e) => console.error(e.message));
