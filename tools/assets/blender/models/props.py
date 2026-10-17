@@ -296,16 +296,22 @@ def lm_monolith(style, seed):
 
 VARIANTS = 6
 
+import props_real as real  # noqa: E402  (real models: Poly Haven scans, the Meshy Echo cluster)
+
 # id -> (builder, frame px, variants)
 PROPS = {
-    "rock_wasteland": (rock_wasteland, 96, VARIANTS),
+    "rock_wasteland": (real.rock_wasteland, 112, VARIANTS),
     "rock_city": (rock_city, 112, VARIANTS),
-    "rock_crystal": (rock_crystal, 112, VARIANTS),
-    "deco_rubble": (deco_rubble, 64, 3),
-    "deco_wreck": (deco_wreck, 80, 3),
-    "deco_outcrop": (deco_outcrop, 64, 3),
-    "deco_tree": (deco_tree, 96, 3),
+    "rock_crystal": (real.rock_crystal, 112, VARIANTS),
+    "deco_rubble": (real.deco_rubble, 64, 3),
+    "deco_wreck": (real.deco_wreck, 96, 3),
+    "deco_outcrop": (real.deco_outcrop, 80, 3),
+    "deco_tree": (real.deco_tree, 128, 3),
     "deco_crater": (deco_crater, 80, 3),
+    # Scattered by the client on open ground (cosmetic).
+    "clutter_wasteland": (real.clutter_wasteland, 80, 4),
+    "clutter_city": (real.clutter_city, 128, 6),
+    "clutter_crystal": (real.clutter_crystal, 64, 4),
 }
 
 # id -> (builder, frame px); one variant each.

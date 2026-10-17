@@ -1,0 +1,11 @@
+{
+  "note": "CC0 3D models from Poly Haven (polyhaven.com), compacted into props/models/ by polyhaven.ts. Used by blender/models/props.py.",
+  "models": [
+    "namaqualand_boulder_02", "namaqualand_boulder_03", "namaqualand_boulder_04", "namaqualand_boulder_05", "namaqualand_boulder_06",
+    "namaqualand_boulders_01", "namaqualand_stones_01", "namaqualand_rocks_01", "sand_rocks_small_01",
+    "dead_quiver_trunk", "dead_tree_trunk_02", "quiver_tree_01", "searsia_burchellii", "wild_rooibos_bush", "dry_branches_medium_01",
+    "Barrel_01", "barrel_03", "old_tyre", "rusted_wheel_rim_01", "wooden_crate_01", "old_military_crate", "metal_jerrycan",
+    "concrete_road_barrier", "concrete_road_barrier_02", "modular_electricity_poles", "street_lamp_01", "utility_box_01", "metal_trash_can", "covered_car",
+    "moon_rock_01", "moon_rock_02", "moon_rock_03", "moon_rock_04", "moon_rock_05"
+  ]
+}

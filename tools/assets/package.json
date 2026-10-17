@@ -11,7 +11,8 @@
     "mapshot": "tsx mapshot.ts",
     "brand": "tsx brand.ts",
     "terrain-photo": "tsx terrain-photo.ts",
-    "meshy": "tsx meshy.ts"
+    "meshy": "tsx meshy.ts",
+    "polyhaven": "tsx polyhaven.ts"
   },
   "devDependencies": {
     "@fontsource/saira-stencil-one": "5.3.0",

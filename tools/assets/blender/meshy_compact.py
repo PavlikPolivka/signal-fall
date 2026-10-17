@@ -9,8 +9,10 @@ import sys
 
 import bpy
 
-TARGET_TRIS = 40000
-TEXTURE_PX = 1024
+import os
+
+TARGET_TRIS = int(os.environ.get("SF_TRIS", 40000))
+TEXTURE_PX = int(os.environ.get("SF_TEXTURE", 1024))
 
 src, dst = sys.argv[sys.argv.index("--") + 1 :][:2]
 bpy.ops.wm.read_factory_settings(use_empty=True)

@@ -4,42 +4,42 @@
  "sprites": {
   "rock_wasteland_0": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "rock_wasteland_1": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "rock_wasteland_2": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "rock_wasteland_3": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "rock_wasteland_4": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "rock_wasteland_5": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 112,
    "dirs": 1,
    "anims": {},
    "turret": false
@@ -151,63 +151,63 @@
   },
   "deco_wreck_0": {
    "kind": "prop",
-   "frame": 80,
+   "frame": 96,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_wreck_1": {
    "kind": "prop",
-   "frame": 80,
+   "frame": 96,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_wreck_2": {
    "kind": "prop",
-   "frame": 80,
+   "frame": 96,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_outcrop_0": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_outcrop_1": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_outcrop_2": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_tree_0": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_tree_1": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "deco_tree_2": {
    "kind": "prop",
-   "frame": 96,
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false
@@ -229,6 +229,104 @@
   "deco_crater_2": {
    "kind": "prop",
    "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_0": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_2": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_0": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_1": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_2": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_3": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_4": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_5": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_crystal_0": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_crystal_1": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_crystal_2": {
+   "kind": "prop",
+   "frame": 64,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_crystal_3": {
+   "kind": "prop",
+   "frame": 64,
    "dirs": 1,
    "anims": {},
    "turret": false
@@ -261,28 +359,84 @@
    "anims": {},
    "turret": false
   },
-  "echo_1": {
+  "echo_1_0": {
    "kind": "prop",
    "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
-  "echo_2": {
+  "echo_1_1": {
    "kind": "prop",
    "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
-  "echo_3": {
+  "echo_1_2": {
    "kind": "prop",
    "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
-  "echo_4": {
+  "echo_2_0": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_2_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_2_2": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_3_0": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_3_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_3_2": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_4_0": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_4_1": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_4_2": {
    "kind": "prop",
    "frame": 80,
    "dirs": 1,

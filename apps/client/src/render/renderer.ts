@@ -9,6 +9,9 @@ import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
 import { Effects } from './effects';
 
 const FX = 1024;
+/** Share of open ground tiles with a bit of clutter, and how many clutter variants each biome has. */
+const CLUTTER_DENSITY: Record<string, number> = { wasteland: 0.06, city: 0.045, crystal: 0.07 };
+const CLUTTER_VARIANTS: Record<string, number> = { wasteland: 4, city: 6, crystal: 4 };
 const CHUNK = 16;
 // Damage types (data DAMAGE order), for projectile looks.
 const PROJ_KINETIC = 0;
@@ -312,7 +315,7 @@ export class Renderer {
     this.buildFog();
   }
 
-  /** Obstacle formations and decorations as rendered prop sprites, depth-sorted with units. */
+  /** Obstacle formations, decorations and clutter as rendered prop sprites, depth-sorted with units. */
   private async drawProps(): Promise<void> {
     const s = this.state;
     await this.lib.loadFaction('props');
@@ -374,7 +377,18 @@ export class Renderer {
         const ob = obstacle(s.terrain[i]!);
         const deco = DECO_IDS[s.decoration[i] ?? 0] ?? '';
         const id = ob ? `${ob}_${Math.floor(hash(x, y, 1) * 6)}` : deco ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}` : null;
-        if (!id) continue;
+        if (!id) {
+          // Clutter on open ground (cosmetic): bushes and stones, street furniture, small crystals.
+          const open = (s.terrain[i] === TERRAIN.ground || s.terrain[i] === TERRAIN.rough) && !(s.surface[i] ?? 0) && !(s.echo[i] ?? 0);
+          if (open && hash(x, y, 11) < CLUTTER_DENSITY[s.biome]!) {
+            const kind = `clutter_${s.biome}`;
+            const n = CLUTTER_VARIANTS[s.biome]!;
+            const jx = (hash(x, y, 12) - 0.5) * 0.7;
+            const jy = (hash(x, y, 13) - 0.5) * 0.7;
+            place(`${kind}_${Math.floor(hash(x, y, 14) * n)}`, this.ground, isoX(x + 0.5 + jx, y + 0.5 + jy), isoY(x + 0.5 + jx, y + 0.5 + jy), 0.85 + hash(x, y, 15) * 0.3, hash(x, y, 16) < 0.5 ? -1 : 1, true);
+          }
+          continue;
+        }
         if (deco === 'deco_crater') {
           place(id, ground, cx, cy, 0.9 + hash(x, y, 5) * 0.5, 1, false);
           continue;
@@ -519,6 +533,7 @@ export class Renderer {
     this.fx.clear();
     this.drawCoverage();
     this.drawChorus();
+    this.shimmerEcho();
     const lowPower = !s.spectator && s.lowPower;
     const ghosts = new Set<number>();
     const salvage = !s.spectator && (s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.salvagePct ?? 0) > 0;
@@ -805,6 +820,7 @@ export class Renderer {
     if (this.propsReady) {
       this.echoLayer.clear();
       this.updateEchoSprites();
+      this.terrain.setEcho(this.state.echo);
       return;
     }
     const g = this.echoLayer;
@@ -829,6 +845,17 @@ export class Renderer {
     }
   }
 
+  /** Echo shimmer: each cluster's light swells and fades on its own beat. */
+  private shimmerEcho(): void {
+    const t = performance.now() / 1000;
+    for (const [i, sp] of this.echoSprites) {
+      if (!sp.visible) continue;
+      const k = 0.5 + 0.5 * Math.sin(t * 1.6 + (i % 97) * 0.7);
+      const c = Math.round(205 + 50 * k);
+      sp.tint = (c << 16) | (Math.min(255, c + 20) << 8) | 255;
+    }
+  }
+
   /** Echo crystal clusters: one sprite per tile, sized by crystals left. */
   private updateEchoSprites(): void {
     const s = this.state;
@@ -843,18 +870,32 @@ export class Renderer {
         continue;
       }
       const size = n >= 10 ? 4 : n >= 7 ? 3 : n >= 4 ? 2 : 1;
-      const tex = this.lib.texture(`echo_${size}`, 'body', 'idle', 0, 0, 'color');
+      const x = i % s.width;
+      const y = Math.floor(i / s.width);
+      // A variant per tile, jittered and sized a little differently, so fields don't read as a grid.
+      const r = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+      // Leave gaps: the stained ground shows the field, crystals stand in clumps rather than a carpet.
+      const nb = (s.echo[i + 1] ?? 0) + (s.echo[i - 1] ?? 0) + (s.echo[i + s.width] ?? 0) + (s.echo[i - s.width] ?? 0);
+      if ((r >>> 7) % 10 < 4 && nb > 0) {
+        if (sp) {
+          sp.destroy();
+          this.echoSprites.delete(i);
+        }
+        continue;
+      }
+      const tex = this.lib.texture(`echo_${size}_${r % 3}`, 'body', 'idle', 0, 0, 'color') ?? this.lib.texture(`echo_${size}`, 'body', 'idle', 0, 0, 'color');
       if (!tex) continue;
       if (!sp) {
-        const x = i % s.width;
-        const y = Math.floor(i / s.width);
         sp = new Sprite(tex);
         sp.anchor.set(0.5);
-        const px = isoX(x + 0.5, y + 0.5);
-        const py = isoY(x + 0.5, y + 0.5);
+        const jx = ((r >>> 4) % 100) / 100 - 0.5;
+        const jy = ((r >>> 11) % 100) / 100 - 0.5;
+        const px = isoX(x + 0.5 + jx * 0.45, y + 0.5 + jy * 0.45);
+        const py = isoY(x + 0.5 + jx * 0.45, y + 0.5 + jy * 0.45);
         sp.position.set(px, py);
         sp.zIndex = py - 2;
-        if (((x * 7 + y * 13) & 1) === 1) sp.scale.x = -1;
+        const k = 0.85 + ((r >>> 18) % 100) / 330;
+        sp.scale.set(((r >>> 25) & 1) === 1 ? -k : k, k);
         this.ground.addChild(sp);
         this.echoSprites.set(i, sp);
       }

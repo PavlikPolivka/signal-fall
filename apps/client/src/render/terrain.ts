@@ -19,12 +19,17 @@ void main() {
 export const CLIFF_H = 32;
 
 // Splat map channels (one texel per tile, linearly filtered for soft blends):
-//   uSplat:   r = rough ground, g = water, b = ground variant, a = obstacle base (rock / cliff / ruins)
+//   uSplat:   r = rough ground, g = water, b = ground variant
+//   uObstacle: r = obstacle base (rock / cliff / ruins)
+// Alpha stays 255 everywhere: the canvas premultiplies, so a = 0 would wipe the colour channels.
 //   uSurface: r = road, g = ford / bridge, b = plaza paving
+//   uEcho:    r = Echo field at the start (stained ground)
 const fragment = /* glsl */ `
 in vec2 vTile;
 uniform sampler2D uSplat;
 uniform sampler2D uSurface;
+uniform sampler2D uEcho;
+uniform sampler2D uObstacle;
 uniform sampler2D uGround;
 uniform sampler2D uGround2;
 uniform sampler2D uRough;
@@ -35,6 +40,7 @@ uniform sampler2D uNoise;
 uniform vec2 uMapSize;
 uniform float uTime;
 uniform float uBridge;
+uniform float uRoughGain;
 
 float edge(float w, float n) {
   // Noise-broken, fairly crisp transitions: gritty edges instead of soft gradients.
@@ -55,7 +61,7 @@ void main() {
   vec3 col = mix(texture(uGround, tuv).rgb, texture(uGround, tuv2).rgb, smoothstep(0.35, 0.65, big));
   vec3 g2 = mix(texture(uGround2, tuv * 0.83 + 0.21).rgb, texture(uGround2, tuv2 * 1.1).rgb, smoothstep(0.35, 0.65, n));
   col = mix(col, g2, edge(splat.b, n));
-  col = mix(col, texture(uRough, tuv * 1.17).rgb, edge(splat.r, n2));
+  col = mix(col, texture(uRough, tuv * 1.17).rgb * uRoughGain, edge(splat.r, n2));
   vec4 surf = texture(uSurface, vTile / uMapSize);
   // Roads: crisp worn edges with a lighter shoulder line, then the surface.
   vec3 road = mix(texture(uRoad, tuv * 0.9).rgb, texture(uRoad, tuv2).rgb, 0.4);
@@ -66,14 +72,41 @@ void main() {
   vec3 paving = texture(uPlaza, vTile * 0.25).rgb * (0.9 + 0.2 * n);
   col = mix(col, paving, edge(surf.b, n * 0.6 + 0.2));
   // Obstacle bases: rough, darkened ground under rocks and ruins.
-  float ob = edge(splat.a, n);
+  float ob = edge(texture(uObstacle, vTile / uMapSize).r, n);
   col = mix(col, texture(uRough, tuv * 1.4 + 0.5).rgb * 0.62, ob);
-  // Water: animated ripples, darker wet shore band around it.
-  float wet = smoothstep(0.12, 0.45, splat.g + (n - 0.5) * 0.3);
-  col *= 1.0 - wet * 0.35;
-  vec2 flow = vec2(uTime * 0.01, uTime * 0.006);
-  vec3 water = mix(texture(uWater, tuv + flow).rgb, texture(uWater, tuv * 1.3 - flow * 0.7).rgb, 0.5);
-  col = mix(col, water, edge(splat.g, n2));
+  // Echo fields: the ground around the crystals is stained a dark teal with faint glowing veins.
+  float stain = smoothstep(0.1, 0.7, texture(uEcho, vTile / uMapSize).r + (n2 - 0.5) * 0.5);
+  float vn = texture(uNoise, px / 180.0 + 0.71).r;
+  float vein = smoothstep(0.485, 0.5, vn) * (1.0 - smoothstep(0.5, 0.515, vn));
+  col = mix(col, col * vec3(0.62, 0.86, 0.9) + vec3(0.0, 0.03, 0.04), stain * 0.8);
+  col += vec3(0.03, 0.18, 0.2) * vein * stain * (0.5 + 0.5 * sin(uTime * 1.3 + n * 9.0));
+  // Water: depth from the blurred water mask, darker deep middle, wet shore, foam line, moving glints.
+  vec2 t0 = vTile / uMapSize;
+  float deep = 0.0;
+  for (int k = 0; k < 8; k++) {
+    float a = float(k) * 0.785;
+    deep += texture(uSplat, t0 + vec2(cos(a), sin(a)) * (1.5 + float(k - k / 2 * 2) * 2.0) / uMapSize).g;
+  }
+  deep *= 0.125;
+  float wet = smoothstep(0.08, 0.45, splat.g + (n - 0.5) * 0.3);
+  col *= 1.0 - wet * 0.4;
+  float ws = edge(splat.g, n2);
+  vec2 flow = vec2(uTime * 0.012, uTime * 0.007);
+  float r1 = texture(uNoise, px / 60.0 + flow * 3.0).r;
+  float r2 = texture(uNoise, px / 45.0 - flow * 2.3 + 0.5).r;
+  vec3 tint = texture(uWater, tuv * 0.05).rgb;
+  vec3 shallowW = mix(vec3(0.24, 0.38, 0.36), tint, 0.3);
+  vec3 deepW = mix(vec3(0.02, 0.07, 0.11), tint * 0.3, 0.25);
+  vec3 water = mix(shallowW, deepW, smoothstep(0.35, 0.95, deep));
+  // Shallows show the bed through the water.
+  water = mix(water, col * 0.7, (1.0 - smoothstep(0.3, 0.7, deep)) * 0.35);
+  water *= 0.85 + 0.3 * r1 * r2 * 2.0;
+  water += vec3(0.7, 0.8, 0.8) * smoothstep(0.7, 0.82, r1 * 0.5 + r2 * 0.5) * 0.5;
+  float g = splat.g + (n2 - 0.5) * 0.25;
+  float foam = smoothstep(0.28, 0.42, g) * (1.0 - smoothstep(0.48, 0.62, g));
+  foam *= 0.6 + 0.4 * sin(uTime * 1.7 + n2 * 14.0);
+  water = mix(water, vec3(0.8, 0.84, 0.8), foam * 0.7);
+  col = mix(col, water, max(ws, foam * 0.8));
   // Crossings: a shallow ford with wet stones, or in the city a concrete causeway.
   float ford = edge(surf.g, n2);
   vec3 shallow = mix(col * 0.75, water, 0.45);
@@ -109,6 +142,18 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }`;
 
+/** Mean brightness (0-1) of a loaded texture, from a small downscaled copy. */
+function luma(tex: Texture): number {
+  const c = document.createElement('canvas');
+  c.width = c.height = 16;
+  const ctx = c.getContext('2d')!;
+  ctx.drawImage(tex.source.resource as CanvasImageSource, 0, 0, 16, 16);
+  const d = ctx.getImageData(0, 0, 16, 16).data;
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) sum += 0.3 * d[i]! + 0.59 * d[i + 1]! + 0.11 * d[i + 2]!;
+  return sum / (256 * 255);
+}
+
 /** Deterministic smooth noise in [0,1) per tile, for ground variant patches. */
 function variant(x: number, y: number): number {
   const h = (a: number, b: number) => {
@@ -134,6 +179,9 @@ export class TerrainLayer {
   private mesh: Mesh<MeshGeometry, Shader> | null = null;
   private shader: Shader | null = null;
   private start = performance.now();
+  private echoMask: Texture | null = null;
+  private size: [number, number] = [0, 0];
+  private echoSet = false;
 
   /** Ground-level decals (craters) drawn over the terrain, under cliffs. */
   readonly groundDecor = new Container();
@@ -188,6 +236,13 @@ export class TerrainLayer {
       d[o + 2] = v === 3 ? 255 : 0;
       d[o + 3] = 255;
     }, true);
+    // Filled by setEcho once the first snapshot brings the fields.
+    const echoMask = splatTexture((_x, _y, _i, d, o) => {
+      d[o + 3] = 255;
+    }, true);
+    this.echoMask = echoMask;
+    this.echoSet = false;
+    this.size = [width, height];
     const cliffMask = splatTexture((_x, _y, i, d, o) => {
       d[o + 3] = TerrainLayer.isMesa(terrain[i]!) ? 255 : 0;
     }, false);
@@ -198,7 +253,12 @@ export class TerrainLayer {
       d[o] = t === TERRAIN.rough ? 255 : 0;
       d[o + 1] = t === TERRAIN.water ? 255 : 0;
       d[o + 2] = variant(x, y) > 0.55 ? 255 : 0;
-      d[o + 3] = t === TERRAIN.rock || t === TERRAIN.cliff || t === TERRAIN.ruins ? 255 : 0;
+      d[o + 3] = 255;
+    }, true);
+    const obstacle = splatTexture((_x, _y, i, d, o) => {
+      const t = terrain[i]!;
+      d[o] = t === TERRAIN.rock || t === TERRAIN.cliff || t === TERRAIN.ruins ? 255 : 0;
+      d[o + 3] = 255;
     }, true);
 
     this.shader = Shader.from({
@@ -206,6 +266,8 @@ export class TerrainLayer {
       resources: {
         uSplat: splat.source,
         uSurface: surf.source,
+        uEcho: echoMask.source,
+        uObstacle: obstacle.source,
         uGround: ground.source,
         uGround2: ground2.source,
         uRough: rough.source,
@@ -217,6 +279,8 @@ export class TerrainLayer {
           uMapSize: { value: [width, height], type: 'vec2<f32>' },
           uTime: { value: 0, type: 'f32' },
           uBridge: { value: biome === 'city' ? 1 : 0, type: 'f32' },
+          // Rough patches keep their texture but not a much darker tone than the ground around them.
+          uRoughGain: { value: Math.min(1.6, Math.max(1, (0.85 * luma(ground)) / Math.max(0.01, luma(rough)))), type: 'f32' },
         },
       },
     });
@@ -277,6 +341,22 @@ export class TerrainLayer {
     };
     // Light comes from the upper left: the lower-left faces are lit, the lower-right ones in shade.
     return [build('x', 0x9a9a9a), build('y', 0xe6e6e6)];
+  }
+
+  /** Stain the ground under the Echo fields (once, from the opening layout, so it marks where fields regrow). */
+  setEcho(echo: Uint8Array): void {
+    if (this.echoSet || !this.echoMask || echo.length === 0) return;
+    this.echoSet = true;
+    const [w, h] = this.size;
+    const canvas = this.echoMask.source.resource as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const img = ctx.createImageData(w, h);
+    for (let i = 0; i < w * h; i++) {
+      img.data[i * 4] = Math.min(255, (echo[i] ?? 0) * 40);
+      img.data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    this.echoMask.source.update();
   }
 
   update(): void {

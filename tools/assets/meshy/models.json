@@ -507,6 +507,11 @@
         "note": "violet, but one hand on the face (would fuse in the rig)"
       },
       "ai_model": "meshy-6"
+    },
+    "echo_cluster": {
+      "faction": "props",
+      "kind": "prop",
+      "prompt": "A natural cluster of glowing cyan Echo crystals growing out of the ground: many sharp translucent hexagonal crystal spikes of different sizes and angles, the tallest in the middle, on a small dark rocky base. Game asset, seen from above."
     }
   }
 }

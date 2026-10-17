@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-17 08:47 UTC
+
+- **Real water:** lakes and rivers now have depth (dark in the middle, shallow at the edges), a foam line along the shore and glints on the surface. They used to be a flat dark smear.
+- **Rough ground shows up:** gravel and rubble patches were missing from every map because of a drawing bug. Maps now have them again.
+- **New map props:** photo-scanned boulders, dead trees, bushes, barrels, crates, wrecks, street lamps and road barriers (from Poly Haven), plus small clutter scattered over open ground.
+- **Echo fields look like fields:** crystals grow in clumps of different shapes and sizes, gently shimmer, and the ground under a field is stained teal with faint glowing veins. They no longer look like a carpet of identical cones.
+
 ## 2026-10-16 21:10 UTC
 
 - **Buildings burn:** damaged buildings smoke, and badly damaged ones catch fire. More damage, more fire.

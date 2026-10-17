@@ -39,8 +39,10 @@ for pid, (builder, frame, variants) in props.PROPS.items():
 for lid, (builder, frame) in props.LANDMARKS.items():
     render(lid, frame, lambda b=builder: b(STYLE, 0))
     print("RENDERED", lid)
+# Echo: the crystal cluster per size (crystals left) in three variants.
 for size in range(1, props.ECHO_SIZES + 1):
-    render(f"echo_{size}", 80, lambda s=size: props.echo_cluster(STYLE, s))
+    for v in range(3):
+        render(f"echo_{size}_{v}", 80, lambda s=size, var=v: props.real.echo(STYLE, s, var))
 print("RENDERED echo")
 json.dump(manifest, open(os.path.join(out_dir, "manifest.json"), "w"), indent=1)
 print("RENDER DONE")
