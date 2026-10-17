@@ -86,48 +86,6 @@
    "anims": {},
    "turret": false
   },
-  "rock_crystal_0": {
-   "kind": "prop",
-   "frame": 112,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "rock_crystal_1": {
-   "kind": "prop",
-   "frame": 112,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "rock_crystal_2": {
-   "kind": "prop",
-   "frame": 112,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "rock_crystal_3": {
-   "kind": "prop",
-   "frame": 112,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "rock_crystal_4": {
-   "kind": "prop",
-   "frame": 112,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "rock_crystal_5": {
-   "kind": "prop",
-   "frame": 112,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
   "deco_rubble_0": {
    "kind": "prop",
    "frame": 64,
@@ -212,27 +170,6 @@
    "anims": {},
    "turret": false
   },
-  "deco_crater_0": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "deco_crater_1": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "deco_crater_2": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
   "clutter_wasteland_0": {
    "kind": "prop",
    "frame": 80,
@@ -255,6 +192,34 @@
    "turret": false
   },
   "clutter_wasteland_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_4": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_5": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_6": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_7": {
    "kind": "prop",
    "frame": 80,
    "dirs": 1,
@@ -303,30 +268,72 @@
    "anims": {},
    "turret": false
   },
+  "clutter_city_6": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_7": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_8": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_9": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
   "clutter_crystal_0": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "clutter_crystal_1": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "clutter_crystal_2": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "clutter_crystal_3": {
    "kind": "prop",
-   "frame": 64,
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_crystal_4": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_crystal_5": {
+   "kind": "prop",
+   "frame": 80,
    "dirs": 1,
    "anims": {},
    "turret": false
@@ -534,6 +541,216 @@
    "anims": {},
    "turret": false
   },
+  "fmn_wasteland_1x1_0": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_1x1_1": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_1x1_2": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_2x1_0": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_2x1_1": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_2x1_2": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_2x2_0": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_2x2_1": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_2x2_2": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_3x2_0": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_3x2_1": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_3x2_2": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_3x3_0": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_3x3_1": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_wasteland_3x3_2": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_1x1_0": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_1x1_1": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_1x1_2": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_2x1_0": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_2x1_1": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_2x1_2": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_2x2_0": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_2x2_1": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_2x2_2": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_3x2_0": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_3x2_1": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_3x2_2": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_3x3_0": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_3x3_1": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "fmn_crystal_3x3_2": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
   "lm_tower": {
    "kind": "prop",
    "frame": 256,
@@ -642,62 +859,6 @@
   "echo_4_2": {
    "kind": "prop",
    "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_wasteland_4": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_wasteland_5": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_wasteland_6": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_wasteland_7": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_city_6": {
-   "kind": "prop",
-   "frame": 128,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_city_7": {
-   "kind": "prop",
-   "frame": 128,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_city_8": {
-   "kind": "prop",
-   "frame": 128,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "clutter_city_9": {
-   "kind": "prop",
-   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false

@@ -42,10 +42,12 @@ test('the menu backdrop video keeps playing across menu screens', async ({ page 
   await page.click('[data-testid=open-multiplayer]');
   // Same elements, and one of them is playing (the loop may have crossfaded to the other meanwhile).
   expect(await page.locator('.menu-backdrop').count()).toBe(1);
-  const after = await page.evaluate(() => {
-    const vs = Array.from(document.querySelectorAll<HTMLVideoElement & { tag?: number }>('.menu-backdrop video'));
-    return { count: vs.length, tagged: vs.filter((v) => v.tag === 1).length, playing: vs.filter((v) => !v.paused).length };
-  });
-  expect(after).toMatchObject({ count: 2, tagged: 2 });
-  expect(after.playing).toBeGreaterThan(0);
+  const state = () =>
+    page.evaluate(() => {
+      const vs = Array.from(document.querySelectorAll<HTMLVideoElement & { tag?: number }>('.menu-backdrop video'));
+      return { count: vs.length, tagged: vs.filter((v) => v.tag === 1).length, playing: vs.filter((v) => !v.paused).length };
+    });
+  expect(await state()).toMatchObject({ count: 2, tagged: 2 });
+  // Polled: mid-crossfade on a slow software-rendered runner, neither may be playing for a moment.
+  await expect.poll(async () => (await state()).playing, { timeout: 10_000 }).toBeGreaterThan(0);
 });

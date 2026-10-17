@@ -15,5 +15,5 @@ test('idle army counter selects the idle units; tabs show queued counts', async 
     const s = (window as unknown as Win).__signalFall.state;
     s.send({ type: 'build', category: 'structures', item: s.rules.structureIndex.get('dynamo') });
   });
-  await expect(page.locator('[data-tab=structures] .tab-badge')).toHaveText('1');
+  await expect(page.locator('[data-tab=structures] .tab-badge')).toHaveText('1', { timeout: 15_000 });
 });

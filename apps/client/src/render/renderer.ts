@@ -310,7 +310,7 @@ export class Renderer {
     // Textured terrain (shader); the flat-colour tiles below stay as the instant fallback until it loads.
     this.drawFlatTerrain();
     void this.terrain
-      .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain, s.surface)
+      .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain, s.surface, (i) => s.decoration[i] === 5)
       .then(() => this.drawProps())
       .catch((err) => console.warn('terrain shader unavailable, using flat tiles', err));
     this.buildFog();
@@ -334,7 +334,7 @@ export class Renderer {
     const mesa = (x: number, y: number) => TerrainLayer.isMesa(at(x, y));
     const obstacle = (t: number): string | null => {
       if (t === TERRAIN.ruins) return 'rock_city';
-      if (t === TERRAIN.rock) return s.biome === 'crystal' ? 'rock_crystal' : 'rock_wasteland';
+      if (t === TERRAIN.rock) return 'rock_wasteland';
       return null;
     };
     const place = (id: string, layer: Container, px: number, py: number, scale: number, flip: number, shadow: boolean) => {
@@ -356,8 +356,13 @@ export class Renderer {
       layer.addChild(sp);
     };
     this.drawLandmarks(place);
-    const built = this.drawBuildings(place, hash);
-    const DECO_IDS = ['', 'deco_rubble', 'deco_wreck', 'deco_outcrop', 'deco_tree', 'deco_crater'];
+    // Rock outcrops that aren't copses become big formations; city ruins become buildings.
+    const grove = (x: number, y: number) => s.biome !== 'crystal' && hash(x >> 2, y >> 2, 21) < (s.biome === 'city' ? 0.35 : 0.45);
+    const built =
+      s.biome === 'city'
+        ? this.drawBlocks(place, hash, (i) => s.terrain[i] === TERRAIN.ruins, 'bld', 4)
+        : this.drawBlocks(place, hash, (i) => s.terrain[i] === TERRAIN.rock && !grove(i % s.width, Math.floor(i / s.width)), `fmn_${s.biome}`, 3);
+    const DECO_IDS = ['', 'deco_rubble', 'deco_wreck', 'deco_outcrop', 'deco_tree', ''];
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
         const i = y * s.width + x;
@@ -369,18 +374,17 @@ export class Renderer {
           const r = hash(x, y, 7);
           if (s.biome === 'wasteland' && r > 0.9) {
             place(`tree_wasteland_${Math.floor(hash(x, y, 2) * 6)}`, top, cx, cy - this.terrain.heightAt(x + 0.5, y + 0.5), 0.8, hash(x, y, 6) < 0.5 ? -1 : 1, false);
-          } else if (s.biome === 'crystal' ? r < 0.3 : r < 0.1) {
-            const id = s.biome === 'crystal' ? `deco_outcrop_${Math.floor(hash(x, y, 2) * 3)}` : `rock_wasteland_${Math.floor(hash(x, y, 2) * 6)}`;
-            place(id, top, cx, cy - this.terrain.heightAt(x + 0.5, y + 0.5), s.biome === 'crystal' ? 1.3 : 0.55, hash(x, y, 6) < 0.5 ? -1 : 1, false);
+          } else if (s.biome === 'crystal' ? r < 0.12 : r < 0.1) {
+            const id = s.biome === 'crystal' ? `fmn_crystal_1x1_${Math.floor(hash(x, y, 2) * 3)}` : `rock_wasteland_${Math.floor(hash(x, y, 2) * 6)}`;
+            place(id, top, cx, cy - this.terrain.heightAt(x + 0.5, y + 0.5), s.biome === 'crystal' ? 0.7 : 0.55, hash(x, y, 6) < 0.5 ? -1 : 1, false);
           }
           continue;
         }
         if ((mesa(x - 1, y) || mesa(x, y - 1)) && hash(x, y, 8) < 0.3) {
-          place(`deco_rubble_${Math.floor(hash(x, y, 9) * 3)}`, this.ground, cx - 6 + hash(x, y, 10) * 12, cy - 4, 0.9, 1, false);
+          place(s.biome === 'crystal' ? `clutter_crystal_${4 + Math.floor(hash(x, y, 9) * 2)}` : `deco_rubble_${Math.floor(hash(x, y, 9) * 3)}`, this.ground, cx - 6 + hash(x, y, 10) * 12, cy - 4, 0.9, 1, false);
         }
         // Wasteland rock outcrops turn into copses where a coarse noise says so.
-        const grove = s.biome !== 'crystal' && s.terrain[i] === TERRAIN.rock && hash(x >> 2, y >> 2, 21) < (s.biome === 'city' ? 0.35 : 0.45);
-        if (grove) {
+        if (s.terrain[i] === TERRAIN.rock && grove(x, y)) {
           const jx = (hash(x, y, 3) - 0.5) * 0.3;
           const jy = (hash(x, y, 4) - 0.5) * 0.3;
           const kind = s.biome === 'city' ? `tree_city_${Math.floor(hash(x, y, 1) * 3)}` : `tree_wasteland_${Math.floor(hash(x, y, 1) * 6)}`;
@@ -388,8 +392,11 @@ export class Renderer {
           continue;
         }
         const ob = obstacle(s.terrain[i]!);
+        // Craters are pressed into the terrain itself (see TerrainLayer.build).
         const deco = DECO_IDS[s.decoration[i] ?? 0] ?? '';
-        const id = ob ? `${ob}_${Math.floor(hash(x, y, 1) * 6)}` : deco ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}` : null;
+        // Crystal rubble: dark stones, not the pale sand rocks of the wasteland.
+        const decoId = deco === 'deco_rubble' && s.biome === 'crystal' ? `clutter_crystal_${4 + Math.floor(hash(x, y, 2) * 2)}` : deco ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}` : null;
+        const id = ob ? `${ob}_${Math.floor(hash(x, y, 1) * 6)}` : decoId;
         if (!id) {
           // Clutter on open ground (cosmetic): bushes and stones, street furniture, small crystals.
           const open = (s.terrain[i] === TERRAIN.ground || s.terrain[i] === TERRAIN.rough) && !(s.surface[i] ?? 0) && !(s.echo[i] ?? 0);
@@ -406,10 +413,7 @@ export class Renderer {
           }
           continue;
         }
-        if (deco === 'deco_crater') {
-          place(id, ground, cx, cy, 0.9 + hash(x, y, 5) * 0.5, 1, false);
-          continue;
-        }
+
         // Jitter inside the tile, random size and mirroring so formations don't repeat.
         const jx = (hash(x, y, 3) - 0.5) * (ob ? 0.3 : 0.6);
         const jy = (hash(x, y, 4) - 0.5) * (ob ? 0.3 : 0.6);
@@ -425,17 +429,20 @@ export class Renderer {
   }
 
   /**
-   * City ruins become real buildings: each cluster of ruins tiles is cut into rectangular blocks
-   * (3x3 down to 1x1), each drawn as one building sprite. Returns the tiles covered.
+   * Obstacle clusters drawn as big pieces: each cluster of matching tiles is cut into rectangular
+   * blocks (3x3 down to 1x1), each one sprite `${prefix}_${WxD}_${variant}` (city buildings, rock
+   * formations). Returns the tiles covered.
    */
-  private drawBuildings(
+  private drawBlocks(
     place: (id: string, layer: Container, px: number, py: number, scale: number, flip: number, shadow: boolean) => void,
     hash: (x: number, y: number, k: number) => number,
+    match: (i: number) => boolean,
+    prefix: string,
+    variants: number,
   ): Uint8Array {
     const s = this.state;
     const built = new Uint8Array(s.width * s.height);
-    if (s.biome !== 'city') return built;
-    const free = (x: number, y: number) => x < s.width && y < s.height && s.terrain[y * s.width + x] === TERRAIN.ruins && !built[y * s.width + x] && !s.landmark[y * s.width + x];
+    const free = (x: number, y: number) => x < s.width && y < s.height && match(y * s.width + x) && !built[y * s.width + x] && !s.landmark[y * s.width + x];
     const fits = (x: number, y: number, w: number, h: number) => {
       for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) if (!free(x + dx, y + dy)) return false;
       return true;
@@ -458,8 +465,8 @@ export class Renderer {
         const shape = SHAPES.slice(skip).find(([w, d]) => fits(x, y, w, d)) ?? SHAPES[SHAPES.length - 1]!;
         const [w, d, id, mirrored] = shape;
         for (let dy = 0; dy < d; dy++) for (let dx = 0; dx < w; dx++) built[(y + dy) * s.width + x + dx] = 1;
-        const variant = Math.floor(hash(x, y, 32) * 4);
-        place(`bld_${id}_${variant}`, this.ground, isoX(x + w / 2, y + d / 2), isoY(x + w / 2, y + d / 2), 1, mirrored ? -1 : 1, true);
+        const variant = Math.floor(hash(x, y, 32) * variants);
+        place(`${prefix}_${id}_${variant}`, this.ground, isoX(x + w / 2, y + d / 2), isoY(x + w / 2, y + d / 2), 1, mirrored ? -1 : 1, true);
       }
     return built;
   }

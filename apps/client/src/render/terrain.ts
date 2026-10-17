@@ -291,7 +291,16 @@ export class TerrainLayer {
     return a + (b - a) * ty;
   }
 
-  async build(layer: Container, biome: string, width: number, height: number, terrain: Uint8Array, surface: Uint8Array): Promise<void> {
+  async build(
+    layer: Container,
+    biome: string,
+    width: number,
+    height: number,
+    terrain: Uint8Array,
+    surface: Uint8Array,
+    /** Tiles with a shell crater: pressed into the height field as a scorched bowl with a rim. */
+    craters?: (i: number) => boolean,
+  ): Promise<void> {
     const base = `${import.meta.env.BASE_URL}assets/terrain/`;
     const load = async (name: string) => {
       const tex = (await Assets.load(`${base}${name}`)) as Texture;
@@ -366,9 +375,40 @@ export class TerrainLayer {
         // Rugged tops with ledges; the face itself gets steeper the higher it climbs.
         const top = CLIFF_H + (fbm(u * 1.3, v * 1.3, 17) - 0.5) * 14;
         lift[i] = c * c * (3 - 2 * c) * top;
-        hgt[i] = lift[i]! - smooth(0.15, 0.9, waterF[i]!) * 16 + (fbm(u / 6, v / 6, 23) - 0.5) * 40 + (noise(u * 1.1, v * 1.1, 29) - 0.5) * 4;
+        // Ridged noise: dry gullies and wind-cut ridges, so open ground has relief between the hills.
+        const ridge = 1 - Math.abs(fbm(u / 2.2, v / 2.2, 37) * 2 - 1);
+        hgt[i] =
+          lift[i]! -
+          smooth(0.15, 0.9, waterF[i]!) * 16 +
+          (fbm(u / 6, v / 6, 23) - 0.5) * 40 +
+          smooth(0.55, 0.95, ridge) * 9 * (1 - c) +
+          (noise(u * 1.1, v * 1.1, 29) - 0.5) * 4;
       }
     this.lift = lift;
+    // Shell craters: a bowl with a raised lip, its floor scorched.
+    const scorch = new Float32Array(gw * gh).fill(1);
+    if (craters)
+      for (let y = 0; y < height; y++)
+        for (let x = 0; x < width; x++) {
+          if (!craters(y * width + x)) continue;
+          const cu = x + 0.3 + hash2(x, y, 51) * 0.4;
+          const cv = y + 0.3 + hash2(x, y, 52) * 0.4;
+          const r = 0.42 + hash2(x, y, 53) * 0.3;
+          const g0x = Math.max(0, Math.floor((cu - r * 1.6) * RES));
+          const g1x = Math.min(gw - 1, Math.ceil((cu + r * 1.6) * RES));
+          const g0y = Math.max(0, Math.floor((cv - r * 1.6) * RES));
+          const g1y = Math.min(gh - 1, Math.ceil((cv + r * 1.6) * RES));
+          for (let gy = g0y; gy <= g1y; gy++)
+            for (let gx = g0x; gx <= g1x; gx++) {
+              const d = Math.hypot(gx / RES - cu, gy / RES - cv) / r;
+              const i = gy * gw + gx;
+              // Bowl (cosine) inside, rim bump around d = 1, fading out by 1.6.
+              const bowl = d < 1 ? -(0.5 + 0.5 * Math.cos(d * Math.PI)) * 8 : 0;
+              const rim = Math.exp(-((d - 1) * (d - 1)) / 0.06) * 6;
+              hgt[i] = hgt[i]! + (bowl + rim) * r * 1.6;
+              scorch[i] = Math.min(scorch[i]!, 0.74 + 0.26 * smooth(0.1, 1.3, d));
+            }
+        }
 
     // Bake the light map: normals, cast shadows toward the sun, ambient occlusion.
     const H = (x: number, y: number) => hgt[Math.max(0, Math.min(gh - 1, y)) * gw + Math.max(0, Math.min(gw - 1, x))]!;
@@ -394,8 +434,8 @@ export class TerrainLayer {
         const ao = Math.max(0.6, Math.min(1, 1 - (Math.max(0, avg[i]! - h0) / PX_PER_TILE) * 1.0));
         lightData[i * 4] = Math.round((-du / l) * 127.5 + 127.5);
         lightData[i * 4 + 1] = Math.round((-dv / l) * 127.5 + 127.5);
-        lightData[i * 4 + 2] = Math.round((1 - smooth(0, 0.18, occ)) * 255);
-        lightData[i * 4 + 3] = Math.round(ao * 255);
+        lightData[i * 4 + 2] = Math.round((1 - smooth(0, 0.18, occ)) * scorch[i]! * 255);
+        lightData[i * 4 + 3] = Math.round(ao * scorch[i]! * 255);
       }
 
     this.shader = Shader.from({

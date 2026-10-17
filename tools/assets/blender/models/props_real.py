@@ -56,7 +56,7 @@ def _tint(obj, rgb, amount):
         nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
 
 
-def place(name, *, size, x=0.0, y=0.0, yaw=0.0, height=None, tint=None, tint_amount=0.5, glow=None, folder=PROPS):
+def place(name, *, size, x=0.0, y=0.0, z=0.0, yaw=0.0, height=None, stretch=1.0, tint=None, tint_amount=0.5, glow=None, folder=PROPS):
     """Import a model, rest it on the ground, scale its widest side to `size` tiles (or its height to
     `height`), turn it by `yaw` and move it to (x, y)."""
     obj = _load(os.path.join(folder, f"{name}.glb"))
@@ -70,8 +70,10 @@ def place(name, *, size, x=0.0, y=0.0, yaw=0.0, height=None, tint=None, tint_amo
     s = (height / max(1e-6, ez)) if height else (size / max(1e-6, ex, ey))
     obj.data.transform(Matrix.Translation(Vector((-cx, -cy, -z0))))
     obj.data.transform(Matrix.Scale(s, 4))
+    if stretch != 1.0:
+        obj.data.transform(Matrix.Scale(stretch, 4, Vector((0, 0, 1))))
     obj.data.transform(Matrix.Rotation(yaw, 4, "Z"))
-    obj.data.transform(Matrix.Translation(Vector((x, y, 0))))
+    obj.data.transform(Matrix.Translation(Vector((x, y, z))))
     obj.data.update()
     if tint:
         _tint(obj, tint, tint_amount)
@@ -106,7 +108,7 @@ def rock_crystal(style, seed):
     return out
 
 
-def echo_growth(rnd, *, x=0.0, y=0.0, height=0.4, violet=False):
+def echo_growth(rnd, *, x=0.0, y=0.0, z=0.0, height=0.4, violet=False):
     """The Meshy crystal cluster, scaled and turned; violet-tinted for Choir crystal biomes."""
     return place(
         "echo_cluster",
@@ -114,11 +116,12 @@ def echo_growth(rnd, *, x=0.0, y=0.0, height=0.4, violet=False):
         height=height,
         x=x,
         y=y,
+        z=z,
         yaw=rnd.random() * 6.28,
         folder=MESHY,
-        tint=(0.42, 0.18, 0.7) if violet else None,
-        tint_amount=0.75,
-        glow=(0.35, 0.12, 0.6) if violet else None,
+        tint=(0.26, 0.07, 0.55) if violet else None,
+        tint_amount=0.82,
+        glow=(0.4, 0.1, 0.75) if violet else None,
     )
 
 
@@ -195,10 +198,18 @@ def clutter_city(style, seed):
 
 
 def clutter_crystal(style, seed):
+    """Dark stones, pale alien succulents, violet grass and the odd crystal shard."""
     rnd = random.Random(seed + 80)
-    if seed % 2:
-        return [echo_growth(rnd, height=rnd.uniform(0.2, 0.32), violet=True)]
-    return [place(MOON[seed % len(MOON)], size=rnd.uniform(0.3, 0.42), yaw=rnd.random() * 6.28, tint=VIOLET, tint_amount=0.55)]
+    k = seed % 6
+    if k == 0:
+        return [echo_growth(rnd, height=rnd.uniform(0.3, 0.42), violet=True),
+                place(MOON[seed % len(MOON)], size=0.3, x=0.15, y=-0.1, yaw=rnd.random() * 6.28, tint=DARK, tint_amount=0.6)]
+    if k in (1, 2):
+        return [place("othonna_cerarioides", size=rnd.uniform(0.45, 0.6), yaw=rnd.random() * 6.28, tint=(0.1, 0.3, 0.32), tint_amount=0.65, glow=(0.02, 0.1, 0.12))]
+    if k == 3:
+        return [place("othonna_cerarioides", size=rnd.uniform(0.4, 0.5), yaw=rnd.random() * 6.28, tint=(0.3, 0.12, 0.42), tint_amount=0.65, glow=(0.1, 0.02, 0.14))]
+    return [place(MOON[(seed + i) % len(MOON)], size=rnd.uniform(0.22, 0.4), x=rnd.uniform(-0.2, 0.2), y=rnd.uniform(-0.2, 0.2), yaw=rnd.random() * 6.28, tint=DARK, tint_amount=0.6)
+            for i in range(1 + seed % 3)]
 
 
 def echo(style, size, variant):
@@ -240,3 +251,63 @@ def tree_city(style, seed):
     rnd = random.Random(seed + 95)
     name, h = [("tree_small_02", 1.7), ("jacaranda_tree", 1.7), ("island_tree_02", 1.6)][seed % 3]
     return [place(name, size=0, height=h, yaw=rnd.random() * 6.28, tint=DRY, tint_amount=0.15)]
+
+
+# Rock formations: the client cuts every cluster of rock obstacles into rectangles (3x3 down to 1x1)
+# and draws one of these per rectangle, so outcrops read as big landforms instead of tile-sized stones.
+MASSES = [
+    ("namaqualand_cliff_01", 1.0), ("namaqualand_boulder_03", 0.8), ("namaqualand_boulder_06", 0.8),
+    ("namaqualand_boulder_02", 0.75), ("namaqualand_boulder_04", 0.8), ("namaqualand_boulder_05", 0.8), ("boulder_01", 0.85),
+]
+FRINGE = ["namaqualand_stones_01", "namaqualand_rocks_01", "sand_rocks_small_01", "namaqualand_boulders_01"]
+DARK = (0.05, 0.045, 0.08)
+SAND = (0.36, 0.26, 0.17)
+
+
+def formation(fw, fd, seed, biome):
+    """Rocks over an fw x fd tile footprint centred on the origin. Wasteland: sun-baked sandstone
+    with scrub at the foot. Crystal: dark rock split by tall violet crystal spires."""
+    rnd = random.Random(seed * 131 + fw * 17 + fd * 5 + (0 if biome == "wasteland" else 1000))
+    crystal = biome == "crystal"
+    tint = dict(tint=DARK, tint_amount=0.62) if crystal else dict(tint=SAND, tint_amount=0.25)
+    out = []
+    # A long ridge along the long side of big footprints.
+    if max(fw, fd) >= 3 and rnd.random() < 0.6:
+        along = 0.0 if fw >= fd else 1.5708
+        out.append(place("namaqualand_cliff_02", size=max(fw, fd) * 0.95, yaw=along + rnd.uniform(-0.25, 0.25) + rnd.choice([0, 3.1416]), stretch=rnd.uniform(1.0, 1.4), **tint))
+    # Masses on every cell, overlapping so the rock reads as one body; the middle stands taller.
+    for i in range(fw):
+        for j in range(fd):
+            cx, cy = i - (fw - 1) / 2, j - (fd - 1) / 2
+            centre = 1 - (abs(cx) / max(1, fw) + abs(cy) / max(1, fd))
+            for big in (True, False):
+                name, k = MASSES[rnd.randrange(len(MASSES))]
+                out.append(place(
+                    name,
+                    size=(rnd.uniform(1.1, 1.35) if big else rnd.uniform(0.6, 0.8)) * k,
+                    x=cx + rnd.uniform(-0.15, 0.15) + (0 if big else rnd.choice([-0.35, 0.35])),
+                    y=cy + rnd.uniform(-0.15, 0.15) + (0 if big else rnd.choice([-0.35, 0.35])),
+                    yaw=rnd.random() * 6.28,
+                    stretch=rnd.uniform(1.5, 2.1) * (0.8 + 0.5 * centre) * (1 if big else 0.8),
+                    **tint,
+                ))
+    # Scree and stones around the foot.
+    for _ in range(fw + fd + rnd.randint(0, 2)):
+        side = rnd.randrange(4)
+        t = rnd.uniform(-0.5, 0.5)
+        x = (fw / 2 + 0.05) * (1 if side == 0 else -1) if side < 2 else t * fw
+        y = (fd / 2 + 0.05) * (1 if side == 2 else -1) if side >= 2 else t * fd
+        out.append(place(FRINGE[rnd.randrange(len(FRINGE))], size=rnd.uniform(0.3, 0.5), x=x, y=y, yaw=rnd.random() * 6.28, **tint))
+    if crystal:
+        # Spires break through the rock: a few tall ones, a crown of smaller growths.
+        for _ in range(max(1, fw * fd * 2 // 3) + rnd.randint(0, 1)):
+            out.append(echo_growth(rnd, x=rnd.uniform(-0.35, 0.35) * fw, y=rnd.uniform(-0.35, 0.35) * fd, z=0.15, height=rnd.uniform(0.9, 1.5), violet=True))
+        for _ in range((fw + fd) // 2):
+            out.append(echo_growth(rnd, x=rnd.uniform(-0.5, 0.5) * fw, y=rnd.uniform(-0.5, 0.5) * fd, height=rnd.uniform(0.3, 0.5), violet=True))
+    else:
+        for _ in range(rnd.randint(1, 1 + fw)):
+            side = rnd.choice([-1, 1])
+            name, h = [("shrub_02", 0.32), ("shrub_04", 0.36), ("searsia_burchellii", 0)][rnd.randrange(3)]
+            kw = dict(size=0, height=h, tint=DRY, tint_amount=0.45) if h else dict(size=0.55)
+            out.append(place(name, x=side * (fw / 2) * rnd.uniform(0.7, 1.0), y=rnd.uniform(-0.5, 0.5) * fd, yaw=rnd.random() * 6.28, **kw))
+    return out

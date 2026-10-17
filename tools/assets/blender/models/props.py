@@ -307,22 +307,26 @@ BUILDING_VARIANTS = 4
 PROPS = {
     "rock_wasteland": (real.rock_wasteland, 112, VARIANTS),
     "rock_city": (rock_city, 112, VARIANTS),
-    "rock_crystal": (real.rock_crystal, 112, VARIANTS),
     "deco_rubble": (real.deco_rubble, 64, 3),
     "deco_wreck": (real.deco_wreck, 96, 3),
     "deco_outcrop": (real.deco_outcrop, 80, 3),
     "deco_tree": (real.deco_tree, 128, 3),
-    "deco_crater": (deco_crater, 80, 3),
     # Scattered by the client on open ground (cosmetic).
     "clutter_wasteland": (real.clutter_wasteland, 80, 8),
     "clutter_city": (real.clutter_city, 128, 10),
-    "clutter_crystal": (real.clutter_crystal, 64, 4),
+    "clutter_crystal": (real.clutter_crystal, 80, 6),
     "tree_wasteland": (real.tree_wasteland, 256, 6),
     "tree_city": (real.tree_city, 208, 3),
 }
 for (_w, _d), _frame in BUILDINGS.items():
     # Even variants stand, odd ones are ruins.
     PROPS[f"bld_{_w}x{_d}"] = (lambda style, seed, w=_w, d=_d: city.block(w, d, seed, ruined=seed % 2 == 1), _frame, BUILDING_VARIANTS)
+
+# Rock formations per footprint and biome (same footprints and frames as buildings).
+FORMATION_VARIANTS = 3
+for _biome in ("wasteland", "crystal"):
+    for (_w, _d), _frame in BUILDINGS.items():
+        PROPS[f"fmn_{_biome}_{_w}x{_d}"] = (lambda style, seed, w=_w, d=_d, b=_biome: real.formation(w, d, seed, b), _frame, FORMATION_VARIANTS)
 
 # id -> (builder, frame px); one variant each.
 LANDMARKS = {

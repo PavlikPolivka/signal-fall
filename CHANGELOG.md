@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-17 21:03 UTC
+
+- **Rock formations:** rocky outcrops are now big landforms spanning several tiles instead of rows of tile-sized stones. Wasteland outcrops are piles of sun-baked sandstone with scrub at their foot; in crystal country, dark rock is split by tall glowing violet crystal spires.
+- **Crystal country:** the ground is scattered with dark stones and pale alien succulents instead of pink crystal confetti, and cliff tops carry the odd crystal outcrop rather than rows of identical spikes.
+- **Shell craters** are real scorched hollows with a raised lip, lit by the sun like the rest of the ground, instead of flat painted rings.
+- **Open ground** has dry gullies and wind-cut ridges, so wide plains aren't flat anymore.
+
 ## 2026-10-17 18:44 UTC
 
 - **Living wasteland:** dry shrubs, grass and bushes grow in clumps, thickest along lakes and at the foot of cliffs, with bare ground between. Trees are taller.
