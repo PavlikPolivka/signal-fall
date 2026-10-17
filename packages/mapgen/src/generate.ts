@@ -1,5 +1,5 @@
 import { FX_ONE, Rng, TERRAIN, TERRAIN_BUILDABLE, TERRAIN_SPEED_PCT, fdiv, idiv, ilength, xxh32Words, type MapData } from '@signal-fall/sim';
-import { makeSymmetry, type Symmetry, type SymmetryKind } from './symmetry';
+import { makeSymmetry, sectorOf, type Symmetry, type SymmetryKind } from './symmetry';
 
 export type MapSize = 'S' | 'M' | 'L';
 export type Biome = 'city' | 'wasteland' | 'crystal';
@@ -52,6 +52,8 @@ const OBSTACLE_THRESHOLD: Record<TerrainStyle, number> = { open: 700, normal: 64
 const WATER_THRESHOLD: Record<Biome, number> = { city: 330, wasteland: 300, crystal: 310 };
 /** [field radius, crystals at the center] per resource level. */
 const FIELD: Record<Resources, [number, number]> = { low: [4, 10], normal: [5, 12], rich: [6, 14] };
+/** City street grid: a lane every STREET_PERIOD tiles. */
+const STREET_PERIOD = 5;
 const DECO_PCT: Record<Biome, number> = { city: 9, wasteland: 5, crystal: 6 };
 /** Chance of a river (2- and 4-player maps). */
 const RIVER_PCT: Record<Biome, number> = { city: 45, wasteland: 35, crystal: 45 };
@@ -111,6 +113,25 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     }
   }
   g.smooth(primary);
+  // 1b. City streets: one-tile lanes cut through the middle of big ruins clusters on a grid centred on
+  // the map, so blocks are at most four tiles across. Only tiles with ruins on both sides of the lane are
+  // cut, so cluster edges keep their outline. Painted over whole orbits, the map stays symmetric.
+  if (params.biome === 'city') {
+    const ruins = (x: number, y: number) => x >= 0 && y >= 0 && x < n && y < n && g.terrain[y * n + x] === TERRAIN.ruins;
+    const lane = (v: number) => (Math.abs(2 * v - (n - 1)) >> 1) % STREET_PERIOD === STREET_PERIOD >> 1;
+    const cut: number[] = [];
+    for (let y = 0; y < n; y++)
+      for (let x = 0; x < n; x++) {
+        if (!ruins(x, y) || (symKind === 'radial' && sectorOf(x, y, n, params.players) !== 0)) continue;
+        if ((lane(x) && ruins(x - 1, y) && ruins(x + 1, y)) || (lane(y) && ruins(x, y - 1) && ruins(x, y + 1))) cut.push(x, y);
+      }
+    for (let k = 0; k < cut.length; k += 2)
+      g.paint(cut[k]!, cut[k + 1]!, (j) => {
+        if (g.terrain[j] !== TERRAIN.ruins) return;
+        g.terrain[j] = TERRAIN.ground;
+        g.surface[j] = SURFACE.road;
+      });
+  }
 
   // 2. Start positions (sector 0, then images).
   const margin = Math.max(BUILD_AREA >> 1, idiv(n * 15, 100)) + 2;

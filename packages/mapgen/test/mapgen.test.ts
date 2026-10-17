@@ -15,17 +15,17 @@ describe('map generator', () => {
     expect(hashes).toMatchInlineSnapshot(`
       [
         [
-          "d413dbdb",
+          "d9e72982",
           "e326ca02",
           "7698507",
         ],
         [
-          "5bd1b1c4",
+          "15506db0",
           "7c80adc9",
           "58cb2204",
         ],
         [
-          "4f47f9af",
+          "511b5d8",
           "d213e168",
           "e1ce889f",
         ],

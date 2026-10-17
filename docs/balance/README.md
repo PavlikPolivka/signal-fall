@@ -83,3 +83,9 @@ Each change was measured by running with one feature removed (150 matches per pa
 - **Chorus** at 5% per ally up to +20% was worth about 8–10 points, and even 3% up to +9% was too much. It is now 2% up
   to +6%.
 - **Energy vs shields** went back up to 160%, which only affects Halcyon vs Choir.
+
+### 2026-10-18: city streets
+
+City maps now cut one-tile streets through big ruins clusters (mapgen, a lane every 5 tiles). Checked
+Halcyon vs Choir at 300 Hard matches with and without streets: 52.7% vs 53.0%, no measurable effect. Holdout
+vs Choir and Holdout vs Halcyon at 100 matches: 45% and 53%.
