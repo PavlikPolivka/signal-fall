@@ -40,7 +40,7 @@
   },
   "ping": {
    "kind": "vehicle",
-   "frame": 72,
+   "frame": 104,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -49,7 +49,7 @@
   },
   "fetch": {
    "kind": "vehicle",
-   "frame": 96,
+   "frame": 136,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -58,7 +58,7 @@
   },
   "vector": {
    "kind": "vehicle",
-   "frame": 96,
+   "frame": 136,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -67,7 +67,7 @@
   },
   "firewall": {
    "kind": "vehicle",
-   "frame": 80,
+   "frame": 120,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -76,7 +76,7 @@
   },
   "broadcast": {
    "kind": "vehicle",
-   "frame": 96,
+   "frame": 136,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -85,7 +85,7 @@
   },
   "seek": {
    "kind": "air",
-   "frame": 96,
+   "frame": 136,
    "dirs": 16,
    "anims": {
     "fly": 2
@@ -94,7 +94,7 @@
   },
   "root": {
    "kind": "vehicle",
-   "frame": 112,
+   "frame": 176,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -103,7 +103,7 @@
   },
   "init": {
    "kind": "vehicle",
-   "frame": 104,
+   "frame": 152,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -112,7 +112,7 @@
   },
   "kernel": {
    "kind": "building",
-   "frame": 256,
+   "frame": 336,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -145,7 +145,7 @@
   },
   "spawn": {
    "kind": "building",
-   "frame": 160,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false,
@@ -244,7 +244,7 @@
   },
   "block": {
    "kind": "building",
-   "frame": 80,
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false,

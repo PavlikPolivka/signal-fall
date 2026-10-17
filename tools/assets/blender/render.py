@@ -54,6 +54,11 @@ def frame_name(sid, part, anim, d, f):
 
 # Vehicles and aircraft are modelled a bit large for detail; shrink them to sit well on 1-tile scale.
 UNIT_SCALE = {"vehicle": 0.72, "air": 0.72, "infantry": 1.0}
+# Extra frame room around vehicles and aircraft: the generated models are long and tall, and a tight
+# frame cut off hulls and turrets at some angles. Same pixel density; the packer trims the margin.
+FRAME_PAD = {"vehicle": 1.5, "air": 1.5, "infantry": 1.0}
+# Models tall enough to still poke out of the top of their frame.
+TALL_PAD = {"refrain": 1.4, "block": 1.6, "spawn": 1.6, "kernel": 1.3, "chord": 1.4}
 
 
 def build_model(sid, spec):
@@ -65,7 +70,7 @@ def build_model(sid, spec):
 
 def render_unit(sid, spec):
     scale = UNIT_SCALE[spec["kind"]]
-    frame_px = int(round(spec["frame"] * scale / 8) * 8)
+    frame_px = int(round(spec["frame"] * scale * FRAME_PAD[spec["kind"]] * TALL_PAD.get(sid, 1) / 8) * 8)
     catcher = fresh(frame_px)
     model = build_model(sid, spec)
     root = kit.root()
@@ -106,7 +111,7 @@ def render_unit(sid, spec):
 
 
 def render_building(sid, spec):
-    frame_px = spec["frame"]
+    frame_px = int(round(spec["frame"] * TALL_PAD.get(sid, 1) / 8) * 8)
     w, dpt = spec["footprint"]
     entry = {"kind": "building", "frame": frame_px, "footprint": [w, dpt], "frames": [], "turret": False}
     for state in ("built", "damaged", "construction"):

@@ -80,6 +80,7 @@ export class Renderer {
   private spriteUnits = new Map<number, UnitSpriteView>();
   private spriteStructures = new Map<number, StructureSpriteView>();
   private deaths: DeathEffect[] = [];
+  private collapsing: StructureSpriteView[] = [];
   /** Last rendered world-pixel position per entity handle (ground point). */
   readonly rendered = new Map<number, { x: number; y: number; air: boolean; shape: Shape | null }>();
   private fogCanvas: HTMLCanvasElement | null = null;
@@ -746,11 +747,18 @@ export class Renderer {
     }
     for (const [h, v] of this.spriteStructures) {
       if (seen.has(h) || this.keepGhost(h, v.root)) continue;
-      v.destroy();
+      // Destroyed (a death burst where it stood, just now) rather than sold: collapse it.
+      const now = performance.now();
+      const k = this.effects.fallen.findIndex((f) => now - f.t < 1500 && Math.abs(f.px - v.root.x) < 40 && Math.abs(f.py - v.root.y) < 40);
+      if (k >= 0 && v.root.visible) {
+        this.effects.fallen.splice(k, 1);
+        this.collapsing.push(v);
+      } else v.destroy();
       this.spriteStructures.delete(h);
       this.rendered.delete(h);
     }
     this.deaths = this.deaths.filter((d) => d.update());
+    this.collapsing = this.collapsing.filter((c) => c.collapse());
     this.effects.burnKeep(burning);
     for (const h of this.lastShields.keys()) if (!seen.has(h)) this.lastShields.delete(h);
 

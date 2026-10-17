@@ -81,6 +81,13 @@ async function load(frame: string, pass: string, size: number): Promise<Packed |
   } catch {
     return null; // pass not rendered (e.g. no shadow for turrets)
   }
+  if (pass === 'shadow') {
+    // Soft shadow edges: the sun render is razor sharp, which reads as cut paper under tall buildings.
+    half = await sharp(half, { raw: { width: size, height: size, channels: 4 } })
+      .blur(Math.max(0.8, size / 150))
+      .raw()
+      .toBuffer();
+  }
   if (pass === 'mask') {
     // White RGB, alpha = how much team color: the client multiplies this, tinted, over the color pass.
     for (let i = 0; i < half.length; i += 4) {

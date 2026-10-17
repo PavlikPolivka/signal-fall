@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-17 09:09 UTC
+
+- **Buildings collapse:** a destroyed building shakes, leans and crumbles down into the dust instead of vanishing.
+- **Softer shadows:** shadows have soft edges instead of razor-sharp paper cut-outs, which shows most under tall buildings.
+- **No more cut-off vehicles:** long hulls, tall turrets and a few tall buildings were cropped at some angles, and wrecks showed up as black boxes. Every model is now drawn whole, and wrecks look like burnt metal.
+- **Cleaner smoke:** smoke puffs no longer show straight edges.
+
 ## 2026-10-17 08:47 UTC
 
 - **Real water:** lakes and rivers now have depth (dark in the middle, shallow at the edges), a foam line along the shore and glints on the surface. They used to be a flat dark smear.

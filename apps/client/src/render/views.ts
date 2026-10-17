@@ -1,7 +1,8 @@
 import { Container, Sprite, type Texture } from 'pixi.js';
+import { isoY } from '../game/iso';
 import { SpriteLibrary, type SpriteInfo } from './sprites';
 
-const WRECK_TINT = 0x4a4744;
+const WRECK_TINT = 0x6e6862;
 let nextTie = 0;
 
 function sprite(layer: Container): Sprite {
@@ -186,6 +187,44 @@ export class StructureSpriteView {
       }
     }
   }
+
+  /**
+   * Destroyed: the building shakes, leans, darkens and crumbles down onto its footprint, then fades.
+   * Returns false when done.
+   */
+  collapse(): boolean {
+    const now = performance.now();
+    if (!this.collapsing) {
+      this.collapsing = now;
+      const [w, h] = this.info.footprint ?? [2, 2];
+      // Pivot on the footprint's front corner so it crumbles down onto the ground, not into the air.
+      this.base = isoY(w / 2, h / 2);
+      this.root.pivot.set(0, this.base);
+      this.root.y += this.base;
+      this.lean = Math.random() < 0.5 ? -1 : 1;
+    }
+    const t = (now - this.collapsing) / 1000;
+    const k = Math.min(1, t / 2);
+    const e = k * k;
+    this.root.scale.y = 1 - 0.62 * e;
+    this.root.skew.x = this.lean * 0.12 * e;
+    this.root.pivot.x = k < 1 ? Math.sin(t * 70) * 2.5 * (1 - k) : 0;
+    const c = Math.round(255 - 150 * k);
+    for (const sp of [this.body, this.turret]) if (sp) sp.tint = (c << 16) | (c << 8) | c;
+    this.team.alpha = 1 - k;
+    if (this.turretTeam) this.turretTeam.alpha = 1 - k;
+    this.shadow.alpha = 1 - k;
+    this.root.alpha = t < 2 ? 1 : Math.max(0, 1 - (t - 2) / 1);
+    if (t > 3) {
+      this.destroy();
+      return false;
+    }
+    return true;
+  }
+
+  private collapsing = 0;
+  private base = 0;
+  private lean = 1;
 
   destroy(): void {
     this.root.destroy({ children: true });

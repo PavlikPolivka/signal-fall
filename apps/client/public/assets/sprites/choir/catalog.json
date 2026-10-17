@@ -40,7 +40,7 @@
   },
   "glissando": {
    "kind": "vehicle",
-   "frame": 80,
+   "frame": 120,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -49,7 +49,7 @@
   },
   "refrain": {
    "kind": "vehicle",
-   "frame": 96,
+   "frame": 192,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -58,7 +58,7 @@
   },
   "basso": {
    "kind": "vehicle",
-   "frame": 96,
+   "frame": 136,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -67,7 +67,7 @@
   },
   "falsetto": {
    "kind": "vehicle",
-   "frame": 80,
+   "frame": 120,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -76,7 +76,7 @@
   },
   "crescendo": {
    "kind": "vehicle",
-   "frame": 104,
+   "frame": 152,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -85,7 +85,7 @@
   },
   "aria": {
    "kind": "air",
-   "frame": 96,
+   "frame": 136,
    "dirs": 16,
    "anims": {
     "fly": 2
@@ -94,7 +94,7 @@
   },
   "requiem": {
    "kind": "vehicle",
-   "frame": 112,
+   "frame": 176,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -103,7 +103,7 @@
   },
   "overture": {
    "kind": "vehicle",
-   "frame": 112,
+   "frame": 176,
    "dirs": 16,
    "anims": {
     "idle": 1
@@ -178,7 +178,7 @@
   },
   "chord": {
    "kind": "building",
-   "frame": 128,
+   "frame": 176,
    "dirs": 1,
    "anims": {},
    "turret": false,

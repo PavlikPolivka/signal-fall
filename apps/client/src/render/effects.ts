@@ -33,9 +33,10 @@ function smokeTexture(size: number): Texture {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   for (let i = 0; i < 9; i++) {
-    const x = size / 2 + (rnd() - 0.5) * size * 0.4;
-    const y = size / 2 + (rnd() - 0.5) * size * 0.4;
-    const r = size * (0.18 + rnd() * 0.16);
+    // Kept inside the canvas (offset + radius < half the size), or puffs show straight edges.
+    const x = size / 2 + (rnd() - 0.5) * size * 0.3;
+    const y = size / 2 + (rnd() - 0.5) * size * 0.3;
+    const r = size * (0.16 + rnd() * 0.17);
     const grad = g.createRadialGradient(x, y, 0, x, y, r);
     grad.addColorStop(0, 'rgba(255,255,255,0.55)');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -239,10 +240,15 @@ export class Effects {
     this.explosion(px, py, 0.5 + r * 0.35, type === SIEGE ? 1.2 : 1);
   }
 
+  /** Where structures were just destroyed (not sold), so the renderer can collapse their sprites. */
+  readonly fallen: { px: number; py: number; t: number }[] = [];
+
   private death(kind: number, type: number, x: number, y: number): void {
     const px = isoX(x / FX, y / FX);
     const py = isoY(x / FX, y / FX);
     if (kind === KIND.structure) {
+      this.fallen.push({ px, py, t: performance.now() });
+      if (this.fallen.length > 16) this.fallen.shift();
       const rule = this.rules.structures[type];
       const w = rule?.footprintW ?? 2;
       const h = rule?.footprintH ?? 2;

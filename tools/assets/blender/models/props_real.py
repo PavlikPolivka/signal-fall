@@ -157,8 +157,8 @@ def deco_outcrop(style, seed):
 
 def deco_tree(style, seed):
     rnd = random.Random(seed + 40)
-    name, height = [("quiver_tree_01", 1.1), ("dead_quiver_trunk", 0.8), ("dead_tree_trunk_02", 0.9)][seed % 3]
-    return [place(name, size=0, height=height, yaw=rnd.random() * 6.28)]
+    name, kw = [("quiver_tree_01", dict(size=0, height=1.1)), ("dead_quiver_trunk", dict(size=0, height=0.8)), ("dead_tree_trunk_02", dict(size=1.3))][seed % 3]
+    return [place(name, yaw=rnd.random() * 6.28, **kw)]
 
 
 # Clutter scattered on open ground by the client (cosmetic only).
