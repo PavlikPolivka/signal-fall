@@ -18,7 +18,14 @@ import props  # noqa: E402
 out_dir = sys.argv[sys.argv.index("--") + 1]
 os.makedirs(out_dir, exist_ok=True)
 STYLE = "gritty"
-manifest = {"faction": "props", "sprites": {}}
+# ONLY=tree_,clutter_ re-renders just the props with those prefixes, keeping the rest of a previous run.
+ONLY = [p for p in os.environ.get("ONLY", "").split(",") if p]
+manifest_path = os.path.join(out_dir, "manifest.json")
+manifest = json.load(open(manifest_path)) if ONLY and os.path.exists(manifest_path) else {"faction": "props", "sprites": {}}
+
+
+def wanted(pid):
+    return not ONLY or any(pid.startswith(p) for p in ONLY)
 
 
 def render(sid, frame_px, builder):
@@ -33,16 +40,20 @@ def render(sid, frame_px, builder):
 
 
 for pid, (builder, frame, variants) in props.PROPS.items():
+    if not wanted(pid):
+        continue
     for v in range(variants):
         render(f"{pid}_{v}", frame, lambda b=builder, s=v: b(STYLE, s))
     print("RENDERED", pid)
 for lid, (builder, frame) in props.LANDMARKS.items():
+    if not wanted(lid):
+        continue
     render(lid, frame, lambda b=builder: b(STYLE, 0))
     print("RENDERED", lid)
 # Echo: the crystal cluster per size (crystals left) in three variants.
-for size in range(1, props.ECHO_SIZES + 1):
+for size in range(1, props.ECHO_SIZES + 1 if wanted("echo") else 1):
     for v in range(3):
         render(f"echo_{size}_{v}", 80, lambda s=size, var=v: props.real.echo(STYLE, s, var))
 print("RENDERED echo")
-json.dump(manifest, open(os.path.join(out_dir, "manifest.json"), "w"), indent=1)
+json.dump(manifest, open(manifest_path, "w"), indent=1)
 print("RENDER DONE")

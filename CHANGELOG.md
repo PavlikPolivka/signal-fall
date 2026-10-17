@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-17 18:44 UTC
+
+- **Living wasteland:** dry shrubs, grass and bushes grow in clumps, thickest along lakes and at the foot of cliffs, with bare ground between. Trees are taller.
+- **Busier streets:** abandoned cars, fire hydrants and more street lamps in the city, and darker tar roofs with real rooftop machinery.
+- **River fords** look like shallow water over gravel instead of a flat green strip.
+
 ## 2026-10-17 18:39 UTC
 
 - **Real cities:** city ruins are now actual buildings: brick apartment blocks and factories of every size, standing or burnt out with collapsed top floors and rubble. City maps read like streets between city blocks instead of grey blobs.

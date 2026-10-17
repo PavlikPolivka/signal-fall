@@ -314,10 +314,10 @@ PROPS = {
     "deco_tree": (real.deco_tree, 128, 3),
     "deco_crater": (deco_crater, 80, 3),
     # Scattered by the client on open ground (cosmetic).
-    "clutter_wasteland": (real.clutter_wasteland, 80, 4),
-    "clutter_city": (real.clutter_city, 128, 6),
+    "clutter_wasteland": (real.clutter_wasteland, 80, 8),
+    "clutter_city": (real.clutter_city, 128, 10),
     "clutter_crystal": (real.clutter_crystal, 64, 4),
-    "tree_wasteland": (real.tree_wasteland, 224, 6),
+    "tree_wasteland": (real.tree_wasteland, 256, 6),
     "tree_city": (real.tree_city, 208, 3),
 }
 for (_w, _d), _frame in BUILDINGS.items():

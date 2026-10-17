@@ -154,7 +154,7 @@ def block(fw, fd, seed, kind=None, floors=None, ruined=None):
     bpy.ops.mesh.primitive_cube_add(size=1, location=(w / 2, d / 2, inner_h / 2))
     core = bpy.context.active_object
     core.scale = (w - 0.6, d - 0.6, inner_h)
-    core.data.materials.append(_roof_material(0.05 if ruined else 0.1))
+    core.data.materials.append(_roof_material(0.025 if ruined else 0.05))
     b.objs.append(core)
     debris = []
     if ruined:
@@ -172,7 +172,7 @@ def block(fw, fd, seed, kind=None, floors=None, ruined=None):
             c = bpy.context.active_object
             c.scale = (rnd.uniform(0.5, 1.6), rnd.uniform(0.4, 1.2), rnd.uniform(0.3, 0.8))
             c.rotation_euler = (rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), rnd.uniform(0, 6.3))
-            c.data.materials.append(brick if rnd.random() < 0.6 else _roof_material(0.18))
+            c.data.materials.append(brick if rnd.random() < 0.6 else _roof_material(0.09))
             b.objs.append(c)
 
     # Into tile units, centred on the footprint.
@@ -185,7 +185,7 @@ def block(fw, fd, seed, kind=None, floors=None, ruined=None):
         # Rooftop machinery: air conditioners and ducts.
         for _ in range(rnd.randint(1, 1 + fw * fd)):
             name = rnd.choice(["exterior_aircon_unit", "exterior_aircon_unit", "utility_box_02"])
-            o = real.place(name, size=rnd.uniform(0.18, 0.3), x=rnd.uniform(-fw / 2 + 0.25, fw / 2 - 0.25), y=rnd.uniform(-fd / 2 + 0.25, fd / 2 - 0.25), yaw=rnd.choice([0, 1.57]))
+            o = real.place(name, size=rnd.uniform(0.18, 0.3), x=rnd.uniform(-fw / 2 + 0.25, fw / 2 - 0.25), y=rnd.uniform(-fd / 2 + 0.25, fd / 2 - 0.25), yaw=rnd.choice([0, 1.57]), tint=(0.22, 0.22, 0.21), tint_amount=0.7)
             o.location.z += roof_t
             b.objs.append(o)
     else:
@@ -246,7 +246,7 @@ def _material(pieces, kind):
     return next(iter(pieces.values())).materials[0]
 
 
-def _roof_material(shade=0.09):
+def _roof_material(shade=0.04):
     name = f"roof_{shade}"
     if name in bpy.data.materials:
         return bpy.data.materials[name]

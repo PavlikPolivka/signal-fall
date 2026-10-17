@@ -333,42 +333,42 @@
   },
   "tree_wasteland_0": {
    "kind": "prop",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "tree_wasteland_1": {
    "kind": "prop",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "tree_wasteland_2": {
    "kind": "prop",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "tree_wasteland_3": {
    "kind": "prop",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "tree_wasteland_4": {
    "kind": "prop",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false
   },
   "tree_wasteland_5": {
    "kind": "prop",
-   "frame": 224,
+   "frame": 256,
    "dirs": 1,
    "anims": {},
    "turret": false
@@ -642,6 +642,62 @@
   "echo_4_2": {
    "kind": "prop",
    "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_4": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_5": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_6": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_wasteland_7": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_6": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_7": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_8": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "clutter_city_9": {
+   "kind": "prop",
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false

@@ -178,7 +178,10 @@ void main() {
   col = mix(col, water, max(ws, foam * 0.8));
   // Crossings: a shallow ford with wet stones, or in the city a concrete causeway.
   float ford = edge(m2.g, n2);
-  vec3 shallow = mix(col * 0.75, water, 0.45);
+  // Shallow wet gravel: the bed shows through a thin sheet of water with ripples catching the light.
+  vec3 bed = texture(uRough, tuv * 1.6 + 0.2).rgb * uRoughGain * (amb * 0.9 + sun * 0.6);
+  vec3 shallow = mix(bed * 0.7, shallowW, 0.3 + 0.2 * r2);
+  shallow += vec3(0.75, 0.8, 0.78) * smoothstep(0.6, 0.72, r1 * 0.6 + r2 * 0.4) * 0.22;
   vec3 deck = mix(texture(uPlaza, vTile * 0.25).rgb * 0.85, road, 0.5) * (0.6 + 0.4 * light.b);
   col = mix(col, mix(shallow, deck, uBridge), ford);
   gl_FragColor = vec4(col, 1.0);

@@ -10,8 +10,8 @@ import { Effects } from './effects';
 
 const FX = 1024;
 /** Share of open ground tiles with a bit of clutter, and how many clutter variants each biome has. */
-const CLUTTER_DENSITY: Record<string, number> = { wasteland: 0.06, city: 0.045, crystal: 0.07 };
-const CLUTTER_VARIANTS: Record<string, number> = { wasteland: 4, city: 6, crystal: 4 };
+const CLUTTER_DENSITY: Record<string, number> = { wasteland: 0.1, city: 0.07, crystal: 0.07 };
+const CLUTTER_VARIANTS: Record<string, number> = { wasteland: 8, city: 10, crystal: 4 };
 const CHUNK = 16;
 // Damage types (data DAMAGE order), for projectile looks.
 const PROJ_KINETIC = 0;
@@ -393,7 +393,11 @@ export class Renderer {
         if (!id) {
           // Clutter on open ground (cosmetic): bushes and stones, street furniture, small crystals.
           const open = (s.terrain[i] === TERRAIN.ground || s.terrain[i] === TERRAIN.rough) && !(s.surface[i] ?? 0) && !(s.echo[i] ?? 0);
-          if (open && hash(x, y, 11) < CLUTTER_DENSITY[s.biome]!) {
+          // Clumped, not sprinkled: dense patches (more of them by water), bare stretches between.
+          const near = (dx: number, dy: number) => at(x + dx, y + dy) === TERRAIN.water || TerrainLayer.isMesa(at(x + dx, y + dy));
+          const bank = near(2, 0) || near(-2, 0) || near(0, 2) || near(0, -2) ? 1.6 : 1;
+          const clump = (hash(x >> 2, y >> 2, 41) + hash((x + 2) >> 2, (y + 2) >> 2, 42)) * 0.5;
+          if (open && hash(x, y, 11) < CLUTTER_DENSITY[s.biome]! * bank * (0.2 + 2.2 * clump * clump)) {
             const kind = `clutter_${s.biome}`;
             const n = CLUTTER_VARIANTS[s.biome]!;
             const jx = (hash(x, y, 12) - 0.5) * 0.7;

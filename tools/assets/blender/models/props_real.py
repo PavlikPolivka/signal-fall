@@ -169,7 +169,11 @@ def clutter_wasteland(style, seed):
         ("wild_rooibos_bush", dict(size=0.45)),
         ("dry_branches_medium_01", dict(size=0.55)),
         ("namaqualand_stones_01", dict(size=0.4)),
-    ][seed % 4]
+        ("shrub_02", dict(size=0, height=0.32, tint=DRY, tint_amount=0.45)),
+        ("shrub_03", dict(size=0, height=0.28, tint=DRY, tint_amount=0.45)),
+        ("shrub_04", dict(size=0, height=0.36, tint=DRY, tint_amount=0.4)),
+        ("grass_medium_01", dict(size=0.5, tint=(0.3, 0.26, 0.12), tint_amount=0.55)),
+    ][seed % 8]
     return [place(name, yaw=rnd.random() * 6.28, **kw)]
 
 
@@ -182,8 +186,12 @@ def clutter_city(style, seed):
         ("utility_box_01", dict(size=0, height=0.35)),
         ("metal_trash_can", dict(size=0, height=0.25)),
         ("concrete_road_barrier_02", dict(size=0.7)),
-    ][seed % 6]
-    return [place(name, yaw=rnd.random() * 6.28, **kw)]
+        ("covered_car", dict(size=0.8)),
+        ("fire_hydrant", dict(size=0, height=0.18)),
+        ("street_lamp_02", dict(size=0, height=1.1)),
+        ("covered_car", dict(size=0.8)),
+    ][seed % 10]
+    return [place(name, yaw=rnd.choice([0.0, 1.57, 3.14, 4.71]) + rnd.uniform(-0.15, 0.15) if name == "covered_car" else rnd.random() * 6.28, **kw)]
 
 
 def clutter_crystal(style, seed):
@@ -209,8 +217,8 @@ def echo(style, size, variant):
 # fill an obstacle tile like a copse.
 DRY = (0.2, 0.18, 0.08)
 WASTE_TREES = [
-    ("island_tree_01", 1.9), ("island_tree_02", 1.8), ("island_tree_03", 1.9),
-    ("jacaranda_tree", 1.8), ("searsia_lucida", 1.2), ("quiver_tree_02", 1.4),
+    ("island_tree_01", 2.2), ("island_tree_02", 2.1), ("island_tree_03", 2.2),
+    ("jacaranda_tree", 2.1), ("searsia_lucida", 1.4), ("quiver_tree_02", 1.6),
 ]
 
 
