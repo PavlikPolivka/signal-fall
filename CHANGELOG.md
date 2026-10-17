@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-17 18:39 UTC
+
+- **Real cities:** city ruins are now actual buildings: brick apartment blocks and factories of every size, standing or burnt out with collapsed top floors and rubble. City maps read like streets between city blocks instead of grey blobs.
+- **Trees:** copses of real trees grow among the wasteland's rocks and on top of its cliffs, and the city has its own street trees.
+- **Lit terrain:** the ground is lit by the same sun as the units. Hills and hollows show, cliffs are rugged rock faces that cast shadows instead of stair-step blocks, and every surface has real relief, with sand settling between stones.
+- **Calmer water:** lakes catch a soft sheen of sunlight instead of glittering dots, and cloud shadows drift slowly over the map.
+
 ## 2026-10-17 09:09 UTC
 
 - **Buildings collapse:** a destroyed building shakes, leans and crumbles down into the dust instead of vanishing.

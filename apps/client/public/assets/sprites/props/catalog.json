@@ -331,6 +331,209 @@
    "anims": {},
    "turret": false
   },
+  "tree_wasteland_0": {
+   "kind": "prop",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_wasteland_1": {
+   "kind": "prop",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_wasteland_2": {
+   "kind": "prop",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_wasteland_3": {
+   "kind": "prop",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_wasteland_4": {
+   "kind": "prop",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_wasteland_5": {
+   "kind": "prop",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_city_0": {
+   "kind": "prop",
+   "frame": 208,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_city_1": {
+   "kind": "prop",
+   "frame": 208,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "tree_city_2": {
+   "kind": "prop",
+   "frame": 208,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_1x1_0": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_1x1_1": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_1x1_2": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_1x1_3": {
+   "kind": "prop",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x1_0": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x1_1": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x1_2": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x1_3": {
+   "kind": "prop",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x2_0": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x2_1": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x2_2": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_2x2_3": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x2_0": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x2_1": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x2_2": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x2_3": {
+   "kind": "prop",
+   "frame": 352,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x3_0": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x3_1": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x3_2": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "bld_3x3_3": {
+   "kind": "prop",
+   "frame": 384,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
   "lm_tower": {
    "kind": "prop",
    "frame": 256,

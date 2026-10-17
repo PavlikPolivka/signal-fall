@@ -4,7 +4,7 @@ import { E, ENT_FLAG, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
 import { SpriteLibrary } from './sprites';
-import { CLIFF_H, TerrainLayer } from './terrain';
+import { TerrainLayer } from './terrain';
 import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
 import { Effects } from './effects';
 
@@ -356,24 +356,36 @@ export class Renderer {
       layer.addChild(sp);
     };
     this.drawLandmarks(place);
+    const built = this.drawBuildings(place, hash);
     const DECO_IDS = ['', 'deco_rubble', 'deco_wreck', 'deco_outcrop', 'deco_tree', 'deco_crater'];
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
         const i = y * s.width + x;
-        if (s.landmark[i]) continue;
+        if (s.landmark[i] || built[i]) continue;
         const cx = isoX(x + 0.5, y + 0.5);
         const cy = isoY(x + 0.5, y + 0.5);
         if (mesa(x, y)) {
           // Mesa tops: crystal spires or the odd boulder; scree at the foot of exposed faces.
           const r = hash(x, y, 7);
-          if (s.biome === 'crystal' ? r < 0.3 : r < 0.1) {
+          if (s.biome === 'wasteland' && r > 0.9) {
+            place(`tree_wasteland_${Math.floor(hash(x, y, 2) * 6)}`, top, cx, cy - this.terrain.heightAt(x + 0.5, y + 0.5), 0.8, hash(x, y, 6) < 0.5 ? -1 : 1, false);
+          } else if (s.biome === 'crystal' ? r < 0.3 : r < 0.1) {
             const id = s.biome === 'crystal' ? `deco_outcrop_${Math.floor(hash(x, y, 2) * 3)}` : `rock_wasteland_${Math.floor(hash(x, y, 2) * 6)}`;
-            place(id, top, cx, cy - CLIFF_H, s.biome === 'crystal' ? 1.3 : 0.55, hash(x, y, 6) < 0.5 ? -1 : 1, false);
+            place(id, top, cx, cy - this.terrain.heightAt(x + 0.5, y + 0.5), s.biome === 'crystal' ? 1.3 : 0.55, hash(x, y, 6) < 0.5 ? -1 : 1, false);
           }
           continue;
         }
         if ((mesa(x - 1, y) || mesa(x, y - 1)) && hash(x, y, 8) < 0.3) {
           place(`deco_rubble_${Math.floor(hash(x, y, 9) * 3)}`, this.ground, cx - 6 + hash(x, y, 10) * 12, cy - 4, 0.9, 1, false);
+        }
+        // Wasteland rock outcrops turn into copses where a coarse noise says so.
+        const grove = s.biome !== 'crystal' && s.terrain[i] === TERRAIN.rock && hash(x >> 2, y >> 2, 21) < (s.biome === 'city' ? 0.35 : 0.45);
+        if (grove) {
+          const jx = (hash(x, y, 3) - 0.5) * 0.3;
+          const jy = (hash(x, y, 4) - 0.5) * 0.3;
+          const kind = s.biome === 'city' ? `tree_city_${Math.floor(hash(x, y, 1) * 3)}` : `tree_wasteland_${Math.floor(hash(x, y, 1) * 6)}`;
+          place(kind, this.ground, isoX(x + 0.5 + jx, y + 0.5 + jy), isoY(x + 0.5 + jx, y + 0.5 + jy), 0.9 + hash(x, y, 5) * 0.25, hash(x, y, 6) < 0.5 ? -1 : 1, true);
+          continue;
         }
         const ob = obstacle(s.terrain[i]!);
         const deco = DECO_IDS[s.decoration[i] ?? 0] ?? '';
@@ -406,6 +418,46 @@ export class Renderer {
     }
     this.propsReady = true;
     this.echoVersion = -1;
+  }
+
+  /**
+   * City ruins become real buildings: each cluster of ruins tiles is cut into rectangular blocks
+   * (3x3 down to 1x1), each drawn as one building sprite. Returns the tiles covered.
+   */
+  private drawBuildings(
+    place: (id: string, layer: Container, px: number, py: number, scale: number, flip: number, shadow: boolean) => void,
+    hash: (x: number, y: number, k: number) => number,
+  ): Uint8Array {
+    const s = this.state;
+    const built = new Uint8Array(s.width * s.height);
+    if (s.biome !== 'city') return built;
+    const free = (x: number, y: number) => x < s.width && y < s.height && s.terrain[y * s.width + x] === TERRAIN.ruins && !built[y * s.width + x] && !s.landmark[y * s.width + x];
+    const fits = (x: number, y: number, w: number, h: number) => {
+      for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) if (!free(x + dx, y + dy)) return false;
+      return true;
+    };
+    // [w, d, sprite footprint, mirrored]: a mirrored sprite swaps the footprint's axes on screen.
+    const SHAPES: [number, number, string, boolean][] = [
+      [3, 3, '3x3', false],
+      [3, 2, '3x2', false],
+      [2, 3, '3x2', true],
+      [2, 2, '2x2', false],
+      [2, 1, '2x1', false],
+      [1, 2, '2x1', true],
+      [1, 1, '1x1', false],
+    ];
+    for (let y = 0; y < s.height; y++)
+      for (let x = 0; x < s.width; x++) {
+        if (!free(x, y)) continue;
+        // Not always the biggest block: mixed sizes read as a real street.
+        const skip = hash(x, y, 31) < 0.35 ? 2 : 0;
+        const shape = SHAPES.slice(skip).find(([w, d]) => fits(x, y, w, d)) ?? SHAPES[SHAPES.length - 1]!;
+        const [w, d, id, mirrored] = shape;
+        for (let dy = 0; dy < d; dy++) for (let dx = 0; dx < w; dx++) built[(y + dy) * s.width + x + dx] = 1;
+        const variant = Math.floor(hash(x, y, 32) * 4);
+        place(`bld_${id}_${variant}`, this.ground, isoX(x + w / 2, y + d / 2), isoY(x + w / 2, y + d / 2), 1, mirrored ? -1 : 1, true);
+      }
+    return built;
   }
 
   /** One big sprite per landmark, at the center of its footprint. */

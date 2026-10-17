@@ -13,7 +13,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
-const LIST = JSON.parse(readFileSync(join(HERE, 'props/polyhaven.json'), 'utf8')) as { models: string[] };
+// `tris` overrides the triangle budget per model (trees and shrubs need their leaves).
+const LIST = JSON.parse(readFileSync(join(HERE, 'props/polyhaven.json'), 'utf8')) as { models: string[]; tris?: Record<string, number> };
 const RAW = join(HERE, 'build/polyhaven');
 const OUT = join(HERE, 'props/models');
 mkdirSync(OUT, { recursive: true });
@@ -42,7 +43,7 @@ for (const id of LIST.models) {
   if (!existsSync(out)) {
     execFileSync('blender', ['-b', '--factory-startup', '-P', join(HERE, 'blender/meshy_compact.py'), '--', gltf, out], {
       stdio: 'ignore',
-      env: { ...process.env, SF_TRIS: '15000', SF_TEXTURE: '512' },
+      env: { ...process.env, SF_TRIS: String(LIST.tris?.[id] ?? 15000), SF_TEXTURE: '512' },
     });
   }
   console.log(id);

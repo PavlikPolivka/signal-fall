@@ -126,5 +126,133 @@
     "Greg Zaal": "Photography",
     "Rico Cilliers": "Photography",
     "Jenelle van Heerden": "Processing"
+  },
+  "modular_urban_apartments_facade": {
+    "James Ray Cock": "All"
+  },
+  "modular_factory_facade": {
+    "James Ray Cock": "All"
+  },
+  "modular_fire_escape": {
+    "Juniix": "All"
+  },
+  "modular_chainlink_fence": {
+    "James Ray Cock": "All",
+    "Amal Kumar": "Fence Wire Material"
+  },
+  "fire_hydrant": {
+    "Gon\u00e7alo Fel\u00edcio": "All"
+  },
+  "street_lamp_02": {
+    "Josh Dean": "All"
+  },
+  "utility_box_02": {
+    "James Ray Cock": "All"
+  },
+  "exterior_aircon_unit": {
+    "Monsta3D": "All"
+  },
+  "water_manhole_cover": {
+    "Raunox": "All"
+  },
+  "modular_airduct_circular_01": {
+    "Riley Queen": "All"
+  },
+  "island_tree_01": {
+    "Rob Tuytel": "scanning, processing",
+    "Rico Cilliers": "cleanup, processing"
+  },
+  "island_tree_02": {
+    "Rob Tuytel": "scanning, processing",
+    "Rico Cilliers": "cleanup, processing"
+  },
+  "island_tree_03": {
+    "Rob Tuytel": "scanning, processing",
+    "Rico Cilliers": "cleanup, processing"
+  },
+  "jacaranda_tree": {
+    "Rob Tuytel": "guidance",
+    "Rico Cilliers": "All"
+  },
+  "tree_small_02": {
+    "Rico Cilliers": "All"
+  },
+  "searsia_lucida": {
+    "James Ray Cock": "modeling",
+    "Jenelle van Heerden": "Photography"
+  },
+  "othonna_cerarioides": {
+    "James Ray Cock": "modeling",
+    "Jenelle van Heerden": "Photography"
+  },
+  "quiver_tree_02": {
+    "Dario Barresi": "photography",
+    "Rico Cilliers": "modeling"
+  },
+  "tree_stump_01": {
+    "Rob Tuytel": "All"
+  },
+  "tree_stump_02": {
+    "Rob Tuytel": "All"
+  },
+  "dead_tree_trunk": {
+    "Rob Tuytel": "All"
+  },
+  "shrub_01": {
+    "Rico Cilliers": "All"
+  },
+  "shrub_02": {
+    "Rico Cilliers": "All"
+  },
+  "shrub_03": {
+    "Rico Cilliers": "All"
+  },
+  "shrub_04": {
+    "Rico Cilliers": "All"
+  },
+  "grass_medium_01": {
+    "Rob Tuytel": "Photography",
+    "Rico Cilliers": "Modeling"
+  },
+  "grass_medium_02": {
+    "Rico Cilliers": "All"
+  },
+  "namaqualand_cliff_01": {
+    "Jenelle van Heerden": "Photography",
+    "Rico Cilliers": "modeling"
+  },
+  "namaqualand_cliff_02": {
+    "Dario Barresi": "Photography",
+    "Rico Cilliers": "modeling"
+  },
+  "rock_face_01": {
+    "Dario Barresi": "All"
+  },
+  "rock_face_02": {
+    "Dario Barresi": "All",
+    "Rico Cilliers": "processing"
+  },
+  "rock_07": {
+    "Jenelle van Heerden": "All"
+  },
+  "rock_09": {
+    "Jenelle van Heerden": "All"
+  },
+  "boulder_01": {
+    "Rico Cilliers": "All"
+  },
+  "moon_rock_06": {
+    "Greg Zaal": "Photography",
+    "Jenelle van Heerden": "Processing",
+    "Rico Cilliers": "Photography"
+  },
+  "moon_rock_07": {
+    "Greg Zaal": "Photography",
+    "Rico Cilliers": "Photography",
+    "Jenelle van Heerden": "Processing"
+  },
+  "stone_01": {
+    "Dario Barresi": "Photography",
+    "Rico Cilliers": "photography, processing"
   }
 }

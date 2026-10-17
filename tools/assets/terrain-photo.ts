@@ -8,7 +8,7 @@
  * and cliff.jpg (1024x512, tileable horizontally). Water stays procedural (terrain.ts): it animates.
  * Grading keeps the ground darker and less saturated than the units so they stay readable.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,20 +57,58 @@ const BIOMES: Record<string, Record<Slot, [string, Grade]>> = {
   },
 };
 
-/** The material's 1K color map, downloaded once. */
-async function colorMap(id: string): Promise<Buffer> {
-  const file = join(CACHE, `${id}.jpg`);
-  if (existsSync(file)) return readFileSync(file);
+/** The material's 1K zip (color, normal, displacement, AO), downloaded once. */
+async function zipOf(id: string): Promise<string> {
+  const zip = join(CACHE, `${id}.zip`);
+  if (existsSync(zip)) return zip;
   mkdirSync(CACHE, { recursive: true });
   const meta = (await (await fetch(`https://ambientcg.com/api/v2/full_json?id=${id}&include=downloadData`)).json()) as {
     foundAssets: { downloadFolders: { default: { downloadFiletypeCategories: { zip: { downloads: { attribute: string; fullDownloadPath: string }[] } } } } }[];
   };
   const zipUrl = meta.foundAssets[0]!.downloadFolders.default.downloadFiletypeCategories.zip.downloads.find((d) => d.attribute === '1K-JPG')!.fullDownloadPath;
-  const zip = join(CACHE, `${id}.zip`);
   writeFileSync(zip, Buffer.from(await (await fetch(zipUrl)).arrayBuffer()));
-  const name = execFileSync('unzip', ['-Z1', zip]).toString().split('\n').find((n) => n.endsWith('_Color.jpg'))!;
-  writeFileSync(file, execFileSync('unzip', ['-p', zip, name], { maxBuffer: 64 << 20 }));
-  return readFileSync(file);
+  return zip;
+}
+
+/** One map of the material (`Color`, `NormalGL`, `Displacement`, `AmbientOcclusion`), or null if it has none. */
+async function map(id: string, kind: string): Promise<Buffer | null> {
+  const zip = await zipOf(id);
+  const name = execFileSync('unzip', ['-Z1', zip]).toString().split('\n').find((n) => n.endsWith(`_${kind}.jpg`));
+  return name ? execFileSync('unzip', ['-p', zip, name], { maxBuffer: 64 << 20 }) : null;
+}
+
+async function colorMap(id: string): Promise<Buffer> {
+  const color = (await map(id, 'Color'))!;
+  // Bake the material's ambient occlusion into the colour: crevices stay dark under any light.
+  const ao = await map(id, 'AmbientOcclusion');
+  if (!ao) return color;
+  const aoRaw = await sharp(ao).resize(1024, 1024).greyscale().linear(0.6, 255 * 0.4).toColourspace('srgb').toBuffer();
+  return sharp(await sharp(color).resize(1024, 1024).toBuffer())
+    .composite([{ input: aoRaw, blend: 'multiply' }])
+    .jpeg({ quality: 95 })
+    .toBuffer();
+}
+
+/**
+ * Relief map for the lighting shader, 512 px: r, g = the normal's x and y (OpenGL convention), b = height
+ * (displacement), so materials can blend by height (sand settles between stones).
+ */
+async function reliefMap(id: string, width: number, height: number): Promise<Buffer> {
+  const w = width / 2;
+  const h = height / 2;
+  const nrm = await sharp((await map(id, 'NormalGL'))!).resize(512, 512).removeAlpha().raw().toBuffer();
+  const dispSrc = await map(id, 'Displacement');
+  const disp = dispSrc ? await sharp(dispSrc).resize(512, 512).greyscale().normalise().raw().toBuffer() : Buffer.alloc(512 * 512, 128);
+  const out = Buffer.alloc(w * h * 3);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 3;
+      const i = y * 512 + x;
+      out[o] = nrm[i * 3]!;
+      out[o + 1] = nrm[i * 3 + 1]!;
+      out[o + 2] = disp[i]!;
+    }
+  return sharp(out, { raw: { width: w, height: h, channels: 3 } }).jpeg({ quality: 88, mozjpeg: true }).toBuffer();
 }
 
 async function graded(id: string, g: Grade, width: number, height: number): Promise<Buffer> {
@@ -90,8 +128,9 @@ async function graded(id: string, g: Grade, width: number, height: number): Prom
 for (const [biome, slots] of Object.entries(BIOMES)) {
   mkdirSync(join(OUT, biome), { recursive: true });
   for (const [slot, [id, grade]] of Object.entries(slots) as [Slot, [string, Grade]][]) {
-    const h = slot === 'cliff' ? 512 : 1024;
+    const h = 1024;
     writeFileSync(join(OUT, biome, `${slot}.jpg`), await graded(id, grade, 1024, h));
+    writeFileSync(join(OUT, biome, `${slot}_n.jpg`), await reliefMap(id, 1024, h));
     console.log(`${biome}/${slot}.jpg  <- ambientCG ${id}`);
   }
 }

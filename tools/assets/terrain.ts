@@ -3,7 +3,7 @@
  *
  *   pnpm --filter @signal-fall/assets terrain
  *
- * Writes apps/client/public/assets/terrain/<biome>/water.png plus the shared blend noise. The ground, rough,
+ * Writes the shared blend noise (apps/client/public/assets/terrain/noise.png). The ground, rough,
  * road, plaza and cliff textures are photo textures now (terrain-photo.ts); PROCEDURAL=1 writes the old
  * generated ones as <slot>.png too.
  * (512x512, tileable; cliff is 512x256, tileable horizontally) plus a shared blend-noise texture. Gritty look: layered
@@ -279,7 +279,8 @@ for (const [biome, looks] of Object.entries(BIOMES)) {
   if (ALL) await ground(looks.ground, s0, join(dir, 'ground.png'));
   if (ALL) await ground(looks.ground2, s0 + 1, join(dir, 'ground2.png'));
   if (ALL) await ground(looks.rough, s0 + 2, join(dir, 'rough.png'));
-  await water(looks.water, s0 + 3, join(dir, 'water.png'));
+  // Water is drawn by the terrain shader now; WATER=1 still writes the old texture.
+  if (ALL || process.env.WATER === '1') await water(looks.water, s0 + 3, join(dir, 'water.png'));
   const extra = EXTRA[biome]!;
   if (ALL) await ground(extra.road, s0 + 4, join(dir, 'road.png'));
   if (ALL) await plaza(extra.plaza, s0 + 5, join(dir, 'plaza.png'));

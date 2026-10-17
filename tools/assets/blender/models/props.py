@@ -297,6 +297,11 @@ def lm_monolith(style, seed):
 VARIANTS = 6
 
 import props_real as real  # noqa: E402  (real models: Poly Haven scans, the Meshy Echo cluster)
+import city  # noqa: E402  (buildings from Poly Haven's modular facade kits)
+
+# City blocks per footprint (w x d tiles): frame px. The client fills ruins clusters with these.
+BUILDINGS = {(1, 1): 160, (2, 1): 256, (2, 2): 288, (3, 2): 352, (3, 3): 384}
+BUILDING_VARIANTS = 4
 
 # id -> (builder, frame px, variants)
 PROPS = {
@@ -312,7 +317,12 @@ PROPS = {
     "clutter_wasteland": (real.clutter_wasteland, 80, 4),
     "clutter_city": (real.clutter_city, 128, 6),
     "clutter_crystal": (real.clutter_crystal, 64, 4),
+    "tree_wasteland": (real.tree_wasteland, 224, 6),
+    "tree_city": (real.tree_city, 208, 3),
 }
+for (_w, _d), _frame in BUILDINGS.items():
+    # Even variants stand, odd ones are ruins.
+    PROPS[f"bld_{_w}x{_d}"] = (lambda style, seed, w=_w, d=_d: city.block(w, d, seed, ruined=seed % 2 == 1), _frame, BUILDING_VARIANTS)
 
 # id -> (builder, frame px); one variant each.
 LANDMARKS = {

@@ -203,3 +203,32 @@ def echo(style, size, variant):
         a = rnd.random() * 6.28
         out.append(echo_growth(rnd, x=0.22 * math.cos(a), y=0.22 * math.sin(a), height=height * 0.55))
     return out
+
+
+# Trees (Poly Haven scans). Wasteland trees are sun-bleached toward olive; groves of two or three
+# fill an obstacle tile like a copse.
+DRY = (0.2, 0.18, 0.08)
+WASTE_TREES = [
+    ("island_tree_01", 1.9), ("island_tree_02", 1.8), ("island_tree_03", 1.9),
+    ("jacaranda_tree", 1.8), ("searsia_lucida", 1.2), ("quiver_tree_02", 1.4),
+]
+
+
+def tree_wasteland(style, seed):
+    rnd = random.Random(seed + 90)
+    name, h = WASTE_TREES[seed % len(WASTE_TREES)]
+    out = [place(name, size=0, height=h * rnd.uniform(0.9, 1.1), x=-0.08, y=0.05, yaw=rnd.random() * 6.28, tint=DRY, tint_amount=0.3)]
+    # Undergrowth: a shrub or a second, smaller tree.
+    if seed % 2:
+        n2, h2 = WASTE_TREES[(seed + 2) % len(WASTE_TREES)]
+        out.append(place(n2, size=0, height=h2 * 0.65, x=0.28, y=-0.22, yaw=rnd.random() * 6.28, tint=DRY, tint_amount=0.35))
+    else:
+        out.append(place("othonna_cerarioides", size=0, height=0.45, x=0.25, y=-0.25, yaw=rnd.random() * 6.28, tint=DRY, tint_amount=0.3))
+    return out
+
+
+def tree_city(style, seed):
+    """Street and park trees, a little greener than the wasteland's."""
+    rnd = random.Random(seed + 95)
+    name, h = [("tree_small_02", 1.7), ("jacaranda_tree", 1.7), ("island_tree_02", 1.6)][seed % 3]
+    return [place(name, size=0, height=h, yaw=rnd.random() * 6.28, tint=DRY, tint_amount=0.15)]

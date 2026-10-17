@@ -26,7 +26,7 @@ const TOOLS: Entry[] = [
   { title: 'FFmpeg', source: 'ffmpeg.org', author: 'FFmpeg developers', license: 'LGPL/GPL (tool only)' },
   { title: 'Meshy', source: 'meshy.ai', author: 'Meshy', license: 'AI 3D model generation (tool; generated models owned by the project on a paid plan)' },
   { title: 'ambientCG', source: 'ambientcg.com', author: 'Lennart Demes', license: 'CC0 (terrain and material textures)' },
-  { title: 'Poly Haven', source: 'polyhaven.com', author: 'Amal Kumar, Dario Barresi, Greg Zaal, GurJas Studios, Jack Mava, James Ray Cock, Jenelle van Heerden, John Hutcheson, Jorge Camacho, Josh Dean, MP, Rico Cilliers, Rob Tuytel, Sean Buckley, Serhii Khromov', license: 'CC0 (3D scans used for map props)' },
+  { title: 'Poly Haven', source: 'polyhaven.com', author: 'Amal Kumar, Dario Barresi, Gonçalo Felício, Greg Zaal, GurJas Studios, Jack Mava, James Ray Cock, Jenelle van Heerden, John Hutcheson, Jorge Camacho, Josh Dean, Juniix, Monsta3D, MP, Raunox, Rico Cilliers, Riley Queen, Rob Tuytel, Sean Buckley, Serhii Khromov', license: 'CC0 (3D scans used for map props, trees and city buildings)' },
 ];
 
 function Section({ title, items }: { title: string; items: Entry[] }) {
