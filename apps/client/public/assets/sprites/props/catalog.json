@@ -128,27 +128,6 @@
    "anims": {},
    "turret": false
   },
-  "deco_outcrop_0": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "deco_outcrop_1": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
-  "deco_outcrop_2": {
-   "kind": "prop",
-   "frame": 80,
-   "dirs": 1,
-   "anims": {},
-   "turret": false
-  },
   "deco_tree_0": {
    "kind": "prop",
    "frame": 128,
@@ -859,6 +838,55 @@
   "echo_4_2": {
    "kind": "prop",
    "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_1_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_2_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_3_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_4_3": {
+   "kind": "prop",
+   "frame": 80,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_mother_0": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_mother_1": {
+   "kind": "prop",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "echo_mother_2": {
+   "kind": "prop",
+   "frame": 128,
    "dirs": 1,
    "anims": {},
    "turret": false

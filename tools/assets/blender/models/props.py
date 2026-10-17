@@ -309,7 +309,6 @@ PROPS = {
     "rock_city": (rock_city, 112, VARIANTS),
     "deco_rubble": (real.deco_rubble, 64, 3),
     "deco_wreck": (real.deco_wreck, 96, 3),
-    "deco_outcrop": (real.deco_outcrop, 80, 3),
     "deco_tree": (real.deco_tree, 128, 3),
     # Scattered by the client on open ground (cosmetic).
     "clutter_wasteland": (real.clutter_wasteland, 80, 8),
@@ -336,3 +335,4 @@ LANDMARKS = {
     "lm_monolith": (lm_monolith, 256),
 }
 ECHO_SIZES = 4
+ECHO_VARIANTS = 4

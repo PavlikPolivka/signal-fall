@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-17 21:12 UTC
+
+- **Echo fields** look like crystal pushed up through the ground: clusters lean, loose shards lie around them, sizes vary, and towering mother crystals rise from the heart of rich fields. The tallest go as the field is mined out.
+- **Crystal country:** small rock outcrops with violet spires replace the scattered crystal specks, and loose stones are dark instead of pale.
+
 ## 2026-10-17 21:03 UTC
 
 - **Rock formations:** rocky outcrops are now big landforms spanning several tiles instead of rows of tile-sized stones. Wasteland outcrops are piles of sun-baked sandstone with scrub at their foot; in crystal country, dark rock is split by tall glowing violet crystal spires.

@@ -50,10 +50,13 @@ for lid, (builder, frame) in props.LANDMARKS.items():
         continue
     render(lid, frame, lambda b=builder: b(STYLE, 0))
     print("RENDERED", lid)
-# Echo: the crystal cluster per size (crystals left) in three variants.
+# Echo: the crystal cluster per size (crystals left) in four variants, and the big "mother" crystals
+# that stand at the heart of rich fields.
 for size in range(1, props.ECHO_SIZES + 1 if wanted("echo") else 1):
-    for v in range(3):
+    for v in range(props.ECHO_VARIANTS):
         render(f"echo_{size}_{v}", 80, lambda s=size, var=v: props.real.echo(STYLE, s, var))
+for v in range(3 if wanted("echo") else 0):
+    render(f"echo_mother_{v}", 128, lambda var=v: props.real.echo_mother(STYLE, var))
 print("RENDERED echo")
 json.dump(manifest, open(manifest_path, "w"), indent=1)
 print("RENDER DONE")

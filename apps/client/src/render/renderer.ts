@@ -395,7 +395,14 @@ export class Renderer {
         // Craters are pressed into the terrain itself (see TerrainLayer.build).
         const deco = DECO_IDS[s.decoration[i] ?? 0] ?? '';
         // Crystal rubble: dark stones, not the pale sand rocks of the wasteland.
-        const decoId = deco === 'deco_rubble' && s.biome === 'crystal' ? `clutter_crystal_${4 + Math.floor(hash(x, y, 2) * 2)}` : deco ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}` : null;
+        const decoId =
+          deco === 'deco_rubble' && s.biome === 'crystal'
+            ? `clutter_crystal_${4 + Math.floor(hash(x, y, 2) * 2)}`
+            : deco === 'deco_outcrop'
+              ? `fmn_crystal_1x1_${Math.floor(hash(x, y, 2) * 3)}`
+              : deco
+                ? `${deco}_${Math.floor(hash(x, y, 2) * 3)}`
+                : null;
         const id = ob ? `${ob}_${Math.floor(hash(x, y, 1) * 6)}` : decoId;
         if (!id) {
           // Clutter on open ground (cosmetic): bushes and stones, street furniture, small crystals.
@@ -419,7 +426,8 @@ export class Renderer {
         const jy = (hash(x, y, 4) - 0.5) * (ob ? 0.3 : 0.6);
         const px = isoX(x + 0.5 + jx, y + 0.5 + jy);
         const py = isoY(x + 0.5 + jx, y + 0.5 + jy);
-        const scale = ob ? 1.05 + hash(x, y, 5) * 0.35 : 0.85 + hash(x, y, 5) * 0.3;
+        // Outcrops on open ground stay small so they don't read as obstacles.
+        const scale = ob ? 1.05 + hash(x, y, 5) * 0.35 : deco === 'deco_outcrop' ? 0.5 + hash(x, y, 5) * 0.15 : 0.85 + hash(x, y, 5) * 0.3;
         const flip = hash(x, y, 6) < 0.5 ? -1 : 1;
         place(id, this.ground, px, py, scale, flip, true);
       }
@@ -954,7 +962,12 @@ export class Renderer {
         }
         continue;
       }
-      const tex = this.lib.texture(`echo_${size}_${r % 3}`, 'body', 'idle', 0, 0, 'color') ?? this.lib.texture(`echo_${size}`, 'body', 'idle', 0, 0, 'color');
+      // Rich tiles deep in a field can hold a towering mother crystal; elsewhere sizes wander a step
+      // below what the tile holds, so a full field isn't a carpet of identical clusters.
+      const core = n >= 10 && (s.echo[i + 1] ?? 0) >= 7 && (s.echo[i - 1] ?? 0) >= 7 && (s.echo[i + s.width] ?? 0) >= 7 && (s.echo[i - s.width] ?? 0) >= 7;
+      const shown = (r >>> 13) % 4 === 0 ? Math.max(1, size - 1) : size;
+      const id = core && (r >>> 20) % 6 === 0 ? `echo_mother_${r % 3}` : `echo_${shown}_${r % 4}`;
+      const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color') ?? this.lib.texture(`echo_${size}_0`, 'body', 'idle', 0, 0, 'color');
       if (!tex) continue;
       if (!sp) {
         sp = new Sprite(tex);
@@ -965,7 +978,7 @@ export class Renderer {
         const py = isoY(x + 0.5 + jx * 0.45, y + 0.5 + jy * 0.45);
         sp.position.set(px, py);
         sp.zIndex = py - 2;
-        const k = 0.85 + ((r >>> 18) % 100) / 330;
+        const k = 0.78 + ((r >>> 18) % 100) / 230;
         sp.scale.set(((r >>> 25) & 1) === 1 ? -k : k, k);
         this.ground.addChild(sp);
         this.echoSprites.set(i, sp);

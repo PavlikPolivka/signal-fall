@@ -56,7 +56,7 @@ def _tint(obj, rgb, amount):
         nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
 
 
-def place(name, *, size, x=0.0, y=0.0, z=0.0, yaw=0.0, height=None, stretch=1.0, tint=None, tint_amount=0.5, glow=None, folder=PROPS):
+def place(name, *, size, x=0.0, y=0.0, z=0.0, yaw=0.0, lean=0.0, height=None, stretch=1.0, tint=None, tint_amount=0.5, glow=None, folder=PROPS):
     """Import a model, rest it on the ground, scale its widest side to `size` tiles (or its height to
     `height`), turn it by `yaw` and move it to (x, y)."""
     obj = _load(os.path.join(folder, f"{name}.glb"))
@@ -72,6 +72,9 @@ def place(name, *, size, x=0.0, y=0.0, z=0.0, yaw=0.0, height=None, stretch=1.0,
     obj.data.transform(Matrix.Scale(s, 4))
     if stretch != 1.0:
         obj.data.transform(Matrix.Scale(stretch, 4, Vector((0, 0, 1))))
+    if lean:
+        # Tip over toward +x before turning, so the lean points along `yaw`.
+        obj.data.transform(Matrix.Rotation(lean, 4, "Y"))
     obj.data.transform(Matrix.Rotation(yaw, 4, "Z"))
     obj.data.transform(Matrix.Translation(Vector((x, y, z))))
     obj.data.update()
@@ -108,7 +111,7 @@ def rock_crystal(style, seed):
     return out
 
 
-def echo_growth(rnd, *, x=0.0, y=0.0, z=0.0, height=0.4, violet=False):
+def echo_growth(rnd, *, x=0.0, y=0.0, z=0.0, height=0.4, violet=False, lean=0.0):
     """The Meshy crystal cluster, scaled and turned; violet-tinted for Choir crystal biomes."""
     return place(
         "echo_cluster",
@@ -118,6 +121,7 @@ def echo_growth(rnd, *, x=0.0, y=0.0, z=0.0, height=0.4, violet=False):
         y=y,
         z=z,
         yaw=rnd.random() * 6.28,
+        lean=lean,
         folder=MESHY,
         tint=(0.26, 0.07, 0.55) if violet else None,
         tint_amount=0.82,
@@ -203,24 +207,41 @@ def clutter_crystal(style, seed):
     k = seed % 6
     if k == 0:
         return [echo_growth(rnd, height=rnd.uniform(0.3, 0.42), violet=True),
-                place(MOON[seed % len(MOON)], size=0.3, x=0.15, y=-0.1, yaw=rnd.random() * 6.28, tint=DARK, tint_amount=0.6)]
+                place(MOON[seed % len(MOON)], size=0.3, x=0.15, y=-0.1, yaw=rnd.random() * 6.28, tint=DARK, tint_amount=0.82)]
     if k in (1, 2):
         return [place("othonna_cerarioides", size=rnd.uniform(0.45, 0.6), yaw=rnd.random() * 6.28, tint=(0.1, 0.3, 0.32), tint_amount=0.65, glow=(0.02, 0.1, 0.12))]
     if k == 3:
         return [place("othonna_cerarioides", size=rnd.uniform(0.4, 0.5), yaw=rnd.random() * 6.28, tint=(0.3, 0.12, 0.42), tint_amount=0.65, glow=(0.1, 0.02, 0.14))]
-    return [place(MOON[(seed + i) % len(MOON)], size=rnd.uniform(0.22, 0.4), x=rnd.uniform(-0.2, 0.2), y=rnd.uniform(-0.2, 0.2), yaw=rnd.random() * 6.28, tint=DARK, tint_amount=0.6)
+    return [place(MOON[(seed + i) % len(MOON)], size=rnd.uniform(0.22, 0.4), x=rnd.uniform(-0.2, 0.2), y=rnd.uniform(-0.2, 0.2), yaw=rnd.random() * 6.28, tint=DARK, tint_amount=0.82)
             for i in range(1 + seed % 3)]
 
 
 def echo(style, size, variant):
     """Echo crystals on a tile: the cluster, bigger the more crystals are left (size 1..4)."""
     rnd = random.Random(size * 7 + variant * 101)
-    height = (0.28, 0.4, 0.52, 0.66)[size - 1]
-    out = [echo_growth(rnd, height=height)]
+    height = (0.28, 0.4, 0.52, 0.66)[size - 1] * rnd.uniform(0.85, 1.1)
+    # The main cluster leans a little, like crystal pushed up through the ground.
+    out = [echo_growth(rnd, height=height, lean=rnd.uniform(0.0, 0.3))]
     # Bigger fields: a smaller second cluster beside the main one.
     if size >= 3:
         a = rnd.random() * 6.28
-        out.append(echo_growth(rnd, x=0.22 * math.cos(a), y=0.22 * math.sin(a), height=height * 0.55))
+        out.append(echo_growth(rnd, x=0.22 * math.cos(a), y=0.22 * math.sin(a), height=height * rnd.uniform(0.45, 0.65), lean=rnd.uniform(0.2, 0.5)))
+    # Loose shards around the foot, tipped every which way.
+    for _ in range(rnd.randint(1, 1 + size)):
+        a = rnd.random() * 6.28
+        d = rnd.uniform(0.18, 0.32)
+        out.append(echo_growth(rnd, x=d * math.cos(a), y=d * math.sin(a), height=rnd.uniform(0.08, 0.16), lean=rnd.uniform(0.4, 1.1)))
+    return out
+
+
+def echo_mother(style, seed):
+    """A towering Echo crystal at the heart of a rich field, ringed by smaller growths."""
+    rnd = random.Random(seed * 37 + 5)
+    out = [echo_growth(rnd, height=rnd.uniform(1.05, 1.25), lean=rnd.uniform(0.05, 0.2))]
+    for k in range(rnd.randint(3, 5)):
+        a = k * 1.4 + rnd.uniform(-0.3, 0.3)
+        d = rnd.uniform(0.25, 0.4)
+        out.append(echo_growth(rnd, x=d * math.cos(a), y=d * math.sin(a), height=rnd.uniform(0.25, 0.5), lean=rnd.uniform(0.25, 0.6)))
     return out
 
 
