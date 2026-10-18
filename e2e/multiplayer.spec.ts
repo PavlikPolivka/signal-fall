@@ -219,3 +219,26 @@ test('a player who leaves can be replaced by the AI, and the match goes on', asy
   expect(await host.evaluate(() => (window as unknown as W).__signalFall.state.seats[1]?.label)).toContain('AI');
   await ctx.close();
 });
+
+test('a public room shows in Open games and can be joined from there', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!process.env.SUPABASE_URL, 'needs the backend (room listing)');
+  test.setTimeout(120_000);
+  const hostCtx = await browser.newContext();
+  const guestCtx = await browser.newContext();
+  const host = await hostCtx.newPage();
+  const guest = await guestCtx.newPage();
+  await host.goto('/play/');
+  await host.click('[data-testid=open-multiplayer]');
+  await host.fill('[data-testid=mp-name]', 'Lister');
+  await host.click('[data-testid=mp-create]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  await host.check('[data-testid=mp-public] input');
+  await guest.goto('/play/');
+  await guest.click('[data-testid=open-multiplayer]');
+  await expect(guest.getByTestId(`open-game-${code}`)).toBeVisible({ timeout: 20_000 });
+  await guest.click(`[data-testid=open-game-${code}]`);
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
+  await hostCtx.close();
+  await guestCtx.close();
+});

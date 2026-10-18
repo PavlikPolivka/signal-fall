@@ -3,7 +3,7 @@ import type { Rules } from '@signal-fall/data';
 import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
 import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
-import { account, backend, rename, signIn } from '../net/backend';
+import { account, backend, publicRooms, rename, signIn, type PublicRoom } from '../net/backend';
 import type { LinkLike, LobbySlot, LobbyState } from '../net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
 import { MenuScreen } from './Setup';
@@ -41,6 +41,29 @@ export function Multiplayer({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, refresh] = useReducer((n: number, _: undefined) => n + 1, 0);
+  const [listed, setListed] = useState(false);
+  const [open, setOpen] = useState<PublicRoom[]>([]);
+  // The room browser: open public games, refreshed while this screen shows.
+  useEffect(() => {
+    const sb = backend();
+    if (!sb || lobby) return;
+    const load = () => void signIn(sb).then(() => publicRooms(sb)).then(setOpen, () => undefined);
+    load();
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, [lobby]);
+  // Host: keep the public listing current (seats, mode) and alive (heartbeat).
+  useEffect(() => {
+    const s = lobby?.state;
+    if (!room || !lobby?.isHost || !s) return;
+    const send = () => {
+      const st = lobby.state!;
+      room.advertise({ public: listed, title: `${name.trim()}'s ${st.mode} game`, mode: st.mode, openSeats: st.slots.filter((x) => x.kind === 'open').length });
+    };
+    send();
+    const t = setInterval(send, 20_000);
+    return () => clearInterval(t);
+  }, [room, lobby, listed, lobby?.state?.mode, lobby?.state?.slots.filter((x) => x.kind === 'open').length]);
   // Online, the name is the account's display name (renaming here renames the account).
   const [profileName, setProfileName] = useState<string | null>(null);
   useEffect(() => {
@@ -71,8 +94,8 @@ export function Multiplayer({
     [lobby],
   );
 
-  const enter = async (host: boolean, again?: LobbyState) => {
-    const c = again ? again.code : host ? roomCode() : code.trim().toUpperCase();
+  const enter = async (host: boolean, again?: LobbyState, join?: string) => {
+    const c = again ? again.code : host ? roomCode() : (join ?? code).trim().toUpperCase();
     if (c.length !== 4 || busy) return;
     try {
       localStorage.setItem(NAME_KEY, name);
@@ -129,6 +152,34 @@ export function Multiplayer({
               </button>
             </div>
           </div>
+          {backend() && (
+            <div class="choice" data-testid="open-games">
+              <span class="label">Open games</span>
+              {open.length === 0 ? (
+                <span class="muted small">None right now. Create a room and list it publicly.</span>
+              ) : (
+                <ul class="open-games">
+                  {open.map((r) => (
+                    <li>
+                      <span>
+                        {r.title} <span class="muted">· {r.mode} · {r.openSeats} open</span>
+                      </span>
+                      <button
+                        data-testid={`open-game-${r.code}`}
+                        disabled={busy}
+                        onClick={() => {
+                          setCode(r.code);
+                          void enter(false, undefined, r.code);
+                        }}
+                      >
+                        Join
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           {error && (
             <p class="mp-status" data-testid="mp-error">
               {error}
@@ -239,6 +290,11 @@ export function Multiplayer({
           Room <span class="room-code" data-testid="room-code">{s?.code ?? code}</span>
         </h1>
         {lobby.isHost && <p class="muted small">Send this code to the other players. They choose Multiplayer → Join.</p>}
+        {lobby.isHost && backend() && (
+          <label class="check" data-testid="mp-public">
+            <input type="checkbox" checked={listed} onChange={(e) => setListed((e.currentTarget as HTMLInputElement).checked)} /> List in Open games, so anyone can join
+          </label>
+        )}
         <div class="setup-cols">
           <section>
             <h2>Players</h2>

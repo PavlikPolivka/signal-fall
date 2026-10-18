@@ -215,6 +215,36 @@ export async function setRoomStatus(sb: SupabaseClient, code: string, status: 'o
   await sb.from('rooms').update({ status, updated_at: new Date().toISOString() }).eq('code', code);
 }
 
+export interface PublicRoom {
+  code: string;
+  title: string;
+  mode: '1v1' | '2v2';
+  openSeats: number;
+}
+
+/** Host: list (or unlist) the room in the public browser; called again as a heartbeat while open. */
+export async function advertiseRoom(sb: SupabaseClient, code: string, info: { public: boolean; title: string; mode: '1v1' | '2v2'; openSeats: number }): Promise<void> {
+  await sb
+    .from('rooms')
+    .update({ public: info.public, title: info.title.slice(0, 40), mode: info.mode, open_seats: Math.max(0, Math.min(3, info.openSeats)), updated_at: new Date().toISOString() })
+    .eq('code', code);
+}
+
+/** Open public rooms with a free seat whose host is still there. */
+export async function publicRooms(sb: SupabaseClient): Promise<PublicRoom[]> {
+  const since = new Date(Date.now() - 60_000).toISOString();
+  const { data } = await sb
+    .from('rooms')
+    .select('code, title, mode, open_seats')
+    .eq('public', true)
+    .eq('status', 'open')
+    .gt('open_seats', 0)
+    .gt('updated_at', since)
+    .order('updated_at', { ascending: false })
+    .limit(20);
+  return (data ?? []).map((r: { code: string; title: string | null; mode: '1v1' | '2v2'; open_seats: number }) => ({ code: r.code, title: r.title ?? `Room ${r.code}`, mode: r.mode, openSeats: r.open_seats }));
+}
+
 /** STUN plus short-lived TURN relay servers from the Edge Function (STUN only if it is unavailable). */
 export async function iceServers(sb: SupabaseClient): Promise<RTCIceServer[]> {
   const { data, error } = await sb.functions.invoke<{ iceServers: RTCIceServer[] }>('turn-credentials', { method: 'POST' });

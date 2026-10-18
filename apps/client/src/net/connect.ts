@@ -1,5 +1,5 @@
 import { BroadcastSignaling, type Signaling } from './signaling';
-import { backend, createRoom, iceServers, roomOpen, setRoomStatus, signIn, SupabaseSignaling } from './backend';
+import { advertiseRoom, backend, createRoom, iceServers, roomOpen, setRoomStatus, signIn, SupabaseSignaling } from './backend';
 import { DEFAULT_ICE } from './webrtc';
 
 export interface RoomConnection {
@@ -8,6 +8,8 @@ export interface RoomConnection {
   iceServers: RTCIceServer[];
   /** Mark the room as playing (host) so nobody else joins. */
   started: () => void;
+  /** Host: list the room publicly (or not), refreshing its seats; no-op without a backend. */
+  advertise: (info: { public: boolean; title: string; mode: '1v1' | '2v2'; openSeats: number }) => void;
   close: () => void;
 }
 
@@ -18,7 +20,7 @@ export interface RoomConnection {
  */
 export async function openRoom(host: boolean, code: string, makeCode: () => string, opts: { reopen?: boolean; waitMs?: number } = {}): Promise<RoomConnection> {
   const sb = backend();
-  if (!sb) return { code, signaling: new BroadcastSignaling(code), iceServers: DEFAULT_ICE, started: () => undefined, close: () => undefined };
+  if (!sb) return { code, signaling: new BroadcastSignaling(code), iceServers: DEFAULT_ICE, started: () => undefined, advertise: () => undefined, close: () => undefined };
   await signIn(sb);
   // A rematch reopens the host's own room under the same code.
   if (host && opts.reopen) await setRoomStatus(sb, code, 'open');
@@ -35,6 +37,7 @@ export async function openRoom(host: boolean, code: string, makeCode: () => stri
     signaling: new SupabaseSignaling(sb, room),
     iceServers: ice,
     started: () => void setRoomStatus(sb, room, 'playing'),
+    advertise: (info) => void advertiseRoom(sb, room, info),
     close: () => {
       if (host) void setRoomStatus(sb, room, 'closed');
     },

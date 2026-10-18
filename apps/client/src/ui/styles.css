@@ -2334,3 +2334,22 @@ table.md-table td {
   border: 1px solid var(--accent);
   border-radius: 3px;
 }
+.open-games {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.open-games li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 14px;
+}
+label.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+}

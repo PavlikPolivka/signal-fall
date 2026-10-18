@@ -56,6 +56,16 @@ describe.skipIf(!URL || !ANON)('backend row level security', () => {
     }
   });
 
+  it('a host lists a room publicly; others see it but cannot change it', async () => {
+    const c = code();
+    expect((await a.sb.from('rooms').insert({ code: c })).error).toBeNull();
+    await a.sb.from('rooms').update({ public: true, title: 'Test game', open_seats: 1, updated_at: new Date().toISOString() }).eq('code', c);
+    const seen = await b.sb.from('rooms').select('code, title').eq('public', true).eq('code', c);
+    expect(seen.data).toEqual([{ code: c, title: 'Test game' }]);
+    await b.sb.from('rooms').update({ public: false }).eq('code', c);
+    expect((await b.sb.from('rooms').select('public').eq('code', c).single()).data?.public).toBe(true);
+  });
+
   it('crash reports are write-only for players and size-capped', async () => {
     const r = await a.sb.from('client_errors').insert({ message: 'boom', stack: 'at x', path: '/play/', context: 'menu', client_version: 'test' });
     expect(r.error).toBeNull();

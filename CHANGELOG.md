@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 19:01 UTC
+
+- **Open games:** hosts can tick **List in Open games** in their room, and anyone can find it on the Multiplayer screen and join with one click: no code needed. The list shows the mode and the free seats.
+
 ## 2026-10-18 18:57 UTC
 
 - **Rematch in multiplayer:** **Rematch** on the end screen takes everyone back to the same room, with the same map, seats and factions. The host starts the next match when all are back.
