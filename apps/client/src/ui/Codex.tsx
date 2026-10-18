@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { ARMOR, DAMAGE, type FactionRule, type Rules, type StructureRule, type UnitRule } from '@signal-fall/data';
 import { CHOIR_ECHO_RANGE, CHOIR_ECHO_REACH, CHOIR_SEED_GROW_PCT, CHOIR_SEED_REACH, CHOIR_SEED_START_PCT } from '@signal-fall/sim';
 import { chordLabel } from '../input/keymap';
-import { roleNames } from '../game/names';
+import { money, roleNames } from '../game/names';
 import { FACTION_LORE } from './lore';
 import { BalanceReport } from './Balance';
 
@@ -165,7 +165,7 @@ const IN_A_MATCH: Record<string, { opening: string; examples: string[]; against:
   },
   halcyon: {
     opening:
-      'kernel, powerd, ingest, spawn, make. Everything must stand inside coverage, so drop a relay ($400) first wherever you want to build next.',
+      'kernel, powerd, ingest, spawn, make. Everything must stand inside coverage, so drop a relay (◆400) first wherever you want to build next.',
     examples: [
       'A chain of relays toward the next field lets an init deploy there, and gives every unit on the way faster fire and self-repair.',
       'Pushing out of the network? Bring a fork and press F: Uplink carries the coverage with it for 15 s, so the army around it keeps its faster fire, repair and Recompile in the enemy\'s base.',
@@ -296,7 +296,7 @@ function Units({ rules, faction }: { rules: Rules; faction: FactionRule }) {
                   <p>{u.role}</p>
                   <dl>
                     <dt>Cost</dt>
-                    <dd>${u.cost}</dd>
+                    <dd>{money(u.cost)}</dd>
                     <dt>HP</dt>
                     <dd>
                       {u.hp}
@@ -343,7 +343,7 @@ function Buildings({ rules, faction }: { rules: Rules; faction: FactionRule }) {
           <p>{s.description}</p>
           <dl>
             <dt>Cost</dt>
-            <dd>${s.cost}</dd>
+            <dd>{money(s.cost)}</dd>
             <dt>Power</dt>
             <dd class={s.power > 0 ? 'good' : ''}>{s.power > 0 ? `+${s.power}` : s.power === 0 ? '—' : s.power}</dd>
             <dt>Needs</dt>
@@ -526,7 +526,7 @@ function BuildingRules({ rules }: { rules: Rules }) {
       </p>
       <h3>Refineries and harvesters</h3>
       <p>
-        A refinery (${Math.min(...rules.factions.map((f) => refinery(f).cost))}–${Math.max(...rules.factions.map((f) => refinery(f).cost))}) comes with one free harvester. Harvesters
+        A refinery (◆{Math.min(...rules.factions.map((f) => refinery(f).cost))}–{Math.max(...rules.factions.map((f) => refinery(f).cost))}) comes with one free harvester. Harvesters
         unload at the nearest refinery, so a second refinery pays off only beside a different field, where it cuts the drive. On the same field, another
         harvester is cheaper. About three harvesters keep one refinery busy; more just queue to unload.
       </p>
@@ -550,6 +550,10 @@ const ACTION_LABEL: Record<string, string> = {
   cancel: 'Cancel / clear selection / close menu',
   menu: 'Open or close the menu',
   mute: 'Mute or unmute all sound',
+  cameraSave: 'Save camera position',
+  cameraJump: 'Jump to saved camera position',
+  speedUp: 'Game speed up (skirmish)',
+  speedDown: 'Game speed down (skirmish)',
   move: 'Move (ignore enemies) + click',
   attackMove: 'Attack-move + click',
   stop: 'Stop',

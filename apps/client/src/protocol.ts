@@ -113,7 +113,9 @@ export const BUILD_STRIDE = 5;
 export const PROD_STRIDE = 1 + QUEUE_SLOTS;
 /** Support power: -2 none, -1 unavailable, 0 ready, else ticks left (after the production queues). */
 export const P_POWER = P.production + 3 * PROD_STRIDE;
-export const PLAYER_STRIDE = P_POWER + 1;
+/** Echo harvested over the match (income readout). */
+export const P_HARVESTED = P_POWER + 1;
+export const PLAYER_STRIDE = P_POWER + 2;
 
 export const E = {
   handle: 0,

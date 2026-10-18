@@ -37,6 +37,9 @@ const CURSORS = {
 };
 
 
+/** Skirmish game speeds (- and = step through them). */
+export const GAME_SPEEDS = [0.5, 0.75, 1, 1.5, 2];
+
 export const STANCE_NAMES = ['Guard area', 'Hold ground', 'Aggressive', 'Hold fire'];
 
 /** Modes that wait for a target click. */
@@ -59,6 +62,8 @@ export class Input {
   private lastClick = { time: 0, handle: -1 };
   private lastGroup = { digit: -1, time: 0 };
   private idleHarvesterCursor = 0;
+  /** Space pressed again soon after: step back to an older alert. */
+  private alertCycle = { index: 0, time: 0 };
 
   constructor(
     private readonly state: ClientState,
@@ -183,6 +188,16 @@ export class Input {
     // I / V / Y tabs stay open: every letter on the tab queues one more (Shift: five), so I G G G queues three.
     // A letter that is not on the tab closes it and does its usual job (A attack, S stop...).
     const menuTab = s.mode === 'infantryMenu' ? 'infantry' : s.mode === 'vehicleMenu' ? 'vehicles' : s.mode === 'airMenu' ? 'air' : null;
+    // Ctrl+letter on an open tab (or with its factory selected): repeat that unit until cancelled.
+    const repeatTab = menuTab ?? this.selectedFactory()?.produces ?? null;
+    if (repeatTab && letter && (e.ctrlKey || e.metaKey) && !e.altKey) {
+      const unit = this.factionUnits().find((u) => u.tab === repeatTab && u.key === letter);
+      if (unit) {
+        e.preventDefault();
+        this.toggleRepeat(unit);
+        return;
+      }
+    }
     if (menuTab && letter && plain) {
       const unit = this.factionUnits().find((u) => u.tab === menuTab && u.key === letter);
       if (unit) {
@@ -223,8 +238,38 @@ export class Input {
       case 'panRight':
         return; // handled while held, in update()
       case 'jumpToAlert': {
-        const a = [...s.alerts].reverse().find((x) => x.x >= 0);
-        if (a) this.renderer.centerOnSim(a.x, a.y);
+        // Space: the latest alert; Space again within 3 s: the one before it, and so on.
+        const placed = s.alerts.filter((x) => x.x >= 0).reverse();
+        if (placed.length === 0) return;
+        const now = performance.now();
+        const index = now - this.alertCycle.time < 3000 ? (this.alertCycle.index + 1) % placed.length : 0;
+        this.alertCycle = { index, time: now };
+        this.renderer.centerOnSim(placed[index]!.x, placed[index]!.y);
+        return;
+      }
+      case 'cameraSave': {
+        const cam = this.renderer.camera;
+        s.bookmarks[digit - 1] = { x: cam.x, y: cam.y };
+        s.notice(`Camera saved to F${digit}`);
+        return;
+      }
+      case 'cameraJump': {
+        const b = s.bookmarks[digit - 1];
+        if (!b) {
+          s.warn(`Nothing saved on F${digit} (Ctrl+F${digit} saves the view)`);
+          return;
+        }
+        Object.assign(this.renderer.camera, b);
+        this.renderer.clampCamera();
+        return;
+      }
+      case 'speedUp':
+      case 'speedDown': {
+        if (s.multiplayer || s.replay) return;
+        const i = GAME_SPEEDS.indexOf(s.gameSpeed);
+        const next = GAME_SPEEDS[Math.max(0, Math.min(GAME_SPEEDS.length - 1, (i < 0 ? 2 : i) + (action === 'speedUp' ? 1 : -1)))]!;
+        s.setGameSpeed(next);
+        s.notice(`Game speed ${next}×`);
         return;
       }
       case 'jumpToBase': {
@@ -513,7 +558,14 @@ export class Input {
   private onWheel(e: WheelEvent): void {
     e.preventDefault();
     const cam = this.renderer.camera;
-    cam.zoom *= e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    const p = this.local(e);
+    // Zoom toward the cursor: the world point under it stays put.
+    const wx = (p.x - this.renderer.width / 2) / cam.zoom + cam.x;
+    const wy = (p.y - this.renderer.height / 2) / cam.zoom + cam.y;
+    const zoomIn = (e.deltaY < 0) !== this.state.settings.invertWheel;
+    cam.zoom = Math.max(0.4, Math.min(2, cam.zoom * (zoomIn ? 1.1 : 1 / 1.1)));
+    cam.x = wx - (p.x - this.renderer.width / 2) / cam.zoom;
+    cam.y = wy - (p.y - this.renderer.height / 2) / cam.zoom;
     this.renderer.clampCamera();
   }
 
@@ -624,6 +676,12 @@ export class Input {
     this.lastClick = { time: now, handle: h };
     if (h < 0) {
       if (!shift) s.select([]);
+      return;
+    }
+    if (ctrl && double && s.isOwn(h) && s.isUnit(h)) {
+      // Ctrl+double-click: every unit of that type on the map.
+      const type = s.field(h, E.type);
+      s.select(this.allOwnUnits().filter((u) => s.field(u, E.type) === type));
       return;
     }
     if ((ctrl || double) && s.isOwn(h)) {
@@ -755,8 +813,28 @@ export class Input {
     s.send({ type: 'train', item: rule.index, count });
   }
 
-  cancelUnit(rule: UnitRule): void {
-    this.state.send({ type: 'cancelTrain', item: rule.index });
+  /** Right-click: stop repeating, else remove one. Shift+right-click: clear every one of this type. */
+  cancelUnit(rule: UnitRule, all = false): void {
+    const s = this.state;
+    if (s.repeat.has(rule.index)) {
+      s.toggleRepeat(rule.index);
+      if (!all) return;
+    }
+    const tab = rule.tab === 'infantry' ? 0 : rule.tab === 'vehicles' ? 1 : 2;
+    const n = all ? (s.cur?.productionQueue(s.localPlayer, tab).items.filter((x) => x === rule.index).length ?? 0) : 1;
+    for (let i = 0; i < n; i++) s.send({ type: 'cancelTrain', item: rule.index });
+  }
+
+  /** Ctrl+click or Ctrl+letter: build this unit over and over (queues one whenever none is left). */
+  toggleRepeat(rule: UnitRule): void {
+    const s = this.state;
+    const missing = s.missing(rule.requires);
+    if (!s.repeat.has(rule.index) && missing.length > 0) {
+      s.warn(`${rule.name} requires ${roleNames(s.rules, rule.faction, missing)}`);
+      return;
+    }
+    s.toggleRepeat(rule.index);
+    s.notice(s.repeat.has(rule.index) ? `Repeating ${rule.name} (right-click to stop)` : `${rule.name}: repeat off`);
   }
 
   stopPlacing(): void {
@@ -874,10 +952,19 @@ export class Input {
     return r.kind === 'unit' && r.weapon !== null;
   }
 
+  /** Own units (or buildings) of the same type as h, on screen. */
   private onScreenOfType(h: number): number[] {
-    const type = this.state.field(h, E.type);
-    return this.allOwnUnits().filter((u) => {
-      if (this.state.field(u, E.type) !== type) return false;
+    const s = this.state;
+    const type = s.field(h, E.type);
+    const kind = s.field(h, E.kind);
+    const cur = s.cur;
+    if (!cur) return [];
+    const same: number[] = [];
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.owner) === s.localPlayer && cur.get(o, E.kind) === kind && cur.get(o, E.type) === type) same.push(cur.get(o, E.handle));
+    }
+    return same.filter((u) => {
       const p = this.renderer.screenOf(u);
       return p !== null && p.x >= 0 && p.y >= 0 && p.x <= this.renderer.width && p.y <= this.renderer.height;
     });

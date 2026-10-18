@@ -1,7 +1,7 @@
 import { ARMOR, DAMAGE, type Rules, type StructureRule, type UnitRule, type WeaponRule } from '@signal-fall/data';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { Icon } from './Icon';
-import { roleNames } from '../game/names';
+import { money, roleNames } from '../game/names';
 
 const FX = 1024;
 const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
@@ -63,7 +63,7 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
       <p class="desc">{rule.kind === 'structure' ? rule.description : rule.role}</p>
       <dl>
         <dt>Cost</dt>
-        <dd class={credits < rule.cost ? 'bad' : ''}>${rule.cost.toLocaleString('en-US')}</dd>
+        <dd class={credits < rule.cost ? 'bad' : ''}>{money(rule.cost)}</dd>
         <dt>Build time</dt>
         <dd>{secs(rule.buildTicks, rate)}</dd>
         {rule.kind === 'structure' && (

@@ -1,6 +1,6 @@
 import type { Role, Rules, StructureRule, Tab } from '@signal-fall/data';
 import { FX_SHIFT, KIND, type Command, type PlacedStructure, type PlacementView } from '@signal-fall/sim';
-import { E, P_POWER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
+import { E, P_HARVESTED, P_POWER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
 
 export type Mode =
   | 'normal'
@@ -137,6 +137,15 @@ export class ClientState {
   sentTotal = 0;
   alertTotal = 0;
   fps = 0;
+  /** Skirmish game speed (1 = normal); multiplayer always runs at 1. */
+  gameSpeed = 1;
+  /** Camera bookmarks for F1–F4 (world px), saved with Ctrl or Shift + the F-key. */
+  bookmarks: ({ x: number; y: number } | null)[] = [null, null, null, null];
+  /** Unit types on repeat (Ctrl+click or Ctrl+letter): one is queued again whenever none is left. */
+  repeat = new Set<number>();
+  private repeatSent = new Map<number, number>();
+  /** Echo harvested so far, sampled once a second as [tick, total], for income per minute. */
+  private incomeLog: [number, number][] = [];
   /** Smoothed main-thread ms per frame spent in input + render prep. */
   frameMs = 0;
 
@@ -171,6 +180,48 @@ export class ClientState {
     this.post({ type: 'command', cmd });
   }
 
+  /** Skirmish only: run the match faster or slower. */
+  setGameSpeed(speed: number): void {
+    if (this.multiplayer || this.replay) return;
+    this.gameSpeed = speed;
+    this.post({ type: 'speed', speed });
+    this.changed();
+  }
+
+  /** Echo harvested over the last minute of game time (or since the start). */
+  incomePerMinute(): number {
+    const log = this.incomeLog;
+    if (log.length < 2) return 0;
+    const last = log[log.length - 1]!;
+    const first = log[Math.max(0, log.length - 61)]!;
+    const ticks = last[0] - first[0];
+    return ticks > 0 ? Math.round(((last[1] - first[1]) * 1200) / ticks) : 0;
+  }
+
+  /** Turn repeat production of a unit type on or off. */
+  toggleRepeat(item: number): void {
+    if (this.repeat.has(item)) this.repeat.delete(item);
+    else this.repeat.add(item);
+    this.changed();
+  }
+
+  /** Keep one of each repeating unit type in its queue. */
+  private repeatProduction(s: Snapshot): void {
+    if (this.repeat.size === 0 || this.spectator || this.replay) return;
+    const now = performance.now();
+    const roles = this.roles();
+    for (const item of this.repeat) {
+      const rule = this.rules.units[item]!;
+      const tab = rule.tab === 'infantry' ? 0 : rule.tab === 'vehicles' ? 1 : 2;
+      if (!roles.get(rule.tab === 'infantry' ? 'barracks' : rule.tab === 'vehicles' ? 'factory' : 'airfield')) continue;
+      if (s.productionQueue(this.localPlayer, tab).items.includes(item)) continue;
+      // The order takes a few ticks to show up in the queue; don't send it twice.
+      if (now - (this.repeatSent.get(item) ?? 0) < 1500 || this.missing(rule.requires, roles).length > 0) continue;
+      this.repeatSent.set(item, now);
+      this.send({ type: 'train', item, count: 1 });
+    }
+  }
+
   setPaused(paused: boolean): void {
     this.post({ type: 'pause', paused });
   }
@@ -189,6 +240,11 @@ export class ClientState {
     }
     this.detectAlerts();
     this.detectEconomyEvents();
+    this.repeatProduction(s);
+    if (s.tick % 20 === 0 && this.incomeLog[this.incomeLog.length - 1]?.[0] !== s.tick) {
+      this.incomeLog.push([s.tick, s.player(this.localPlayer, P_HARVESTED)]);
+      if (this.incomeLog.length > 70) this.incomeLog.shift();
+    }
     // Drop dead entities from selection and control groups.
     const alive = (h: number) => s.index.has(h);
     const before = this.selection.length;
@@ -436,10 +492,12 @@ export interface Settings {
   graphics: 'high' | 'balanced' | 'performance';
   /** First-match tips in the corner. */
   hints: boolean;
+  /** Mouse wheel zooms the other way. */
+  invertWheel: boolean;
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false };
 
 export function loadSettings(): Settings {
   try {

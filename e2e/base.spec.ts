@@ -104,6 +104,14 @@ test('build a base and train a unit with hotkeys', async ({ page }) => {
   // A letter that is not on the tab closes it.
   await page.keyboard.press('KeyX');
   await expect(page.getByTestId('mode')).not.toContainText('Infantry');
+  // Ctrl+G on the open tab: Grunts repeat until right-clicked.
+  await page.keyboard.press('KeyI');
+  await page.keyboard.press('Control+KeyG');
+  await expect(page.getByTestId('repeat-badge')).toBeVisible();
+  await expect.poll(() => owned(page, 'grunt'), { timeout: 40_000 }).toBeGreaterThanOrEqual(7);
+  await page.locator('[data-item=grunt]').click({ button: 'right' });
+  await expect(page.getByTestId('repeat-badge')).toHaveCount(0);
+  await page.keyboard.press('Escape');
   // The refinery's harvester is earning money.
   await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.cur.player(0, 0) > 5400, undefined, { timeout: 60_000 });
 });

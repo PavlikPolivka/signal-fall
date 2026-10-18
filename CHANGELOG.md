@@ -1,5 +1,19 @@
 # What's new
 
+## 2026-10-18 18:04 UTC
+
+- **No more dollars:** credits show with an Echo crystal mark (◆) everywhere: the sidebar, prices, the Codex and the "+◆" payouts on the battlefield.
+- **Repeat production:** <kbd>Ctrl</kbd>+click a unit (or <kbd>Ctrl</kbd>+its letter on an open tab) and the factory keeps building it, one after another, until you right-click it. A green ∞ marks what repeats.
+- **Clear a queue:** <kbd>Shift</kbd>+right-click a unit to cancel every one of it you have queued.
+- **Camera bookmarks:** <kbd>Ctrl</kbd>+<kbd>F1</kbd>–<kbd>F4</kbd> (or <kbd>Shift</kbd>+F-key) saves the view, the F-key jumps back.
+- **Game speed** for skirmish: 0.5× to 2× in the menu, or <kbd>-</kbd> and <kbd>=</kbd> in game.
+- **Older alerts:** press <kbd>Space</kbd> again within a few seconds to jump to the alert before.
+- **Zoom to the cursor:** the mouse wheel zooms toward where you point. An option in the menu inverts the wheel.
+- **Army at a glance:** the top bar counts your combat units by type; click one to select them all. The clock also shows your local time.
+- **Income:** credits count up and down smoothly, and hovering them shows your income per minute.
+- **Selecting by type:** double-clicking a building now selects your buildings of that type on screen (it picked the wrong things before), and <kbd>Ctrl</kbd>+double-click selects every unit of a type across the whole map.
+- **Surrender asks first**, and **Rematch** on the end screen starts the same skirmish again: same map, sides and AI.
+
 ## 2026-10-18 15:39 UTC
 
 - **Selection panel by type:** selecting a mixed army shows one card per unit type with how many you have and their combined health, instead of a wall of identical icons. Click a card to keep only that type, <kbd>Shift</kbd>+click to drop it, and <kbd>Tab</kbd> still cycles through them.

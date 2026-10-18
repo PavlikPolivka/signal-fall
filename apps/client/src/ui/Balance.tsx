@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { Rules } from '@signal-fall/data';
+import { money } from '../game/names';
 
 /** Where CI publishes the latest balance run (see the `balance` job in .github/workflows/ci.yml). */
 export const BALANCE_URL = 'https://raw.githubusercontent.com/PavlikPolivka/signal-fall/balance-data/balance.json';
@@ -108,7 +109,7 @@ export function BalanceReport({ rules }: { rules: Rules }) {
               <tr>
                 <td>{faction(s!.faction)}</td>
                 <td>{faction(vs!.faction)}</td>
-                <td>${s!.harvested.toLocaleString('en-US')}</td>
+                <td>{money(s!.harvested)}</td>
                 <td>{s!.topUnits.map(unit).join(', ')}</td>
               </tr>
             )),

@@ -1984,3 +1984,65 @@ table.md-table td {
     animation: none;
   }
 }
+
+/* Repeat production badge on a sidebar unit. */
+.item .repeat {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  font: 700 15px var(--mono);
+  color: #6dff8a;
+  text-shadow: 0 1px 3px #000;
+}
+.timer small {
+  margin-left: 8px;
+  font: 500 11px var(--mono);
+  color: var(--muted);
+}
+.speed-badge {
+  padding: 0 6px;
+  font: 700 12px var(--mono);
+  color: #0b0d10;
+  background: var(--accent);
+  border-radius: 8px;
+}
+/* Army composition in the top bar. */
+.army-counts {
+  display: flex;
+  gap: 2px;
+}
+.army-count {
+  position: relative;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+}
+.army-count:hover {
+  border-color: var(--line);
+}
+.army-count .icon {
+  width: 100%;
+  height: 100%;
+}
+.army-count b {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  font: 700 11px var(--mono);
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+.confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.confirm-row span {
+  flex: 1;
+}
+.confirm-row .danger {
+  color: #fff;
+  background: var(--bad);
+}

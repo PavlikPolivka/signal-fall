@@ -6,12 +6,12 @@ import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
 import { chordLabel } from '../input/keymap';
-import { STANCE_NAMES } from '../input/input';
+import { GAME_SPEEDS, STANCE_NAMES } from '../input/input';
 import { EntityCard, ItemCard } from './InfoCard';
 import { Codex } from './Codex';
 import { isoX, isoY } from '../game/iso';
 import { Icon } from './Icon';
-import { roleName, roleNames } from '../game/names';
+import { money, roleName, roleNames } from '../game/names';
 import { Credits } from './Credits';
 import { MatchReport } from './MatchReport';
 import type { GameAudio } from '../audio/audio';
@@ -84,7 +84,16 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
   const idle = state.cur && !state.spectator ? input.idleUnits() : { harvesters: [], army: [] };
   return (
     <header class="topbar">
-      <span class="timer" data-testid="timer">{time}</span>
+      <span class="timer" data-testid="timer" title="Game time · your clock">
+        {time}
+        <small>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+      </span>
+      {state.gameSpeed !== 1 && (
+        <span class="speed-badge" data-testid="speed-badge" title="Game speed (- and = change it)">
+          {state.gameSpeed}×
+        </span>
+      )}
+      {!state.spectator && <ArmyCounts state={state} />}
       {idle.harvesters.length > 0 && (
         <button class="idle-btn warn" data-testid="idle-harvesters" title="Idle harvesters: click (or E) to jump to one" onClick={() => input.selectIdle('harvesters')}>
           {idle.harvesters.length} idle harvester{idle.harvesters.length > 1 ? 's' : ''}
@@ -111,6 +120,63 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
         Menu <kbd>`</kbd>
       </button>
     </header>
+  );
+}
+
+/** Own army at a glance: how many of each combat unit type (click a type to select them all). */
+function ArmyCounts({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur) return null;
+  const counts = new Map<number, number[]>();
+  for (let i = 0; i < cur.entityCount; i++) {
+    const o = cur.ent(i);
+    if (cur.get(o, E.owner) !== state.localPlayer || cur.get(o, E.kind) !== KIND.unit) continue;
+    const type = cur.get(o, E.type);
+    if (!state.rules.units[type]!.weapon) continue;
+    const list = counts.get(type) ?? [];
+    list.push(cur.get(o, E.handle));
+    counts.set(type, list);
+  }
+  if (counts.size === 0) return null;
+  const faction = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]!;
+  const color = TEAM_COLORS[state.localPlayer % TEAM_COLORS.length]!;
+  return (
+    <span class="army-counts" data-testid="army-counts">
+      {[...counts].sort((a, b) => b[1].length - a[1].length).slice(0, 8).map(([type, list]) => {
+        const rule = state.rules.units[type]!;
+        return (
+          <button class="army-count" title={`${list.length} × ${rule.name}: click to select them all`} onClick={() => state.select(list)}>
+            <Icon state={state} faction={faction.id} id={artId(rule)} color={color} />
+            <b>{list.length}</b>
+          </button>
+        );
+      })}
+    </span>
+  );
+}
+
+/** Credits readout that counts toward the real number instead of jumping; hover for income. */
+function CreditsReadout({ state, credits }: { state: ClientState; credits: number }) {
+  const shown = useRef(credits);
+  const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
+  useEffect(() => {
+    if (shown.current === credits) return;
+    let raf = 0;
+    const step = () => {
+      const d = credits - shown.current;
+      // Close a fifth of the gap per frame, at least 1: big spends roll, small ones tick.
+      shown.current += Math.abs(d) <= 1 ? d : Math.sign(d) * Math.max(1, Math.round(Math.abs(d) / 5));
+      force(undefined);
+      if (shown.current !== credits) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [credits]);
+  const income = state.incomePerMinute();
+  return (
+    <div class="credits" data-testid="credits" data-value={credits} title={`Income: ${money(income)} per minute from harvesting`}>
+      {money(shown.current)}
+    </div>
   );
 }
 
@@ -147,9 +213,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
     <aside class="sidebar" data-faction={faction.id}>
       <Minimap state={state} renderer={renderer} input={input} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
       <div class="economy">
-        <div class="credits" data-testid="credits">
-          ${credits.toLocaleString('en-US')}
-        </div>
+        <CreditsReadout state={state} credits={credits} />
         <div class={`power ${used > produced ? 'low' : ''}`} title={`Power ${produced} produced / ${used} used`} data-testid="power">
           <div class="power-bar" style={{ width: `${Math.min(100, (used / Math.max(1, produced)) * 100)}%` }} />
           <span>
@@ -229,7 +293,8 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
           const title =
             missing.length > 0
               ? `${it.name} — requires ${roleNames(state.rules, faction.index, missing)}`
-              : `${it.name} — $${it.cost}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, right-click: cancel' : ready ? ' · click to place' : ' · right-click: cancel'}`;
+              : `${it.name} — ${money(it.cost)}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, Ctrl+click: repeat, right-click: cancel one, Shift+right-click: cancel all' : ready ? ' · click to place' : ' · right-click: cancel'}`;
+          const repeating = it.kind === 'unit' && state.repeat.has(it.index);
           return (
             <button
               class={`item ${ready ? 'ready' : ''} ${progress > 0 && !ready ? 'building' : ''} ${disabled ? 'off' : ''}`}
@@ -247,20 +312,22 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
               onClick={(e) => {
                 if (disabled) return;
                 if (it.kind === 'structure') input.activateStructure(it);
+                else if (e.ctrlKey || e.metaKey) input.toggleRepeat(it);
                 else input.activateUnit(it, e.shiftKey ? 5 : 1);
               }}
               onContextMenu={(e) => {
                 e.preventDefault();
                 if (it.kind === 'structure') input.cancelStructure(it);
-                else input.cancelUnit(it);
+                else input.cancelUnit(it, e.shiftKey);
               }}
             >
               <Icon state={state} faction={faction.id} id={it.id} color={teamColor} />
               {progress > 0 && !ready && <i class="progress" style={{ '--p': `${progress / 10}%` }} />}
               <span class={`name ${faction.monospaceNames ? 'mono' : ''}`}>{it.name}</span>
-              <span class="cost">{ready ? 'READY' : `$${it.cost}`}</span>
+              <span class="cost">{ready ? 'READY' : money(it.cost)}</span>
               {it.key && <kbd class="key">{it.key}</kbd>}
               {count > 0 && <b class="count">{count}</b>}
+              {repeating && <b class="repeat" data-testid="repeat-badge" title="Repeating: right-click to stop">∞</b>}
             </button>
           );
         })}
@@ -701,12 +768,12 @@ function ResearchPanel({ state }: { state: ClientState }) {
             class={`upgrade ${researched ? 'done' : ''} ${running ? 'building' : ''}`}
             disabled={researched || locked || busy}
             data-upgrade={u.id}
-            title={`${u.name}: ${effect}. $${u.cost}, ${Math.round(u.researchTicks / 20)} s${locked ? ' (locked)' : ''}${running ? ' · click to cancel' : ''}`}
+            title={`${u.name}: ${effect}. ${money(u.cost)}, ${Math.round(u.researchTicks / 20)} s${locked ? ' (locked)' : ''}${running ? ' · click to cancel' : ''}`}
             onClick={() => state.send(running ? { type: 'cancelResearch' } : { type: 'research', upgrade: u.index })}
           >
             {running && <i class="progress" style={{ '--p': `${progress / 10}%` }} />}
             <span>{u.name}</span>
-            <small>{researched ? 'done' : running ? `${Math.floor(progress / 10)}%` : `$${u.cost}`}</small>
+            <small>{researched ? 'done' : running ? `${Math.floor(progress / 10)}%` : money(u.cost)}</small>
           </button>
         );
       })}
@@ -920,7 +987,11 @@ function EndScreen({ state }: { state: ClientState }) {
     <div class="menu-overlay" data-testid="end-screen">
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
-        {!state.multiplayer && !state.replay && <button onClick={() => location.reload()}>Play again</button>}
+        {!state.multiplayer && !state.replay && (
+          <button data-testid="end-rematch" onClick={() => (location.href = `${location.pathname}?rematch=1`)}>
+            Rematch (same map and sides)
+          </button>
+        )}
         <button
           data-testid="open-report"
           onClick={() => {
@@ -948,6 +1019,7 @@ function EndScreen({ state }: { state: ClientState }) {
 
 function Menu({ state, input, audio }: { state: ClientState; input: Input; audio: GameAudio }) {
   const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
+  const [confirmSurrender, setConfirmSurrender] = useState(false);
   const slider = (label: string, kind: 'music' | 'sfx' | 'voice') => (
     <label class="slider">
       {label}
@@ -1041,6 +1113,31 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             </button>
           ))}
         </div>
+        {!state.multiplayer && !state.replay && (
+          <div class="seg-row" title="Skirmish only (- and = in game)">
+            <span>Game speed</span>
+            {GAME_SPEEDS.map((v) => (
+              <button class={state.gameSpeed === v ? 'active' : ''} data-testid={`setting-speed-${v}`} onClick={() => state.setGameSpeed(v)}>
+                {v}×
+              </button>
+            ))}
+          </div>
+        )}
+        <div class="seg-row">
+          <span>Wheel zoom</span>
+          {[false, true].map((v) => (
+            <button
+              class={state.settings.invertWheel === v ? 'active' : ''}
+              data-testid={`setting-wheel-${v ? 'inverted' : 'normal'}`}
+              onClick={() => {
+                state.settings.invertWheel = v;
+                state.applySettings();
+              }}
+            >
+              {v ? 'Inverted' : 'Normal'}
+            </button>
+          ))}
+        </div>
         <div class="seg-row">
           <span>Hints</span>
           {[true, false].map((v) => (
@@ -1064,14 +1161,27 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
         >
           Credits
         </button>
-        <button
-          onClick={() => {
-            state.send({ type: 'surrender' });
-            input.toggleMenu();
-          }}
-        >
-          Surrender
-        </button>
+        {confirmSurrender ? (
+          <div class="confirm-row" data-testid="surrender-confirm">
+            <span>Give up this match?</span>
+            <button
+              class="danger"
+              data-testid="surrender-yes"
+              onClick={() => {
+                state.send({ type: 'surrender' });
+                setConfirmSurrender(false);
+                input.toggleMenu();
+              }}
+            >
+              Surrender
+            </button>
+            <button onClick={() => setConfirmSurrender(false)}>Keep playing</button>
+          </div>
+        ) : (
+          <button data-testid="menu-surrender" onClick={() => setConfirmSurrender(true)}>
+            Surrender
+          </button>
+        )}
       </div>
     </div>
   );

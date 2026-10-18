@@ -34,3 +34,8 @@ export function roleNames(rules: Rules, faction: number, roles: readonly string[
 export function roleLabel(role: string): string {
   return ROLE_FALLBACK[role] ?? role;
 }
+
+/** The credit mark: an Echo crystal, not a dollar sign. */
+export const CREDIT = '◆';
+/** An amount of credits for display, e.g. "◆1,200". */
+export const money = (n: number): string => `${CREDIT}${n.toLocaleString('en-US')}`;

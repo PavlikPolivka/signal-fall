@@ -33,7 +33,8 @@ const DIFFICULTY_OPTIONS: [Difficulty, string][] = [
 
 const STORAGE_KEY = 'signal-fall.setup';
 
-function loadSaved(): Partial<SkirmishSettings> {
+/** The last skirmish setup (also what a rematch replays). */
+export function loadSaved(): Partial<SkirmishSettings> {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<SkirmishSettings>;
   } catch {

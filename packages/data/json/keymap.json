@@ -14,7 +14,11 @@
     "cycleSubgroup": ["Tab"],
     "cancel": ["Escape"],
     "menu": ["Backquote"],
-    "mute": ["Ctrl+KeyM"]
+    "mute": ["Ctrl+KeyM"],
+    "cameraSave": ["Ctrl+F#", "Shift+F#"],
+    "cameraJump": ["F#"],
+    "speedUp": ["Equal"],
+    "speedDown": ["Minus"]
   },
   "units": {
     "move": ["KeyM"],

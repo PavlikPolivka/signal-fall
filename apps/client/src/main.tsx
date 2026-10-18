@@ -7,7 +7,7 @@ import type { ScheduledCommand } from '@signal-fall/sim';
 import { Renderer } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
-import { MenuScreen, Setup, type SkirmishSettings } from './ui/Setup';
+import { MenuScreen, Setup, loadSaved, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
@@ -74,7 +74,14 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
   return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map };
 }
 
-let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : null;
+/** ?rematch: the last skirmish setup again (same map, sides and AI), straight into the match. */
+function rematch(): ScenarioSpec | null {
+  const saved = loadSaved();
+  if (!params.has('rematch') || saved.seed === undefined) return null;
+  history.replaceState(null, '', location.pathname);
+  return scenarioFromSetup(saved as SkirmishSettings);
+}
+let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : rematch();
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */

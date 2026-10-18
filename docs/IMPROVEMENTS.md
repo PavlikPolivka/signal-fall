@@ -18,8 +18,8 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 5 ✅ | E | Bigger, regrowing Echo fields; more fields across the map, so matches have a mid-game | 5 | S |
 | 6 ✅ | E | Expansion fields worth taking: richer fields away from the base, a second refinery near them pays off | 5 | S |
 | 7 ✅ | U | Queue counts on build icons, and a progress clock on the icon itself (not only in the queue) | 4 | XS |
-| 8 | C | Shift+click / Shift+key queues 5, Ctrl queues until cancelled ("infinite" repeat production) | 4 | S |
-| 9 | C | Right-click a production icon to remove one; Shift+right-click clears that unit's queue | 4 | XS |
+| 8 ✅ | C | Shift+click / Shift+key queues 5, Ctrl queues until cancelled ("infinite" repeat production) | 4 | S |
+| 9 ✅ | C | Right-click a production icon to remove one; Shift+right-click clears that unit's queue | 4 | XS |
 | 10 ✅ | U | "Unit ready" / "Construction complete" are spoken, not just text; text notices stack and fade | 4 | XS |
 | 11 ✅ | C | Rally points per factory by right-clicking the ground with the factory selected (also on units/Echo: harvesters go harvest) | 4 | XS |
 | 12 ✅ | U | Idle harvester and idle army counters in the top bar, click to jump | 4 | XS |
@@ -27,14 +27,14 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 14 ✅ | U | Clear low-power state: buildings dim, a power bar that turns red, the announcer says it | 4 | XS |
 | 15 ✅ | C | Double-click a building to select all of that type on screen (factories, for shared rally) | 3 | XS |
 | 16 ✅ | U | Hover a unit or building: health, owner, veterancy, what it is good against (already partly) | 3 | XS |
-| 17 | C | Space jumps to the last alert; repeated Space cycles older alerts | 3 | XS |
+| 17 ✅ | C | Space jumps to the last alert; repeated Space cycles older alerts | 3 | XS |
 | 18 ✅ | C | Ctrl+click a unit adds/removes it from selection; Shift+drag adds to selection | 3 | XS |
 | 19 ✅ | U | Selection panel: portraits grouped by type with counts; click a group to narrow the selection | 4 | S |
 | 20 ✅ | G | Health bars only when hurt or selected (cleaner screen), toggle to always show (Alt) | 3 | XS |
 | 21 ✅ | U | Under-attack pings on the minimap (red pulse) | 4 | XS |
 | 22 | V | Unit acknowledgements ("Moving out", "On it") per faction, short and rate-limited | 4 | S |
-| 23 | C | Attack-move as the default right-click option when holding A is clumsy: A then left-click, plus Ctrl+right-click = attack-move | 3 | XS |
-| 24 | U | Credits counter ticks smoothly; income per minute shown on hover | 3 | XS |
+| 23 ✅ | C | Attack-move as the default right-click option when holding A is clumsy: A then left-click, plus Ctrl+right-click = attack-move | 3 | XS |
+| 24 ✅ | U | Credits counter ticks smoothly; income per minute shown on hover | 3 | XS |
 | 25 ✅ | O | First-match hints rewritten around the new flow (place-first, sticky tabs) | 3 | XS |
 
 ## Tier 2: high impact, moderate cost
@@ -60,7 +60,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 42 | U | Tooltips with full stats for every button, delay 400 ms, Shift shows numbers | 3 | S |
 | 43 ✅ | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
 | 44 | C | Control-group bar: shows each group's main unit and count; double-tap centers | 3 | S |
-| 45 | C | Camera bookmarks (F1–F4 save with Ctrl, jump with F-key) | 3 | XS |
+| 45 ✅ | C | Camera bookmarks (F1–F4 save with Ctrl, jump with F-key) | 3 | XS |
 | 46 | C | Formation move with right-drag (draw a line, units spread along it) | 3 | M |
 | 47 | U | Minimap: unit dots by size, structures as squares, click-drag to move the camera, right-click to order | 4 | S |
 | 48 ✅ | U | Fog-of-war shows last-seen buildings as ghosts | 4 | S |
@@ -77,15 +77,15 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
 | 56 | C | Customizable keymap in settings (rebind, grid layout preset QWER) | 3 | M |
-| 57 | C | Edge-scroll speed and camera zoom limits in settings; zoom to cursor | 3 | XS |
-| 58 | C | Select all of a type across the screen with Ctrl+double-click | 2 | XS |
-| 59 | C | Waypoint queue shown as lines when Shift is held | 3 | S |
+| 57 ✅ | C | Edge-scroll speed and camera zoom limits in settings; zoom to cursor | 3 | XS |
+| 58 ✅ | C | Select all of a type across the screen with Ctrl+double-click | 2 | XS |
+| 59 ✅ | C | Waypoint queue shown as lines when Shift is held | 3 | S |
 | 60 ✅ | C | Stop / hold / scatter on the command card with hover hints | 2 | XS |
 | 61 | C | Smart cast: abilities on a group cast with the nearest available unit | 3 | S |
 | 62 ✅ | U | Build grid overlay while placing (green / red tiles, power coverage, growth range) | 4 | S |
 | 63 | U | Show attack range circles while hovering a defense button or selected unit (Alt) | 3 | S |
 | 64 | U | Notification log (last 20 events, click to jump) | 3 | S |
-| 65 | U | Game speed for skirmish (0.5×–2×) | 3 | XS |
+| 65 ✅ | U | Game speed for skirmish (0.5×–2×) | 3 | XS |
 | 66 | U | Unit veterancy chevrons more visible; veteran units named in the selection panel | 2 | XS |
 | 67 | U | Upgrade research shown on unit cards (what it improves) | 2 | XS |
 | 68 | U | Sell and repair with clear cursors and refund amounts on hover | 3 | XS |
@@ -142,12 +142,12 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
 | 111 | U | Remember camera position per match in replays | 1 | XS |
-| 112 | U | Confirm before surrender; "rematch" after skirmish | 2 | XS |
-| 113 | C | Mouse wheel zoom invert option | 1 | XS |
-| 114 | U | Clock shows game time and real time | 1 | XS |
+| 112 ✅ | U | Confirm before surrender; "rematch" after skirmish | 2 | XS |
+| 113 ✅ | C | Mouse wheel zoom invert option | 1 | XS |
+| 114 ✅ | U | Clock shows game time and real time | 1 | XS |
 | 115 | G | Cursor set per faction | 2 | S |
 | 116 ✅ | V | Mute announcer separately from sound effects and music | 2 | XS |
-| 117 | U | Unit counts per type in the top bar (army composition at a glance) | 2 | XS |
+| 117 ✅ | U | Unit counts per type in the top bar (army composition at a glance) | 2 | XS |
 | 118 ✅ | C | Tab cycles subgroups in a mixed selection (already) with a visible highlight | 2 | XS |
 | 119 | U | Visible cooldowns on ability buttons | 2 | XS |
 | 120 | O | Credits screen with the team and the tools used (already) linked from the landing page | 1 | XS |

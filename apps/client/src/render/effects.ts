@@ -98,7 +98,7 @@ interface Beam {
 /** Beam colors by faction index (Holdout tracers, Halcyon cyan, Choir violet). */
 const FACTION_BEAM = [0xffd27a, 0x5cecff, 0xc58cff];
 
-/** A floating "+$N" over where credits came from. */
+/** A floating "+◆N" over where credits came from. */
 interface Popup {
   text: Text;
   age: number;
@@ -414,10 +414,10 @@ export class Effects {
     }
   }
 
-  /** "+$N" rising and fading where Recompile or salvage paid out. */
+  /** "+◆N" rising and fading where Recompile or salvage paid out. */
   private credits(amount: number, x: number, y: number): void {
     const text = new Text({
-      text: `+$${amount}`,
+      text: `+◆${amount}`,
       style: { fontFamily: 'system-ui, sans-serif', fontSize: 15, fontWeight: '700', fill: 0xffd75a, stroke: { color: 0x1a1406, width: 3 } },
     });
     text.anchor.set(0.5, 1);

@@ -9,7 +9,7 @@ type Win = { __signalFall: any };
 const ev = <T>(page: Page, fn: (arg: number) => T, arg = 0) => page.evaluate(fn, arg);
 
 /** Playwright key name for a keymap chord ("Ctrl+Digit#" -> "Control+Digit3"). */
-const toKey = (chord: string, digit = 3) => chord.replace('Ctrl', 'Control').replace('Digit#', `Digit${digit}`);
+const toKey = (chord: string, digit = 3) => chord.replace('Ctrl', 'Control').replace('Digit#', `Digit${digit}`).replace('F#', `F${Math.min(4, Math.max(1, digit))}`);
 
 async function selectOwnUnits(page: Page, filter: 'army' | 'all' = 'all') {
   await ev(page, (army) => {
@@ -155,6 +155,32 @@ const checks: Record<string, Check> = {
     expect(await muted()).toBe(!before);
     await page.keyboard.press(toKey(chord));
     expect(await muted()).toBe(before);
+  },
+  cameraSave: async (page, chord) => {
+    await ev(page, () => Object.assign((window as unknown as Win).__signalFall.renderer.camera, { x: 300, y: 900 }));
+    await page.keyboard.press(toKey(chord, 2));
+    await ev(page, () => Object.assign((window as unknown as Win).__signalFall.renderer.camera, { x: 0, y: 400 }));
+    await page.keyboard.press('F2');
+    const cam = (await state(page)).cam;
+    expect(Math.round(cam.x)).toBe(300);
+    expect(Math.round(cam.y)).toBe(900);
+  },
+  cameraJump: async (page, chord) => {
+    await ev(page, () => Object.assign((window as unknown as Win).__signalFall.renderer.camera, { x: -200, y: 700 }));
+    await page.keyboard.press('Control+F3');
+    await ev(page, () => Object.assign((window as unknown as Win).__signalFall.renderer.camera, { x: 0, y: 400 }));
+    await page.keyboard.press(toKey(chord, 3));
+    const cam = (await state(page)).cam;
+    expect(Math.round(cam.x)).toBe(-200);
+    expect(Math.round(cam.y)).toBe(700);
+  },
+  speedUp: async (page, chord) => {
+    await page.keyboard.press(toKey(chord));
+    expect(await ev(page, () => (window as unknown as Win).__signalFall.state.gameSpeed)).toBe(1.5);
+  },
+  speedDown: async (page, chord) => {
+    await page.keyboard.press(toKey(chord));
+    expect(await ev(page, () => (window as unknown as Win).__signalFall.state.gameSpeed)).toBe(0.75);
   },
   move: setsMode('move'),
   attackMove: setsMode('attackMove'),

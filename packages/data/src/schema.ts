@@ -283,7 +283,7 @@ export const constantsSchema = z
   .strict();
 
 // A chord is "Mod+Mod+Code" where Code is a KeyboardEvent.code value.
-// "Digit#" stands for Digit0..Digit9.
+// "Digit#" stands for Digit0..Digit9, "F#" for F1..F4 (camera bookmarks).
 const chord = z.string().regex(/^((Ctrl|Shift|Alt)\+)*([A-Z][A-Za-z0-9#]*|Mouse(Left|Right|Middle))$/);
 
 export const keymapSchema = z
