@@ -42,7 +42,12 @@ export interface LobbyState {
   seed: number;
   /** People whose connections to every other person are open. */
   ready: string[];
+  /** People watching (no seat): they receive every player's orders and play no part. */
+  spectators?: LobbyPlayer[];
 }
+
+/** At most this many people may watch a match. */
+export const MAX_SPECTATORS = 4;
 
 /** A connection to one other person; PeerLink in the browser, a fake in tests. */
 export interface LinkLike {
@@ -99,13 +104,16 @@ export class Lobby {
   private readonly connect: LinkFactory;
   /** Called on every state change (UI refresh). */
   onChange: () => void = () => undefined;
-  /** Called once when the match starts: scenario, our slot, links to the other people by slot, and the room. */
-  onStart: (scenario: ScenarioSpec, slot: number, links: Map<number, LinkLike>, room: LobbyState) => void = () => undefined;
+  /**
+   * Called once when the match starts: scenario, our slot (-1 when watching), links to the other
+   * players by slot, the room, and links to the spectators (players send them every turn).
+   */
+  onStart: (scenario: ScenarioSpec, slot: number, links: Map<number, LinkLike>, room: LobbyState, watchers: LinkLike[]) => void = () => undefined;
 
   constructor(
     readonly signaling: Signaling,
     readonly isHost: boolean,
-    private me: { name: string; faction: number; uid?: string },
+    private me: { name: string; faction: number; uid?: string; spectate?: boolean },
     code: string,
     rtc: { iceServers?: RTCIceServer[]; relayOnly?: boolean } | LinkFactory = {},
     /** Rematch (host): the last match's room; people get their old seats back when they rejoin. */
@@ -126,7 +134,11 @@ export class Lobby {
         return;
       }
       if (this.isHost) {
-        if (m.type === 'hello') this.admit(m.from, m.data as { name: string; faction: number; uid?: string });
+        if (m.type === 'hello') {
+          const who = m.data as { name: string; faction: number; uid?: string; spectate?: boolean };
+          if (who.spectate) this.admitSpectator(m.from, who);
+          else this.admit(m.from, who);
+        }
         else if (m.type === 'choose') this.update(m.from, (slot) => (slot.faction = (m.data as { faction: number }).faction));
         else if (m.type === 'move') this.move(m.from, (m.data as { slot: number }).slot);
         else if (m.type === 'links') this.markReady(m.from, (m.data as { ready: boolean }).ready);
@@ -192,7 +204,12 @@ export class Lobby {
   }
 
   private seated(): boolean {
-    return this.mySlot() >= 0;
+    return this.mySlot() >= 0 || this.watching();
+  }
+
+  /** We are in the room as a spectator. */
+  watching(): boolean {
+    return this.state?.spectators?.some((x) => x.id === this.myId) ?? false;
   }
 
   /** Every link of ours is open (trivially true with nobody else seated). */
@@ -204,7 +221,9 @@ export class Lobby {
     const s = this.state;
     if (!this.isHost || !s) return false;
     const people = s.slots.filter((x) => x.kind === 'human');
-    return !s.slots.some((x) => x.kind === 'open') && people.length >= 2 && people.every((x) => s.ready.includes(x.player!.id));
+    // Spectators must be connected too, or they would miss the first turns.
+    const watchers = s.spectators ?? [];
+    return !s.slots.some((x) => x.kind === 'open') && people.length >= 2 && [...people.map((x) => x.player!), ...watchers].every((p) => s.ready.includes(p.id));
   }
 
   // --- anyone ---
@@ -286,16 +305,17 @@ export class Lobby {
   private begin(scenario: ScenarioSpec): void {
     const s = this.state;
     const me = this.mySlot();
-    if (!s || me < 0 || this.started) return;
+    if (!s || (me < 0 && !this.watching()) || this.started) return;
     this.started = true;
     const bySlot = new Map<number, LinkLike>();
     s.slots.forEach((x, k) => {
       const link = x.player && x.player.id !== this.myId ? this.links.get(x.player.id) : undefined;
       if (link) bySlot.set(k, link);
     });
+    const watchers = me >= 0 ? (s.spectators ?? []).flatMap((w) => (this.links.has(w.id) ? [this.links.get(w.id)!] : [])) : [];
     for (const t of this.timers) clearInterval(t);
     this.timers = [];
-    this.onStart(scenario, me, bySlot, s);
+    this.onStart(scenario, me, bySlot, s, watchers);
   }
 
   private admit(id: string, who: { name: string; faction: number; uid?: string }): void {
@@ -320,6 +340,16 @@ export class Lobby {
   private admitTo(free: number, id: string, who: { name: string; faction: number; uid?: string }): void {
     const s = this.state!;
     s.slots[free] = { ...s.slots[free]!, kind: 'human', faction: who.faction, player: { id, uid: who.uid, name: who.name } };
+    this.broadcast();
+  }
+
+  private admitSpectator(id: string, who: { name: string; uid?: string }): void {
+    const s = this.state!;
+    s.spectators ??= [];
+    if (!s.spectators.some((x) => x.id === id)) {
+      if (s.spectators.length >= MAX_SPECTATORS) return this.signaling.send('full', undefined, id);
+      s.spectators.push({ id, uid: who.uid, name: who.name });
+    }
     this.broadcast();
   }
 
@@ -353,6 +383,7 @@ export class Lobby {
     const s = this.state!;
     const k = s.slots.findIndex((x) => x.player?.id === id);
     if (k >= 0) s.slots[k] = { ...s.slots[k]!, kind: 'open', player: undefined };
+    if (s.spectators) s.spectators = s.spectators.filter((x) => x.id !== id);
     s.ready = s.ready.filter((x) => x !== id);
     this.broadcast();
   }
@@ -361,7 +392,10 @@ export class Lobby {
   private syncLinks(): void {
     const s = this.state;
     if (!s || !this.seated()) return;
-    const others = new Set(s.slots.flatMap((x) => (x.player && x.player.id !== this.myId ? [x.player.id] : [])));
+    // Players link with everyone in the room; spectators only with the players.
+    const players = s.slots.flatMap((x) => (x.player && x.player.id !== this.myId ? [x.player.id] : []));
+    const watchers = this.watching() ? [] : (s.spectators ?? []).flatMap((x) => (x.id !== this.myId ? [x.id] : []));
+    const others = new Set([...players, ...watchers]);
     for (const [id, link] of this.links)
       if (!others.has(id)) {
         link.close();

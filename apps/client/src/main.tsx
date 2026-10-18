@@ -12,7 +12,7 @@ import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
 import { addRecent, clock, saveGame, savedGame } from './game/saves';
-import { NetSession, degrade } from './net/session';
+import { NetSession, SpectatorFeed, degrade } from './net/session';
 import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
 import { recordMatch, type NetMatch } from './net/history';
 import { reportErrors } from './net/errors';
@@ -104,6 +104,10 @@ let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : resume ? res
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */
 let peerLinks: Map<number, LinkLike> | null = null;
+/** Multiplayer: links to the people watching our match (they get every turn). */
+let watcherLinks: LinkLike[] = [];
+/** Watching someone else's multiplayer match: links to its players. */
+let spectateLinks: Map<number, LinkLike> | null = null;
 /** Watching a recorded match. */
 let replay: Replay | null = null;
 let netSession: NetSession | null = null;
@@ -349,11 +353,12 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.changed();
     };
     for (const l of links) l.onFailed = lost;
-    void Promise.all(links.map((l) => l.ready)).then((dgrams) => {
+    void Promise.all([Promise.all(links.map((l) => l.ready)), Promise.all(watcherLinks.map((l) => l.ready))]).then(([dgrams, watchers]) => {
       const netsim = params.get('netsim');
       netSession = new NetSession(
         dgrams.map((d) => (netsim ? degrade(d, netsim) : d)),
         (m) => post({ type: 'net', msg: m }),
+        watchers,
       );
       netSession.onPeerLost = lost;
       netSession.onChat = (m) => {
@@ -365,6 +370,19 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         netSession?.send({ kind: 'chat', player: localSlot, team, text: text.slice(0, 200), at });
         state.addChat(localSlot, text.slice(0, 200), team, at);
       };
+    });
+  } else if (spectateLinks && scenario?.kind === 'skirmish') {
+    // Watching a multiplayer match: the players' turns arrive over the links and play as a live replay.
+    state.spectator = true;
+    state.replay = { endTick: 0, verified: null, speed: 1, paused: false, live: true };
+    const live: Replay = { format: 'signal-fall-replay', version: 1, scenario, localPlayer: 0, commands: [], endTick: 0, hash: 0 };
+    post({ type: 'start', scenario, localPlayer: 0, replay: live, live: true });
+    const players = [...(scenario.humans ?? [])].sort((a, b) => a - b);
+    void Promise.all([...spectateLinks.values()].map((l) => l.ready)).then((dgrams) => {
+      const feed = new SpectatorFeed(dgrams, players);
+      feed.onTurns = (commands, until) => post({ type: 'live', commands, until });
+      feed.start();
+      state.liveStatus = 'live';
     });
   } else if (replay) {
     state.spectator = true;
@@ -416,10 +434,17 @@ function renderUi(): void {
           multiplayerScreen = false;
           renderUi();
         }}
-        onStart={(sc, slot, links, room) => {
+        onStart={(sc, slot, links, room, watchers) => {
           scenario = sc;
+          state.names = room.slots.map((x) => x.player?.name ?? null);
+          if (slot < 0) {
+            spectateLinks = links;
+            renderUi();
+            return;
+          }
           localSlot = slot;
           peerLinks = links;
+          watcherLinks = watchers;
           netMatch = { room: room.code, uids: room.slots.map((x) => x.player?.uid ?? null) };
           state.names = room.slots.map((x) => x.player?.name ?? null);
           lastRoom = room;

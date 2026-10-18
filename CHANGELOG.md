@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 19:06 UTC
+
+- **Watch your friends play:** enter a room code and press **Watch** instead of Join. You see the whole match live, with no fog, without taking a seat. Up to four people can watch, and the players never wait for them.
+
 ## 2026-10-18 19:01 UTC
 
 - **Open games:** hosts can tick **List in Open games** in their room, and anyone can find it on the Multiplayer screen and join with one click: no code needed. The list shows the mode and the free seats.

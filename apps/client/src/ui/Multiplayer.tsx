@@ -28,7 +28,7 @@ export function Multiplayer({
   rematch,
 }: {
   rules: Rules;
-  onStart: (scenario: ScenarioSpec, slot: number, links: Map<number, LinkLike>, room: LobbyState) => void;
+  onStart: (scenario: ScenarioSpec, slot: number, links: Map<number, LinkLike>, room: LobbyState, watchers: LinkLike[]) => void;
   onBack: () => void;
   /** Back to the same room after a match: the host reopens it, the others rejoin. */
   rematch?: { host: boolean; room: LobbyState };
@@ -94,7 +94,7 @@ export function Multiplayer({
     [lobby],
   );
 
-  const enter = async (host: boolean, again?: LobbyState, join?: string) => {
+  const enter = async (host: boolean, again?: LobbyState, join?: string, spectate = false) => {
     const c = again ? again.code : host ? roomCode() : (join ?? code).trim().toUpperCase();
     if (c.length !== 4 || busy) return;
     try {
@@ -115,11 +115,11 @@ export function Multiplayer({
       // ?relay=1 forces every packet through the TURN relay (testing strict networks).
       const relayOnly = new URLSearchParams(location.search).get('relay') === '1';
       const mine = again?.slots.find((x) => x.player?.uid === uid || x.player?.name === name.trim())?.faction;
-      const l = new Lobby(r.signaling, host, { name: name.trim(), faction: mine ?? faction, uid }, r.code, { iceServers: r.iceServers, relayOnly }, host ? again : undefined);
+      const l = new Lobby(r.signaling, host, { name: name.trim(), faction: mine ?? faction, uid, spectate }, r.code, { iceServers: r.iceServers, relayOnly }, host ? again : undefined);
       l.onChange = () => refresh(undefined);
-      l.onStart = (scenario, slot, links, room) => {
+      l.onStart = (scenario, slot, links, room, watchers) => {
         if (host) r.started();
-        onStart(scenario, slot, links, room);
+        onStart(scenario, slot, links, room, watchers);
       };
       setRoom(r);
       setLobby(l);
@@ -149,6 +149,9 @@ export function Multiplayer({
               <input value={code} maxLength={4} placeholder="ABCD" data-testid="mp-code" onInput={(e) => setCode((e.currentTarget as HTMLInputElement).value.toUpperCase())} />
               <button data-testid="mp-join" disabled={code.trim().length !== 4 || busy} onClick={() => void enter(false)}>
                 Join
+              </button>
+              <button data-testid="mp-watch" disabled={code.trim().length !== 4 || busy} title="Watch the match without playing" onClick={() => void enter(false, undefined, undefined, true)}>
+                Watch
               </button>
             </div>
           </div>
@@ -198,7 +201,9 @@ export function Multiplayer({
   const people = s?.slots.filter((x) => x.kind === 'human') ?? [];
   const status = lobby.error
     ? lobby.error
-    : !s || me < 0
+    : lobby.watching()
+      ? 'You are watching. The match shows when the host starts it.'
+      : !s || me < 0
       ? 'Looking for the room…'
       : s.slots.some((x) => x.kind === 'open')
         ? lobby.isHost
@@ -317,6 +322,11 @@ export function Multiplayer({
                   <ul class="lobby-players">{s.slots.map((x, k) => (x.team === t ? seat(x, k) : null))}</ul>
                 </div>
               ))}
+            {(s?.spectators?.length ?? 0) > 0 && (
+              <p class="muted small" data-testid="mp-spectators">
+                Watching: {s!.spectators!.map((x) => x.name).join(', ')}
+              </p>
+            )}
             <p class="mp-status" data-testid="mp-status">
               {status}
             </p>

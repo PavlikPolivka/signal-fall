@@ -114,7 +114,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 91 ✅ | O | Loading screen tips and faction art while the map generates | 2 | XS |
 | 92 ✅ | O | Accessibility: colorblind team palettes, UI scale, subtitles for announcer | 3 | S |
 | 93 ✅ | O | Codex search and "how to beat X" pages | 2 | S |
-| 94 | M | Spectator mode for multiplayer rooms (watch friends' matches) | 3 | M |
+| 94 ✅ | M | Spectator mode for multiplayer rooms (watch friends' matches) | 3 | M |
 | 95 | M | Ranked queue (matchmaking by rating) | 3 | L |
 | 96 ✅ | M | Room browser for public games | 3 | M |
 | 97 ✅ | T | Performance: render culling, batch effects; 60 fps with 400 units on mid laptops | 4 | M |

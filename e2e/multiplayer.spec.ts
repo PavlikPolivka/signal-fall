@@ -242,3 +242,34 @@ test('a public room shows in Open games and can be joined from there', async ({ 
   await hostCtx.close();
   await guestCtx.close();
 });
+
+test('a spectator joins with the code and watches the match as it is played', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!!process.env.SUPABASE_URL, 'offline test (one browser profile)');
+  test.setTimeout(180_000);
+  type W = { __signalFall: { state: { cur: { tick: number; a: Int32Array } | null; send: (c: unknown) => void; spectator: boolean } } };
+  const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  const [host, guest, watcher] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
+  await host.goto('/play/');
+  await host.click('[data-testid=open-multiplayer]');
+  await host.click('[data-testid=mp-create]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  await guest.goto('/play/');
+  await guest.click('[data-testid=open-multiplayer]');
+  await guest.fill('[data-testid=mp-code]', code);
+  await guest.click('[data-testid=mp-join]');
+  await watcher.goto('/play/');
+  await watcher.click('[data-testid=open-multiplayer]');
+  await watcher.fill('[data-testid=mp-name]', 'Fan');
+  await watcher.fill('[data-testid=mp-code]', code);
+  await watcher.click('[data-testid=mp-watch]');
+  await expect(host.getByTestId('mp-spectators')).toContainText('Fan', { timeout: 20_000 });
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
+  await host.click('[data-testid=mp-start]');
+  await watcher.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 200, null, { timeout: 90_000 });
+  expect(await watcher.evaluate(() => (window as unknown as W).__signalFall.state.spectator)).toBe(true);
+  // The players never wait on the spectator, and the end reaches it too.
+  await guest.evaluate(() => (window as unknown as W).__signalFall.state.send({ type: 'surrender' }));
+  await expect(watcher.getByTestId('end-screen')).toBeVisible({ timeout: 60_000 });
+  await ctx.close();
+});
