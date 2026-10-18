@@ -67,9 +67,9 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 49 ✅ | U | Pause menu shows objectives, faction tips and the keymap at a glance | 3 | XS |
 | 50 | O | Interactive tutorial (5 short steps) for players new to RTS | 4 | M |
 | 51 ✅ | O | Skirmish presets ("Quick match", "Long game", "Rush") and a "same as last time" button | 3 | XS |
-| 52 | M | Rematch button for multiplayer; post-game lobby keeps the room | 4 | S |
+| 52 ✅ | M | Rematch button for multiplayer; post-game lobby keeps the room | 4 | S |
 | 53 ✅ | M | In-game chat and pings (Alt+click to ping a spot for teammates in 2v2) | 4 | M |
-| 54 | M | Replace a disconnected player with the AI (2v2) | 4 | M |
+| 54 ✅ | M | Replace a disconnected player with the AI (2v2) | 4 | M |
 | 55 ✅ | U | Score screen MVP stats per player (units killed, Echo harvested, APM) | 3 | XS |
 
 ## Tier 3: solid improvements

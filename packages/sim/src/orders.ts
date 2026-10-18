@@ -90,6 +90,8 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
     case 'directives':
       player.directives = sanitizeDirectives(world, c.player, cmd.directives);
       return;
+    case 'takeover':
+      return;
     case 'surrender':
       player.surrendered = true;
       player.defeated = true;

@@ -37,6 +37,8 @@ export type ToWorker =
   | { type: 'requestStats' }
   | { type: 'command'; cmd: Command }
   | { type: 'pause'; paused: boolean }
+  /** Multiplayer: vote to let the AI take over a person who left. */
+  | { type: 'dropPeer'; player: number }
   /** A lockstep message from a remote peer. */
   | { type: 'net'; msg: NetMessage };
 
@@ -46,6 +48,8 @@ export interface PlayerInfo {
 }
 
 export type FromWorker =
+  /** Everyone agreed: this person is gone and the AI plays their seat. */
+  | { type: 'dropped'; player: number }
   | {
       type: 'ready';
       width: number;

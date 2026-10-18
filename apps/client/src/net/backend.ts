@@ -211,7 +211,7 @@ export async function roomOpen(sb: SupabaseClient, code: string): Promise<boolea
   return data?.status === 'open';
 }
 
-export async function setRoomStatus(sb: SupabaseClient, code: string, status: 'playing' | 'closed'): Promise<void> {
+export async function setRoomStatus(sb: SupabaseClient, code: string, status: 'open' | 'playing' | 'closed'): Promise<void> {
   await sb.from('rooms').update({ status, updated_at: new Date().toISOString() }).eq('code', code);
 }
 

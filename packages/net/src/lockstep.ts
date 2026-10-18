@@ -30,7 +30,8 @@ export interface LockstepOptions {
  */
 export class LockstepScheduler {
   readonly localPlayer: number;
-  readonly peers: number[];
+  /** People whose input every turn needs (shrinks when someone is dropped). */
+  peers: number[];
   private readonly transport: Transport;
   private delay: number;
   private readonly inputs = new Map<number, Map<number, Command[]>>();
@@ -44,6 +45,16 @@ export class LockstepScheduler {
   private readonly now: () => number;
   /** Smoothed round-trip time in ms, or -1 before the first pong. */
   rtt = -1;
+  /** Each person's recent turns (kept to help others fill gaps when someone drops). */
+  private readonly recent = new Map<number, Map<number, Command[]>>();
+  /** Drop votes: lost player -> reporter -> last turn held. */
+  private readonly votes = new Map<number, Map<number, number>>();
+  /** Dropped players and the first turn played without them. */
+  private readonly dropped = new Map<number, number>();
+  /** Highest turn already handed to the sim. */
+  private taken = -1;
+  /** Everyone agreed: `player` plays no more from `turn` (the AI takes their seat). */
+  onDropped: (player: number, turn: number) => void = () => undefined;
 
   constructor(o: LockstepOptions) {
     this.localPlayer = o.localPlayer;
@@ -85,7 +96,52 @@ export class LockstepScheduler {
       this.flush(turn + this.delay);
     }
     const got = this.inputs.get(turn);
-    return got !== undefined && got.size === this.peers.length;
+    return got !== undefined && this.needed(turn).every((p) => got.has(p));
+  }
+
+  /** Whose input a turn needs: today's peers, plus anyone dropped after it. */
+  private needed(turn: number): number[] {
+    const out = [...this.peers];
+    for (const [p, from] of this.dropped) if (turn < from) out.push(p);
+    return out.sort((a, b) => a - b);
+  }
+
+  /** The last turn we hold from a player, or -1. */
+  private lastTurn(player: number): number {
+    let last = -1;
+    for (const t of this.recent.get(player)?.keys() ?? []) last = Math.max(last, t);
+    return last;
+  }
+
+  /**
+   * Vote to drop a person who left (call on every remaining peer; peers also vote as soon as
+   * they hear someone else's vote). When all remaining peers have voted, `onDropped` fires.
+   */
+  proposeDrop(lost: number): void {
+    if (this.dropped.has(lost) || this.votes.get(lost)?.has(this.localPlayer) || lost === this.localPlayer) return;
+    const turns = [...(this.recent.get(lost) ?? new Map<number, Command[]>())];
+    const have = this.lastTurn(lost);
+    this.transport.send({ kind: 'drop', player: this.localPlayer, lost, have, turns });
+    this.vote(this.localPlayer, lost, have, turns);
+  }
+
+  private vote(from: number, lost: number, have: number, turns: [number, Command[]][]): void {
+    if (this.dropped.has(lost)) return;
+    // Fill in their turns we missed (not ones already played).
+    for (const [turn, cmds] of turns) if (turn > this.taken && !this.inputs.get(turn)?.has(lost)) this.record(turn, lost, cmds);
+    let v = this.votes.get(lost);
+    if (!v) this.votes.set(lost, (v = new Map()));
+    v.set(from, have);
+    if (from !== this.localPlayer) this.proposeDrop(lost);
+    // Our own vote may have just completed it.
+    if (this.dropped.has(lost)) return;
+    const voters = this.peers.filter((p) => p !== lost);
+    if (!voters.every((p) => v.has(p))) return;
+    const from_ = Math.max(...v.values()) + 1;
+    this.dropped.set(lost, from_);
+    this.peers = this.peers.filter((p) => p !== lost);
+    for (const [turn, m] of this.inputs) if (turn >= from_) m.delete(lost);
+    this.onDropped(lost, from_);
   }
 
   /** Commands to apply at `tick` (non-empty only at turn boundaries). Call after ready(). */
@@ -95,15 +151,17 @@ export class LockstepScheduler {
     const got = this.inputs.get(turn);
     if (!got) throw new Error(`no inputs for turn ${turn}`);
     this.inputs.delete(turn);
+    this.taken = turn;
     const out: ScheduledCommand[] = [];
-    for (const p of this.peers) for (const cmd of got.get(p) ?? []) out.push({ tick, player: p, cmd });
+    for (const p of this.needed(turn)) for (const cmd of got.get(p) ?? []) out.push({ tick, player: p, cmd });
     return out;
   }
 
   /** Which peers are we still waiting on for the turn containing `tick`? */
   waitingOn(tick: number): number[] {
-    const got = this.inputs.get(Math.floor(tick / TICKS_PER_TURN));
-    return this.peers.filter((p) => !got?.has(p));
+    const turn = Math.floor(tick / TICKS_PER_TURN);
+    const got = this.inputs.get(turn);
+    return this.needed(turn).filter((p) => !got?.has(p));
   }
 
   private flush(target: number): void {
@@ -123,6 +181,13 @@ export class LockstepScheduler {
   }
 
   private record(turn: number, player: number, commands: Command[]): void {
+    // A dropped player's late turns no longer count.
+    const gone = this.dropped.get(player);
+    if (gone !== undefined && turn >= gone) return;
+    let r = this.recent.get(player);
+    if (!r) this.recent.set(player, (r = new Map()));
+    r.set(turn, commands);
+    if (r.size > 256) r.delete(r.keys().next().value!);
     let m = this.inputs.get(turn);
     if (!m) {
       m = new Map();
@@ -167,6 +232,11 @@ export class LockstepScheduler {
       }
       case 'ping':
         this.transport.send({ kind: 'pong', player: m.player, t: m.t });
+        return;
+      case 'drop':
+        this.vote(m.player, m.lost, m.have, m.turns);
+        return;
+      case 'chat':
         return;
       case 'pong': {
         if (m.player !== this.localPlayer) return;

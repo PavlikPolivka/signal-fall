@@ -122,12 +122,21 @@ export function commandsByTick(commands: ScheduledCommand[]): Map<number, Schedu
   return by;
 }
 
+/**
+ * Schedule a recorded or live command; a takeover also puts the built-in AI in charge of
+ * that seat (deterministically, at that tick, on every machine and in every replay).
+ */
+export function scheduleCommand(sim: Sim, c: ScheduledCommand, starts: { x: number; y: number }[]): void {
+  if (c.cmd.type === 'takeover') attachAi(sim, c.player, c.cmd.difficulty, starts);
+  sim.schedule(c);
+}
+
 /** Play a replay headless to its end; returns the final hash (equal to replay.hash if it reproduces). */
 export function runReplay(replay: Replay): number {
-  const { sim } = createSim(replay.scenario);
+  const { sim, extras } = createSim(replay.scenario);
   const by = commandsByTick(replay.commands);
   while (sim.tick < replay.endTick) {
-    for (const c of by.get(sim.tick) ?? []) sim.schedule(c);
+    for (const c of by.get(sim.tick) ?? []) scheduleCommand(sim, c, extras.starts);
     sim.step();
   }
   return sim.hash();

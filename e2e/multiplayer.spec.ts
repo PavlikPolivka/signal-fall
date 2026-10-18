@@ -111,6 +111,15 @@ test('two clients play a networked match over a lossy link without desync', asyn
   // The guest gives up: both see the end, and online the match is recorded and rated.
   await guest.evaluate(() => (window as unknown as { __signalFall: { state: { send: (c: unknown) => void } } }).__signalFall.state.send({ type: 'surrender' }));
   for (const p of [host, guest]) await expect(p.getByTestId('end-screen')).toBeVisible({ timeout: 30_000 });
+  if (!online) {
+    // Rematch: both go back to the same room, the guest keeps its seat and faction, the map is kept.
+    await host.click('[data-testid=end-mp-rematch]');
+    await guest.click('[data-testid=end-mp-rematch]');
+    await expect(host.getByTestId('room-code')).toHaveText(code, { timeout: 20_000 });
+    await expect(host.getByTestId('seat-1')).toContainText('Choir', { timeout: 20_000 });
+    await expect(guest.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('777');
+    await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
+  }
   if (online) {
     await host.waitForTimeout(2000);
     await host.goto('/play/');
@@ -180,5 +189,33 @@ test('2v2: three people and an AI over a full mesh stay in sync', async ({ brows
   const pings = (p: Page) => p.evaluate(() => (window as unknown as { __signalFall: { state: { mapPings: unknown[] } } }).__signalFall.state.mapPings.length);
   await expect.poll(() => pings(a)).toBe(1);
   expect(await pings(b)).toBe(0);
+  await ctx.close();
+});
+
+test('a player who leaves can be replaced by the AI, and the match goes on', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!!process.env.SUPABASE_URL, 'offline test (one browser profile)');
+  test.setTimeout(180_000);
+  type W = { __signalFall: { state: { cur: { tick: number } | null; seats: { label: string }[] } } };
+  const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  const [host, guest] = await Promise.all([ctx.newPage(), ctx.newPage()]);
+  await host.goto('/play/');
+  await host.click('[data-testid=open-multiplayer]');
+  await host.click('[data-testid=mp-create]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  await guest.goto('/play/');
+  await guest.click('[data-testid=open-multiplayer]');
+  await guest.fill('[data-testid=mp-code]', code);
+  await guest.click('[data-testid=mp-join]');
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
+  await host.click('[data-testid=mp-start]');
+  await host.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 100, null, { timeout: 60_000 });
+  await guest.close();
+  await expect(host.getByTestId('peer-lost')).toBeVisible({ timeout: 30_000 });
+  const stalled = await host.evaluate(() => (window as unknown as W).__signalFall.state.cur!.tick);
+  await host.click('[data-testid=replace-with-ai]');
+  await expect(host.getByTestId('peer-lost')).toHaveCount(0, { timeout: 10_000 });
+  await host.waitForFunction((t) => (window as unknown as W).__signalFall.state.cur!.tick > t + 100, stalled, { timeout: 60_000 });
+  expect(await host.evaluate(() => (window as unknown as W).__signalFall.state.seats[1]?.label)).toContain('AI');
   await ctx.close();
 });

@@ -8,6 +8,11 @@ import type { Directives } from './directives';
 export type Command =
   | { type: 'noop' }
   | { type: 'surrender' }
+  /**
+   * A person left a multiplayer match and the built-in AI takes over their seat from this tick.
+   * The sim itself ignores it; whoever runs the sim (client worker, replays) attaches the AI.
+   */
+  | { type: 'takeover'; difficulty: 'easy' | 'normal' | 'hard' }
   | { type: 'move'; units: number[]; x: number; y: number; queue?: boolean }
   | { type: 'attackMove'; units: number[]; x: number; y: number; queue?: boolean }
   | { type: 'attack'; units: number[]; target: number; queue?: boolean }

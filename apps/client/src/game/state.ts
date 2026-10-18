@@ -96,6 +96,10 @@ export class ClientState {
   /** Live spectating: the stream's state for the UI. */
   liveStatus: 'connecting' | 'live' | 'ended' | 'lost' | null = null;
   saveReplay: () => void = () => undefined;
+  /** Multiplayer: vote to let the AI take over whoever we are waiting on (they left). */
+  dropPeers: () => void = () => undefined;
+  /** Multiplayer: back to the same room for another match (set up by main). */
+  rematch: () => void = () => undefined;
   /** Skirmish: keep the match in this browser's save slot (Continue on the main menu). */
   saveGame: () => void = () => undefined;
   /** Match statistics for the post-game report (arrives when the match ends). */

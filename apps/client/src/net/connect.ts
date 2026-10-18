@@ -16,12 +16,19 @@ export interface RoomConnection {
  * rooms row, Realtime signaling and TURN credentials. Without one: rooms only
  * work between tabs of this browser.
  */
-export async function openRoom(host: boolean, code: string, makeCode: () => string): Promise<RoomConnection> {
+export async function openRoom(host: boolean, code: string, makeCode: () => string, opts: { reopen?: boolean; waitMs?: number } = {}): Promise<RoomConnection> {
   const sb = backend();
   if (!sb) return { code, signaling: new BroadcastSignaling(code), iceServers: DEFAULT_ICE, started: () => undefined, close: () => undefined };
   await signIn(sb);
-  const room = host ? await createRoom(sb, makeCode) : code;
-  if (!host && !(await roomOpen(sb, room))) throw new Error('No open room with that code');
+  // A rematch reopens the host's own room under the same code.
+  if (host && opts.reopen) await setRoomStatus(sb, code, 'open');
+  const room = host ? (opts.reopen ? code : await createRoom(sb, makeCode)) : code;
+  // Rejoining a rematch: the host may take a moment to reopen the room.
+  const until = Date.now() + (opts.waitMs ?? 0);
+  while (!host && !(await roomOpen(sb, room))) {
+    if (Date.now() > until) throw new Error('No open room with that code');
+    await new Promise((r) => setTimeout(r, 1500));
+  }
   const ice = await iceServers(sb);
   return {
     code: room,

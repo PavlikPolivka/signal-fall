@@ -25,10 +25,13 @@ export function Multiplayer({
   rules,
   onStart,
   onBack,
+  rematch,
 }: {
   rules: Rules;
   onStart: (scenario: ScenarioSpec, slot: number, links: Map<number, LinkLike>, room: LobbyState) => void;
   onBack: () => void;
+  /** Back to the same room after a match: the host reopens it, the others rejoin. */
+  rematch?: { host: boolean; room: LobbyState };
 }) {
   const [name, setName] = useState(savedName() || `Commander ${Math.floor(Math.random() * 90 + 10)}`);
   const [code, setCode] = useState('');
@@ -51,6 +54,10 @@ export function Multiplayer({
         () => undefined,
       );
   }, []);
+  // Rematch: straight back into the room.
+  useEffect(() => {
+    if (rematch) void enter(rematch.host, rematch.room);
+  }, []);
   // Join links: ?room=ABCD opens the join form prefilled.
   useEffect(() => {
     const room = new URLSearchParams(location.search).get('room');
@@ -64,8 +71,8 @@ export function Multiplayer({
     [lobby],
   );
 
-  const enter = async (host: boolean) => {
-    const c = host ? roomCode() : code.trim().toUpperCase();
+  const enter = async (host: boolean, again?: LobbyState) => {
+    const c = again ? again.code : host ? roomCode() : code.trim().toUpperCase();
     if (c.length !== 4 || busy) return;
     try {
       localStorage.setItem(NAME_KEY, name);
@@ -81,10 +88,11 @@ export function Multiplayer({
         setProfileName(name.trim());
       }
       const uid = sb ? await signIn(sb) : undefined;
-      const r = await openRoom(host, c, roomCode);
+      const r = await openRoom(host, c, roomCode, again ? { reopen: host, waitMs: 60_000 } : {});
       // ?relay=1 forces every packet through the TURN relay (testing strict networks).
       const relayOnly = new URLSearchParams(location.search).get('relay') === '1';
-      const l = new Lobby(r.signaling, host, { name: name.trim(), faction, uid }, r.code, { iceServers: r.iceServers, relayOnly });
+      const mine = again?.slots.find((x) => x.player?.uid === uid || x.player?.name === name.trim())?.faction;
+      const l = new Lobby(r.signaling, host, { name: name.trim(), faction: mine ?? faction, uid }, r.code, { iceServers: r.iceServers, relayOnly }, host ? again : undefined);
       l.onChange = () => refresh(undefined);
       l.onStart = (scenario, slot, links, room) => {
         if (host) r.started();

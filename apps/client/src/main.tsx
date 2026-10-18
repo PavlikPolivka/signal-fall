@@ -122,13 +122,34 @@ let lastRoom: import('./net/lobby').LobbyState | null = null;
 /** Multiplayer: room code and account ids per slot, for the match record. */
 let netMatch: NetMatch | null = null;
 /** Lobby screen showing instead of the skirmish setup. */
-let multiplayerScreen = new URLSearchParams(location.search).has('room');
+/** Rematch after a multiplayer match: back to the same room (kept for this tab only). */
+const REMATCH_KEY = 'signalfall.rematch';
+const rematchRoom = (() => {
+  try {
+    const r = sessionStorage.getItem(REMATCH_KEY);
+    sessionStorage.removeItem(REMATCH_KEY);
+    return r ? (JSON.parse(r) as { host: boolean; room: import('./net/lobby').LobbyState }) : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+let multiplayerScreen = new URLSearchParams(location.search).has('room') || !!rematchRoom;
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
 reportErrors(() => (!scenario ? 'menu' : replay ? 'replay' : peerLinks ? 'multiplayer' : `${scenario.kind} @${state.cur?.tick ?? 0}`), worker);
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
+state.rematch = () => {
+  if (!lastRoom) return;
+  const me = lastRoom.slots[localSlot]?.player?.id;
+  try {
+    sessionStorage.setItem(REMATCH_KEY, JSON.stringify({ host: me === lastRoom.host, room: lastRoom }));
+  } catch {
+    return;
+  }
+  location.href = location.pathname;
+};
 state.applySettings = () => {
   saveSettings(state.settings);
   renderer.effects.reduced = state.settings.effects === 'reduced';
@@ -141,6 +162,9 @@ state.applySettings = () => {
 };
 state.saveReplay = () => post({ type: 'saveReplay' });
 state.saveGame = () => post({ type: 'saveReplay', purpose: 'save' });
+state.dropPeers = () => {
+  for (const p of state.net?.waitingOn ?? []) post({ type: 'dropPeer', player: p });
+};
 state.requestStats = () => post({ type: 'requestStats' });
 state.replaySpeed = (speed) => {
   if (!state.replay) return;
@@ -242,6 +266,13 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     if (msg.type === 'replayEnd') {
       if (state.replay) state.replay.verified = msg.ok;
       state.changed();
+      return;
+    }
+    if (msg.type === 'dropped') {
+      state.peerLost = false;
+      state.names[msg.player] = `${state.names[msg.player] ?? `Player ${msg.player + 1}`} (AI)`;
+      state.seats[msg.player] = { kind: 'ai', label: 'AI (Normal), took over' };
+      state.notice(`${state.names[msg.player]} took over the seat`);
       return;
     }
     if (msg.type === 'netStatus') {
@@ -379,6 +410,7 @@ function renderUi(): void {
   if (!scenario && multiplayerScreen) {
     render(
       <Multiplayer
+        rematch={rematchRoom}
         rules={state.rules}
         onBack={() => {
           multiplayerScreen = false;

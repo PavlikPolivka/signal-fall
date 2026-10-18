@@ -33,7 +33,20 @@ export interface ChatMessage {
   at?: { x: number; y: number };
 }
 
-export type NetMessage = TurnMessage | HashMessage | PingMessage | ChatMessage;
+/**
+ * Dropping a person who left: each remaining peer reports the last turn it holds from them,
+ * with their recent turns (so everyone can fill gaps). Once every remaining peer has reported,
+ * all agree: the dropped player's input ends after the highest turn anyone holds.
+ */
+export interface DropMessage {
+  kind: 'drop';
+  player: number;
+  lost: number;
+  have: number;
+  turns: [number, Command[]][];
+}
+
+export type NetMessage = TurnMessage | HashMessage | PingMessage | ChatMessage | DropMessage;
 
 /**
  * A reliable, ordered message channel to all other peers. Implementations:

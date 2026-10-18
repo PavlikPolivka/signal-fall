@@ -108,6 +108,8 @@ export class Lobby {
     private me: { name: string; faction: number; uid?: string },
     code: string,
     rtc: { iceServers?: RTCIceServer[]; relayOnly?: boolean } | LinkFactory = {},
+    /** Rematch (host): the last match's room; people get their old seats back when they rejoin. */
+    previous?: LobbyState,
   ) {
     this.connect =
       typeof rtc === 'function'
@@ -152,6 +154,24 @@ export class Lobby {
         seed: Math.floor(Math.random() * 1_000_000),
         ready: [],
       };
+      if (previous) {
+        // Same mode, map, AI seats and teams; the other people's seats wait for them.
+        const mine = previous.slots.findIndex((x) => x.player?.id === previous.host);
+        this.reserved = previous.slots.map((x, k) => (x.kind === 'human' && k !== mine ? (x.player?.uid ?? x.player?.name ?? null) : null));
+        this.state = {
+          ...this.state,
+          mode: previous.mode,
+          map: previous.map,
+          seed: previous.seed,
+          slots: previous.slots.map((x, k) =>
+            k === mine
+              ? { ...x, kind: 'human', player: { id: signaling.id, uid: me.uid, name: me.name } }
+              : x.kind === 'human'
+                ? { ...x, kind: 'open', player: undefined }
+                : { ...x },
+          ),
+        };
+      }
       // Rebroadcast now and then, in case a message was missed.
       this.timers.push(setInterval(() => this.broadcast(), 2000));
     } else {
@@ -260,6 +280,8 @@ export class Lobby {
   // --- internals ---
 
   private started = false;
+  /** Rematch: who each open seat waits for (account id or name). */
+  private reserved: (string | null)[] = [];
 
   private begin(scenario: ScenarioSpec): void {
     const s = this.state;
@@ -279,8 +301,24 @@ export class Lobby {
   private admit(id: string, who: { name: string; faction: number; uid?: string }): void {
     const s = this.state!;
     if (s.slots.some((x) => x.player?.id === id)) return this.broadcast();
-    const free = s.slots.findIndex((x) => x.kind === 'open');
-    if (free < 0) return this.signaling.send('full', undefined, id);
+    // Back for a rematch: their old seat; anyone else: the first open seat nobody is coming back to.
+    const back = s.slots.findIndex((x, k) => x.kind === 'open' && this.reserved[k] !== null && this.reserved[k] === (who.uid ?? who.name));
+    const free = back >= 0 ? back : s.slots.findIndex((x, k) => x.kind === 'open' && !this.reserved[k]);
+    if (free < 0) {
+      const any = s.slots.findIndex((x) => x.kind === 'open');
+      if (any < 0) return this.signaling.send('full', undefined, id);
+      return this.admitTo(any, id, who);
+    }
+    if (back >= 0) {
+      // A rematch keeps everyone's faction.
+      this.reserved[back] = null;
+      return this.admitTo(back, id, { ...who, faction: s.slots[back]!.faction });
+    }
+    return this.admitTo(free, id, who);
+  }
+
+  private admitTo(free: number, id: string, who: { name: string; faction: number; uid?: string }): void {
+    const s = this.state!;
     s.slots[free] = { ...s.slots[free]!, kind: 'human', faction: who.faction, player: { id, uid: who.uid, name: who.name } };
     this.broadcast();
   }

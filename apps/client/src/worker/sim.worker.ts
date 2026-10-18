@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
 import { KIND, Sim, inCoverage, powerStatus, type ScheduledCommand, type World } from '@signal-fall/sim';
-import { STATS_INTERVAL, commandsByTick, createSim, sampleStats, type MatchStats, type Replay } from '../game/scenario';
+import { STATS_INTERVAL, commandsByTick, createSim, sampleStats, scheduleCommand, type MatchStats, type Replay } from '../game/scenario';
 import {
   E,
   ENT_FLAG,
@@ -197,6 +197,10 @@ let earlyNet: NetMessage[] = [];
 let scenario: ScenarioSpec | null = null;
 /** Every command applied, for desync reports. */
 let commandLog: ScheduledCommand[] = [];
+/** Start positions (for an AI taking over a seat). */
+let starts: { x: number; y: number }[] = [];
+/** Ticks at which the AI takes over a person who left (multiplayer). */
+const takeovers = new Map<number, number>();
 /** Replay playback: commands by tick, and where/what the recording ended. */
 let replayCmds: Map<number, ScheduledCommand[]> | null = null;
 let replayEnd: { tick: number; hash: number } | null = null;
@@ -269,11 +273,18 @@ function loop(): void {
           stalled = true;
           break;
         }
-        for (const c of replayCmds.get(sim.tick) ?? []) sim.schedule(c);
+        for (const c of replayCmds.get(sim.tick) ?? []) scheduleCommand(sim, c, starts);
       } else {
         if (!lockstep.ready(sim.tick)) {
           stalled = true;
           break;
+        }
+        const gone = takeovers.get(sim.tick);
+        if (gone !== undefined) {
+          takeovers.delete(sim.tick);
+          const c: ScheduledCommand = { tick: sim.tick, player: gone, cmd: { type: 'takeover', difficulty: 'normal' } };
+          scheduleCommand(sim, c, starts);
+          commandLog.push(c);
         }
         for (const c of lockstep.take(sim.tick)) {
           sim.schedule(c);
@@ -299,6 +310,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       const created = createSim(msg.scenario);
       sim = created.sim;
       const extras = created.extras;
+      starts = extras.starts;
+      takeovers.clear();
       localPlayer = msg.localPlayer;
       TICK_MS = 50 / Math.max(0.25, Math.min(8, msg.speed ?? 1));
       scenario = msg.scenario;
@@ -315,7 +328,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         const end = msg.resume.endTick + (msg.resume.endTick % 2);
         while (sim.tick < end && !sim.world.ended) {
           for (const c of saved.get(sim.tick) ?? []) {
-            sim.schedule(c);
+            scheduleCommand(sim, c, starts);
             commandLog.push(c);
           }
           sim.step();
@@ -338,6 +351,10 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
           post({ type: 'desync', tick, local, remote, player, report });
         },
       });
+      lockstep.onDropped = (player, turn) => {
+        takeovers.set(turn * 2, player);
+        post({ type: 'dropped', player });
+      };
       const w = sim.world;
       const terrain = w.map.terrain.slice();
       post(
@@ -363,6 +380,9 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     }
     case 'command':
       lockstep?.submit(msg.cmd);
+      return;
+    case 'dropPeer':
+      lockstep?.proposeDrop(msg.player);
       return;
     case 'pause':
       // Nobody pauses a networked match on their own.

@@ -1041,8 +1041,11 @@ function NetOverlays({ state }: { state: ClientState }) {
       {state.peerLost && (
         <div class="menu-overlay" data-testid="peer-lost">
           <div class="menu">
-            <h2>Opponent disconnected</h2>
-            <p class="muted">The connection to your opponent was lost.</p>
+            <h2>{state.players.length > 2 ? 'A player disconnected' : 'Opponent disconnected'}</h2>
+            <p class="muted">The connection was lost. The AI can take over their side so the match goes on (it won't count for the ladder).</p>
+            <button data-testid="replace-with-ai" onClick={() => state.dropPeers()} disabled={(state.net?.waitingOn.length ?? 0) === 0}>
+              Let the AI take over
+            </button>
             <button onClick={() => (location.href = location.pathname)}>Back to menu</button>
           </div>
         </div>
@@ -1092,6 +1095,11 @@ function EndScreen({ state }: { state: ClientState }) {
         {!state.replay && (
           <button onClick={() => state.saveReplay()} data-testid="end-save-replay">
             Save replay
+          </button>
+        )}
+        {state.multiplayer && (
+          <button data-testid="end-mp-rematch" onClick={() => state.rematch()} title="Back to the same room: same map and seats">
+            Rematch
           </button>
         )}
         <button onClick={() => (location.href = `${location.pathname}?menu=skirmish`)} data-testid="end-new-skirmish">

@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-18 18:57 UTC
+
+- **Rematch in multiplayer:** **Rematch** on the end screen takes everyone back to the same room, with the same map, seats and factions. The host starts the next match when all are back.
+- **When someone leaves:** if a player disconnects, **Let the AI take over** keeps the match going with the AI playing their side. Everyone left agrees on the exact moment, so nobody goes out of sync, and replays show the takeover too.
+
 ## 2026-10-18 18:49 UTC
 
 - **Chat in multiplayer:** press <kbd>Enter</kbd>, type, <kbd>Enter</kbd> to send. In 2v2, a button picks whether your team or everyone reads it.

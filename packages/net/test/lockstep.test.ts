@@ -140,4 +140,43 @@ describe('lockstep', () => {
     expect(LockstepScheduler.delayForRtt(80)).toBe(2);
     expect(LockstepScheduler.delayForRtt(600)).toBe(4);
   });
+
+  it('drops a person who left: the rest agree on the turn and play on', () => {
+    const clock = new VirtualClock();
+    const link = clock.link(() => 40);
+    const ts = LoopbackTransport.mesh(3, link);
+    const ls = ts.map((t, p) => new LockstepScheduler({ localPlayer: p, peers: [0, 1, 2], transport: t, delayTurns: 2, now: () => clock.time }));
+    const dropped: [number, number][][] = [[], [], []];
+    ls.forEach((l, p) => (l.onDropped = (lost, turn) => dropped[p]!.push([lost, turn])));
+    const ticks = [0, 0, 0];
+    const taken: string[][] = [[], [], []];
+    const run = (who: number[], ms: number) => {
+      for (let t = 0; t < ms; t += TICK_MS) {
+        for (const p of who) {
+          if (!ls[p]!.ready(ticks[p]!)) continue;
+          for (const c of ls[p]!.take(ticks[p]!)) taken[p]!.push(`${c.tick}:${c.player}:${c.cmd.type}`);
+          if (ticks[p]! % 10 === 0) ls[p]!.submit({ type: 'noop' });
+          ticks[p]!++;
+        }
+        clock.advance(TICK_MS);
+      }
+    };
+    run([0, 1, 2], 2000);
+    // Player 2 vanishes (stops sending); the others stall waiting for it.
+    ts[2]!.close();
+    run([0, 1], 2000);
+    const stalled = [ticks[0]!, ticks[1]!];
+    run([0, 1], 1000);
+    expect([ticks[0], ticks[1]]).toEqual(stalled);
+    // Player 0 votes to drop 2; player 1 joins in; both agree on the same turn and go on.
+    ls[0]!.proposeDrop(2);
+    run([0, 1], 3000);
+    expect(dropped[0]).toEqual(dropped[1]);
+    expect(dropped[0]).toHaveLength(1);
+    expect(dropped[0]![0]![0]).toBe(2);
+    expect(ticks[0]).toBeGreaterThan(stalled[0]! + 20);
+    // Both applied exactly the same commands.
+    const n = Math.min(taken[0]!.length, taken[1]!.length);
+    expect(taken[0]!.slice(0, n)).toEqual(taken[1]!.slice(0, n));
+  });
 });
