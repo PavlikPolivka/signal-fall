@@ -129,7 +129,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 101 | K | Campaign: 15 missions with briefings and videos ([CAMPAIGN.md](CAMPAIGN.md)) | 5 | XL |
 | 102 ✅ | K | Map editor in the browser, share maps by code | 4 | L |
 | 103 ✅ | K | Hand-made competitive maps alongside generated ones | 4 | M |
-| 104 | K | Survival / co-op mode: hold out against waves with a friend | 4 | L |
+| 104 ✅ | K | Survival / co-op mode: hold out against waves with a friend | 4 | L |
 | 105 | K | Fourth faction (later) | 4 | XL |
 | 106 ✅ | K | Daily challenge: same seed and setup for everyone, leaderboard by time | 3 | M |
 | 107 ✅ | K | Free-for-all 3–4 players | 3 | M |

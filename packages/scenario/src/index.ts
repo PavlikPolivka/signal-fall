@@ -1,7 +1,7 @@
 import { defaultRules } from '@signal-fall/data';
 import { Sim, createMatch, grantBase, sandbox, type ScheduledCommand } from '@signal-fall/sim';
 import { customToGenerated, decodeMap, generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
-import { attachAi, type Difficulty, type StrategyName } from '@signal-fall/ai';
+import { attachAi, HordeBrain, type Difficulty, type StrategyName } from '@signal-fall/ai';
 
 /**
  * A seat played by an AI agent (an LLM or a program over the agent API) rather than a
@@ -39,6 +39,8 @@ export type ScenarioSpec =
       map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean; custom?: string };
       /** AI personality per slot (a strategy it always plays); null or missing: drawn per match. */
       personality?: (StrategyName | null)[];
+      /** Survival: the last slot is the horde, which sends waves at everyone else (they are one team). */
+      survival?: 'easy' | 'normal' | 'hard';
       /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */
       time?: 'day' | 'dusk' | 'night';
     }
@@ -61,15 +63,23 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
   switch (spec.kind) {
     case 'skirmish': {
       // A hand-made map (share code) or a generated one.
-      const map = spec.map.custom ? customToGenerated(decodeMap(spec.map.custom)) : generateMap({ seed: spec.seed, players: spec.factions.length, ...spec.map });
+      // Survival: the horde (last slot) needs no start of its own; it gets the map center.
+      const horde = spec.survival ? spec.factions.length - 1 : undefined;
+      const players = horde !== undefined ? Math.max(2, horde) : spec.factions.length;
+      const map = spec.map.custom ? customToGenerated(decodeMap(spec.map.custom)) : generateMap({ seed: spec.seed, players, ...spec.map });
+      if (horde !== undefined) map.starts = [...map.starts.slice(0, horde), { x: map.width >> 1, y: map.height >> 1 }];
       const sim = createMatch({
         rules,
         seed: spec.seed,
         map,
         players: spec.factions.map((faction, k) => ({ faction, team: spec.teams?.[k] ?? k })),
         crates: spec.map.crates,
+        survivalHorde: horde,
+        survivalPct: spec.survival === 'easy' ? 70 : spec.survival === 'hard' ? 170 : 125,
       });
+      if (horde !== undefined) sim.addBrain(new HordeBrain(horde));
       spec.ai.forEach((difficulty, p) => {
+        if (p === horde) return;
         // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.
         if (difficulty) attachAi(sim, p, difficulty, map.starts, { strategy: spec.personality?.[p] ?? undefined });
         else if (spec.agents?.[p]?.autopilot) {

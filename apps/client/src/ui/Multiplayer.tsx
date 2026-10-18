@@ -380,6 +380,7 @@ export function Multiplayer({
                   ['2v2', '2 vs 2'],
                   ['ffa3', 'Free-for-all (3)'],
                   ['ffa4', 'Free-for-all (4)'],
+                  ['coop', 'Co-op survival'],
                 ]}
                 onChange={(m) => lobby.setMode(m)}
                 testid="mp-mode"

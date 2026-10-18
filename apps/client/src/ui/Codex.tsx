@@ -600,6 +600,12 @@ function BuildingRules({ rules }: { rules: Rules }) {
         far around it, and a <b>repair depot</b> mends your units that stand by it (machines and soldiers; Choir crystal heals on its own).
         Enemy units next to a point stop a capture, and a defeated player's points go neutral.
       </p>
+      <h3>Survival</h3>
+      <p>
+        In <b>Survival</b> (skirmish mode, or <b>Co-op survival</b> in a multiplayer room) there is no enemy base: fifteen waves come in from
+        the map edges, the first at 2:30 and then every 75 seconds, each bigger and with heavier units. Hold out through all of them and
+        clear the last to win; lose every building and the waves win. With a partner the waves are bigger.
+      </p>
       <h3>King of the hill</h3>
       <p>
         With <b>Victory: King of the hill</b>, a flag stands at the center of the map. It is taken like a capture point; the side holding it

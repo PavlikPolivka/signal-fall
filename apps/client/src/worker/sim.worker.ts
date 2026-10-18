@@ -58,6 +58,10 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
   a[H.stalled] = stalled ? 1 : 0;
   a[H.pointCount] = world.points.length;
   a[H.crateCount] = world.crates?.list.length ?? 0;
+  const sv = world.survival;
+  a[H.wave] = sv?.wave ?? 0;
+  a[H.waves] = sv?.waves ?? 0;
+  a[H.waveIn] = sv && sv.wave < sv.waves ? sv.nextTick - world.tick : -1;
   let off = HEADER_LEN;
   for (const p of world.players) {
     a[off + P.credits] = p.credits;

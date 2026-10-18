@@ -24,6 +24,9 @@ export interface MatchSetup {
   players: PlayerSetup[];
   /** Crates drop on the map now and then. */
   crates?: boolean;
+  /** Survival: this player is the horde (no construction unit, scripted waves). */
+  survivalHorde?: number;
+  survivalPct?: number;
 }
 
 /** A real match: each player starts with one construction unit and the starting credits. */
@@ -40,8 +43,11 @@ export function createMatch(setup: MatchSetup): Sim {
     victoryRules: true,
     points: map.points,
     crates: setup.crates,
+    survivalHorde: setup.survivalHorde,
+    survivalPct: setup.survivalPct,
   });
   setup.players.forEach((p, i) => {
+    if (i === setup.survivalHorde) return;
     const start = map.starts[i]!;
     const cu = rules.factions[p.faction]!.constructionUnit;
     spawnUnit(sim.world, cu, i, (start.x << FX_SHIFT) + FX_HALF, (start.y << FX_SHIFT) + FX_HALF);

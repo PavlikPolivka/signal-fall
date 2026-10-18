@@ -108,12 +108,16 @@ export const H = {
   stalled: 6,
   pointCount: 7,
   crateCount: 8,
+  /** Survival: waves sent, waves in all, ticks to the next (or -1). */
+  wave: 9,
+  waves: 10,
+  waveIn: 11,
 } as const;
 /** Crates after the capture points: [x, y, kind]. */
 export const CRATE_STRIDE = 3;
 /** Capture points after the projectiles: [x, y, kind, owner, capturer team, progress ticks]. */
 export const POINT_STRIDE = 6;
-export const HEADER_LEN = 9;
+export const HEADER_LEN = 12;
 
 export const P = {
   credits: 0,

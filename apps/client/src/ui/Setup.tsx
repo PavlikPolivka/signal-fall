@@ -17,7 +17,10 @@ import { account, backend, type Account as AccountInfo } from '../net/backend';
 
 export interface SkirmishSettings extends MapChoice {
   /** 1v1, 2v2 (you and an AI ally against two AIs), or free-for-all against two or three AIs. */
-  mode: '1v1' | '2v2' | 'ffa3' | 'ffa4';
+  mode: '1v1' | '2v2' | 'ffa3' | 'ffa4' | 'survival';
+  /** Survival: alone or with an AI ally, and how big the waves get. */
+  survivalAlly?: boolean;
+  survivalLevel?: 'easy' | 'normal' | 'hard';
   faction: number;
   enemyFaction: number;
   /** Enemy AI difficulty. */
@@ -300,20 +303,49 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
                 ['2v2', '2 vs 2'],
                 ['ffa3', 'Free-for-all (3)'],
                 ['ffa4', 'Free-for-all (4)'],
+                ['survival', 'Survival (waves)'],
               ]}
               onChange={(v) => set({ mode: v })}
               testid="mode"
             />
+            {s.mode === 'survival' && (
+              <>
+                <Choice
+                  label="Waves"
+                  value={s.survivalLevel ?? 'normal'}
+                  options={[
+                    ['easy', 'Easy'],
+                    ['normal', 'Normal'],
+                    ['hard', 'Hard'],
+                  ]}
+                  onChange={(v) => set({ survivalLevel: v })}
+                  testid="survival-level"
+                />
+                <Choice
+                  label="Ally"
+                  value={s.survivalAlly ? 'yes' : 'no'}
+                  options={[
+                    ['no', 'Alone'],
+                    ['yes', 'With an AI ally'],
+                  ]}
+                  onChange={(v) => set({ survivalAlly: v === 'yes' })}
+                  testid="survival-ally"
+                />
+                <p class="setup-note">Hold out through 15 waves from the map edges; the first comes at 2:30. The waves are made of the "Opponent" faction.</p>
+              </>
+            )}
             <Choice label="You play" value={s.faction} options={factions} onChange={(v) => set({ faction: v })} testid="faction" />
-            {s.mode === '2v2' && (
+            {(s.mode === '2v2' || (s.mode === 'survival' && s.survivalAlly)) && (
               <>
                 <Choice label="Ally" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="ally" />
                 <Choice label="Ally skill" value={s.allyDifficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ allyDifficulty: v })} testid="ally-difficulty" />
               </>
             )}
-            <Choice label={s.mode === '1v1' ? 'Opponent' : 'Enemy 1'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
-            {s.mode !== '1v1' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
+            <Choice label={s.mode === '1v1' ? 'Opponent' : s.mode === 'survival' ? 'The waves' : 'Enemy 1'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
+            {s.mode !== '1v1' && s.mode !== 'survival' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
             {s.mode === 'ffa4' && <Choice label="Enemy 3" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="enemy3" />}
+            {s.mode !== 'survival' && (
+              <>
             <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
             <p class="setup-note" data-testid="difficulty-info">{DIFFICULTY_INFO[s.difficulty]}</p>
             <Choice
@@ -324,6 +356,8 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
               testid="personality"
             />
             <p class="setup-note">{PERSONALITIES.find(([v]) => v === (s.personality ?? 'random'))![2]}</p>
+              </>
+            )}
           </section>
           <section>
             <h2>Map</h2>

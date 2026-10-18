@@ -5,7 +5,7 @@ import type { ScenarioSpec } from '../protocol';
 import { PeerLink } from './webrtc';
 import type { Signaling } from './signaling';
 
-export type LobbyMode = '1v1' | '2v2' | 'ffa3' | 'ffa4';
+export type LobbyMode = '1v1' | '2v2' | 'ffa3' | 'ffa4' | 'coop';
 
 export interface LobbyPlayer {
   /** Signaling id (this connection). */
@@ -72,12 +72,24 @@ export function roomCode(): string {
 }
 
 function emptySlots(mode: LobbyMode): LobbySlot[] {
-  const teams = mode === '2v2' ? [0, 0, 1, 1] : mode === 'ffa3' ? [0, 1, 2] : mode === 'ffa4' ? [0, 1, 2, 3] : [0, 1];
+  const teams = mode === '2v2' ? [0, 0, 1, 1] : mode === 'ffa3' ? [0, 1, 2] : mode === 'ffa4' ? [0, 1, 2, 3] : mode === 'coop' ? [0, 0] : [0, 1];
   return teams.map((team, k) => ({ team, kind: 'open', faction: k % 3, difficulty: 'normal' }));
 }
 
 /** The match a lobby describes: per slot faction, AI, team; people's slots are `humans`. */
 export function scenarioOf(s: LobbyState): ScenarioSpec {
+  // Co-op survival: everyone on one team against the waves (an extra, scripted slot).
+  if (s.mode === 'coop')
+    return {
+      kind: 'skirmish',
+      seed: s.seed,
+      factions: [...s.slots.map((x) => x.faction), s.seed % 3],
+      ai: [...s.slots.map((x) => (x.kind === 'ai' ? x.difficulty : null)), null],
+      humans: s.slots.flatMap((x, k) => (x.kind === 'human' ? [k] : [])),
+      teams: [...s.slots.map(() => 0), 1],
+      survival: 'normal',
+      map: s.map,
+    };
   return {
     kind: 'skirmish',
     seed: s.seed,

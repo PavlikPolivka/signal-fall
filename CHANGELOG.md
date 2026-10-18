@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-18 23:10 UTC
+
+- **Survival:** a new skirmish mode. Build up and hold out against 15 waves that come from the map edges, bigger every time, with heavier units as they go. Play alone or with an AI ally, on Easy, Normal or Hard waves. The top bar counts the waves and the time to the next.
+- **Co-op survival** in multiplayer rooms: you and a friend (or two friends, or friends and AI) on one side against the waves.
+
 ## 2026-10-18 22:48 UTC
 
 - **Map editor:** **Map editor** on the main menu. Paint ground, rough, rock, cliffs, water and city ruins, lay Echo fields and place the starts, with mirroring as you paint so every side gets the same land. **Check** tells you if it's fair and playable, **Play vs AI** tries it out, and every map has a code you can share; paste a code to load someone's map.

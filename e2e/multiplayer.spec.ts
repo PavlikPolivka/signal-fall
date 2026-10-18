@@ -366,3 +366,30 @@ test('free-for-all: three people, three teams, in sync', async ({ browser, brows
   for (const p of [host, a, b]) await expect(p.getByTestId('desync')).toHaveCount(0);
   await ctx.close();
 });
+
+test('co-op survival: two people on one team against the waves', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!!process.env.SUPABASE_URL, 'offline test (one browser profile)');
+  test.setTimeout(120_000);
+  type W = { __signalFall: { state: { cur: { tick: number } | null; players: { team: number }[] } } };
+  const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  const [host, guest] = await Promise.all([ctx.newPage(), ctx.newPage()]);
+  await host.goto('/play/');
+  await host.click('[data-testid=open-multiplayer]');
+  await host.click('[data-testid=mp-create]');
+  await host.click('[data-testid=mp-mode] [data-value="coop"]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  await guest.goto('/play/');
+  await guest.click('[data-testid=open-multiplayer]');
+  await guest.fill('[data-testid=mp-code]', code);
+  await guest.click('[data-testid=mp-join]');
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
+  await host.click('[data-testid=mp-start]');
+  for (const p of [host, guest]) await p.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 100, null, { timeout: 60_000 });
+  for (const p of [host, guest]) {
+    expect(await p.evaluate(() => (window as unknown as W).__signalFall.state.players.map((x) => x.team))).toEqual([0, 0, 1]);
+    await expect(p.getByTestId('wave-counter')).toBeVisible();
+    await expect(p.getByTestId('desync')).toHaveCount(0);
+  }
+  await ctx.close();
+});

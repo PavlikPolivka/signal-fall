@@ -18,3 +18,4 @@ export { AWAKEN_HOME_RANGE, canResearch, inCoverage, isPhased, nearOwnStructure,
 export { computeFacts } from './systems/economy';
 export { POINT, HILL_TICKS, CAPTURE_RADIUS, CAPTURE_TICKS, DERRICK_CREDITS, DEPOT_RADIUS, WATCHTOWER_SIGHT, type CapturePoint } from './systems/points';
 export { CRATE, CRATE_CREDITS, type Crate } from './systems/crates';
+export { SURVIVAL_WAVES, WAVE_GAP, FIRST_WAVE_TICK, waveBudget, type SurvivalState } from './systems/survival';

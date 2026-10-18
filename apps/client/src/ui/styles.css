@@ -2501,3 +2501,14 @@ label.check {
   display: flex;
   justify-content: space-between;
 }
+.wave-counter {
+  padding: 1px 8px;
+  font: 600 12px var(--mono);
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.wave-counter.soon {
+  color: #fff;
+  background: var(--bad);
+}

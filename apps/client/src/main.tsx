@@ -107,6 +107,20 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       time: s.time,
       personality: [null, null, style, style],
     };
+  // Survival: you (and maybe an AI ally) against the waves, which are the last slot.
+  if (s.mode === 'survival') {
+    const factions = s.survivalAlly ? [s.faction, s.allyFaction, s.enemyFaction] : [s.faction, s.enemyFaction];
+    return {
+      kind: 'skirmish',
+      seed: s.seed,
+      factions,
+      ai: s.survivalAlly ? [null, s.allyDifficulty, null] : [null, null],
+      teams: s.survivalAlly ? [0, 0, 1] : [0, 1],
+      survival: s.survivalLevel ?? 'normal',
+      map,
+      time: s.time,
+    };
+  }
   // Free-for-all: everyone on their own team.
   if (s.mode === 'ffa3' || s.mode === 'ffa4') {
     const factions = [s.faction, s.enemyFaction, s.enemy2Faction, s.allyFaction].slice(0, s.mode === 'ffa3' ? 3 : 4);

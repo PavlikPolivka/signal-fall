@@ -41,6 +41,7 @@ export interface SeatLabel {
 export function seatLabels(scenario: import('./scenario').ScenarioSpec, localPlayer: number, spectator: boolean): SeatLabel[] {
   if (scenario.kind !== 'skirmish') return [];
   return scenario.factions.map((_, k) => {
+    if (scenario.survival && k === scenario.factions.length - 1) return { kind: 'ai', label: 'The waves' };
     const agent = scenario.agents?.[k];
     if (agent) return { kind: 'agent', label: agent.name, model: agent.model };
     const ai = scenario.ai[k];

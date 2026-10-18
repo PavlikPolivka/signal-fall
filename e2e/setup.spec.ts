@@ -82,3 +82,12 @@ test('a hand-made map can be picked for a skirmish', async ({ page }) => {
   await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur, null, { timeout: 30_000 });
   expect(await page.evaluate(() => (window as unknown as { __signalFall: { state: { width: number; biome: string } } }).__signalFall.state.width)).toBe(128);
 });
+
+test('survival: the wave counter shows the waves to come', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-skirmish]');
+  await page.click('[data-testid=mode] [data-value=survival]');
+  await page.click('[data-testid=start]');
+  await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur, null, { timeout: 30_000 });
+  await expect(page.getByTestId('wave-counter')).toContainText('Wave 0/15');
+});

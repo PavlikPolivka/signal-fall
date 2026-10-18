@@ -108,6 +108,7 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
       )}
       {!state.spectator && <ArmyCounts state={state} />}
       <HillScore state={state} />
+      <WaveCounter state={state} />
       {idle.harvesters.length > 0 && (
         <button class="idle-btn warn" data-testid="idle-harvesters" title="Idle harvesters: click (or E) to jump to one" onClick={() => input.selectIdle('harvesters')}>
           {idle.harvesters.length} idle harvester{idle.harvesters.length > 1 ? 's' : ''}
@@ -171,6 +172,22 @@ function EventLog({ state, input }: { state: ClientState; input: Input }) {
         </button>
       ))}
     </div>
+  );
+}
+
+/** Survival: which wave, out of how many, and when the next comes. */
+function WaveCounter({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur || !cur.a[H.waves]) return null;
+  const wave = cur.a[H.wave]!;
+  const waves = cur.a[H.waves]!;
+  const next = cur.a[H.waveIn]!;
+  const clock = (t: number) => `${Math.floor(t / 1200)}:${String(Math.floor(t / 20) % 60).padStart(2, '0')}`;
+  return (
+    <span class={`wave-counter ${next >= 0 && next < 200 ? 'soon' : ''}`} data-testid="wave-counter" title="Survival: hold out through every wave">
+      Wave {wave}/{waves}
+      {next >= 0 ? <> · next in {clock(next)}</> : <> · last one: finish them</>}
+    </span>
   );
 }
 

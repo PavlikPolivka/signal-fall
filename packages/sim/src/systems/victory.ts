@@ -1,6 +1,7 @@
 import { KIND } from '../entities';
 import type { World } from '../world';
 import { HILL_TICKS } from './points';
+import { hordeBeaten } from './survival';
 
 /**
  * A player is defeated when they have no structures and no construction units
@@ -17,7 +18,16 @@ export function victorySystem(world: World): void {
       if (e.kind[s] === KIND.structure) hasBase[owner] = true;
       else if (e.kind[s] === KIND.unit && e.type[s] === world.rules.factions[world.players[owner]!.faction]!.constructionUnit) hasBase[owner] = true;
     }
-    for (const p of world.players) if (!hasBase[p.index]) p.defeated = true;
+    // The survival horde has no base to lose.
+    for (const p of world.players) if (!hasBase[p.index] && p.index !== world.survival?.horde) p.defeated = true;
+  }
+  if (world.survival) {
+    // Every wave held off: the defenders win.
+    if (hordeBeaten(world)) {
+      world.ended = true;
+      world.winnerTeam = world.players.find((p) => p.index !== world.survival!.horde)!.team;
+      return;
+    }
   }
   const teamsAtStart = new Set(world.players.map((p) => p.team));
   if (teamsAtStart.size < 2) return;
