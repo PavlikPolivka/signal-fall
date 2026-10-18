@@ -73,6 +73,7 @@ function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null 
 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
   const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain };
+  const style = s.personality && s.personality !== 'random' ? s.personality : null;
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
   if (s.mode === '2v2')
     return {
@@ -83,8 +84,9 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       teams: [0, 0, 1, 1],
       map,
       time: s.time,
+      personality: [null, null, style, style],
     };
-  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map, time: s.time };
+  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map, time: s.time, personality: [null, style] };
 }
 
 /** ?rematch: the last skirmish setup again (same map, sides and AI), straight into the match. */

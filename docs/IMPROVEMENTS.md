@@ -48,7 +48,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 30 ✅ | A | AI counters what it scouts (it already weights by armor; make it react within a minute) | 4 | S |
 | 31 | E | Tech choices that matter: each faction gets 2 mutually exclusive tier-2 upgrades (a real decision) | 4 | M |
 | 32 | E | Map control: capturable Echo relays / derricks that give income or vision | 4 | M |
-| 33 | E | Unit roles sharpened: every unit has one clear job and one clear counter, shown in the Codex and on hover | 4 | M |
+| 33 ✅ | E | Unit roles sharpened: every unit has one clear job and one clear counter, shown in the Codex and on hover | 4 | M |
 | 34 | E | Faster mid-game: unit caps, build times and costs tuned so the first real fight is around minute 5–7 | 4 | S |
 | 35 ✅ | G | Better terrain: blended texture transitions, cliffs with edges, decals (craters, tracks) that persist | 5 | M |
 | 36 ✅ | G | Lighting pass: soft shadows, glow on Echo and energy weapons, night-time maps with light radius | 4 | M |
@@ -96,7 +96,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 73 | E | Harvester economy depth: refinery queue logic, harvester escorts matter, raids are punishing but recoverable | 3 | S |
 | 74 | E | Crates (rare pickups) on skirmish maps, optional | 2 | S |
 | 75 ✅ | A | AI difficulty describes itself in the menu (what it does, how fast) | 2 | XS |
-| 76 | A | AI personalities with names in skirmish (Aggressive Ada, Turtle Tomas) | 3 | S |
+| 76 ✅ | A | AI personalities with names in skirmish (Aggressive Ada, Turtle Tomas) | 3 | S |
 | 77 ✅ | A | AI uses abilities well (blink in, override, phase) at Hard+ | 3 | M |
 | 78 ✅ | A | AI scouts and harasses harvesters on Normal+ | 3 | S |
 | 79 ✅ | G | Unit idle animations and turret tracking even when not firing | 3 | M |

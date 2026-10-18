@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-18 18:38 UTC
+
+- **Opponent style:** pick who you play against in the skirmish setup: Steady Sam (balanced), Rusher Rita (early pressure), Tech Tara (heavy units later), Turtle Tomas (defenses, then one big push) or Raider Rex (fast units after your harvesters). Random still picks a plan each match.
+- **Know your counters:** every unit's card in the sidebar lists the enemy units that beat it.
+
 ## 2026-10-18 18:34 UTC
 
 - **Dusk and night:** pick the time of day in the skirmish setup. At night the battlefield goes dark blue, buildings throw warm pools of light, units carry lamps and Echo glows cyan. It changes the look only: vision is the same.

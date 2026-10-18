@@ -44,7 +44,9 @@ export function seatLabels(scenario: import('./scenario').ScenarioSpec, localPla
     const agent = scenario.agents?.[k];
     if (agent) return { kind: 'agent', label: agent.name, model: agent.model };
     const ai = scenario.ai[k];
-    if (ai) return { kind: 'ai', label: `AI (${ai[0]!.toUpperCase()}${ai.slice(1)})` };
+    const style = scenario.personality?.[k];
+    const name = style ? { balanced: 'Steady Sam', rush: 'Rusher Rita', tech: 'Tech Tara', turtle: 'Turtle Tomas', raider: 'Raider Rex' }[style] : null;
+    if (ai) return { kind: 'ai', label: `${name ? `${name}, ` : ''}AI (${ai[0]!.toUpperCase()}${ai.slice(1)})` };
     if (k === localPlayer && !spectator) return { kind: 'you', label: 'You' };
     return { kind: 'person', label: `Player ${k + 1}` };
   });

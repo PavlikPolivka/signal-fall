@@ -1,7 +1,7 @@
 import { defaultRules } from '@signal-fall/data';
 import { Sim, createMatch, grantBase, sandbox, type ScheduledCommand } from '@signal-fall/sim';
 import { generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
-import { attachAi, type Difficulty } from '@signal-fall/ai';
+import { attachAi, type Difficulty, type StrategyName } from '@signal-fall/ai';
 
 /**
  * A seat played by an AI agent (an LLM or a program over the agent API) rather than a
@@ -37,6 +37,8 @@ export type ScenarioSpec =
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
       map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
+      /** AI personality per slot (a strategy it always plays); null or missing: drawn per match. */
+      personality?: (StrategyName | null)[];
       /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */
       time?: 'day' | 'dusk' | 'night';
     }
@@ -67,7 +69,7 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
       });
       spec.ai.forEach((difficulty, p) => {
         // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.
-        if (difficulty) attachAi(sim, p, difficulty, map.starts);
+        if (difficulty) attachAi(sim, p, difficulty, map.starts, { strategy: spec.personality?.[p] ?? undefined });
         else if (spec.agents?.[p]?.autopilot) {
           const level = spec.agents[p]!.autopilot;
           attachAi(sim, p, level === true ? 'hard' : (level as Difficulty), map.starts, { directed: true });

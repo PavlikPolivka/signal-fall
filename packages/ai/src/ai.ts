@@ -25,7 +25,7 @@ import {
   type World,
 } from '@signal-fall/sim';
 import { PROFILES, type Difficulty, type DifficultyProfile } from './difficulty';
-import { STRATEGIES, STRATEGY_POOL, type Strategy } from './strategy';
+import { STRATEGIES, STRATEGY_POOL, type Strategy, type StrategyName } from './strategy';
 
 const MINUTE = 1200;
 /** Forget enemies not seen for this long. */
@@ -121,7 +121,11 @@ export class AiPlayer implements Brain {
   /** This think's plan (directed only). */
   private plan: Directives = {};
 
-  constructor(opts: { player: number; difficulty: Difficulty; profile: AiProfile; starts: { x: number; y: number }[]; directed?: boolean }) {
+  /** A personality picked in the setup instead of drawn at random. */
+  private readonly forced: StrategyName | null;
+
+  constructor(opts: { player: number; difficulty: Difficulty; profile: AiProfile; starts: { x: number; y: number }[]; directed?: boolean; strategy?: StrategyName }) {
+    this.forced = opts.strategy ?? null;
     this.player = opts.player;
     this.difficulty = opts.difficulty;
     this.d = PROFILES[opts.difficulty];
@@ -219,7 +223,9 @@ export class AiPlayer implements Brain {
     this.strategyChosen = true;
     if (this.directed) return;
     const pool = STRATEGY_POOL[this.difficulty]!;
-    const st = STRATEGIES[pool[world.aiRng[this.player]!.int(pool.length)]!];
+    // The draw happens either way, so the AI's random stream stays the same.
+    const drawn = pool[world.aiRng[this.player]!.int(pool.length)]!;
+    const st = STRATEGIES[this.forced ?? drawn];
     this.strategy = st;
     const base = this.d;
     this.d = {

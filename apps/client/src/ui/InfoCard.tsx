@@ -41,6 +41,17 @@ function WeaponRows({ rules, w }: { rules: Rules; w: WeaponRule }) {
   );
 }
 
+/** Enemy units (other factions) that hit this armor hardest: what beats it. */
+export function counters(rules: Rules, faction: number, armor: number, max = 3): UnitRule[] {
+  const air = armor === 3;
+  return rules.units
+    .filter((u) => u.faction !== faction && u.weapon && (air ? u.weapon.targetsAir : u.weapon.targetsGround))
+    .map((u) => [u, rules.damageMatrix[u.weapon!.type * ARMOR.length + armor]! * u.weapon!.damage * rules.constants.tickRate / u.weapon!.cooldown] as const)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, max)
+    .map(([u]) => u);
+}
+
 /** Rich hover card for a buildable structure or unit. */
 export function ItemCard({ state, rule }: { state: ClientState; rule: StructureRule | UnitRule }) {
   const rules = state.rules;
@@ -96,6 +107,12 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
           </>
         )}
         {rule.weapon && <WeaponRows rules={rules} w={rule.weapon} />}
+        {rule.kind === 'unit' && (
+          <>
+            <dt>Beaten by</dt>
+            <dd class="bad">{counters(rules, rule.faction, rule.armor).map((u) => `${u.name} (${rules.factions[u.faction]!.name})`).join(', ')}</dd>
+          </>
+        )}
       </dl>
       {rule.kind === 'unit' && <UnitUpgrades state={state} rule={rule} />}
       {missing.length > 0 && <p class="req bad">Requires {roleNames(rules, rule.faction, missing)}</p>}

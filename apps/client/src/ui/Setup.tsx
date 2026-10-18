@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { Rules } from '@signal-fall/data';
-import type { Difficulty } from '@signal-fall/ai';
+import type { Difficulty, StrategyName } from '@signal-fall/ai';
 import { clock, recentMatches, savedGame } from '../game/saves';
 import { Codex } from './Codex';
 import { Changes } from './Changes';
@@ -23,6 +23,8 @@ export interface SkirmishSettings extends MapChoice {
   allyFaction: number;
   allyDifficulty: Difficulty;
   enemy2Faction: number;
+  /** Enemy AI personality (a fixed strategy), or random per match. */
+  personality?: StrategyName | 'random';
   /** Lighting: day, dusk or night (looks only). */
   time?: 'day' | 'dusk' | 'night';
 }
@@ -41,6 +43,16 @@ const DIFFICULTY_INFO: Record<Difficulty, string> = {
   hard: 'Plays like a good player: fast, raids your harvesters, retreats from lost fights, focuses fire and uses every ability.',
   brutal: 'Hard, plus 25% more income from every harvest. The only level that cheats.',
 };
+
+/** AI personalities: each always plays one strategy. */
+export const PERSONALITIES: [StrategyName | 'random', string, string][] = [
+  ['random', 'Random', 'A different plan every match'],
+  ['balanced', 'Steady Sam', 'Even economy and army, attacks when ready'],
+  ['rush', 'Rusher Rita', 'Cheap units early and often'],
+  ['tech', 'Tech Tara', 'Builds up, then comes with heavy units'],
+  ['turtle', 'Turtle Tomas', 'Walls in behind defenses, attacks late and hard'],
+  ['raider', 'Raider Rex', 'Fast units and air hunting your harvesters'],
+];
 
 /** One-click setups; the map seed is fresh each time. */
 const PRESETS: { id: string; label: string; title: string; patch: Partial<SkirmishSettings> }[] = [
@@ -290,6 +302,14 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
             {s.mode === '2v2' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
             <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
             <p class="setup-note" data-testid="difficulty-info">{DIFFICULTY_INFO[s.difficulty]}</p>
+            <Choice
+              label="Opponent style"
+              value={s.personality ?? 'random'}
+              options={PERSONALITIES.map(([v, label]) => [v, label] as [StrategyName | 'random', string])}
+              onChange={(v) => set({ personality: v })}
+              testid="personality"
+            />
+            <p class="setup-note">{PERSONALITIES.find(([v]) => v === (s.personality ?? 'random'))![2]}</p>
           </section>
           <section>
             <h2>Map</h2>
