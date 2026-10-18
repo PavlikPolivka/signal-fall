@@ -17,6 +17,8 @@ export interface LockstepOptions {
   onDesync?: (tick: number, local: number, remote: number, player: number) => void;
   /** Clock for RTT measurement (ms). */
   now?: () => number;
+  /** First turn to play (a resumed match starts mid-way). */
+  startTurn?: number;
 }
 
 /**
@@ -51,8 +53,10 @@ export class LockstepScheduler {
     this.onDesync = o.onDesync;
     this.now = o.now ?? (() => Date.now());
     // Turns before the first possible input are empty for everyone.
-    for (let t = 0; t < this.delay; t++) for (const p of this.peers) this.record(t, p, []);
-    this.nextSendTurn = this.delay;
+    const start = o.startTurn ?? 0;
+    for (let t = start; t < start + this.delay; t++) for (const p of this.peers) this.record(t, p, []);
+    this.nextSendTurn = start + this.delay;
+    this.lastFlushedTurn = start - 1;
     this.transport.onMessage((m) => this.receive(m));
   }
 

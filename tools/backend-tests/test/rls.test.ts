@@ -56,6 +56,15 @@ describe.skipIf(!URL || !ANON)('backend row level security', () => {
     }
   });
 
+  it('crash reports are write-only for players and size-capped', async () => {
+    const r = await a.sb.from('client_errors').insert({ message: 'boom', stack: 'at x', path: '/play/', context: 'menu', client_version: 'test' });
+    expect(r.error).toBeNull();
+    expect((await a.sb.from('client_errors').select('id')).data).toHaveLength(0);
+    expect((await a.sb.from('client_errors').insert({ message: 'x'.repeat(3000) })).error).not.toBeNull();
+    // Nobody files a report in someone else's name.
+    expect((await a.sb.from('client_errors').insert({ message: 'spoof', reporter: b.id })).error).not.toBeNull();
+  });
+
   it('realtime broadcast carries signaling between two players', async () => {
     const room = `room:${code()}`;
     const got = new Promise<unknown>((resolve) => {

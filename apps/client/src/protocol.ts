@@ -5,6 +5,9 @@ import type { MatchStats, Replay, ScenarioSpec } from './game/scenario';
 
 export type { ScenarioSpec };
 
+/** What a requested replay is for: a file download, the save slot, or the recent-matches list. */
+export type ReplayPurpose = 'download' | 'save' | 'recent';
+
 export type ToWorker =
   | {
       type: 'start';
@@ -18,6 +21,8 @@ export type ToWorker =
       replay?: Replay;
       /** The replay is a match still being played: more arrives in 'live' messages. */
       live?: boolean;
+      /** Continue a saved skirmish: fast-forward through its orders, then play on. */
+      resume?: Replay;
     }
   | { type: 'speed'; speed: number }
   /**
@@ -27,7 +32,7 @@ export type ToWorker =
    */
   | { type: 'live'; commands: ScheduledCommand[]; until: number; hash?: number }
   /** Ask for the match so far as a replay file. */
-  | { type: 'saveReplay' }
+  | { type: 'saveReplay'; purpose?: ReplayPurpose }
   /** Ask for the statistics so far (match report mid-game or after a replay). */
   | { type: 'requestStats' }
   | { type: 'command'; cmd: Command }
@@ -66,7 +71,7 @@ export type FromWorker =
     }
   /** A lockstep message for the remote peers. */
   | { type: 'net'; msg: NetMessage }
-  | { type: 'replay'; json: string }
+  | { type: 'replay'; json: string; purpose: ReplayPurpose }
   /** The match's statistics (sent when it ends, or on request). */
   | { type: 'stats'; stats: MatchStats }
   /** The match ended (live play, not replays): for the match record. */

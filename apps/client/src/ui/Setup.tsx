@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { Rules } from '@signal-fall/data';
 import type { Difficulty } from '@signal-fall/ai';
+import { clock, recentMatches, savedGame } from '../game/saves';
 import { Codex } from './Codex';
 import { Changes } from './Changes';
 import { Logo } from './Logo';
@@ -55,6 +56,41 @@ export function loadSaved(): Partial<SkirmishSettings> {
   } catch {
     return {};
   }
+}
+
+/** Continue the saved skirmish, or watch one of the last matches played in this browser. */
+function SavedAndRecent({ onReplay }: { onReplay: (r: Replay) => void }) {
+  const save = savedGame();
+  const recent = recentMatches();
+  const [open, setOpen] = useState(false);
+  if (!save && recent.length === 0) return null;
+  const when = (at: number) => new Date(at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return (
+    <div class="saved" data-testid="saved">
+      {save && (
+        <button class="continue" data-testid="continue" onClick={() => (location.href = `${location.pathname}?continue=1`)}>
+          Continue: {save.meta.label} at {clock(save.meta.tick)} <span class="muted">({when(save.meta.at)})</span>
+        </button>
+      )}
+      {recent.length > 0 && (
+        <button class="link" data-testid="recent-toggle" onClick={() => setOpen(!open)}>
+          Recent matches ({recent.length})
+        </button>
+      )}
+      {open && (
+        <ul class="recent" data-testid="recent">
+          {recent.map((r) => (
+            <li>
+              <span>
+                {r.meta.label} · {clock(r.meta.tick)} · <span class="muted">{when(r.meta.at)}</span>
+              </span>
+              <button onClick={() => onReplay(parseReplay(r.json))}>Watch</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 /** The menu frame: background video, the logo on top, content anchored to the bottom. */
@@ -142,6 +178,7 @@ export function Setup({
           </button>
         )}
         {notice && <p class="home-notice">{notice}</p>}
+        <SavedAndRecent onReplay={onReplay} />
         <div class="home-actions">
           <button class="start" onClick={() => setSkirmish(true)} data-testid="open-skirmish">
             Skirmish vs AI

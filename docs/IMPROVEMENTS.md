@@ -81,7 +81,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 58 ✅ | C | Select all of a type across the screen with Ctrl+double-click | 2 | XS |
 | 59 ✅ | C | Waypoint queue shown as lines when Shift is held | 3 | S |
 | 60 ✅ | C | Stop / hold / scatter on the command card with hover hints | 2 | XS |
-| 61 | C | Smart cast: abilities on a group cast with the nearest available unit | 3 | S |
+| 61 ✅ | C | Smart cast: abilities on a group cast with the nearest available unit | 3 | S |
 | 62 ✅ | U | Build grid overlay while placing (green / red tiles, power coverage, growth range) | 4 | S |
 | 63 ✅ | U | Show attack range circles while hovering a defense button or selected unit (Alt) | 3 | S |
 | 64 ✅ | U | Notification log (last 20 events, click to jump) | 3 | S |
@@ -89,7 +89,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 66 ✅ | U | Unit veterancy chevrons more visible; veteran units named in the selection panel | 2 | XS |
 | 67 ✅ | U | Upgrade research shown on unit cards (what it improves) | 2 | XS |
 | 68 ✅ | U | Sell and repair with clear cursors and refund amounts on hover | 3 | XS |
-| 69 | U | Warnings when a factory is blocked (rally point unreachable, exit blocked) | 3 | S |
+| 69 ✅ | U | Warnings when a factory is blocked (rally point unreachable, exit blocked) | 3 | S |
 | 70 | E | Superweapon-lite per faction at tier 3 (long cooldown, visible charge timer for all) | 4 | L |
 | 71 | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers | 3 | M |
 | 72 | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles | 4 | L |
@@ -110,7 +110,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 87 ✅ | V | Weapon sounds per unit type, distinct enough to hear what is fighting | 3 | M |
 | 88 | V | Building ambient loops (power hum, factory clanks) quietly near the camera | 2 | S |
 | 89 ✅ | V | Victory/defeat stingers and a short voice line | 2 | XS |
-| 90 | O | Main menu: continue last skirmish setup, recent replays list | 2 | S |
+| 90 ✅ | O | Main menu: continue last skirmish setup, recent replays list | 2 | S |
 | 91 ✅ | O | Loading screen tips and faction art while the map generates | 2 | XS |
 | 92 ✅ | O | Accessibility: colorblind team palettes, UI scale, subtitles for announcer | 3 | S |
 | 93 ✅ | O | Codex search and "how to beat X" pages | 2 | S |
@@ -118,9 +118,9 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 95 | M | Ranked queue (matchmaking by rating) | 3 | L |
 | 96 | M | Room browser for public games | 3 | M |
 | 97 ✅ | T | Performance: render culling, batch effects; 60 fps with 400 units on mid laptops | 4 | M |
-| 98 | T | Save and load skirmish (from the command log, like replays) | 4 | S |
+| 98 ✅ | T | Save and load skirmish (from the command log, like replays) | 4 | S |
 | 99 | T | Reconnect to a multiplayer match after a refresh | 3 | M |
-| 100 | T | Error reporting (anonymous) so crashes reach us | 3 | S |
+| 100 ✅ | T | Error reporting (anonymous) so crashes reach us | 3 | S |
 
 ## Tier 4: big bets
 
@@ -141,11 +141,11 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 111 | U | Remember camera position per match in replays | 1 | XS |
+| 111 ✅ | U | Remember camera position per match in replays | 1 | XS |
 | 112 ✅ | U | Confirm before surrender; "rematch" after skirmish | 2 | XS |
 | 113 ✅ | C | Mouse wheel zoom invert option | 1 | XS |
 | 114 ✅ | U | Clock shows game time and real time | 1 | XS |
-| 115 | G | Cursor set per faction | 2 | S |
+| 115 ✅ | G | Cursor set per faction | 2 | S |
 | 116 ✅ | V | Mute announcer separately from sound effects and music | 2 | XS |
 | 117 ✅ | U | Unit counts per type in the top bar (army composition at a glance) | 2 | XS |
 | 118 ✅ | C | Tab cycles subgroups in a mixed selection (already) with a visible highlight | 2 | XS |

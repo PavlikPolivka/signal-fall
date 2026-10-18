@@ -307,12 +307,26 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       desynced = false;
       paused = false;
       replayCmds = msg.replay ? commandsByTick(msg.replay.commands) : null;
+      stats = { interval: STATS_INTERVAL, players: sim.world.players.map((p) => ({ faction: p.faction, team: p.team })), samples: [{ tick: 0, players: sampleStats(sim.world) }] };
+      statsSent = false;
+      if (msg.resume) {
+        // A saved skirmish: replay its orders as fast as possible, then hand over (on a turn boundary).
+        const saved = commandsByTick(msg.resume.commands);
+        const end = msg.resume.endTick + (msg.resume.endTick % 2);
+        while (sim.tick < end && !sim.world.ended) {
+          for (const c of saved.get(sim.tick) ?? []) {
+            sim.schedule(c);
+            commandLog.push(c);
+          }
+          sim.step();
+          recordStats();
+        }
+      }
       // A live match starts as an empty replay with its end unknown.
       liveUntil = msg.live ? 0 : null;
       replayEnd = msg.replay && !msg.live ? { tick: msg.replay.endTick, hash: msg.replay.hash } : null;
-      stats = { interval: STATS_INTERVAL, players: sim.world.players.map((p) => ({ faction: p.faction, team: p.team })), samples: [{ tick: 0, players: sampleStats(sim.world) }] };
-      statsSent = false;
       lockstep = new LockstepScheduler({
+        startTurn: Math.ceil(sim.tick / 2),
         localPlayer,
         peers: msg.net ? msg.net.peers : [localPlayer],
         transport: port ?? new NullTransport(),
@@ -376,7 +390,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     case 'saveReplay': {
       if (!sim || !scenario) return;
       const replay: Replay = { format: 'signal-fall-replay', version: 1, scenario, localPlayer, commands: commandLog, endTick: sim.tick, hash: sim.hash() };
-      post({ type: 'replay', json: JSON.stringify(replay) });
+      post({ type: 'replay', json: JSON.stringify(replay), purpose: msg.purpose ?? 'download' });
       return;
     }
     case 'net':

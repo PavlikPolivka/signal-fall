@@ -1,4 +1,4 @@
-import { FX_SHIFT, KIND, PLACEMENT_MESSAGES, placementError } from '@signal-fall/sim';
+import { FX_SHIFT, KIND, PLACEMENT_MESSAGES, TERRAIN_SPEED_PCT, placementError } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E } from '../protocol';
 import type { ClientState, Mode } from '../game/state';
@@ -22,19 +22,39 @@ const DOUBLE_MS = 350;
 const svgCursor = (svg: string, x: number, y: number, fallback: string) =>
   `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${x} ${y}, ${fallback}`;
 
-/** Context cursors: what a click will do. */
-const CURSORS = {
-  move: svgCursor(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><g fill="none" stroke="#000" stroke-width="4"><path d="M12 3v18M3 12h18"/></g><g fill="none" stroke="#6dff8a" stroke-width="2"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="4"/></g></svg>',
-    12, 12, 'crosshair',
-  ),
-  attack: svgCursor(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="8" fill="none" stroke="#000" stroke-width="4"/><g fill="none" stroke="#ff5a5a" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 1v7M12 16v7M1 12h7M16 12h7"/></g></svg>',
-    12, 12, 'crosshair',
-  ),
-  select: 'pointer',
-  tool: 'cell',
-};
+/**
+ * Context cursors (what a click will do), drawn in the faction's style: Holdout a field
+ * crosshair in amber, Halcyon square brackets in cyan, the Choir a violet crystal diamond.
+ */
+function factionCursors(faction: string) {
+  const shape: Record<string, { color: string; move: string; attack: string }> = {
+    holdout: {
+      color: '#e8c35a',
+      move: '<path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="4"/>',
+      attack: '<circle cx="12" cy="12" r="8"/><path d="M12 1v7M12 16v7M1 12h7M16 12h7"/>',
+    },
+    halcyon: {
+      color: '#3ee6ff',
+      move: '<path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/><circle cx="12" cy="12" r="1.5"/>',
+      attack: '<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path d="M12 7v10M7 12h10"/>',
+    },
+    choir: {
+      color: '#c58cff',
+      move: '<path d="M12 3l6 9-6 9-6-9z"/>',
+      attack: '<path d="M12 1l9 11-9 11-9-11z"/><path d="M12 7v10"/>',
+    },
+  };
+  const f = shape[faction] ?? shape.holdout!;
+  const svg = (body: string, color: string) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><g fill="none" stroke="#000" stroke-width="4">${body}</g><g fill="none" stroke="${color}" stroke-width="2">${body}</g></svg>`;
+  return {
+    move: svgCursor(svg(f.move, f.color), 12, 12, 'crosshair'),
+    attack: svgCursor(svg(f.attack, '#ff5a5a'), 12, 12, 'crosshair'),
+    select: 'pointer',
+    tool: 'cell',
+  };
+}
+let CURSORS = factionCursors('holdout');
 
 
 /** Skirmish game speeds (- and = step through them). */
@@ -402,6 +422,12 @@ export class Input {
     else s.warn(`${power.name} needs ${roleName(s.rules, s.players[s.localPlayer]!.faction, power.requires)} and power`);
   }
 
+  /** Cursor set for the local player's faction (called once the match is known). */
+  useFactionCursors(): void {
+    const s = this.state;
+    CURSORS = factionCursors(s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.id ?? 'holdout');
+  }
+
   setMode(mode: Mode): void {
     this.state.mode = mode;
     this.canvas.style.cursor = mode === 'move' ? CURSORS.move : TARGET_MODES.includes(mode) ? CURSORS.attack : 'default';
@@ -509,7 +535,7 @@ export class Input {
     // A production building selected and the ground clicked: that's its new rally point.
     if (units.length === 0 && intent.kind !== 'select' && this.selectedFactory()) {
       const p = this.simPoint(sx, sy);
-      s.send({ type: 'rally', target: s.selection[0]!, x: p.x, y: p.y });
+      this.setRally(s.selection[0]!, p.x, p.y);
       this.renderer.ping(sx, sy, 0xe8c35a);
       return;
     }
@@ -605,7 +631,7 @@ export class Input {
     const y = Math.round(Math.max(0, Math.min(s.height - 0.01, v)) * FX);
     if (units.length === 0) {
       if (!factory) return false;
-      s.send({ type: 'rally', target: s.selection[0]!, x, y });
+      this.setRally(s.selection[0]!, x, y);
       return true;
     }
     const mode = s.mode;
@@ -649,7 +675,14 @@ export class Input {
         if (blink.length > 0) s.send({ type: 'ability', units: blink, x: p.x, y: p.y });
         const override = this.withAbility(units, 'override');
         if (override.length > 0) {
-          if (h >= 0 && s.isUnit(h) && s.teamOf(h) !== s.players[s.localPlayer]!.team) s.send({ type: 'ability', units: override, target: h });
+          if (h >= 0 && s.isUnit(h) && s.teamOf(h) !== s.players[s.localPlayer]!.team) {
+            // Smart cast: one Override per target, from the nearest ready unit; the rest keep theirs.
+            const tx = s.field(h, E.x);
+            const ty = s.field(h, E.y);
+            const d = (u: number) => Math.hypot(s.field(u, E.x) - tx, s.field(u, E.y) - ty);
+            const caster = override.reduce((a, b) => (d(b) < d(a) ? b : a));
+            s.send({ type: 'ability', units: [caster], target: h });
+          }
           else if (blink.length === 0) s.warn('Override: click an enemy vehicle');
         }
         break;
@@ -923,6 +956,48 @@ export class Input {
       } else if (this.isArmy(h) && s.field(h, E.target) < 0) army.push(h);
     }
     return { harvesters, army };
+  }
+
+  /** Ground regions (connected passable tiles), worked out once per map for rally checks. */
+  private regions: Int32Array | null = null;
+
+  private region(tile: number): number {
+    const s = this.state;
+    if (!this.regions || this.regions.length !== s.terrain.length) {
+      const r = new Int32Array(s.terrain.length).fill(-1);
+      let next = 0;
+      for (let start = 0; start < r.length; start++) {
+        if (r[start] !== -1 || TERRAIN_SPEED_PCT[s.terrain[start]!] === 0) continue;
+        const stack = [start];
+        r[start] = next;
+        while (stack.length > 0) {
+          const t = stack.pop()!;
+          const x = t % s.width;
+          for (const n of [x > 0 ? t - 1 : -1, x < s.width - 1 ? t + 1 : -1, t - s.width, t + s.width]) {
+            if (n < 0 || n >= r.length || r[n] !== -1 || TERRAIN_SPEED_PCT[s.terrain[n]!] === 0) continue;
+            r[n] = next;
+            stack.push(n);
+          }
+        }
+        next++;
+      }
+      this.regions = r;
+    }
+    return this.regions[tile] ?? -1;
+  }
+
+  /** Set a factory's rally point; warn when ground units could never walk there. */
+  setRally(factory: number, x: number, y: number): void {
+    const s = this.state;
+    s.send({ type: 'rally', target: factory, x, y });
+    const rule = s.ruleOf(factory) as StructureRule;
+    if (rule.produces === 'air') return;
+    const fx = (s.field(factory, E.x) >> FX_SHIFT) + 0;
+    const fy = (s.field(factory, E.y) >> FX_SHIFT) + Math.ceil(rule.footprintH / 2);
+    const from = this.region(Math.min(s.height - 1, fy) * s.width + Math.min(s.width - 1, fx));
+    const to = this.region((y >> FX_SHIFT) * s.width + (x >> FX_SHIFT));
+    if (to < 0) s.warn('Rally point is on blocked ground: units will gather as close as they can');
+    else if (from >= 0 && to !== from) s.warn("Rally point can't be reached from this factory: units will gather as close as they can");
   }
 
   /** Center the camera on a sim position (Q10). */

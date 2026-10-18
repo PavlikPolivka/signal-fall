@@ -11,9 +11,11 @@ import { MenuScreen, Setup, loadSaved, type SkirmishSettings } from './ui/Setup'
 import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
+import { addRecent, clock, saveGame, savedGame } from './game/saves';
 import { NetSession, degrade } from './net/session';
 import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
 import { recordMatch, type NetMatch } from './net/history';
+import { reportErrors } from './net/errors';
 import type { LinkLike } from './net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
@@ -59,6 +61,16 @@ function scenarioFromUrl(): ScenarioSpec {
   };
 }
 
+/** Where the camera was in a replay, per replay (seed, length and final hash identify it). */
+const replayCameraKey = (r: Replay) => `signalfall.replaycam.${r.scenario.seed}.${r.endTick}.${r.hash}`;
+function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null {
+  try {
+    return JSON.parse(localStorage.getItem(replayCameraKey(r)) ?? 'null') as { x: number; y: number; zoom: number } | null;
+  } catch {
+    return null;
+  }
+}
+
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
   const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain };
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
@@ -81,7 +93,10 @@ function rematch(): ScenarioSpec | null {
   history.replaceState(null, '', location.pathname);
   return scenarioFromSetup(saved as SkirmishSettings);
 }
-let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : rematch();
+/** ?continue: the saved skirmish, picked up where it was saved. */
+const resume = params.has('continue') ? (savedGame()?.replay ?? null) : null;
+if (params.has('continue')) history.replaceState(null, '', location.pathname);
+let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch();
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */
@@ -106,6 +121,7 @@ let multiplayerScreen = new URLSearchParams(location.search).has('room');
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
+reportErrors(() => (!scenario ? 'menu' : replay ? 'replay' : peerLinks ? 'multiplayer' : `${scenario.kind} @${state.cur?.tick ?? 0}`), worker);
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
 state.applySettings = () => {
@@ -117,6 +133,7 @@ state.applySettings = () => {
   state.changed();
 };
 state.saveReplay = () => post({ type: 'saveReplay' });
+state.saveGame = () => post({ type: 'saveReplay', purpose: 'save' });
 state.requestStats = () => post({ type: 'requestStats' });
 state.replaySpeed = (speed) => {
   if (!state.replay) return;
@@ -183,6 +200,17 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       return;
     }
     if (msg.type === 'replay') {
+      const label = state.players.map((p) => state.rules.factions[p.faction]!.name).join(' vs ');
+      const meta = { at: Date.now(), tick: state.cur?.tick ?? 0, label };
+      if (msg.purpose === 'save') {
+        if (saveGame(msg.json, meta)) state.notice(`Game saved at ${clock(meta.tick)}`);
+        else state.warn('Could not save: browser storage is full or blocked');
+        return;
+      }
+      if (msg.purpose === 'recent') {
+        addRecent(msg.json, meta);
+        return;
+      }
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([msg.json], { type: 'application/json' }));
       a.download = `signal-fall-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.sfreplay.json`;
@@ -190,6 +218,8 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       return;
     }
     if (msg.type === 'final') {
+      // Keep the replay in the recent-matches list on the main menu.
+      if (!replay) post({ type: 'saveReplay', purpose: 'recent' });
       // Match history (online builds; not for spectating or replays).
       const sb = backend();
       if (sb && scenario?.kind === 'skirmish' && !replay && !state.spectator)
@@ -248,7 +278,23 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         renderer.effects.ingest(msg.fx);
         audio.ingest(msg.fx);
       }
-      if (first) input?.run('jumpToBase');
+      if (first) {
+        input?.useFactionCursors();
+        // A replay watched before opens where the camera was left.
+        const cam = replay ? replayCamera(replay) : null;
+        if (cam) Object.assign(renderer.camera, cam);
+        else input?.run('jumpToBase');
+        if (replay) {
+          const key = replayCameraKey(replay);
+          setInterval(() => {
+            try {
+              localStorage.setItem(key, JSON.stringify(renderer.camera));
+            } catch {
+              // Not remembered.
+            }
+          }, 2000);
+        }
+      }
     }
   };
   if (peerLinks && scenario?.kind === 'skirmish') {
@@ -277,7 +323,7 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       for (const m of liveBuffer ?? []) post(m);
       liveBuffer = null;
     }
-  } else post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1) });
+  } else post({ type: 'start', scenario: scenario!, localPlayer: 0, speed: Number(params.get('speed') ?? 1), resume: resume ?? undefined });
   const shown = replay ? replay.scenario : scenario;
   if (shown) state.seats = seatLabels(shown, replay ? replay.localPlayer : localSlot, state.spectator);
 }

@@ -1,5 +1,15 @@
 # What's new
 
+## 2026-10-18 18:28 UTC
+
+- **Save and continue:** **Save game** in the menu keeps your skirmish in this browser; **Continue** on the main menu picks it up where you left it.
+- **Recent matches:** the main menu keeps the replays of your last five matches, ready to watch.
+- **Rally warnings:** setting a rally point your ground units can't walk to (across water, on rock) tells you so.
+- **Smart Override:** with several Halcyon units selected, Override goes out from the nearest one only; the others keep theirs for the next target.
+- **Faction cursors:** amber crosshairs for the Holdout, cyan brackets for Halcyon, violet diamonds for the Choir.
+- **Replays remember the camera:** reopen a replay and the view is where you left it.
+- **Crash reports:** if the game hits an error, it sends an anonymous report so it can be fixed (see the privacy page).
+
 ## 2026-10-18 18:21 UTC
 
 - **Units talk back:** select or order your units and they answer, in your faction's voice: Holdout troops on the radio ("Moving out", "Open fire!"), Halcyon machines ("Executing", "Target acquired"), the Choir in chorus ("We flow", "Silence them"). Replies are short and never pile up; turn them off with **Unit voices** in the menu.

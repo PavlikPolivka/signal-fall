@@ -1196,6 +1196,11 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
           Codex
         </button>
         <button onClick={fullscreen}>Fullscreen</button>
+        {!state.replay && !state.multiplayer && !state.spectator && (
+          <button data-testid="menu-save-game" onClick={() => state.saveGame()} title="Continue it later from the main menu">
+            Save game
+          </button>
+        )}
         {!state.replay && (
           <button data-testid="menu-save-replay" onClick={() => state.saveReplay()}>
             Save replay

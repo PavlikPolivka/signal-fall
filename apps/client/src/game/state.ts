@@ -94,6 +94,8 @@ export class ClientState {
   /** Live spectating: the stream's state for the UI. */
   liveStatus: 'connecting' | 'live' | 'ended' | 'lost' | null = null;
   saveReplay: () => void = () => undefined;
+  /** Skirmish: keep the match in this browser's save slot (Continue on the main menu). */
+  saveGame: () => void = () => undefined;
   /** Match statistics for the post-game report (arrives when the match ends). */
   stats: import('./scenario').MatchStats | null = null;
   reportOpen = false;
