@@ -135,7 +135,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 107 ✅ | K | Free-for-all 3–4 players | 3 | M |
 | 108 ✅ | K | King-of-the-hill and capture modes | 3 | M |
 | 109 | G | 3D renderer (WebGPU) keeping the sim (long-term) | 4 | XL |
-| 110 | K | Mobile/tablet controls (touch UI) | 3 | L |
+| 110 ✅ | K | Mobile/tablet controls (touch UI) | 3 | L |
 
 ## Also worth doing (small)
 

@@ -99,6 +99,10 @@ export class ClientState {
   saveReplay: () => void = () => undefined;
   /** Multiplayer: vote to let the AI take over whoever we are waiting on (they left). */
   dropPeers: () => void = () => undefined;
+  /** Touch: one-finger drag box-selects instead of panning. */
+  touchBox = false;
+  /** A touch screen was used (shows the touch toolbar). */
+  touched = false;
   /** The tutorial match. */
   tutorial = false;
   /** Playing today's daily challenge (its description), or null. */

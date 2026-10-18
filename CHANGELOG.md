@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 23:13 UTC
+
+- **Touch screens:** play on a tablet. Tap to select or give orders, drag one finger to move the view, pinch with two fingers to zoom, and press and hold to back out (like a right click). A touch bar appears with **Box** (drag to select a group), **Army**, **Attack**, **Stop** and **Cancel**.
+
 ## 2026-10-18 23:10 UTC
 
 - **Survival:** a new skirmish mode. Build up and hold out against 15 waves that come from the map edges, bigger every time, with heavier units as they go. Play alone or with an AI ally, on Easy, Normal or Hard waves. The top bar counts the waves and the time to the next.

@@ -460,7 +460,109 @@ export class Input {
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
 
+  // --- touch: tap = click, one finger pans (or box-selects in box mode), two fingers pinch-zoom and pan,
+  // a long press backs out like a right click ---
+  private touches = new Map<number, { x: number; y: number; x0: number; y0: number; t0: number }>();
+  private pinch: { d: number; zoom: number; cx: number; cy: number } | null = null;
+  private longPress: ReturnType<typeof setTimeout> | null = null;
+
+  private onTouchDown(e: PointerEvent): void {
+    if (!this.state.touched) {
+      this.state.touched = true;
+      this.state.changed();
+    }
+    const p = this.local(e);
+    try {
+      this.canvas.setPointerCapture(e.pointerId);
+    } catch {
+      // No such pointer to capture (synthetic events): fine.
+    }
+    this.touches.set(e.pointerId, { x: p.x, y: p.y, x0: p.x, y0: p.y, t0: performance.now() });
+    if (this.longPress) clearTimeout(this.longPress);
+    this.longPress = null;
+    if (this.touches.size === 2) {
+      const [a, b] = [...this.touches.values()];
+      this.pinch = { d: Math.hypot(a!.x - b!.x, a!.y - b!.y), zoom: this.renderer.camera.zoom, cx: (a!.x + b!.x) / 2, cy: (a!.y + b!.y) / 2 };
+      this.drag = null;
+      this.renderer.drawBox(null);
+      return;
+    }
+    if (this.touches.size > 2) return;
+    // Long press without moving: back out (deselect, cancel a mode or placement).
+    this.longPress = setTimeout(() => {
+      const t = this.touches.get(e.pointerId);
+      if (t && Math.hypot(t.x - t.x0, t.y - t.y0) < 12) {
+        this.touches.delete(e.pointerId);
+        this.rightClick(t.x, t.y, false);
+        this.renderer.ping(t.x, t.y, 0x9aa0a6);
+      }
+    }, 550);
+    if (this.state.touchBox) this.drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, button: 0 };
+  }
+
+  private onTouchMove(e: PointerEvent): void {
+    const t = this.touches.get(e.pointerId);
+    if (!t) return;
+    const p = this.local(e);
+    const dx = p.x - t.x;
+    const dy = p.y - t.y;
+    t.x = p.x;
+    t.y = p.y;
+    const cam = this.renderer.camera;
+    if (this.pinch && this.touches.size === 2) {
+      const [a, b] = [...this.touches.values()];
+      const d = Math.hypot(a!.x - b!.x, a!.y - b!.y);
+      cam.zoom = Math.max(0.4, Math.min(2, (this.pinch.zoom * d) / Math.max(1, this.pinch.d)));
+      const cx = (a!.x + b!.x) / 2;
+      const cy = (a!.y + b!.y) / 2;
+      cam.x -= (cx - this.pinch.cx) / cam.zoom;
+      cam.y -= (cy - this.pinch.cy) / cam.zoom;
+      this.pinch.cx = cx;
+      this.pinch.cy = cy;
+      this.renderer.clampCamera();
+      return;
+    }
+    if (this.drag) {
+      this.drag.x1 = p.x;
+      this.drag.y1 = p.y;
+      if (this.dragSize() > 8) this.renderer.drawBox(this.drag);
+      return;
+    }
+    cam.x -= dx / cam.zoom;
+    cam.y -= dy / cam.zoom;
+    this.renderer.clampCamera();
+  }
+
+  private onTouchUp(e: PointerEvent): void {
+    const t = this.touches.get(e.pointerId);
+    this.touches.delete(e.pointerId);
+    if (this.longPress) clearTimeout(this.longPress);
+    this.longPress = null;
+    if (this.touches.size < 2) this.pinch = null;
+    if (!t) return;
+    const d = this.drag;
+    if (d) {
+      this.drag = null;
+      this.renderer.drawBox(null);
+      if (Math.hypot(d.x1 - d.x0, d.y1 - d.y0) > 8) {
+        this.boxSelect(d, false);
+        return;
+      }
+    }
+    // A short tap that barely moved: a click.
+    if (Math.hypot(t.x - t.x0, t.y - t.y0) < 12 && performance.now() - t.t0 < 450 && this.touches.size === 0) {
+      if (this.state.placing) this.tryPlace(t.x, t.y, false);
+      else if (TARGET_MODES.includes(this.state.mode)) this.targetClick(t.x, t.y, false);
+      else this.leftClick(t.x, t.y, false, false);
+    }
+  }
+
   private onPointerDown(e: PointerEvent): void {
+    if (e.pointerType === 'touch') {
+      e.preventDefault();
+      this.onTouchDown(e);
+      return;
+    }
     const p = this.local(e);
     this.canvas.setPointerCapture(e.pointerId);
     if (e.button === 1) {
@@ -498,6 +600,10 @@ export class Input {
   }
 
   private onPointerMove(e: PointerEvent): void {
+    if (e.pointerType === 'touch') {
+      this.onTouchMove(e);
+      return;
+    }
     this.mouse.x = e.clientX;
     this.mouse.y = e.clientY;
     this.mouse.inside = true;
@@ -523,6 +629,10 @@ export class Input {
   }
 
   private onPointerUp(e: PointerEvent): void {
+    if (e.pointerType === 'touch') {
+      this.onTouchUp(e);
+      return;
+    }
     if (!this.drag) return;
     const d = this.drag;
     this.drag = null;

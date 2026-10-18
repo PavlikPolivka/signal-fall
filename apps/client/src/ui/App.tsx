@@ -72,6 +72,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
       {state.multiplayer && <Chat state={state} />}
+      {state.touched && <TouchBar state={state} input={props.input} />}
       {state.replay && <ReplayBar state={state} />}
       {state.reportOpen && (
         <MatchReport
@@ -1284,6 +1285,30 @@ function KeyBindings({ state, onClose }: { state: ClientState; onClose: () => vo
           <button onClick={onClose}>Done</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Touch screens: what keys and the right mouse button do elsewhere. */
+function TouchBar({ state, input }: { state: ClientState; input: Input }) {
+  return (
+    <div class="touch-bar" data-testid="touch-bar">
+      <button
+        class={state.touchBox ? 'active' : ''}
+        title="Drag to box-select instead of moving the view"
+        onClick={() => {
+          state.touchBox = !state.touchBox;
+          state.changed();
+        }}
+      >
+        ▢ Box
+      </button>
+      <button onClick={() => input.run('selectArmy')}>Army</button>
+      <button onClick={() => input.run('attackMove')} class={state.mode === 'attackMove' ? 'active' : ''}>
+        Attack
+      </button>
+      <button onClick={() => input.run('stop')}>Stop</button>
+      <button onClick={() => input.rightClick(0, 0, false)}>Cancel</button>
     </div>
   );
 }
