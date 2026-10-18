@@ -31,6 +31,19 @@ test.describe('mouse', () => {
     await page.evaluate(() => (window as unknown as Win).__signalFall.renderer.centerOnSim(48 * 1024, 70 * 1024));
   });
 
+  test('selection panel groups by type; clicking a group narrows to it', async ({ page }) => {
+    const n = await selectOwn(page);
+    const cards = page.locator('[data-testid=selection-groups] .cell');
+    const types = await page.evaluate(() => (window as unknown as Win).__signalFall.state.subgroups().length);
+    test.skip(types < 2, 'sandbox needs at least two unit types');
+    await expect(cards).toHaveCount(types);
+    await cards.first().click();
+    const left = await page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length);
+    expect(left).toBeGreaterThan(0);
+    expect(left).toBeLessThan(n);
+    expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.subgroups().length)).toBe(1);
+  });
+
   test('right-click clears the selection', async ({ page }) => {
     expect(await selectOwn(page)).toBeGreaterThan(0);
     const c = await canvasCenter(page);

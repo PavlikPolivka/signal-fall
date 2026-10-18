@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 15:39 UTC
+
+- **Selection panel by type:** selecting a mixed army shows one card per unit type with how many you have and their combined health, instead of a wall of identical icons. Click a card to keep only that type, <kbd>Shift</kbd>+click to drop it, and <kbd>Tab</kbd> still cycles through them.
+
 ## 2026-10-17 23:23 UTC
 
 - **Smoother play:** scenery far off screen is no longer drawn, and the ground is cheaper to draw. Frame rate holds up much better when armies are on the move, especially on bigger maps.

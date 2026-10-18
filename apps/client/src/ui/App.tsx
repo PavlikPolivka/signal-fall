@@ -449,19 +449,30 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
         {sel.length === 0 && <span class="muted">Nothing selected</span>}
         {sel.length === 1 && <SelectedOne state={state} h={sel[0]!} />}
         {sel.length > 1 && (
-          <div class="group-grid">
-            {sel.slice(0, 36).map((h) => {
-              const type = (state.isUnit(h) ? 0 : 10000) + state.field(h, E.type);
-              const hp = state.field(h, E.hp) / Math.max(1, state.field(h, E.maxHp));
+          <div class="group-grid" data-testid="selection-groups">
+            {groups.map((type) => {
+              // One card per type: count, combined health, click narrows the selection to it.
+              const members = sel.filter((h) => (state.isUnit(h) ? 0 : 10000) + state.field(h, E.type) === type);
+              const h = members[0]!;
+              const rule = state.ruleOf(h);
+              const factionId = state.rules.factions[rule.faction]!.id;
+              let hp = 0;
+              let max = 0;
+              for (const m of members) {
+                hp += state.field(m, E.hp);
+                max += state.field(m, E.maxHp);
+              }
               return (
                 <button
                   class={`cell ${type === activeType ? 'active' : ''}`}
-                  title={state.ruleOf(h).name}
-                  onClick={() => state.select([h])}
+                  data-type={type}
+                  title={`${members.length} × ${rule.name}: click to select only these, Shift+click to drop them, Tab cycles`}
+                  onClick={(e) => state.select(e.shiftKey ? sel.filter((x) => !members.includes(x)) : members)}
                 >
-                  <Icon state={state} faction={state.rules.factions[state.ruleOf(h).faction]!.id} id={artId(state.ruleOf(h))} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
-                  {!state.art.has(state.rules.factions[state.ruleOf(h).faction]!.id) && <span>{state.ruleOf(h).name.slice(0, 3)}</span>}
-                  <i style={{ width: `${hp * 100}%` }} />
+                  <Icon state={state} faction={factionId} id={artId(rule)} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
+                  {!state.art.has(factionId) && <span>{rule.name.slice(0, 3)}</span>}
+                  {members.length > 1 && <b class="count">{members.length}</b>}
+                  <i style={{ width: `${(hp / Math.max(1, max)) * 100}%` }} />
                 </button>
               );
             })}

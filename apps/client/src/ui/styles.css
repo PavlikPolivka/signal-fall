@@ -181,12 +181,12 @@ kbd {
 }
 .group-grid {
   display: grid;
-  grid-template-columns: repeat(12, 40px);
-  gap: 3px;
+  grid-template-columns: repeat(9, 52px);
+  gap: 4px;
 }
 .group-grid .cell {
   position: relative;
-  height: 38px;
+  height: 50px;
   padding: 1px;
   font-size: 10px;
   overflow: hidden;
@@ -197,6 +197,14 @@ kbd {
 }
 .group-grid .cell.active {
   border-color: var(--accent);
+}
+.group-grid .cell .count {
+  position: absolute;
+  right: 3px;
+  bottom: 4px;
+  font: 700 13px var(--mono);
+  color: #fff;
+  text-shadow: 0 1px 3px #000;
 }
 .group-grid .cell i {
   position: absolute;
