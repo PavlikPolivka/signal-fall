@@ -1,20 +1,32 @@
 /**
- * Generative battle score in WebAudio: a dark D-minor loop whose layers follow
+ * Generative battle score in WebAudio, in the local faction's style, whose layers follow
  * the fighting. Calm: pads and a slow bass. Tension: driving bass, kick and hats.
  * Combat: full drums and an echoing arpeggio. Nothing is pre-recorded.
  */
 
-const BPM = 88;
-const STEP = 60 / BPM / 4; // one sixteenth
 const LOOKAHEAD = 0.15;
-// Two bars per chord: Dm, Bb, Gm, A (harmonic minor turnaround). MIDI notes.
-const CHORDS = [
-  [50, 53, 57],
-  [46, 50, 53],
-  [43, 46, 50],
-  [45, 49, 52],
-];
-const BASS = [38, 34, 31, 33];
+
+/** A faction's musical identity: tempo, harmony and instruments. */
+interface Theme {
+  bpm: number;
+  /** Two bars per chord (MIDI notes), and the bass root under each. */
+  chords: number[][];
+  bass: number[];
+  pad: OscillatorType;
+  arp: OscillatorType;
+  /** Pad filter brightness multiplier and detune spread (cents). */
+  bright: number;
+  detune: number;
+}
+
+const THEMES: Record<string, Theme> = {
+  // Holdout: a gritty D-minor march, sawtooth pads, square arpeggio (Dm, Bb, Gm, A).
+  holdout: { bpm: 88, chords: [[50, 53, 57], [46, 50, 53], [43, 46, 50], [45, 49, 52]], bass: [38, 34, 31, 33], pad: 'sawtooth', arp: 'square', bright: 1, detune: 8 },
+  // Halcyon: cold and exact, E minor with major sevenths, triangle tones a little faster (Em(maj7), Cmaj7, Am9, B).
+  halcyon: { bpm: 100, chords: [[52, 55, 59, 63], [48, 52, 55, 59], [45, 48, 52, 59], [47, 51, 54, 58]], bass: [40, 36, 33, 35], pad: 'triangle', arp: 'triangle', bright: 1.6, detune: 3 },
+  // Choir: slow suspended chords that never resolve, wide sine voices (Fsus2, Dbmaj7#11, Ebsus4, Csus2).
+  choir: { bpm: 72, chords: [[53, 55, 60, 65], [49, 53, 56, 60], [51, 56, 58, 63], [48, 50, 55, 62]], bass: [41, 37, 39, 36], pad: 'sine', arp: 'sine', bright: 0.7, detune: 18 },
+};
 // Bass rhythm per 16th step (1 = note); calm uses only the quarter notes.
 const BASS_PATTERN = [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0];
 const KICK = [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0];
@@ -35,6 +47,17 @@ export class Music {
   private padVoices: { stop: (t: number) => void }[] = [];
   /** 0 calm, 1 tension, 2 combat. */
   private intensity = 0;
+  private theme: Theme = THEMES.holdout!;
+
+  /** One sixteenth note, seconds. */
+  private get STEP(): number {
+    return 60 / this.theme.bpm / 4;
+  }
+
+  /** Play in this faction's style (from the next chord on). */
+  setTheme(faction: string): void {
+    this.theme = THEMES[faction] ?? THEMES.holdout!;
+  }
 
   constructor(private readonly ctx: AudioContext) {
     this.out = ctx.createGain();
@@ -51,7 +74,7 @@ export class Music {
     this.arp = ctx.createGain();
     this.arp.gain.value = 0;
     const delay = ctx.createDelay(1);
-    delay.delayTime.value = STEP * 3;
+    delay.delayTime.value = (60 / 88 / 4) * 3;
     const fb = ctx.createGain();
     fb.gain.value = 0.38;
     const tone = ctx.createBiquadFilter();
@@ -91,7 +114,7 @@ export class Music {
   private schedule(): void {
     while (this.next < this.ctx.currentTime + LOOKAHEAD) {
       this.play(this.step, this.next);
-      this.next += STEP;
+      this.next += this.STEP;
       this.step++;
     }
   }
@@ -99,21 +122,23 @@ export class Music {
   private play(step: number, t: number): void {
     const s16 = step % 16;
     const bar = Math.floor(step / 16);
-    const chord = Math.floor(bar / 2) % CHORDS.length;
-    if (step % 32 === 0) this.padChord(CHORDS[chord]!, t, STEP * 32);
+    const { chords, bass } = this.theme;
+    const STEP = this.STEP;
+    const chord = Math.floor(bar / 2) % chords.length;
+    if (step % 32 === 0) this.padChord(chords[chord]!, t, STEP * 32);
     // Bass: quarters when calm, the full pattern otherwise.
     const bassHit = this.intensity === 0 ? s16 % 4 === 0 : BASS_PATTERN[s16] === 1;
-    if (bassHit) this.bassNote(hz(BASS[chord]! + (s16 === 14 && this.intensity > 0 ? 12 : 0)), t, s16 % 4 === 0 ? 1 : 0.7);
+    if (bassHit) this.bassNote(hz(bass[chord]! + (s16 === 14 && this.intensity > 0 ? 12 : 0)), t, s16 % 4 === 0 ? 1 : 0.7);
     if (this.intensity > 0) {
       if (KICK[s16] || (this.intensity === 2 && s16 === 10)) this.kick(t);
       if (this.intensity === 2 && SNARE[s16]) this.snare(t);
       if (s16 % 2 === 0 || this.intensity === 2) this.hat(t, s16 % 4 === 2 ? 0.6 : 0.3);
     }
     if (this.intensity === 2) {
-      const notes = CHORDS[chord]!;
+      const notes = chords[chord]!;
       const up = [0, 1, 2, 1, 2, 3, 2, 1];
       const k = up[s16 % 8]!;
-      this.arpNote(hz(notes[k % 3]! + 12 + (k === 3 ? 12 : 0)), t);
+      this.arpNote(hz(notes[k % notes.length]! + 12 + (k === 3 ? 12 : 0)), t);
     }
   }
 
@@ -123,9 +148,10 @@ export class Music {
     const ctx = this.ctx;
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.setValueAtTime(500, t);
-    f.frequency.linearRampToValueAtTime(1100, t + dur / 2);
-    f.frequency.linearRampToValueAtTime(600, t + dur);
+    const b = this.theme.bright;
+    f.frequency.setValueAtTime(500 * b, t);
+    f.frequency.linearRampToValueAtTime(1100 * b, t + dur / 2);
+    f.frequency.linearRampToValueAtTime(600 * b, t + dur);
     f.Q.value = 2;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
@@ -133,9 +159,9 @@ export class Music {
     f.connect(g).connect(this.pad);
     const oscs: OscillatorNode[] = [];
     for (const n of notes)
-      for (const detune of [-8, 7]) {
+      for (const detune of [-this.theme.detune, this.theme.detune - 1]) {
         const o = ctx.createOscillator();
-        o.type = 'sawtooth';
+        o.type = this.theme.pad;
         o.frequency.value = hz(n);
         o.detune.value = detune;
         o.connect(f);
@@ -162,14 +188,14 @@ export class Music {
     f.type = 'lowpass';
     f.Q.value = 6;
     f.frequency.setValueAtTime(220 + 900 * accent, t);
-    f.frequency.exponentialRampToValueAtTime(140, t + STEP * 1.8);
+    f.frequency.exponentialRampToValueAtTime(140, t + this.STEP * 1.8);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(accent, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + STEP * 1.9);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + this.STEP * 1.9);
     o.connect(f).connect(g).connect(this.bass);
     o.start(t);
-    o.stop(t + STEP * 2);
+    o.stop(t + this.STEP * 2);
   }
 
   private kick(t: number): void {
@@ -212,7 +238,7 @@ export class Music {
   private arpNote(freq: number, t: number): void {
     const ctx = this.ctx;
     const o = ctx.createOscillator();
-    o.type = 'square';
+    o.type = this.theme.arp;
     o.frequency.value = freq;
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';
@@ -220,9 +246,9 @@ export class Music {
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(0.8, t + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + STEP * 0.9);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + this.STEP * 0.9);
     o.connect(f).connect(g).connect(this.arp);
     o.start(t);
-    o.stop(t + STEP);
+    o.stop(t + this.STEP);
   }
 }

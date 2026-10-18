@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-18 18:40 UTC
+
+- **Faction music:** the score plays in your faction's style: a gritty minor march for the Holdout, cold exact tones for Halcyon, slow unresolved chords for the Choir. It still swells with the fighting.
+- **Base ambience:** power plants on screen hum quietly, and your factories clank now and then.
+
 ## 2026-10-18 18:38 UTC
 
 - **Opponent style:** pick who you play against in the skirmish setup: Steady Sam (balanced), Rusher Rita (early pressure), Tech Tara (heavy units later), Turtle Tomas (defenses, then one big push) or Raider Rex (fast units after your harvesters). Random still picks a plan each match.

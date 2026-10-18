@@ -55,7 +55,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 37 ✅ | G | Combat effects: muzzle flashes, tracers, impact sparks, smoke trails, screen shake on big explosions (Reduced setting honored) | 4 | M |
 | 38 ✅ | G | Building construction animation (scaffold rising / crystal growing) and destruction collapse | 4 | M |
 | 39 ✅ | G | Unit death: wrecks that stay a while (Holdout salvage), dissolve for Halcyon, shatter for Choir | 3 | S |
-| 40 | V | Music that follows the battle (already layered) with a faction theme per side | 3 | M |
+| 40 ✅ | V | Music that follows the battle (already layered) with a faction theme per side | 3 | M |
 | 41 ✅ | V | Positional sound for combat and a mix that ducks music under announcer lines | 3 | S |
 | 42 ✅ | U | Tooltips with full stats for every button, delay 400 ms, Shift shows numbers | 3 | S |
 | 43 ✅ | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
@@ -108,7 +108,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 85 ✅ | G | Smoother zoom levels with sprite mip-mapping, no shimmering | 3 | S |
 | 86 ✅ | G | Damaged-building fire and smoke effects scaling with damage | 3 | S |
 | 87 ✅ | V | Weapon sounds per unit type, distinct enough to hear what is fighting | 3 | M |
-| 88 | V | Building ambient loops (power hum, factory clanks) quietly near the camera | 2 | S |
+| 88 ✅ | V | Building ambient loops (power hum, factory clanks) quietly near the camera | 2 | S |
 | 89 ✅ | V | Victory/defeat stingers and a short voice line | 2 | XS |
 | 90 ✅ | O | Main menu: continue last skirmish setup, recent replays list | 2 | S |
 | 91 ✅ | O | Loading screen tips and faction art while the map generates | 2 | XS |

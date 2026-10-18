@@ -1,6 +1,7 @@
 import { DAMAGE, type Rules } from '@signal-fall/data';
 import { FX_EVENT, FX_STRIDE, KIND } from '@signal-fall/sim';
 import type { ClientState } from '../game/state';
+import { E } from '../protocol';
 import { isoX, isoY } from '../game/iso';
 import { Music } from './music';
 import { renderSfx } from './sfx';
@@ -83,6 +84,9 @@ export class GameAudio {
   private ended = false;
   /** The selection last frame, to reply when the player picks units. */
   private lastSelection = '';
+  /** Base ambience: a power hum and factory work near the camera. */
+  private hum: { gain: GainNode } | null = null;
+  private lastAmbience = 0;
 
   constructor(
     private readonly state: ClientState,
@@ -212,6 +216,7 @@ export class GameAudio {
     if (this.voice || !this.ctx || !this.voiceGain || !this.state.ready) return this.voice;
     const faction = this.rules.factions[this.state.players[this.state.localPlayer]?.faction ?? 0]!.id;
     this.voice = new VoicePlayer(this.ctx, this.voiceGain, faction);
+    this.music?.setTheme(faction);
     this.voice.onSpeaking = (on) => {
       this.ducked = on;
       this.apply();
@@ -264,9 +269,61 @@ export class GameAudio {
       if (s.selectedUnits().some((h) => s.ruleOf(h).kind === 'unit')) ack('select');
     }
     const now = performance.now();
+    if (now - this.lastAmbience > 500) {
+      this.lastAmbience = now;
+      this.ambience();
+    }
     this.combat = this.combat.filter((t) => now - t < 15000);
     const recent = this.combat.filter((t) => now - t < 6000).length;
     this.music?.setIntensity(recent >= 10 ? 2 : this.combat.length > 0 ? 1 : 0);
+  }
+
+  /**
+   * Quiet base ambience: power plants on screen hum (louder with more of them), and working
+   * factories now and then clank. Twice a second is plenty.
+   */
+  private ambience(): void {
+    const ctx = this.ctx;
+    const cur = this.state.cur;
+    if (!ctx || !cur || !this.sfxGain) return;
+    if (!this.hum) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = 260;
+      for (const [freq, level] of [[55, 1], [110, 0.5], [165, 0.2]] as const) {
+        const o = ctx.createOscillator();
+        o.frequency.value = freq;
+        const g = ctx.createGain();
+        g.gain.value = level;
+        o.connect(g).connect(f);
+        o.start();
+      }
+      // A slow wobble, like a generator under load.
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.3;
+      const depth = ctx.createGain();
+      depth.gain.value = 40;
+      lfo.connect(depth).connect(f.frequency);
+      lfo.start();
+      f.connect(gain).connect(this.sfxGain);
+      this.hum = { gain };
+    }
+    let power = 0;
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.kind) !== KIND.structure) continue;
+      const x = cur.get(o, E.x);
+      const y = cur.get(o, E.y);
+      const { nx, ny } = this.listener(x, y);
+      if (Math.abs(nx) > 1 || Math.abs(ny) > 1) continue;
+      const rule = this.rules.structures[cur.get(o, E.type)]!;
+      if (rule.power > 0) power++;
+      // Own factories now and then clank.
+      if (rule.produces && cur.get(o, E.owner) === this.state.localPlayer && Math.random() < 0.08) this.play('click', x, y, 0.18);
+    }
+    this.hum.gain.gain.setTargetAtTime(Math.min(1, power * 0.35) * 0.05, ctx.currentTime, 0.6);
   }
 
   /** Play a sound; positioned and attenuated when a sim point is given. Returns whether it played. */
