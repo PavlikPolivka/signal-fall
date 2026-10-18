@@ -22,6 +22,8 @@ export interface MatchSetup {
   seed: number;
   map: MapData;
   players: PlayerSetup[];
+  /** Crates drop on the map now and then. */
+  crates?: boolean;
 }
 
 /** A real match: each player starts with one construction unit and the starting credits. */
@@ -37,6 +39,7 @@ export function createMatch(setup: MatchSetup): Sim {
     players: setup.players,
     victoryRules: true,
     points: map.points,
+    crates: setup.crates,
   });
   setup.players.forEach((p, i) => {
     const start = map.starts[i]!;

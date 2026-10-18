@@ -8,6 +8,7 @@ import { buildSystem, computeFacts, echoRegrowSystem, harvestSystem, productionS
 import { movementSystem } from './systems/movement';
 import { victorySystem } from './systems/victory';
 import { pointsSystem } from './systems/points';
+import { cratesSystem } from './systems/crates';
 import { abilitySystem, chordRegrowSystem, coverageSystem, researchSystem, sustainSystem } from './systems/faction';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
 import { autoPlaceSystem } from './orders';
@@ -75,6 +76,7 @@ export class Sim {
       w.spatial.rebuild(w.entities);
       repairSystem(w);
       pointsSystem(w);
+      cratesSystem(w);
       weaponSystem(w);
       projectileSystem(w);
       deathSystem(w);

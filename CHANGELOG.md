@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 22:07 UTC
+
+- **Crates:** a new map option. With **Crates** on, a supply crate drops somewhere on the map every 45 seconds. The first ground unit to reach one opens it: 500 credits, a full repair for your units around it, or a promotion for the unit that found it. The AI grabs the ones it sees, too.
+
 ## 2026-10-18 21:57 UTC
 
 - **No false "disconnected":** a short network or computer hiccup in multiplayer no longer leaves the "Opponent disconnected" screen up for good. It goes away as soon as the other player is heard from again.

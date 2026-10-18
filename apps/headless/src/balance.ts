@@ -18,6 +18,8 @@ export interface MatchSpec {
   maxMinutes: number;
   /** Capture points on the map. */
   points?: 'none' | 'some';
+  /** Crates drop now and then. */
+  crates?: boolean;
 }
 
 export interface MatchOutcome {
@@ -45,6 +47,7 @@ export function playMatch(spec: MatchSpec): MatchOutcome {
     seed: spec.seed,
     map,
     players: order.map((side, team) => ({ faction: FACTIONS.indexOf(spec.sides[side]!.faction), team })),
+    crates: spec.crates,
   });
   const ais = order.map((side, slot) => attachAi(sim, slot, spec.sides[side]!.difficulty, map.starts));
   const limit = spec.maxMinutes * 1200;
@@ -68,7 +71,7 @@ export function playMatch(spec: MatchSpec): MatchOutcome {
   };
 }
 
-export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: MapSize; seed: number; maxMinutes: number; points?: 'none' | 'some' }): MatchSpec[] {
+export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: MapSize; seed: number; maxMinutes: number; points?: 'none' | 'some'; crates?: boolean }): MatchSpec[] {
   return Array.from({ length: opts.matches }, (_, i) => ({
     seed: opts.seed + i,
     size: opts.size,
@@ -77,6 +80,7 @@ export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: M
     swap: i % 2 === 1,
     maxMinutes: opts.maxMinutes,
     points: opts.points,
+    crates: opts.crates,
   }));
 }
 

@@ -388,8 +388,21 @@ def pt_depot(style, seed):
     return out
 
 
+def pt_crate(style, seed):
+    """Supply crate: a banded wooden box with a small beacon blinking on top."""
+    wood = material("cr_wood", "8a6a42", rough=0.9, style=style)
+    band = material("cr_band", "4a4844", rough=0.5, metal=0.6, style=style)
+    lamp = material("cr_lamp", "ffd24a", rough=0.3, emission="ffd24a", style=style)
+    out = [box("crate", (0.5, 0.42, 0.36), (0, 0, 0.18), wood, bevel=0.025)]
+    for z in (0.06, 0.3):
+        out.append(box(f"band{z}", (0.52, 0.44, 0.04), (0, 0, z), band))
+    out.append(box("lid", (0.36, 0.06, 0.02), (0, -0.215, 0.24), band))
+    out.append(cylinder("beacon", 0.04, 0.08, (0.15, 0.1, 0.4), lamp, verts=10))
+    return out
+
+
 # Capture points: id -> (builder, frame px).
-POINTS = {"pt_derrick": (pt_derrick, 192), "pt_watchtower": (pt_watchtower, 288), "pt_depot": (pt_depot, 192)}
+POINTS = {"pt_derrick": (pt_derrick, 192), "pt_watchtower": (pt_watchtower, 288), "pt_depot": (pt_depot, 192), "pt_crate": (pt_crate, 96)}
 
 
 import city  # noqa: E402  (buildings from Poly Haven's modular facade kits)

@@ -31,6 +31,7 @@ export interface LobbyMap {
   resources: Resources;
   terrain: TerrainStyle;
   points?: 'none' | 'some';
+  crates?: boolean;
 }
 
 export interface LobbyState {

@@ -1,5 +1,6 @@
 import { ARMOR, type AiProfile, type Role, type StructureRule, type UnitRule } from '@signal-fall/data';
 import {
+  FOG_VISIBLE,
   FX_HALF,
   FX_ONE,
   FX_SHIFT,
@@ -162,6 +163,7 @@ export class AiPlayer implements Brain {
     this.scout(world, own);
     this.harass(world, own);
     this.capturePoints(world, own);
+    this.pickCrates(world, own);
     this.waves(world, own);
     return this.cmds;
   }
@@ -929,6 +931,30 @@ export class AiPlayer implements Brain {
     if (this.holders.size === 0) return;
     const p = world.points[best]!;
     this.act({ type: 'attackMove', units: [...this.holders], x: (p.x << FX_SHIFT) + FX_HALF, y: (p.y << FX_SHIFT) + FX_HALF });
+  }
+
+  /** Crates in sight: the nearest spare army unit within 15 tiles goes to pick each one up. */
+  private pickCrates(world: World, own: Own): void {
+    if (!world.crates || world.crates.list.length === 0 || (world.tick + this.player) % 60 !== 0) return;
+    const e = world.entities;
+    const fog = world.fog[this.player]!;
+    const spare = this.reserve(world, own);
+    for (const c of world.crates.list) {
+      if ((fog[c.y * world.map.width + c.x]! & FOG_VISIBLE) === 0) continue;
+      const cx = (c.x << FX_SHIFT) + FX_HALF;
+      const cy = (c.y << FX_SHIFT) + FX_HALF;
+      let best = -1;
+      let bestD = 15 * FX_ONE;
+      for (const h of spare) {
+        const s = e.resolve(h);
+        const d = ilength(e.x[s]! - cx, e.y[s]! - cy);
+        if (d < bestD) {
+          best = h;
+          bestD = d;
+        }
+      }
+      if (best >= 0) this.act({ type: 'move', units: [best], x: cx, y: cy });
+    }
   }
 
   private armyValue(world: World, handles: Iterable<number>): number {

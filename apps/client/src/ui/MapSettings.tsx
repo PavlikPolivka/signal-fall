@@ -11,6 +11,8 @@ export interface MapChoice {
   seed: number;
   /** Capture points on the map. */
   points?: 'none' | 'some';
+  /** Crates drop now and then. */
+  crates?: boolean;
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -129,6 +131,17 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         ]}
         onChange={(v) => set({ points: v })}
         testid="points"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Crates"
+        value={value.crates ? 'on' : 'off'}
+        options={[
+          ['off', 'Off'],
+          ['on', 'Now and then'],
+        ]}
+        onChange={(v) => set({ crates: v === 'on' })}
+        testid="crates"
         disabled={readOnly}
       />
       <div class="choice">

@@ -104,6 +104,8 @@ export class Renderer {
   private echoSprites = new Map<number, Sprite>();
   /** Capture point models placed so far (by tile). */
   private pointSprites = new Set<number>();
+  /** Crate sprites by tile (crates come and go). */
+  private crateSprites = new Map<number, Sprite>();
   /** Shields per entity last frame: a drop means a hit, shown as a shimmer. */
   private lastShields = new Map<number, number>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
@@ -642,6 +644,7 @@ export class Renderer {
     this.fx.clear();
     this.drawCoverage();
     this.drawPoints();
+    this.drawCrates();
     this.drawChorus();
     this.shimmerEcho();
     this.night.begin();
@@ -1272,6 +1275,40 @@ export class Renderer {
         this.overlay.arc(px, py - 70, 9, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).stroke({ width: 3, color: c });
       }
     }
+  }
+
+  /** Crates on the map: a sprite each, bobbing a little, with a glint so they catch the eye. */
+  private drawCrates(): void {
+    const s = this.state;
+    const cur = s.cur;
+    if (!cur) return;
+    const seen = new Set<number>();
+    const t = performance.now() / 1000;
+    for (const c of cur.crates()) {
+      const key = c.y * s.width + c.x;
+      if (s.fog && !s.spectator && (s.fog[key]! & 1) === 0) continue;
+      seen.add(key);
+      const px = isoX(c.x + 0.5, c.y + 0.5);
+      const py = isoY(c.x + 0.5, c.y + 0.5);
+      let sp = this.crateSprites.get(key);
+      if (!sp) {
+        const tex = this.lib.texture('pt_crate', 'body', 'idle', 0, 0, 'color');
+        if (!tex) continue;
+        sp = new Sprite(tex);
+        sp.anchor.set(0.5);
+        sp.zIndex = py;
+        this.ground.addChild(sp);
+        this.crateSprites.set(key, sp);
+      }
+      sp.position.set(px, py - 2 - 2 * Math.sin(t * 3 + key));
+      const glint = 0.5 + 0.5 * Math.sin(t * 4 + key);
+      this.overlay.circle(px + 4, py - 20, 2 + glint * 2).fill({ color: 0xffe28a, alpha: 0.4 + 0.5 * glint });
+    }
+    for (const [key, sp] of this.crateSprites)
+      if (!seen.has(key)) {
+        sp.destroy();
+        this.crateSprites.delete(key);
+      }
   }
 
   /** A weapon range circle of r tiles around a world point (an ellipse on the iso grid). */

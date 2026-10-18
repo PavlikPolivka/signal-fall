@@ -417,7 +417,7 @@ export class Effects {
   /** "+◆N" rising and fading where Recompile or salvage paid out. */
   private credits(amount: number, x: number, y: number): void {
     const text = new Text({
-      text: `+◆${amount}`,
+      text: amount >= 0 ? `+◆${amount}` : amount === -2 ? 'Repaired!' : 'Promoted!',
       style: { fontFamily: 'system-ui, sans-serif', fontSize: 15, fontWeight: '700', fill: 0xffd75a, stroke: { color: 0x1a1406, width: 3 } },
     });
     text.anchor.set(0.5, 1);

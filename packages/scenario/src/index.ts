@@ -36,7 +36,7 @@ export type ScenarioSpec =
       teams?: number[];
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
-      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some' };
+      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean };
       /** AI personality per slot (a strategy it always plays); null or missing: drawn per match. */
       personality?: (StrategyName | null)[];
       /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */
@@ -66,6 +66,7 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         seed: spec.seed,
         map,
         players: spec.factions.map((faction, k) => ({ faction, team: spec.teams?.[k] ?? k })),
+        crates: spec.map.crates,
       });
       spec.ai.forEach((difficulty, p) => {
         // A computer player without a difficulty is a passive base (sandbox/testing); people play their own.

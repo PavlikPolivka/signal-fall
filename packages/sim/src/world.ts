@@ -1,4 +1,5 @@
 import type { CapturePoint } from './systems/points';
+import { makeCrates, type Crate } from './systems/crates';
 import type { FactionIdx, Rules } from '@signal-fall/data';
 import { Entities } from './entities';
 import { IntWriter } from './hash';
@@ -104,12 +105,12 @@ export interface Projectile {
  * death:  a = entity kind, b = rule index, (x, y) where it died
  * ability: a = 1 blink / 2 phase / 3 override / 4 dig in / 5 uplink, b = unit rule index, (x, y) from, (tx, ty) to
  * power:   a = 1 jam / 2 awaken, b = radius (Q10), owner cast it, (x, y) where
- * credits: a = amount, b = 1 recompile / 2 salvage, owner gets them, (x, y) where
+ * credits: a = amount, b = 1 recompile / 2 salvage / 3 crate (a < 0: crate kind -a), owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
 export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6 } as const;
 /** Why credits were gained (FX_EVENT.credits b). */
-export const CREDIT_REASON = { recompile: 1, salvage: 2 } as const;
+export const CREDIT_REASON = { recompile: 1, salvage: 2, crate: 3 } as const;
 export const FX_STRIDE = 8;
 /** Events kept when nobody drains them (headless runs). */
 const FX_CAP = FX_STRIDE * 4096;
@@ -161,6 +162,8 @@ export interface World {
   groups: Map<number, GroupInfo>;
   /** Capture points on the map (none on most maps). */
   points: CapturePoint[];
+  /** Crates (an optional setting), or null. */
+  crates: { rng: Rng; list: Crate[] } | null;
 }
 
 export interface GroupInfo {
@@ -186,6 +189,8 @@ export interface WorldOptions {
   victoryRules?: boolean;
   /** Capture points (tile and POINT kind). */
   points?: { x: number; y: number; kind: number }[];
+  /** Crates drop on the map now and then. */
+  crates?: boolean;
 }
 
 export function createWorld(o: WorldOptions): World {
@@ -232,6 +237,7 @@ export function createWorld(o: WorldOptions): World {
     pending: new Map(),
     groups: new Map(),
     points: (o.points ?? []).map((p) => ({ x: p.x, y: p.y, kind: p.kind, owner: -1, capturer: -1, progress: 0 })),
+    crates: o.crates ? makeCrates(o.seed) : null,
   };
 }
 
@@ -294,6 +300,15 @@ export function serializeWorld(world: World, w: IntWriter): void {
   w.pushArray(world.map.echo);
   for (const r of world.aiRng) w.pushArray(r.s);
   world.entities.serialize(w);
+  // Only matches with crates carry them (other states hash exactly as before).
+  if (world.crates) {
+    w.pushArray(world.crates.rng.s);
+    for (const c of world.crates.list) {
+      w.push(c.x);
+      w.push(c.y);
+      w.push(c.kind);
+    }
+  }
   // Only maps with capture points carry them (other states hash exactly as before).
   for (const p of world.points) {
     w.push(p.owner);

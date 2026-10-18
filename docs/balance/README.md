@@ -103,3 +103,9 @@ runs are unchanged). Checked with `--points some`, Hard vs Hard:
 - Fix: the AI takes only points on its own half of the map, sends its three fastest spare units from minute 4 and
   releases them once the point is held. Now 44.5% / 55.5% / 49% (Holdout–Choir, Holdout–Halcyon, Halcyon–Choir,
   200 matches each), in line with the default maps.
+
+### 2026-10-19: crates (optional setting)
+
+Crates drop every 45 s (at most three on the map): 500 credits, a full repair around the finder, or a promotion.
+The AI picks up crates it can see within 15 tiles of a spare unit. Hard vs Hard with `--crates`, 100 matches:
+Holdout–Choir 47%, Holdout–Halcyon 50%, Halcyon–Choir 54%.

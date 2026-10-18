@@ -107,10 +107,13 @@ export const H = {
   playerCount: 5,
   stalled: 6,
   pointCount: 7,
+  crateCount: 8,
 } as const;
+/** Crates after the capture points: [x, y, kind]. */
+export const CRATE_STRIDE = 3;
 /** Capture points after the projectiles: [x, y, kind, owner, capturer team, progress ticks]. */
 export const POINT_STRIDE = 6;
-export const HEADER_LEN = 8;
+export const HEADER_LEN = 9;
 
 export const P = {
   credits: 0,
@@ -217,6 +220,16 @@ export class Snapshot {
     for (let i = 0; i < (this.a[H.pointCount] ?? 0); i++) {
       const o = base + i * POINT_STRIDE;
       out.push({ x: this.a[o]!, y: this.a[o + 1]!, kind: this.a[o + 2]!, owner: this.a[o + 3]!, capturer: this.a[o + 4]!, progress: this.a[o + 5]! });
+    }
+    return out;
+  }
+  /** Crates lying on the map (only with the crates setting). */
+  crates(): { x: number; y: number; kind: number }[] {
+    const out = [];
+    const base = this.projBase + this.projectileCount * PROJ_STRIDE + (this.a[H.pointCount] ?? 0) * POINT_STRIDE;
+    for (let i = 0; i < (this.a[H.crateCount] ?? 0); i++) {
+      const o = base + i * CRATE_STRIDE;
+      out.push({ x: this.a[o]!, y: this.a[o + 1]!, kind: this.a[o + 2]! });
     }
     return out;
   }

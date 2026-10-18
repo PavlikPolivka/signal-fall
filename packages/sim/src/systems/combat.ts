@@ -172,7 +172,7 @@ export function deathSystem(world: World): void {
   }
 }
 
-function promote(world: World, s: number): void {
+export function promote(world: World, s: number): void {
   const e = world.entities;
   const c = world.rules.constants;
   const cost = costOf(world, s);

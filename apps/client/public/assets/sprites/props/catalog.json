@@ -911,6 +911,13 @@
    "dirs": 1,
    "anims": {},
    "turret": false
+  },
+  "pt_crate": {
+   "kind": "prop",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
   }
  }
 }

@@ -94,7 +94,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 71 | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers (depots and watchtowers done as capture points; garrisoning still open) | 3 | M |
 | 72 | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles | 4 | L |
 | 73 | E | Harvester economy depth: refinery queue logic, harvester escorts matter, raids are punishing but recoverable | 3 | S |
-| 74 | E | Crates (rare pickups) on skirmish maps, optional | 2 | S |
+| 74 ✅ | E | Crates (rare pickups) on skirmish maps, optional | 2 | S |
 | 75 ✅ | A | AI difficulty describes itself in the menu (what it does, how fast) | 2 | XS |
 | 76 ✅ | A | AI personalities with names in skirmish (Aggressive Ada, Turtle Tomas) | 3 | S |
 | 77 ✅ | A | AI uses abilities well (blink in, override, phase) at Hard+ | 3 | M |
