@@ -58,3 +58,16 @@ test('free-for-all: four players, each on their own team', async ({ page }) => {
   const teams = await page.evaluate(() => (window as unknown as { __signalFall: { state: { players: { team: number }[] } } }).__signalFall.state.players.map((p) => p.team));
   expect(teams).toEqual([0, 1, 2, 3]);
 });
+
+test('the daily challenge starts the same match for everyone today', async ({ page }) => {
+  await page.goto('/play/');
+  await expect(page.getByTestId('daily')).toBeVisible();
+  await page.click('[data-testid=open-daily]');
+  await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur);
+  const st = await page.evaluate(() => {
+    const s = (window as unknown as { __signalFall: { state: { daily: string | null; players: unknown[] } } }).__signalFall.state;
+    return { daily: s.daily, players: s.players.length };
+  });
+  expect(st.daily).toContain('vs');
+  expect(st.players).toBe(2);
+});

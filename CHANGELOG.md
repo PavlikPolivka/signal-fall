@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 22:33 UTC
+
+- **Daily challenge:** every day there is one skirmish that's the same for everyone: your faction, the opponent (Hard AI) and the map follow from the date. Win it as fast as you can; the main menu and the end screen show today's fastest wins. Only your best time counts.
+
 ## 2026-10-18 22:29 UTC
 
 - **King of the hill:** set **Victory** to King of the hill in the map options. A flag stands at the center of the map; hold it (ground units next to it, no enemy beside them) for five minutes in total and you win. The top bar shows how long each side has held it. Destroying the enemy still wins too. The AI fights for the hill.

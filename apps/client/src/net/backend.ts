@@ -265,6 +265,22 @@ export async function findMatch(sb: SupabaseClient): Promise<{ code: string; hos
   return row ? { code: row.code, host: row.host } : null;
 }
 
+/** Daily challenge: record a win (keeps the fastest); returns today's best time in ticks. */
+export async function submitDaily(sb: SupabaseClient, ticks: number, hash: number): Promise<number | null> {
+  await signIn(sb);
+  const { data, error } = await sb.rpc('submit_daily', { win_ticks: ticks, hash });
+  return error ? null : (data as number);
+}
+
+/** Today's fastest wins (UTC day), and where we stand. */
+export async function dailyBoard(sb: SupabaseClient, day: string): Promise<{ top: { name: string; ticks: number; rank: number; me: boolean }[]; mine: { ticks: number; rank: number } | null }> {
+  const me = await signIn(sb);
+  const { data } = await sb.from('daily_board').select('player, name, ticks, rank').eq('day', day).order('ticks').limit(10);
+  const rows = (data ?? []) as { player: string; name: string; ticks: number; rank: number }[];
+  const { data: own } = await sb.from('daily_board').select('ticks, rank').eq('day', day).eq('player', me).maybeSingle();
+  return { top: rows.map((r) => ({ name: r.name, ticks: r.ticks, rank: r.rank, me: r.player === me })), mine: (own as { ticks: number; rank: number } | null) ?? null };
+}
+
 /** STUN plus short-lived TURN relay servers from the Edge Function (STUN only if it is unavailable). */
 export async function iceServers(sb: SupabaseClient): Promise<RTCIceServer[]> {
   const { data, error } = await sb.functions.invoke<{ iceServers: RTCIceServer[] }>('turn-credentials', { method: 'POST' });

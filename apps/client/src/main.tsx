@@ -12,8 +12,9 @@ import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import type { Replay } from './game/scenario';
 import { addRecent, clock, saveGame, savedGame } from './game/saves';
+import { dailyChallenge } from './game/daily';
 import { NetSession, SpectatorFeed, degrade } from './net/session';
-import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
+import { backend, fileDesyncReport, finishEmailLink, submitDaily } from './net/backend';
 import { recordMatch, type NetMatch } from './net/history';
 import { reportErrors } from './net/errors';
 import { RejoinHost, forgetMatch, matchToRejoin, rejoin, rememberMatch, type CatchupData, type Rejoined } from './net/rejoin';
@@ -113,6 +114,8 @@ function rematch(): ScenarioSpec | null {
   history.replaceState(null, '', location.pathname);
   return scenarioFromSetup(saved as SkirmishSettings);
 }
+/** ?daily: today's challenge, the same match for everyone. */
+const daily = params.has('daily') ? dailyChallenge() : null;
 /** Reloaded during a multiplayer match: get back into it. */
 let comeback = !autostart && !new URLSearchParams(location.search).has('continue') ? matchToRejoin() : null;
 let rejoined: Rejoined | null = null;
@@ -151,7 +154,7 @@ function hostRejoins(code: string, scenario: ScenarioSpec): void {
 /** ?continue: the saved skirmish, picked up where it was saved. */
 const resume = params.has('continue') ? (savedGame()?.replay ?? null) : null;
 if (params.has('continue')) history.replaceState(null, '', location.pathname);
-let scenario: ScenarioSpec | null = autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch();
+let scenario: ScenarioSpec | null = daily ? daily.scenario : autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch();
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */
@@ -196,6 +199,7 @@ const post = (msg: ToWorker) => worker.postMessage(msg);
 reportErrors(() => (!scenario ? 'menu' : replay ? 'replay' : peerLinks ? 'multiplayer' : `${scenario.kind} @${state.cur?.tick ?? 0}`), worker);
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
+state.daily = daily ? daily.label : null;
 state.rematch = () => {
   if (!lastRoom) return;
   const me = lastRoom.slots[localSlot]?.player?.id;
@@ -304,6 +308,15 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       a.download = `signal-fall-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.sfreplay.json`;
       a.click();
       return;
+    }
+    if (msg.type === 'final' && daily && msg.winnerTeam === state.players[0]?.team) {
+      // A daily challenge win: on the board (fastest counts).
+      const sb = backend();
+      state.dailyResult = { ticks: msg.tick, best: null };
+      if (sb) void submitDaily(sb, msg.tick, msg.hash).then((best) => {
+        state.dailyResult = { ticks: msg.tick, best };
+        state.changed();
+      });
     }
     if (msg.type === 'final') {
       // Over: nothing to rejoin after a reload.

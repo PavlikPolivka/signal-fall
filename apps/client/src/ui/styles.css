@@ -2381,3 +2381,36 @@ label.check {
   text-align: center;
   color: #fff;
 }
+.daily {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.daily-board {
+  margin: 4px 0 0;
+  padding: 6px 12px;
+  list-style: none;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+}
+.daily-board li {
+  display: flex;
+  gap: 8px;
+}
+.daily-board li span {
+  min-width: 2.5em;
+  color: var(--muted);
+}
+.daily-board li b {
+  margin-left: auto;
+  font-family: var(--mono);
+}
+.daily-board li.me {
+  color: var(--accent);
+}
+.daily-end p {
+  margin: 0 0 6px;
+}

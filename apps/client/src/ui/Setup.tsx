@@ -3,6 +3,7 @@ import type { Rules } from '@signal-fall/data';
 import type { Difficulty, StrategyName } from '@signal-fall/ai';
 import { clock, recentMatches, savedGame } from '../game/saves';
 import { Codex } from './Codex';
+import { DailyPanel } from './Daily';
 import { Changes } from './Changes';
 import { Logo } from './Logo';
 import { MenuVideo } from './Video';
@@ -193,6 +194,7 @@ export function Setup({
         )}
         {notice && <p class="home-notice">{notice}</p>}
         <SavedAndRecent onReplay={onReplay} />
+        <DailyPanel />
         <div class="home-actions">
           <button class="start" onClick={() => setSkirmish(true)} data-testid="open-skirmish">
             Skirmish vs AI

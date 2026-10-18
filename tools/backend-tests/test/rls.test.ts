@@ -86,6 +86,18 @@ describe.skipIf(!URL || !ANON)('backend row level security', () => {
     await d.sb.from('queue').delete().eq('player', d.id);
   });
 
+  it('daily challenge keeps each player's fastest win and ranks them', async () => {
+    const c = await player();
+    expect((await c.sb.rpc('submit_daily', { win_ticks: 20000, hash: 1 })).data).toBe(20000);
+    expect((await c.sb.rpc('submit_daily', { win_ticks: 25000, hash: 2 })).data).toBe(20000);
+    expect((await c.sb.rpc('submit_daily', { win_ticks: 15000, hash: 3 })).data).toBe(15000);
+    const day = new Date().toISOString().slice(0, 10);
+    const mine = await c.sb.from('daily_board').select('ticks').eq('day', day).eq('player', c.id).single();
+    expect(mine.data?.ticks).toBe(15000);
+    // Nobody writes scores directly.
+    expect((await c.sb.from('daily_scores').insert({ day, ticks: 1 })).error).not.toBeNull();
+  });
+
   it('crash reports are write-only for players and size-capped', async () => {
     const r = await a.sb.from('client_errors').insert({ message: 'boom', stack: 'at x', path: '/play/', context: 'menu', client_version: 'test' });
     expect(r.error).toBeNull();

@@ -17,6 +17,8 @@ import { Credits } from './Credits';
 import { MatchReport } from './MatchReport';
 import type { GameAudio } from '../audio/audio';
 import { FACTION_TIPS, GENERAL_TIPS } from './tips';
+import { DailyBoard } from './Daily';
+import { clock } from '../game/saves';
 
 const FX = 1024;
 
@@ -1113,6 +1115,21 @@ function EndScreen({ state }: { state: ClientState }) {
     <div class="menu-overlay" data-testid="end-screen">
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
+        {state.daily && (
+          <div class="daily-end" data-testid="daily-end">
+            <p>
+              Daily challenge: {state.daily}
+              {state.dailyResult && (
+                <>
+                  <br />
+                  Your time <b>{clock(state.dailyResult.ticks)}</b>
+                  {state.dailyResult.best !== null && state.dailyResult.best < state.dailyResult.ticks && <> · your best today {clock(state.dailyResult.best)}</>}
+                </>
+              )}
+            </p>
+            <DailyBoard refresh={state.dailyResult?.best ?? 0} />
+          </div>
+        )}
         {!state.multiplayer && !state.replay && (
           <button data-testid="end-rematch" onClick={() => (location.href = `${location.pathname}?rematch=1`)}>
             Rematch (same map and sides)

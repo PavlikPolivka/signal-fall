@@ -98,6 +98,10 @@ export class ClientState {
   saveReplay: () => void = () => undefined;
   /** Multiplayer: vote to let the AI take over whoever we are waiting on (they left). */
   dropPeers: () => void = () => undefined;
+  /** Playing today's daily challenge (its description), or null. */
+  daily: string | null = null;
+  /** Daily challenge won: this match's time and today's best (ticks), when known. */
+  dailyResult: { ticks: number; best: number | null } | null = null;
   /** Multiplayer: back to the same room for another match (set up by main). */
   rematch: () => void = () => undefined;
   /** Skirmish: keep the match in this browser's save slot (Continue on the main menu). */
