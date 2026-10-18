@@ -5,7 +5,7 @@ import type { ScenarioSpec } from '../protocol';
 import { PeerLink } from './webrtc';
 import type { Signaling } from './signaling';
 
-export type LobbyMode = '1v1' | '2v2';
+export type LobbyMode = '1v1' | '2v2' | 'ffa3' | 'ffa4';
 
 export interface LobbyPlayer {
   /** Signaling id (this connection). */
@@ -69,7 +69,7 @@ export function roomCode(): string {
 }
 
 function emptySlots(mode: LobbyMode): LobbySlot[] {
-  const teams = mode === '2v2' ? [0, 0, 1, 1] : [0, 1];
+  const teams = mode === '2v2' ? [0, 0, 1, 1] : mode === 'ffa3' ? [0, 1, 2] : mode === 'ffa4' ? [0, 1, 2, 3] : [0, 1];
   return teams.map((team, k) => ({ team, kind: 'open', faction: k % 3, difficulty: 'normal' }));
 }
 
@@ -251,7 +251,7 @@ export class Lobby {
     const slots = emptySlots(mode);
     if (people.length > slots.length) return; // 2v2 → 1v1 with three people: not possible.
     // The host keeps seat 0; the others fill seats from the far team first, so 1v1 → 2v2 stays a fair split.
-    const order = mode === '2v2' ? [0, 2, 1, 3] : [0, 1];
+    const order = mode === '2v2' ? [0, 2, 1, 3] : slots.map((_, k) => k);
     people.forEach((p, i) => (slots[order[i]!] = { ...slots[order[i]!]!, kind: 'human', faction: p.faction, player: p.player }));
     s.mode = mode;
     s.slots = slots;

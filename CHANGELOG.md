@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 22:11 UTC
+
+- **Free-for-all:** play against two or three AIs at once, everyone for themselves, in skirmish (Mode: Free-for-all 3 or 4), or with friends in a multiplayer room. The last side standing wins.
+
 ## 2026-10-18 22:07 UTC
 
 - **Crates:** a new map option. With **Crates** on, a supply crate drops somewhere on the map every 45 seconds. The first ground unit to reach one opens it: 500 credits, a full repair for your units around it, or a promotion for the unit that found it. The AI grabs the ones it sees, too.

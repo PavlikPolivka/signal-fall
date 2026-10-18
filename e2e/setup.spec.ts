@@ -51,3 +51,10 @@ test('the menu backdrop video keeps playing across menu screens', async ({ page 
   // Polled: mid-crossfade on a slow software-rendered runner, neither may be playing for a moment.
   await expect.poll(async () => (await state()).playing, { timeout: 10_000 }).toBeGreaterThan(0);
 });
+
+test('free-for-all: four players, each on their own team', async ({ page }) => {
+  await page.goto('/play/?mode=ffa4&ai=easy');
+  await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur);
+  const teams = await page.evaluate(() => (window as unknown as { __signalFall: { state: { players: { team: number }[] } } }).__signalFall.state.players.map((p) => p.team));
+  expect(teams).toEqual([0, 1, 2, 3]);
+});

@@ -14,8 +14,8 @@ import { Stats } from './Stats';
 import { account, backend, type Account as AccountInfo } from '../net/backend';
 
 export interface SkirmishSettings extends MapChoice {
-  /** 1v1, or 2v2: you and an AI ally against two AIs. */
-  mode: '1v1' | '2v2';
+  /** 1v1, 2v2 (you and an AI ally against two AIs), or free-for-all against two or three AIs. */
+  mode: '1v1' | '2v2' | 'ffa3' | 'ffa4';
   faction: number;
   enemyFaction: number;
   /** Enemy AI difficulty. */
@@ -287,6 +287,8 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
               options={[
                 ['1v1', '1 vs 1'],
                 ['2v2', '2 vs 2'],
+                ['ffa3', 'Free-for-all (3)'],
+                ['ffa4', 'Free-for-all (4)'],
               ]}
               onChange={(v) => set({ mode: v })}
               testid="mode"
@@ -298,8 +300,9 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
                 <Choice label="Ally skill" value={s.allyDifficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ allyDifficulty: v })} testid="ally-difficulty" />
               </>
             )}
-            <Choice label={s.mode === '2v2' ? 'Enemy 1' : 'Opponent'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
-            {s.mode === '2v2' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
+            <Choice label={s.mode === '1v1' ? 'Opponent' : 'Enemy 1'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
+            {s.mode !== '1v1' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
+            {s.mode === 'ffa4' && <Choice label="Enemy 3" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="enemy3" />}
             <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
             <p class="setup-note" data-testid="difficulty-info">{DIFFICULTY_INFO[s.difficulty]}</p>
             <Choice
@@ -320,7 +323,7 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
                 </button>
               ))}
             </div>
-            <MapSettings value={s} onChange={set} players={s.mode === '2v2' ? 4 : 2} />
+            <MapSettings value={s} onChange={set} players={s.mode === '2v2' || s.mode === 'ffa4' ? 4 : s.mode === 'ffa3' ? 3 : 2} />
             <Choice
               label="Time of day"
               value={s.time ?? 'day'}

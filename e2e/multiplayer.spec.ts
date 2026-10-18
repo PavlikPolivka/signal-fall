@@ -338,3 +338,31 @@ test('two players in the ranked queue are paired and the match starts by itself'
   expect(slots.sort()).toEqual([0, 1]);
   for (const c of contexts) await c.close();
 });
+
+test('free-for-all: three people, three teams, in sync', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!!process.env.SUPABASE_URL, 'offline mesh test (one browser profile)');
+  test.setTimeout(180_000);
+  type W = { __signalFall: { state: { cur: { tick: number } | null; players: { team: number }[]; localPlayer: number } } };
+  const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  const [host, a, b] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
+  await host.goto('/play/');
+  await host.click('[data-testid=open-multiplayer]');
+  await host.click('[data-testid=mp-create]');
+  await host.click('[data-testid=mp-mode] [data-value="ffa3"]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  for (const p of [a, b]) {
+    await p.goto('/play/');
+    await p.click('[data-testid=open-multiplayer]');
+    await p.fill('[data-testid=mp-code]', code);
+    await p.click('[data-testid=mp-join]');
+  }
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
+  await host.click('[data-testid=mp-start]');
+  for (const p of [host, a, b]) await p.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 250, null, { timeout: 120_000 });
+  const views = await Promise.all([host, a, b].map((p) => p.evaluate(() => ({ teams: (window as unknown as W).__signalFall.state.players.map((x) => x.team), me: (window as unknown as W).__signalFall.state.localPlayer }))));
+  expect(views.map((v) => v.me).sort()).toEqual([0, 1, 2]);
+  for (const v of views) expect(v.teams).toEqual([0, 1, 2]);
+  for (const p of [host, a, b]) await expect(p.getByTestId('desync')).toHaveCount(0);
+  await ctx.close();
+});

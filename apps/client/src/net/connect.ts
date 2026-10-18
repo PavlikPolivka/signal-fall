@@ -9,7 +9,7 @@ export interface RoomConnection {
   /** Mark the room as playing (host) so nobody else joins. */
   started: () => void;
   /** Host: list the room publicly (or not), refreshing its seats; no-op without a backend. */
-  advertise: (info: { public: boolean; title: string; mode: '1v1' | '2v2'; openSeats: number }) => void;
+  advertise: (info: { public: boolean; title: string; mode: '1v1' | '2v2' | 'ffa3' | 'ffa4'; openSeats: number }) => void;
   close: () => void;
 }
 

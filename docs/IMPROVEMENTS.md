@@ -132,7 +132,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 104 | K | Survival / co-op mode: hold out against waves with a friend | 4 | L |
 | 105 | K | Fourth faction (later) | 4 | XL |
 | 106 | K | Daily challenge: same seed and setup for everyone, leaderboard by time | 3 | M |
-| 107 | K | Free-for-all 3–4 players | 3 | M |
+| 107 ✅ | K | Free-for-all 3–4 players | 3 | M |
 | 108 | K | King-of-the-hill and capture modes | 3 | M |
 | 109 | G | 3D renderer (WebGPU) keeping the sim (long-term) | 4 | XL |
 | 110 | K | Mobile/tablet controls (touch UI) | 3 | L |

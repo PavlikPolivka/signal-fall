@@ -218,12 +218,12 @@ export async function setRoomStatus(sb: SupabaseClient, code: string, status: 'o
 export interface PublicRoom {
   code: string;
   title: string;
-  mode: '1v1' | '2v2';
+  mode: '1v1' | '2v2' | 'ffa3' | 'ffa4';
   openSeats: number;
 }
 
 /** Host: list (or unlist) the room in the public browser; called again as a heartbeat while open. */
-export async function advertiseRoom(sb: SupabaseClient, code: string, info: { public: boolean; title: string; mode: '1v1' | '2v2'; openSeats: number }): Promise<void> {
+export async function advertiseRoom(sb: SupabaseClient, code: string, info: { public: boolean; title: string; mode: '1v1' | '2v2' | 'ffa3' | 'ffa4'; openSeats: number }): Promise<void> {
   await sb
     .from('rooms')
     .update({ public: info.public, title: info.title.slice(0, 40), mode: info.mode, open_seats: Math.max(0, Math.min(3, info.openSeats)), updated_at: new Date().toISOString() })
@@ -242,7 +242,7 @@ export async function publicRooms(sb: SupabaseClient): Promise<PublicRoom[]> {
     .gt('updated_at', since)
     .order('updated_at', { ascending: false })
     .limit(20);
-  return (data ?? []).map((r: { code: string; title: string | null; mode: '1v1' | '2v2'; open_seats: number }) => ({ code: r.code, title: r.title ?? `Room ${r.code}`, mode: r.mode, openSeats: r.open_seats }));
+  return (data ?? []).map((r: { code: string; title: string | null; mode: '1v1' | '2v2' | 'ffa3' | 'ffa4'; open_seats: number }) => ({ code: r.code, title: r.title ?? `Room ${r.code}`, mode: r.mode, openSeats: r.open_seats }));
 }
 
 /** Ranked queue: wait for an opponent of similar rating. */

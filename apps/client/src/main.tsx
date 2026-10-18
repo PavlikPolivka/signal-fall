@@ -50,6 +50,13 @@ function scenarioFromUrl(): ScenarioSpec {
     points: (params.get('points') ?? 'none') as 'none' | 'some',
     crates: params.get('crates') === '1',
   };
+  // ?mode=ffa3 / ffa4: everyone for themselves, every slot but ours AI.
+  if (params.get('mode') === 'ffa3' || params.get('mode') === 'ffa4') {
+    const n = params.get('mode') === 'ffa3' ? 3 : 4;
+    const factions = (params.get('factions') ?? '0,1,2,0').split(',').map(Number).slice(0, n);
+    const level = spectate ?? (ai as Difficulty);
+    return { kind, seed, factions, ai: factions.map((_, k) => (k === 0 ? spectate : level)), map };
+  }
   // ?mode=2v2[&factions=0,2,1,0]: slots 0+1 against 2+3; every slot but ours is AI (all of them when spectating).
   if (params.get('mode') === '2v2') {
     const factions = (params.get('factions') ?? '0,2,1,0').split(',').map(Number);
@@ -90,6 +97,11 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       time: s.time,
       personality: [null, null, style, style],
     };
+  // Free-for-all: everyone on their own team.
+  if (s.mode === 'ffa3' || s.mode === 'ffa4') {
+    const factions = [s.faction, s.enemyFaction, s.enemy2Faction, s.allyFaction].slice(0, s.mode === 'ffa3' ? 3 : 4);
+    return { kind: 'skirmish', seed: s.seed, factions, ai: factions.map((_, k) => (k === 0 ? null : s.difficulty)), map, time: s.time, personality: factions.map((_, k) => (k === 0 ? null : style)) };
+  }
   return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map, time: s.time, personality: [null, style] };
 }
 
