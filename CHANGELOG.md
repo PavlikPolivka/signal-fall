@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 22:37 UTC
+
+- **Tutorial:** new to real-time strategy? **Tutorial** on the main menu teaches the game in eight short steps on a small map: moving the camera, setting up a base, power, money, an army, control groups, attacking and winning. Each step ticks off as soon as you've done it.
+
 ## 2026-10-18 22:33 UTC
 
 - **Daily challenge:** every day there is one skirmish that's the same for everyone: your faction, the opponent (Hard AI) and the map follow from the date. Win it as fast as you can; the main menu and the end screen show today's fastest wins. Only your best time counts.

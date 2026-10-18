@@ -18,6 +18,7 @@ import { MatchReport } from './MatchReport';
 import type { GameAudio } from '../audio/audio';
 import { FACTION_TIPS, GENERAL_TIPS } from './tips';
 import { DailyBoard } from './Daily';
+import { Tutorial } from './Tutorial';
 import { clock } from '../game/saves';
 
 const FX = 1024;
@@ -81,7 +82,8 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
           }}
         />
       )}
-      {!state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
+      {state.tutorial && <Tutorial state={state} renderer={props.renderer} />}
+      {!state.tutorial && !state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
     </div>
   );
 }

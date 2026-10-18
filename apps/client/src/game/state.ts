@@ -98,6 +98,8 @@ export class ClientState {
   saveReplay: () => void = () => undefined;
   /** Multiplayer: vote to let the AI take over whoever we are waiting on (they left). */
   dropPeers: () => void = () => undefined;
+  /** The tutorial match. */
+  tutorial = false;
   /** Playing today's daily challenge (its description), or null. */
   daily: string | null = null;
   /** Daily challenge won: this match's time and today's best (ticks), when known. */

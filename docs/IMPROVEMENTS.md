@@ -65,7 +65,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 47 ✅ | U | Minimap: unit dots by size, structures as squares, click-drag to move the camera, right-click to order | 4 | S |
 | 48 ✅ | U | Fog-of-war shows last-seen buildings as ghosts | 4 | S |
 | 49 ✅ | U | Pause menu shows objectives, faction tips and the keymap at a glance | 3 | XS |
-| 50 | O | Interactive tutorial (5 short steps) for players new to RTS | 4 | M |
+| 50 ✅ | O | Interactive tutorial (5 short steps) for players new to RTS | 4 | M |
 | 51 ✅ | O | Skirmish presets ("Quick match", "Long game", "Rush") and a "same as last time" button | 3 | XS |
 | 52 ✅ | M | Rematch button for multiplayer; post-game lobby keeps the room | 4 | S |
 | 53 ✅ | M | In-game chat and pings (Alt+click to ping a spot for teammates in 2v2) | 4 | M |

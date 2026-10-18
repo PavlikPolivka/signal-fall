@@ -114,6 +114,10 @@ function rematch(): ScenarioSpec | null {
   history.replaceState(null, '', location.pathname);
   return scenarioFromSetup(saved as SkirmishSettings);
 }
+/** ?tutorial: a small map, Holdout against a Choir base that never builds an army. */
+const tutorial: ScenarioSpec | null = params.has('tutorial')
+  ? { kind: 'skirmish', seed: 4242, factions: [0, 2], ai: [null, null], map: { size: 'S', biome: 'wasteland', resources: 'normal', terrain: 'open' } }
+  : null;
 /** ?daily: today's challenge, the same match for everyone. */
 const daily = params.has('daily') ? dailyChallenge() : null;
 /** Reloaded during a multiplayer match: get back into it. */
@@ -154,7 +158,7 @@ function hostRejoins(code: string, scenario: ScenarioSpec): void {
 /** ?continue: the saved skirmish, picked up where it was saved. */
 const resume = params.has('continue') ? (savedGame()?.replay ?? null) : null;
 if (params.has('continue')) history.replaceState(null, '', location.pathname);
-let scenario: ScenarioSpec | null = daily ? daily.scenario : autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch();
+let scenario: ScenarioSpec | null = tutorial ?? (daily ? daily.scenario : null) ?? (autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch());
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */
@@ -200,6 +204,7 @@ reportErrors(() => (!scenario ? 'menu' : replay ? 'replay' : peerLinks ? 'multip
 const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
 state.daily = daily ? daily.label : null;
+state.tutorial = !!tutorial;
 state.rematch = () => {
   if (!lastRoom) return;
   const me = lastRoom.slots[localSlot]?.player?.id;

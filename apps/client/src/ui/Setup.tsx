@@ -204,6 +204,9 @@ export function Setup({
           </button>
         </div>
         <nav class="setup-links">
+          <button onClick={() => (location.href = `${location.pathname}?tutorial=1`)} data-testid="open-tutorial" title="Learn to play in eight short steps">
+            Tutorial
+          </button>
           <button onClick={() => setCodex(true)} data-testid="open-codex">
             Codex
           </button>
