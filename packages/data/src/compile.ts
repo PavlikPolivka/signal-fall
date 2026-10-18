@@ -129,6 +129,8 @@ export interface UpgradeRule {
   researchTicks: number;
   requires: Role[];
   requiresUpgrade: string | null;
+  /** The other half of an either/or choice (id), if any. */
+  excludes: string | null;
   effect: UpgradeEffect;
 }
 
@@ -333,6 +335,7 @@ export function compileRules(raw: RawData): Rules {
       researchTicks: ticks(u.researchTime),
       requires: u.requires,
       requiresUpgrade: u.requiresUpgrade ?? null,
+      excludes: u.excludes ?? null,
       effect: u.effect,
     };
   });

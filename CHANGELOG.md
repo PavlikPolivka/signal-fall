@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 23:28 UTC
+
+- **Doctrines:** each faction's two special upgrades at the tech center are now a choice: research one and the other closes for the match. Holdout picks Salvage Crews or Reinforced Plating, Halcyon Extended Relays or Deep Recompile, the Choir Harmonic Shields or Rapid Growth. They show with a dashed border, and the one you didn't pick is crossed out.
+
 ## 2026-10-18 23:13 UTC
 
 - **Touch screens:** play on a tablet. Tap to select or give orders, drag one finger to move the view, pinch with two fingers to zoom, and press and hold to back out (like a right click). A touch bar appears with **Box** (drag to select a group), **Army**, **Attack**, **Stop** and **Cancel**.

@@ -461,8 +461,15 @@ export class AiPlayer implements Brain {
     const order = this.directed
       ? (this.plan.research ?? []).map((id) => ups.find((u) => u.id === id)!).filter((u) => u)
       : [...ups.filter((u) => u.faction === p.faction), ...ups.filter((u) => u.faction < 0)].sort((a, b) => a.tier - b.tier);
+    // Doctrines (either/or): tech and turtle plans take the pricier, longer-term one, the rest the cheaper.
+    const longGame = this.strategy.name === 'tech' || this.strategy.name === 'turtle';
+    const skip = (u: (typeof ups)[number]) => {
+      if (!u.excludes || this.directed) return false;
+      const other = ups.find((x) => x.id === u.excludes)!;
+      return longGame ? u.cost < other.cost : u.cost > other.cost;
+    };
     for (const u of order) {
-      if (!canResearch(world, facts, this.player, u.index)) continue;
+      if (skip(u) || !canResearch(world, facts, this.player, u.index)) continue;
       this.act({ type: 'research', upgrade: u.index });
       return;
     }

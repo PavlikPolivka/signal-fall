@@ -72,6 +72,7 @@ export function validateRaw(raw: RawData): string[] {
   for (const u of raw.upgrades) {
     claim(u.id, 'upgrade');
     if (u.requiresUpgrade && !upgradeIds.has(u.requiresUpgrade)) err(`upgrade ${u.id} requires unknown ${u.requiresUpgrade}`);
+    if (u.excludes && !upgradeIds.has(u.excludes)) err(`upgrade ${u.id} excludes unknown ${u.excludes}`);
   }
 
   const seen = new Map<string, string>();

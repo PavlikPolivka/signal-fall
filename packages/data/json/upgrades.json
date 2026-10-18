@@ -1,12 +1,160 @@
 [
-  { "id": "weapons_1", "name": "Weapons I", "faction": "all", "tier": 2, "cost": 1000, "researchTime": 30, "requires": ["tech"], "effect": { "kind": "damagePct", "pct": 10 } },
-  { "id": "weapons_2", "name": "Weapons II", "faction": "all", "tier": 3, "cost": 1500, "researchTime": 40, "requires": ["tech"], "requiresUpgrade": "weapons_1", "effect": { "kind": "damagePct", "pct": 10 } },
-  { "id": "armor_1", "name": "Armor I", "faction": "all", "tier": 2, "cost": 1000, "researchTime": 30, "requires": ["tech"], "effect": { "kind": "hpPct", "pct": 10 } },
-  { "id": "armor_2", "name": "Armor II", "faction": "all", "tier": 3, "cost": 1500, "researchTime": 40, "requires": ["tech"], "requiresUpgrade": "armor_1", "effect": { "kind": "hpPct", "pct": 10 } },
-  { "id": "salvage_crews", "name": "Salvage Crews", "faction": "holdout", "tier": 3, "cost": 800, "researchTime": 25, "requires": ["tech"], "effect": { "kind": "salvagePct", "pct": 50 } },
-  { "id": "reinforced_plating", "name": "Reinforced Plating", "faction": "holdout", "tier": 3, "cost": 1200, "researchTime": 35, "requires": ["tech"], "effect": { "kind": "vehicleEnergyResistPct", "pct": 20 } },
-  { "id": "extended_relays", "name": "Extended Relays", "faction": "halcyon", "tier": 3, "cost": 800, "researchTime": 25, "requires": ["tech"], "effect": { "kind": "coverageRadiusPct", "pct": 40 } },
-  { "id": "deep_recompile", "name": "Deep Recompile", "faction": "halcyon", "tier": 3, "cost": 1200, "researchTime": 35, "requires": ["tech"], "effect": { "kind": "recompileRefundPct", "pct": 40 } },
-  { "id": "harmonic_shields", "name": "Harmonic Shields", "faction": "choir", "tier": 3, "cost": 1200, "researchTime": 35, "requires": ["tech"], "effect": { "kind": "shieldPct", "pct": 25 } },
-  { "id": "rapid_growth", "name": "Rapid Growth", "faction": "choir", "tier": 3, "cost": 800, "researchTime": 25, "requires": ["tech"], "effect": { "kind": "growSpeedPct", "pct": 30 } }
+  {
+    "id": "weapons_1",
+    "name": "Weapons I",
+    "faction": "all",
+    "tier": 2,
+    "cost": 1000,
+    "researchTime": 30,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "damagePct",
+      "pct": 10
+    }
+  },
+  {
+    "id": "weapons_2",
+    "name": "Weapons II",
+    "faction": "all",
+    "tier": 3,
+    "cost": 1500,
+    "researchTime": 40,
+    "requires": [
+      "tech"
+    ],
+    "requiresUpgrade": "weapons_1",
+    "effect": {
+      "kind": "damagePct",
+      "pct": 10
+    }
+  },
+  {
+    "id": "armor_1",
+    "name": "Armor I",
+    "faction": "all",
+    "tier": 2,
+    "cost": 1000,
+    "researchTime": 30,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "hpPct",
+      "pct": 10
+    }
+  },
+  {
+    "id": "armor_2",
+    "name": "Armor II",
+    "faction": "all",
+    "tier": 3,
+    "cost": 1500,
+    "researchTime": 40,
+    "requires": [
+      "tech"
+    ],
+    "requiresUpgrade": "armor_1",
+    "effect": {
+      "kind": "hpPct",
+      "pct": 10
+    }
+  },
+  {
+    "id": "salvage_crews",
+    "name": "Salvage Crews",
+    "faction": "holdout",
+    "tier": 3,
+    "cost": 800,
+    "researchTime": 25,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "salvagePct",
+      "pct": 50
+    },
+    "excludes": "reinforced_plating"
+  },
+  {
+    "id": "reinforced_plating",
+    "name": "Reinforced Plating",
+    "faction": "holdout",
+    "tier": 3,
+    "cost": 1200,
+    "researchTime": 35,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "vehicleEnergyResistPct",
+      "pct": 20
+    },
+    "excludes": "salvage_crews"
+  },
+  {
+    "id": "extended_relays",
+    "name": "Extended Relays",
+    "faction": "halcyon",
+    "tier": 3,
+    "cost": 800,
+    "researchTime": 25,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "coverageRadiusPct",
+      "pct": 40
+    },
+    "excludes": "deep_recompile"
+  },
+  {
+    "id": "deep_recompile",
+    "name": "Deep Recompile",
+    "faction": "halcyon",
+    "tier": 3,
+    "cost": 1200,
+    "researchTime": 35,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "recompileRefundPct",
+      "pct": 40
+    },
+    "excludes": "extended_relays"
+  },
+  {
+    "id": "harmonic_shields",
+    "name": "Harmonic Shields",
+    "faction": "choir",
+    "tier": 3,
+    "cost": 1200,
+    "researchTime": 35,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "shieldPct",
+      "pct": 25
+    },
+    "excludes": "rapid_growth"
+  },
+  {
+    "id": "rapid_growth",
+    "name": "Rapid Growth",
+    "faction": "choir",
+    "tier": 3,
+    "cost": 800,
+    "researchTime": 25,
+    "requires": [
+      "tech"
+    ],
+    "effect": {
+      "kind": "growSpeedPct",
+      "pct": 30
+    },
+    "excludes": "harmonic_shields"
+  }
 ]

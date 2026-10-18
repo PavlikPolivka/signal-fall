@@ -904,16 +904,19 @@ function ResearchPanel({ state }: { state: ClientState }) {
       {ups.map((u) => {
         const researched = (done & (1 << u.index)) !== 0;
         const pre = u.requiresUpgrade ? state.rules.upgradeIndex.get(u.requiresUpgrade) : undefined;
-        const locked = (pre !== undefined && (done & (1 << pre)) === 0) || state.missing(u.requires, roles).length > 0;
+        // Doctrines: the other half of the choice, once researched, closes this one for the match.
+        const other = u.excludes ? state.rules.upgradeIndex.get(u.excludes) : undefined;
+        const closed = other !== undefined && (done & (1 << other)) !== 0;
+        const locked = closed || (pre !== undefined && (done & (1 << pre)) === 0) || state.missing(u.requires, roles).length > 0;
         const running = active === u.index;
         const busy = active >= 0 && !running;
         const effect = describeEffect(u.effect.kind, u.effect.pct);
         return (
           <button
-            class={`upgrade ${researched ? 'done' : ''} ${running ? 'building' : ''}`}
+            class={`upgrade ${researched ? 'done' : ''} ${running ? 'building' : ''} ${u.excludes ? 'doctrine' : ''} ${closed ? 'closed' : ''}`}
             disabled={researched || locked || busy}
             data-upgrade={u.id}
-            title={`${u.name}: ${effect}. ${money(u.cost)}, ${Math.round(u.researchTicks / 20)} s${locked ? ' (locked)' : ''}${running ? ' · click to cancel' : ''}`}
+            title={`${u.name}: ${effect}. ${money(u.cost)}, ${Math.round(u.researchTicks / 20)} s${u.excludes ? ` · Doctrine: choose this or ${state.rules.upgrades[other!]!.name}, not both` : ''}${closed ? ' (you chose the other)' : locked ? ' (locked)' : ''}${running ? ' · click to cancel' : ''}`}
             onClick={() => state.send(running ? { type: 'cancelResearch' } : { type: 'research', upgrade: u.index })}
           >
             {running && <i class="progress" style={{ '--p': `${progress / 10}%` }} />}

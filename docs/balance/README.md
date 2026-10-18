@@ -120,3 +120,10 @@ sends a squad to the hill from minute 4 and keeps it there, and its waves attack
 - Waves aimed at the hill while it isn't ours: Holdout–Choir 47%, Holdout–Halcyon 56% (100 matches),
   Halcyon–Choir 58% (300 matches). Halcyon keeps an edge of a few points over the standard maps in this mode;
   it is optional and not part of the CI gate.
+
+### 2026-10-19: doctrines
+
+Each faction's two tier-3 upgrades became an either/or choice (Salvage Crews or Reinforced Plating, Extended
+Relays or Deep Recompile, Harmonic Shields or Rapid Growth). The AI takes the pricier one on tech and turtle plans
+and the cheaper one otherwise. Hard vs Hard, 200 matches: Holdout–Choir 45.5%, Holdout–Halcyon 51.5%,
+Halcyon–Choir 52%.

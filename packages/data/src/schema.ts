@@ -170,6 +170,8 @@ export const upgradeSchema = z
     researchTime: z.number().positive(),
     requires: z.array(z.enum(ROLES)).default([]),
     requiresUpgrade: id.optional(),
+    /** A doctrine choice: researching one rules out the other for the match. */
+    excludes: id.optional(),
     effect: upgradeEffectSchema,
   })
   .strict();

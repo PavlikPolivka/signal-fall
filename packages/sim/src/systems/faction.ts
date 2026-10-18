@@ -44,6 +44,11 @@ export function canResearch(world: World, facts: PlayerFacts, player: number, up
     const pre = world.rules.upgradeIndex.get(u.requiresUpgrade);
     if (pre === undefined || p.upgrades[pre] !== 1) return false;
   }
+  // Doctrines: the other choice, once researched, closes this one.
+  if (u.excludes) {
+    const other = world.rules.upgradeIndex.get(u.excludes);
+    if (other !== undefined && p.upgrades[other] === 1) return false;
+  }
   return true;
 }
 

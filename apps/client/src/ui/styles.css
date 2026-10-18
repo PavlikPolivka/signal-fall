@@ -2534,3 +2534,10 @@ label.check {
   color: #0b0d10;
   background: var(--accent);
 }
+.upgrade.doctrine {
+  border-style: dashed;
+}
+.upgrade.closed {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
