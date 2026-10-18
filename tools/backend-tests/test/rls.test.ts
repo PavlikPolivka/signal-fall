@@ -86,7 +86,7 @@ describe.skipIf(!URL || !ANON)('backend row level security', () => {
     await d.sb.from('queue').delete().eq('player', d.id);
   });
 
-  it('daily challenge keeps each player's fastest win and ranks them', async () => {
+  it('daily challenge keeps the fastest win of each player and ranks them', async () => {
     const c = await player();
     expect((await c.sb.rpc('submit_daily', { win_ticks: 20000, hash: 1 })).data).toBe(20000);
     expect((await c.sb.rpc('submit_daily', { win_ticks: 25000, hash: 2 })).data).toBe(20000);
