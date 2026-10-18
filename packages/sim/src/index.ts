@@ -16,5 +16,5 @@ export * from './placement';
 export { HARVEST_TICKS, UNLOAD_PER_TICK, MAX_QUEUE, TABS } from './systems/economy';
 export { AWAKEN_HOME_RANGE, canResearch, inCoverage, isPhased, nearOwnStructure, powerReady, powerStatus, upgradePct, usePower } from './systems/faction';
 export { computeFacts } from './systems/economy';
-export { POINT, CAPTURE_RADIUS, CAPTURE_TICKS, DERRICK_CREDITS, DEPOT_RADIUS, WATCHTOWER_SIGHT, type CapturePoint } from './systems/points';
+export { POINT, HILL_TICKS, CAPTURE_RADIUS, CAPTURE_TICKS, DERRICK_CREDITS, DEPOT_RADIUS, WATCHTOWER_SIGHT, type CapturePoint } from './systems/points';
 export { CRATE, CRATE_CREDITS, type Crate } from './systems/crates';

@@ -9,7 +9,9 @@ import type { World } from '../world';
  * sees far, a repair depot mends the owner's units around it (machines and soldiers, not Choir crystal). Opposing units nearby stop a
  * capture; a point whose owner is defeated goes neutral again.
  */
-export const POINT = { derrick: 1, watchtower: 2, depot: 3 } as const;
+export const POINT = { derrick: 1, watchtower: 2, depot: 3, hill: 4 } as const;
+/** King of the hill: the team that holds the hill this long in total wins. */
+export const HILL_TICKS = 5 * 60 * 20;
 
 export interface CapturePoint {
   /** Tile. */
@@ -83,6 +85,8 @@ export function pointsSystem(world: World): void {
       }
     }
   }
+  // The hill: its holder's team scores time.
+  for (const p of world.points) if (p.kind === POINT.hill && p.owner >= 0) world.hillScore[players[p.owner]!.team]! += STEP;
   if (world.tick % PULSE !== 0) return;
   for (const p of world.points) {
     if (p.owner < 0) continue;

@@ -13,6 +13,8 @@ export interface MapChoice {
   points?: 'none' | 'some';
   /** Crates drop now and then. */
   crates?: boolean;
+  /** King of the hill: hold the center to win. */
+  hill?: boolean;
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -54,8 +56,8 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
   const readOnly = !onChange;
   const set = (patch: Partial<MapChoice>) => onChange?.(patch);
   const map = useMemo(
-    () => generateMap({ seed: value.seed, size: value.size, players, biome: value.biome, resources: value.resources, terrain: value.terrain, points: value.points }),
-    [value.seed, value.size, value.biome, value.resources, value.terrain, value.points, players],
+    () => generateMap({ seed: value.seed, size: value.size, players, biome: value.biome, resources: value.resources, terrain: value.terrain, points: value.points, hill: value.hill }),
+    [value.seed, value.size, value.biome, value.resources, value.terrain, value.points, value.hill, players],
   );
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -131,6 +133,17 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         ]}
         onChange={(v) => set({ points: v })}
         testid="points"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Victory"
+        value={value.hill ? 'hill' : 'destroy'}
+        options={[
+          ['destroy', 'Destroy every enemy building'],
+          ['hill', 'King of the hill (or destroy)'],
+        ]}
+        onChange={(v) => set({ hill: v === 'hill' })}
+        testid="victory"
         disabled={readOnly}
       />
       <Choice

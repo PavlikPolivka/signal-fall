@@ -49,6 +49,7 @@ function scenarioFromUrl(): ScenarioSpec {
     terrain: (params.get('terrain') ?? 'normal') as TerrainStyle,
     points: (params.get('points') ?? 'none') as 'none' | 'some',
     crates: params.get('crates') === '1',
+    hill: params.get('hill') === '1',
   };
   // ?mode=ffa3 / ffa4: everyone for themselves, every slot but ours AI.
   if (params.get('mode') === 'ffa3' || params.get('mode') === 'ffa4') {
@@ -83,7 +84,7 @@ function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null 
 }
 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
-  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates };
+  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill };
   const style = s.personality && s.personality !== 'random' ? s.personality : null;
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
   if (s.mode === '2v2')

@@ -32,6 +32,7 @@ export interface LobbyMap {
   terrain: TerrainStyle;
   points?: 'none' | 'some';
   crates?: boolean;
+  hill?: boolean;
 }
 
 export interface LobbyState {

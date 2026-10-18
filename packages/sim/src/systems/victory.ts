@@ -1,5 +1,6 @@
 import { KIND } from '../entities';
 import type { World } from '../world';
+import { HILL_TICKS } from './points';
 
 /**
  * A player is defeated when they have no structures and no construction units
@@ -20,6 +21,13 @@ export function victorySystem(world: World): void {
   }
   const teamsAtStart = new Set(world.players.map((p) => p.team));
   if (teamsAtStart.size < 2) return;
+  // King of the hill: holding the hill long enough wins outright.
+  for (let t = 0; t < world.hillScore.length; t++)
+    if (world.hillScore[t]! >= HILL_TICKS) {
+      world.ended = true;
+      world.winnerTeam = t;
+      return;
+    }
   const remaining = new Set(world.players.filter((p) => !p.defeated).map((p) => p.team));
   if (remaining.size <= 1) {
     world.ended = true;

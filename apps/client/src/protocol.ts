@@ -138,7 +138,9 @@ export const PROD_STRIDE = 1 + QUEUE_SLOTS;
 export const P_POWER = P.production + 3 * PROD_STRIDE;
 /** Echo harvested over the match (income readout). */
 export const P_HARVESTED = P_POWER + 1;
-export const PLAYER_STRIDE = P_POWER + 2;
+/** King of the hill: ticks this player's team has held the hill. */
+export const P_HILL = P_POWER + 2;
+export const PLAYER_STRIDE = P_POWER + 3;
 
 export const E = {
   handle: 0,

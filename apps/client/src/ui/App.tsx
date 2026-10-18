@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'preact/hooks';
-import { KIND } from '@signal-fall/sim';
+import { HILL_TICKS, KIND, POINT } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
-import { E, H, P } from '../protocol';
+import { E, H, P, P_HILL } from '../protocol';
 import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
@@ -103,6 +103,7 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
         </span>
       )}
       {!state.spectator && <ArmyCounts state={state} />}
+      <HillScore state={state} />
       {idle.harvesters.length > 0 && (
         <button class="idle-btn warn" data-testid="idle-harvesters" title="Idle harvesters: click (or E) to jump to one" onClick={() => input.selectIdle('harvesters')}>
           {idle.harvesters.length} idle harvester{idle.harvesters.length > 1 ? 's' : ''}
@@ -166,6 +167,29 @@ function EventLog({ state, input }: { state: ClientState; input: Input }) {
         </button>
       ))}
     </div>
+  );
+}
+
+/** King of the hill: how long each side has held the hill, out of the time that wins. */
+function HillScore({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur || !cur.points().some((p) => p.kind === POINT.hill)) return null;
+  const clock = (t: number) => `${Math.floor(t / 1200)}:${String(Math.floor(t / 20) % 60).padStart(2, '0')}`;
+  const teams = [...new Set(state.players.map((p) => p.team))];
+  return (
+    <span class="hill-score" data-testid="hill-score" title={`King of the hill: hold the flag for ${clock(HILL_TICKS)} in total to win`}>
+      ⚑
+      {teams.map((t) => {
+        const k = state.players.findIndex((p) => p.team === t);
+        const held = cur.player(k, P_HILL);
+        return (
+          <span class="hill-team">
+            <i style={{ width: `${Math.min(100, (held * 100) / HILL_TICKS)}%`, background: hex(TEAM_COLORS[k % TEAM_COLORS.length]!) }} />
+            <b>{clock(held)}</b>
+          </span>
+        );
+      })}
+    </span>
   );
 }
 

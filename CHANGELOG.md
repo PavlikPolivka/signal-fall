@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 22:29 UTC
+
+- **King of the hill:** set **Victory** to King of the hill in the map options. A flag stands at the center of the map; hold it (ground units next to it, no enemy beside them) for five minutes in total and you win. The top bar shows how long each side has held it. Destroying the enemy still wins too. The AI fights for the hill.
+
 ## 2026-10-18 22:11 UTC
 
 - **Free-for-all:** play against two or three AIs at once, everyone for themselves, in skirmish (Mode: Free-for-all 3 or 4), or with friends in a multiplayer room. The last side standing wins.

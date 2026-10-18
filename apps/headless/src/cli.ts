@@ -25,6 +25,7 @@ Commands:
          --size <S|M|L>    map size (default M)
          --points <none|some>  capture points on the maps (default none)
          --crates          crates drop on the maps
+         --hill            king of the hill
          --seed <n>        first seed (default 1)
          --minutes <n>     time limit per match (default 30)
          --threads <n>     worker threads (default cores - 1)
@@ -108,6 +109,7 @@ async function balance(args: string[]): Promise<void> {
       'max-win': { type: 'string' },
       points: { type: 'string', default: 'none' },
       crates: { type: 'boolean', default: false },
+      hill: { type: 'boolean', default: false },
     },
   });
   const sides: [Side, Side] = [parseSide(values.a), parseSide(values.b)];
@@ -120,6 +122,7 @@ async function balance(args: string[]): Promise<void> {
     maxMinutes: Number(values.minutes),
     points: values.points === 'some' ? 'some' : 'none',
     crates: values.crates,
+    hill: values.hill,
   });
   const start = Date.now();
   const outcomes = await runParallel(specs, values.threads ? Number(values.threads) : undefined, (done) => {

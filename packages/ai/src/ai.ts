@@ -5,6 +5,7 @@ import {
   FX_ONE,
   FX_SHIFT,
   KIND,
+  POINT,
   canResearch,
   computeFacts,
   inCoverage,
@@ -893,6 +894,18 @@ export class AiPlayer implements Brain {
     const e = world.entities;
     for (const h of this.holders) if (e.resolve(h) < 0) this.holders.delete(h);
     const team = world.players[this.player]!.team;
+    // King of the hill: a bigger squad goes for the hill and stays on it (holding is what scores).
+    const hill = world.points.findIndex((p) => p.kind === POINT.hill);
+    if (hill >= 0) {
+      const want = this.difficulty === 'easy' ? 2 : this.difficulty === 'normal' ? 4 : 6;
+      for (const h of this.reserve(world, own)) {
+        if (this.holders.size >= want) break;
+        this.holders.add(h);
+      }
+      const p = world.points[hill]!;
+      if (this.holders.size > 0) this.act({ type: 'attackMove', units: [...this.holders], x: (p.x << FX_SHIFT) + FX_HALF, y: (p.y << FX_SHIFT) + FX_HALF });
+      return;
+    }
     const homeX = (this.home.x << FX_SHIFT) + FX_HALF;
     const homeY = (this.home.y << FX_SHIFT) + FX_HALF;
     let best = -1;
@@ -987,6 +1000,10 @@ export class AiPlayer implements Brain {
   /** Attack target: the nearest remembered enemy structure, else an enemy start. */
   private attackTarget(world: World, own: Own): { x: number; y: number } {
     if (this.directed && this.plan.target) return { x: (this.plan.target[0] << FX_SHIFT) + FX_HALF, y: (this.plan.target[1] << FX_SHIFT) + FX_HALF };
+    // King of the hill: while the hill isn't ours, that's where the fight is.
+    const hill = world.points.find((p) => p.kind === POINT.hill);
+    if (hill && (hill.owner < 0 || world.players[hill.owner]!.team !== world.players[this.player]!.team))
+      return { x: (hill.x << FX_SHIFT) + FX_HALF, y: (hill.y << FX_SHIFT) + FX_HALF };
     const stage = this.stagingPoint(world, own);
     let best: Sighting | null = null;
     let bestD = 0x7fffffff;

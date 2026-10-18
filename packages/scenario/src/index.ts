@@ -36,7 +36,7 @@ export type ScenarioSpec =
       teams?: number[];
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
-      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean };
+      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean };
       /** AI personality per slot (a strategy it always plays); null or missing: drawn per match. */
       personality?: (StrategyName | null)[];
       /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */

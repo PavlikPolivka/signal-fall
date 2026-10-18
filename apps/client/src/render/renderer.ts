@@ -1234,7 +1234,14 @@ export class Renderer {
       this.decals.ellipse(px, py, 46, 23).stroke({ width: 2.5, color, alpha: 0.9 });
       // The site itself: a rendered model (drawn shapes until the props atlas is in).
       const key = p.y * s.width + p.x;
-      if (!this.pointSprites.has(key)) {
+      if (p.kind === POINT.hill) {
+        // The hill: a tall flag in the holder's color, waving.
+        const t = performance.now() / 1000;
+        this.overlay.rect(px - 2, py - 70, 4, 70).fill(0x3a3632);
+        const w = Math.sin(t * 3) * 3;
+        this.overlay.poly([px + 2, py - 70, px + 34, py - 62 + w, px + 2, py - 50]).fill({ color, alpha: 0.95 }).stroke({ width: 1.5, color: 0x1a1a1a });
+        this.overlay.circle(px, py - 72, 3).fill(0xe8c35a);
+      } else if (!this.pointSprites.has(key)) {
         const id = p.kind === POINT.derrick ? 'pt_derrick' : p.kind === POINT.watchtower ? 'pt_watchtower' : 'pt_depot';
         const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color');
         if (tex) {
@@ -1255,8 +1262,8 @@ export class Renderer {
           this.pointSprites.add(key);
         }
       }
-      if (this.pointSprites.has(key)) {
-        // Drawn by the sprite.
+      if (this.pointSprites.has(key) || p.kind === POINT.hill) {
+        // Drawn by the sprite (or the flag above).
       } else if (p.kind === POINT.derrick) {
         this.overlay.poly([px - 7, py, px - 3, py - 26, px + 3, py - 26, px + 7, py]).fill(0x3b3f45).stroke({ width: 1.5, color });
         this.overlay.circle(px, py - 28, 4).fill(0x3ee6ff);

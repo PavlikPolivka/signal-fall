@@ -14,6 +14,7 @@ import {
   POINT_STRIDE,
   CRATE_STRIDE,
   P_HARVESTED,
+  P_HILL,
   P_POWER,
   PROD_STRIDE,
   QUEUE_SLOTS,
@@ -84,6 +85,7 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     });
     a[off + P_POWER] = powerStatus(world, p.index);
     a[off + P_HARVESTED] = p.harvested;
+    a[off + P_HILL] = world.hillScore[p.team] ?? 0;
     off += PLAYER_STRIDE;
   }
   for (let s = 0; s < e.high; s++) {

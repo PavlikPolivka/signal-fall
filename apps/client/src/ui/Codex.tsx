@@ -600,6 +600,11 @@ function BuildingRules({ rules }: { rules: Rules }) {
         far around it, and a <b>repair depot</b> mends your units that stand by it (machines and soldiers; Choir crystal heals on its own).
         Enemy units next to a point stop a capture, and a defeated player's points go neutral.
       </p>
+      <h3>King of the hill</h3>
+      <p>
+        With <b>Victory: King of the hill</b>, a flag stands at the center of the map. It is taken like a capture point; the side holding it
+        scores time, and the first to five minutes in total wins. Destroying every enemy building still wins as well.
+      </p>
       <h3>Crates</h3>
       <p>
         With <b>Crates</b> on, a supply crate drops somewhere on the map every 45 seconds (at most three lie around). The first ground unit to

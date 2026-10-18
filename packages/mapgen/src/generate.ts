@@ -15,10 +15,12 @@ export interface MapParams {
   terrain: TerrainStyle;
   /** Capture points (derricks, watchtowers, repair depots): none, or one of each per player. */
   points?: 'none' | 'some';
+  /** King of the hill: a hill at the center of the map. */
+  hill?: boolean;
 }
 
 /** Capture point kinds (the sim's POINT values). */
-export const POINT_KIND = { derrick: 1, watchtower: 2, depot: 3 } as const;
+export const POINT_KIND = { derrick: 1, watchtower: 2, depot: 3, hill: 4 } as const;
 
 export const SIZES: Record<MapSize, number> = { S: 96, M: 128, L: 160 };
 /** Side of the guaranteed flat build area around each start. */
@@ -296,6 +298,9 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     }
   }
 
+  // King of the hill: the exact center is the one tile every symmetry treats alike; clear it.
+  if (params.hill) g.clearSquare(c, c, 1);
+
   const words = new Int32Array(n * n * 2 + starts.length * 2);
   for (let i = 0; i < n * n; i++) {
     words[i] = g.terrain[i]!;
@@ -306,7 +311,8 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     words[2 * n * n + 2 * k + 1] = s.y;
   });
   // Capture points: one of each kind per player, on open ground between the bases (symmetric).
-  const points = params.points === 'some' ? placePoints(g, starts, along, dC) : undefined;
+  let points = params.points === 'some' ? placePoints(g, starts, along, dC) : undefined;
+  if (params.hill) points = [...(points ?? []), { x: c, y: c, kind: POINT_KIND.hill }];
   return {
     width: n,
     height: n,
@@ -801,6 +807,9 @@ export function validateMap(map: GeneratedMap): string[] {
   const slack = map.symmetry === 'radial' ? idiv(hi * 15, 100) : 0;
   if (hi - lo > slack) errors.push(`unequal resources ${totals.join('/')}`);
   if (lo === 0) errors.push('a player has no Echo');
+
+  // The hill must be reachable.
+  for (const p of map.points ?? []) if (dist[p.y * n + p.x]! < 0) errors.push(`point at ${p.x},${p.y} unreachable`);
 
   // Every Echo field must be reachable by ground from start 0.
   for (let i = 0; i < n * n; i++) {

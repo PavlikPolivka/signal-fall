@@ -109,3 +109,14 @@ runs are unchanged). Checked with `--points some`, Hard vs Hard:
 Crates drop every 45 s (at most three on the map): 500 credits, a full repair around the finder, or a promotion.
 The AI picks up crates it can see within 15 tiles of a spare unit. Hard vs Hard with `--crates`, 100 matches:
 Holdout–Choir 47%, Holdout–Halcyon 50%, Halcyon–Choir 54%.
+
+### 2026-10-19: king of the hill (optional victory)
+
+A flag at the map center; holding it for 5 minutes in total wins (destroying everything still wins too). The AI
+sends a squad to the hill from minute 4 and keeps it there, and its waves attack the hill whenever the enemy holds it.
+
+- 3-minute hold, waves aimed at the enemy base: Halcyon won 60–66% (fast units take the hill first and keep it).
+- 5-minute hold: Halcyon still 58–59%, Holdout 42%.
+- Waves aimed at the hill while it isn't ours: Holdout–Choir 47%, Holdout–Halcyon 56% (100 matches),
+  Halcyon–Choir 58% (300 matches). Halcyon keeps an edge of a few points over the standard maps in this mode;
+  it is optional and not part of the CI gate.

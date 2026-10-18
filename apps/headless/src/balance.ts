@@ -20,6 +20,8 @@ export interface MatchSpec {
   points?: 'none' | 'some';
   /** Crates drop now and then. */
   crates?: boolean;
+  /** King of the hill. */
+  hill?: boolean;
 }
 
 export interface MatchOutcome {
@@ -39,7 +41,7 @@ const BIOMES: Biome[] = ['wasteland', 'city', 'crystal'];
 /** Play one AI vs AI match headless to the end (or the time limit). */
 export function playMatch(spec: MatchSpec): MatchOutcome {
   const rules = defaultRules();
-  const map = generateMap({ seed: spec.seed, size: spec.size, players: 2, biome: spec.biome, resources: 'normal', terrain: 'normal', points: spec.points });
+  const map = generateMap({ seed: spec.seed, size: spec.size, players: 2, biome: spec.biome, resources: 'normal', terrain: 'normal', points: spec.points, hill: spec.hill });
   // Player slot k plays side order[k].
   const order = spec.swap ? [1, 0] : [0, 1];
   const sim = createMatch({
@@ -71,7 +73,7 @@ export function playMatch(spec: MatchSpec): MatchOutcome {
   };
 }
 
-export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: MapSize; seed: number; maxMinutes: number; points?: 'none' | 'some'; crates?: boolean }): MatchSpec[] {
+export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: MapSize; seed: number; maxMinutes: number; points?: 'none' | 'some'; crates?: boolean; hill?: boolean }): MatchSpec[] {
   return Array.from({ length: opts.matches }, (_, i) => ({
     seed: opts.seed + i,
     size: opts.size,
@@ -81,6 +83,7 @@ export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: M
     maxMinutes: opts.maxMinutes,
     points: opts.points,
     crates: opts.crates,
+    hill: opts.hill,
   }));
 }
 

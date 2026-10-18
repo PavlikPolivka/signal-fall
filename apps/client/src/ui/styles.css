@@ -2353,3 +2353,31 @@ label.check {
   align-items: center;
   font-size: 14px;
 }
+.hill-score {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--accent);
+}
+.hill-team {
+  position: relative;
+  width: 64px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.hill-team i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  opacity: 0.75;
+}
+.hill-team b {
+  position: relative;
+  display: block;
+  font: 600 11px var(--mono);
+  line-height: 14px;
+  text-align: center;
+  color: #fff;
+}

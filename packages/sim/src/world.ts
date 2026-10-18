@@ -1,4 +1,4 @@
-import type { CapturePoint } from './systems/points';
+import { POINT, type CapturePoint } from './systems/points';
 import { makeCrates, type Crate } from './systems/crates';
 import type { FactionIdx, Rules } from '@signal-fall/data';
 import { Entities } from './entities';
@@ -162,6 +162,8 @@ export interface World {
   groups: Map<number, GroupInfo>;
   /** Capture points on the map (none on most maps). */
   points: CapturePoint[];
+  /** King of the hill: ticks each team has held the hill (indexed by team). */
+  hillScore: number[];
   /** Crates (an optional setting), or null. */
   crates: { rng: Rng; list: Crate[] } | null;
 }
@@ -238,6 +240,7 @@ export function createWorld(o: WorldOptions): World {
     groups: new Map(),
     points: (o.points ?? []).map((p) => ({ x: p.x, y: p.y, kind: p.kind, owner: -1, capturer: -1, progress: 0 })),
     crates: o.crates ? makeCrates(o.seed) : null,
+    hillScore: o.players.map(() => 0),
   };
 }
 
@@ -310,6 +313,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     }
   }
   // Only maps with capture points carry them (other states hash exactly as before).
+  if (world.points.some((p) => p.kind === POINT.hill)) for (const v of world.hillScore) w.push(v);
   for (const p of world.points) {
     w.push(p.owner);
     w.push(p.capturer);

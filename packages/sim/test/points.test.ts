@@ -1,6 +1,6 @@
 import { defaultRules } from '@signal-fall/data';
 import { describe, expect, it } from 'vitest';
-import { CAPTURE_TICKS, DERRICK_CREDITS, FOG_VISIBLE, FX_ONE, POINT, Sim, spawnUnit } from '../src/index';
+import { CAPTURE_TICKS, DERRICK_CREDITS, FOG_VISIBLE, FX_ONE, HILL_TICKS, POINT, Sim, spawnUnit } from '../src/index';
 
 const rules = defaultRules();
 const grunt = rules.unitIndex.get('grunt')!;
@@ -56,5 +56,15 @@ describe('capture points', () => {
     a.run(50);
     b.run(50);
     expect(a.hash()).toBe(b.hash());
+  });
+});
+
+describe('king of the hill', () => {
+  it('holding the hill long enough wins the match', () => {
+    const s = new Sim({ rules, seed: 3, width: 48, height: 48, players: [{ faction: 0, team: 0 }, { faction: 0, team: 1 }], victoryRules: false, points: [{ x: 24, y: 24, kind: POINT.hill }] });
+    spawnUnit(s.world, grunt, 0, at(25), at(24));
+    s.run(CAPTURE_TICKS + HILL_TICKS + 40);
+    expect(s.world.ended).toBe(true);
+    expect(s.world.winnerTeam).toBe(0);
   });
 });
