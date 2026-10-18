@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'preact/hooks';
-import { generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
+import { HANDMADE_MAPS } from '../game/maps';
+import { savedMaps } from '../game/saves';
+import { customToGenerated, decodeMap, generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
 import { BIOME_COLORS } from '../render/renderer';
 import { TEAM_COLORS } from '../game/state';
 
@@ -15,6 +17,8 @@ export interface MapChoice {
   crates?: boolean;
   /** King of the hill: hold the center to win. */
   hill?: boolean;
+  /** A hand-made map (its share code) instead of a generated one. */
+  custom?: string;
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -48,6 +52,15 @@ export function Choice<T extends string | number>(props: {
   );
 }
 
+/** Players a map code is for (0 if it doesn't decode). */
+function safePlayers(code: string): number {
+  try {
+    return decodeMap(code).starts.length;
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * Map options and a live preview. Used by the skirmish setup and the
  * multiplayer lobby (where only the host may change them).
@@ -55,9 +68,15 @@ export function Choice<T extends string | number>(props: {
 export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice; onChange?: (patch: Partial<MapChoice>) => void; players?: number }) {
   const readOnly = !onChange;
   const set = (patch: Partial<MapChoice>) => onChange?.(patch);
+  // Hand-made maps that fit this many players: the shipped ones and the player's own.
+  const choices = [...HANDMADE_MAPS, ...savedMaps().map((m) => ({ ...m, players: safePlayers(m.code) }))].filter((m) => m.players === players);
+  const custom = value.custom && choices.some((m) => m.code === value.custom) ? value.custom : undefined;
   const map = useMemo(
-    () => generateMap({ seed: value.seed, size: value.size, players, biome: value.biome, resources: value.resources, terrain: value.terrain, points: value.points, hill: value.hill }),
-    [value.seed, value.size, value.biome, value.resources, value.terrain, value.points, value.hill, players],
+    () =>
+      custom
+        ? customToGenerated(decodeMap(custom))
+        : generateMap({ seed: value.seed, size: value.size, players, biome: value.biome, resources: value.resources, terrain: value.terrain, points: value.points, hill: value.hill }),
+    [custom, value.seed, value.size, value.biome, value.resources, value.terrain, value.points, value.hill, players],
   );
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -95,57 +114,72 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
 
   return (
     <div class="map-settings">
-      <Choice label="Map size" value={value.size} options={[['S', 'Small'], ['M', 'Medium'], ['L', 'Large']]} onChange={(v) => set({ size: v })} testid="size" disabled={readOnly} />
-      <Choice
-        label="Biome"
-        value={value.biome}
-        options={(Object.keys(BIOME_NAMES) as Biome[]).map((b) => [b, BIOME_NAMES[b]])}
-        onChange={(v) => set({ biome: v })}
-        testid="biome"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Resources"
-        value={value.resources}
-        options={[['low', 'Low'], ['normal', 'Normal'], ['rich', 'Rich']]}
-        onChange={(v) => set({ resources: v })}
-        testid="resources"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Terrain"
-        value={value.terrain}
-        options={[
-          ['open', 'Open'],
-          ['normal', 'Normal'],
-          ['choke', 'Chokepoints'],
-        ]}
-        onChange={(v) => set({ terrain: v })}
-        testid="terrain"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Capture points"
-        value={value.points ?? 'none'}
-        options={[
-          ['none', 'None'],
-          ['some', 'Derricks, towers, depots'],
-        ]}
-        onChange={(v) => set({ points: v })}
-        testid="points"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Victory"
-        value={value.hill ? 'hill' : 'destroy'}
-        options={[
-          ['destroy', 'Destroy every enemy building'],
-          ['hill', 'King of the hill (or destroy)'],
-        ]}
-        onChange={(v) => set({ hill: v === 'hill' })}
-        testid="victory"
-        disabled={readOnly}
-      />
+      {choices.length > 0 && (
+        <label class="choice">
+          <span class="label">Map</span>
+          <select value={custom ?? ''} data-testid="map-pick" disabled={readOnly} onChange={(e) => set({ custom: (e.currentTarget as HTMLSelectElement).value || undefined })}>
+            <option value="">Generated (from the seed)</option>
+            {choices.map((m) => (
+              <option value={m.code}>{m.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
+      {!custom && (
+        <>
+          <Choice label="Map size" value={value.size} options={[['S', 'Small'], ['M', 'Medium'], ['L', 'Large']]} onChange={(v) => set({ size: v })} testid="size" disabled={readOnly} />
+          <Choice
+            label="Biome"
+            value={value.biome}
+            options={(Object.keys(BIOME_NAMES) as Biome[]).map((b) => [b, BIOME_NAMES[b]])}
+            onChange={(v) => set({ biome: v })}
+            testid="biome"
+            disabled={readOnly}
+          />
+          <Choice
+            label="Resources"
+            value={value.resources}
+            options={[['low', 'Low'], ['normal', 'Normal'], ['rich', 'Rich']]}
+            onChange={(v) => set({ resources: v })}
+            testid="resources"
+            disabled={readOnly}
+          />
+          <Choice
+            label="Terrain"
+            value={value.terrain}
+            options={[
+              ['open', 'Open'],
+              ['normal', 'Normal'],
+              ['choke', 'Chokepoints'],
+            ]}
+            onChange={(v) => set({ terrain: v })}
+            testid="terrain"
+            disabled={readOnly}
+          />
+          <Choice
+            label="Capture points"
+            value={value.points ?? 'none'}
+            options={[
+              ['none', 'None'],
+              ['some', 'Derricks, towers, depots'],
+            ]}
+            onChange={(v) => set({ points: v })}
+            testid="points"
+            disabled={readOnly}
+          />
+          <Choice
+            label="Victory"
+            value={value.hill ? 'hill' : 'destroy'}
+            options={[
+              ['destroy', 'Destroy every enemy building'],
+              ['hill', 'King of the hill (or destroy)'],
+            ]}
+            onChange={(v) => set({ hill: v === 'hill' })}
+            testid="victory"
+            disabled={readOnly}
+          />
+        </>
+      )}
       <Choice
         label="Crates"
         value={value.crates ? 'on' : 'off'}
@@ -157,32 +191,40 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         testid="crates"
         disabled={readOnly}
       />
-      <div class="choice">
-        <span class="label">Seed</span>
-        <div class="seed">
-          <input
-            type="number"
-            value={value.seed}
-            readOnly={readOnly}
-            data-testid="seed"
-            onChange={(e) => set({ seed: Number((e.currentTarget as HTMLInputElement).value) || 0 })}
-          />
-          {!readOnly && (
-            <button onClick={() => set({ seed: randomSeed() })} data-testid="seed-random">
-              Random
-            </button>
-          )}
+      {!custom && (
+        <div class="choice">
+          <span class="label">Seed</span>
+          <div class="seed">
+            <input
+              type="number"
+              value={value.seed}
+              readOnly={readOnly}
+              data-testid="seed"
+              onChange={(e) => set({ seed: Number((e.currentTarget as HTMLInputElement).value) || 0 })}
+            />
+            {!readOnly && (
+              <button onClick={() => set({ seed: randomSeed() })} data-testid="seed-random">
+                Random
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <div class="setup-map">
         <canvas ref={canvas} width={460} height={460} data-testid="map-preview" />
         <div class="setup-map-info">
           <b>
             {map.width}×{map.height}
           </b>
-          <span>{BIOME_NAMES[value.biome]}</span>
-          <span class="muted">{map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')} symmetry</span>
-          <span class="muted">seed {map.seedUsed}</span>
+          <span>{BIOME_NAMES[map.biome]}</span>
+          {custom ? (
+            <span class="muted">hand-made: {choices.find((m) => m.code === custom)?.name}</span>
+          ) : (
+            <>
+              <span class="muted">{map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')} symmetry</span>
+              <span class="muted">seed {map.seedUsed}</span>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { defaultRules } from '@signal-fall/data';
 import { Sim, createMatch, grantBase, sandbox, type ScheduledCommand } from '@signal-fall/sim';
-import { generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
+import { customToGenerated, decodeMap, generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
 import { attachAi, type Difficulty, type StrategyName } from '@signal-fall/ai';
 
 /**
@@ -36,7 +36,7 @@ export type ScenarioSpec =
       teams?: number[];
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
-      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean };
+      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean; custom?: string };
       /** AI personality per slot (a strategy it always plays); null or missing: drawn per match. */
       personality?: (StrategyName | null)[];
       /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */
@@ -60,7 +60,8 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
   const rules = defaultRules();
   switch (spec.kind) {
     case 'skirmish': {
-      const map = generateMap({ seed: spec.seed, players: spec.factions.length, ...spec.map });
+      // A hand-made map (share code) or a generated one.
+      const map = spec.map.custom ? customToGenerated(decodeMap(spec.map.custom)) : generateMap({ seed: spec.seed, players: spec.factions.length, ...spec.map });
       const sim = createMatch({
         rules,
         seed: spec.seed,

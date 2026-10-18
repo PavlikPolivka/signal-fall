@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateMap, generateOnce, validateMap, type Biome, type MapParams, type MapSize } from '../src/index';
+import { customToGenerated, decodeMap, encodeMap, generateMap, generateOnce, validateMap, type Biome, type MapParams, type MapSize } from '../src/index';
 import { TERRAIN_BUILDABLE } from '@signal-fall/sim';
 
 const base: MapParams = { seed: 1, size: 'M', players: 2, biome: 'wasteland', resources: 'normal', terrain: 'normal' };
@@ -121,6 +121,37 @@ describe('capture points', () => {
       expect(on.points!.length).toBeGreaterThanOrEqual(4);
       for (const k of [1, 2, 3]) expect(on.points!.filter((p) => p.kind === k).length % 2).toBe(0);
       for (const p of on.points!) expect(on.terrain[p.y * on.width + p.x]).toBe(0);
+    }
+  });
+});
+
+describe('custom maps', () => {
+  it('survive a round trip through a share code and validate like the original', () => {
+    const g = generateMap({ seed: 9, size: 'M', players: 2, biome: 'city', resources: 'normal', terrain: 'normal' });
+    const code = encodeMap({ name: 'Round trip', size: g.width, biome: g.biome, terrain: g.terrain, echo: g.echo, starts: g.starts });
+    expect(code.startsWith('SF1.')).toBe(true);
+    const back = decodeMap(code);
+    expect(back.name).toBe('Round trip');
+    expect(back.starts).toEqual(g.starts);
+    expect(Array.from(back.terrain)).toEqual(Array.from(g.terrain));
+    expect(Array.from(back.echo)).toEqual(Array.from(g.echo).map((v) => Math.min(15, v)));
+    expect(validateMap(customToGenerated(back))).toEqual([]);
+  });
+
+  it('reject damaged codes', () => {
+    expect(() => decodeMap('hello')).toThrow();
+    expect(() => decodeMap('SF1.AAAA')).toThrow();
+  });
+});
+
+describe('hand-made maps that ship with the game', () => {
+  it('are all fair and playable', async () => {
+    const { HANDMADE_MAPS } = await import('../../../apps/client/src/game/maps');
+    expect(HANDMADE_MAPS.length).toBeGreaterThanOrEqual(4);
+    for (const m of HANDMADE_MAPS) {
+      const map = decodeMap(m.code);
+      expect(map.starts.length).toBe(m.players);
+      expect(validateMap(customToGenerated(map)), m.name).toEqual([]);
     }
   });
 });

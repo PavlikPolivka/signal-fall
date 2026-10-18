@@ -73,3 +73,23 @@ export function recentMatches(): { meta: SavedMeta; json: string }[] {
 
 /** "12:34" from ticks. */
 export const clock = (ticks: number) => `${Math.floor(ticks / 1200)}:${String(Math.floor(ticks / 20) % 60).padStart(2, '0')}`;
+
+/** Saved hand-made maps in this browser: name -> share code. */
+const SAVED_KEY = 'signalfall.maps';
+
+export function savedMaps(): { name: string; code: string }[] {
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_KEY) ?? '[]') as { name: string; code: string }[];
+  } catch {
+    return [];
+  }
+}
+
+export function storeMaps(list: { name: string; code: string }[]): void {
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+  } catch {
+    // Storage full or blocked: the code still works.
+  }
+}
+

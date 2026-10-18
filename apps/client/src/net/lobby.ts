@@ -33,6 +33,8 @@ export interface LobbyMap {
   points?: 'none' | 'some';
   crates?: boolean;
   hill?: boolean;
+  /** A hand-made map's share code. */
+  custom?: string;
 }
 
 export interface LobbyState {

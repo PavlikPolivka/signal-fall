@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-18 22:48 UTC
+
+- **Map editor:** **Map editor** on the main menu. Paint ground, rough, rock, cliffs, water and city ruins, lay Echo fields and place the starts, with mirroring as you paint so every side gets the same land. **Check** tells you if it's fair and playable, **Play vs AI** tries it out, and every map has a code you can share; paste a code to load someone's map.
+- **Hand-made maps:** four designed maps ship with the game: **Crossroads**, **Twin Rivers**, **Fortress** (1v1) and **Four Corners** (four players). Pick them, or your own saved maps, under **Map** in the skirmish setup or a multiplayer room.
+
 ## 2026-10-18 22:37 UTC
 
 - **Tutorial:** new to real-time strategy? **Tutorial** on the main menu teaches the game in eight short steps on a small map: moving the camera, setting up a base, power, money, an army, control groups, attacking and winning. Each step ticks off as soon as you've done it.

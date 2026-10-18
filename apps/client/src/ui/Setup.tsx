@@ -4,6 +4,7 @@ import type { Difficulty, StrategyName } from '@signal-fall/ai';
 import { clock, recentMatches, savedGame } from '../game/saves';
 import { Codex } from './Codex';
 import { DailyPanel } from './Daily';
+import { Editor } from './Editor';
 import { Changes } from './Changes';
 import { Logo } from './Logo';
 import { MenuVideo } from './Video';
@@ -146,6 +147,7 @@ export function Setup({
     if (location.search.includes('menu=')) history.replaceState(null, '', location.pathname);
   }, []);
   const [changes, setChanges] = useState(false);
+  const [editor, setEditor] = useState(false);
   const [replayError, setReplayError] = useState<string | null>(null);
   const [codex, setCodex] = useState(false);
   // ?menu=credits (from the landing page) opens the credits.
@@ -182,6 +184,7 @@ export function Setup({
   };
 
   if (skirmish) return <Skirmish rules={rules} onStart={onStart} onBack={() => setSkirmish(false)} />;
+  if (editor) return <Editor onBack={() => setEditor(false)} />;
 
   return (
     <MenuScreen testid="home">
@@ -206,6 +209,9 @@ export function Setup({
         <nav class="setup-links">
           <button onClick={() => (location.href = `${location.pathname}?tutorial=1`)} data-testid="open-tutorial" title="Learn to play in eight short steps">
             Tutorial
+          </button>
+          <button onClick={() => setEditor(true)} data-testid="open-editor" title="Make your own maps and share them as a code">
+            Map editor
           </button>
           <button onClick={() => setCodex(true)} data-testid="open-codex">
             Codex

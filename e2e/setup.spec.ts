@@ -71,3 +71,14 @@ test('the daily challenge starts the same match for everyone today', async ({ pa
   expect(st.daily).toContain('vs');
   expect(st.players).toBe(2);
 });
+
+test('a hand-made map can be picked for a skirmish', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-skirmish]');
+  const option = page.locator('[data-testid=map-pick] option', { hasText: 'Crossroads' });
+  await page.selectOption('[data-testid=map-pick]', { value: (await option.getAttribute('value'))! });
+  await expect(page.getByTestId('seed')).toHaveCount(0);
+  await page.click('[data-testid=start]');
+  await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur, null, { timeout: 30_000 });
+  expect(await page.evaluate(() => (window as unknown as { __signalFall: { state: { width: number; biome: string } } }).__signalFall.state.width)).toBe(128);
+});

@@ -21,7 +21,7 @@ import { RejoinHost, forgetMatch, matchToRejoin, rejoin, rememberMatch, type Cat
 import { matchChannel } from './net/connect';
 import type { LinkLike } from './net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
-import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
+import { decodeMap, sizeClass, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
 import '@fontsource/saira-stencil-one/latin-400.css';
 import '@fontsource/rajdhani/latin-500.css';
 import '@fontsource/rajdhani/latin-700.css';
@@ -31,7 +31,7 @@ import './ui/styles.css';
 
 const params = new URLSearchParams(location.search);
 // Any game parameter in the URL skips the setup screen (tests, shared links).
-const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy', 'spectate', 'mode'];
+const AUTOSTART_KEYS = ['scenario', 'seed', 'speed', 'size', 'biome', 'ai', 'faction', 'enemy', 'spectate', 'mode', 'mapcode'];
 /** Spectator mode: both sides are AI at this difficulty, no fog. Great for watching and recording. */
 const spectate = params.get('spectate') as Difficulty | null;
 const autostart = AUTOSTART_KEYS.some((k) => params.has(k));
@@ -52,6 +52,14 @@ function scenarioFromUrl(): ScenarioSpec {
     crates: params.get('crates') === '1',
     hill: params.get('hill') === '1',
   };
+  // ?mapcode=SF1...: a hand-made map; one AI per other start, everyone on their own team.
+  const code = params.get('mapcode');
+  if (code) {
+    const custom = decodeMap(code);
+    const factions = [Number(params.get('faction') ?? 0), Number(params.get('enemy') ?? 1), 2, 0].slice(0, custom.starts.length);
+    const level = spectate ?? (ai === 'none' ? null : (ai as Difficulty));
+    return { kind, seed, factions, ai: factions.map((_, k) => (k === 0 ? spectate : level)), map: { ...map, size: sizeClass(custom.size), biome: custom.biome, custom: code } };
+  }
   // ?mode=ffa3 / ffa4: everyone for themselves, every slot but ours AI.
   if (params.get('mode') === 'ffa3' || params.get('mode') === 'ffa4') {
     const n = params.get('mode') === 'ffa3' ? 3 : 4;
@@ -85,7 +93,7 @@ function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null 
 }
 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
-  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill };
+  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom };
   const style = s.personality && s.personality !== 'random' ? s.personality : null;
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
   if (s.mode === '2v2')
