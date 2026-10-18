@@ -108,3 +108,19 @@ describe('map generator', () => {
     }
   });
 });
+
+describe('capture points', () => {
+  it('are placed for every player alike, on open reachable ground, only when asked for', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const off = generateMap({ seed, size: 'M', players: 2, biome: 'wasteland', resources: 'normal', terrain: 'normal' });
+      expect(off.points).toBeUndefined();
+      const on = generateMap({ seed, size: 'M', players: 2, biome: 'wasteland', resources: 'normal', terrain: 'normal', points: 'some' });
+      // Same map otherwise.
+      expect(on.hash).toBe(off.hash);
+      expect(on.points!.length % 2).toBe(0);
+      expect(on.points!.length).toBeGreaterThanOrEqual(4);
+      for (const k of [1, 2, 3]) expect(on.points!.filter((p) => p.kind === k).length % 2).toBe(0);
+      for (const p of on.points!) expect(on.terrain[p.y * on.width + p.x]).toBe(0);
+    }
+  });
+});

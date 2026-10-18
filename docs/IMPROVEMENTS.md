@@ -47,7 +47,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 29 ✅ | A | AI timing attacks with reinforcement streams instead of one all-in wave; retreats and regroups | 4 | M |
 | 30 ✅ | A | AI counters what it scouts (it already weights by armor; make it react within a minute) | 4 | S |
 | 31 | E | Tech choices that matter: each faction gets 2 mutually exclusive tier-2 upgrades (a real decision) | 4 | M |
-| 32 | E | Map control: capturable Echo relays / derricks that give income or vision | 4 | M |
+| 32 ✅ | E | Map control: capturable Echo relays / derricks that give income or vision | 4 | M |
 | 33 ✅ | E | Unit roles sharpened: every unit has one clear job and one clear counter, shown in the Codex and on hover | 4 | M |
 | 34 | E | Faster mid-game: unit caps, build times and costs tuned so the first real fight is around minute 5–7 | 4 | S |
 | 35 ✅ | G | Better terrain: blended texture transitions, cliffs with edges, decals (craters, tracks) that persist | 5 | M |
@@ -91,7 +91,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 68 ✅ | U | Sell and repair with clear cursors and refund amounts on hover | 3 | XS |
 | 69 ✅ | U | Warnings when a factory is blocked (rally point unreachable, exit blocked) | 3 | S |
 | 70 | E | Superweapon-lite per faction at tier 3 (long cooldown, visible charge timer for all) | 4 | L |
-| 71 | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers | 3 | M |
+| 71 | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers (depots and watchtowers done as capture points; garrisoning still open) | 3 | M |
 | 72 | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles | 4 | L |
 | 73 | E | Harvester economy depth: refinery queue logic, harvester escorts matter, raids are punishing but recoverable | 3 | S |
 | 74 | E | Crates (rare pickups) on skirmish maps, optional | 2 | S |

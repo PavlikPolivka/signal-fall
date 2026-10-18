@@ -13,7 +13,12 @@ export interface MapParams {
   biome: Biome;
   resources: Resources;
   terrain: TerrainStyle;
+  /** Capture points (derricks, watchtowers, repair depots): none, or one of each per player. */
+  points?: 'none' | 'some';
 }
+
+/** Capture point kinds (the sim's POINT values). */
+export const POINT_KIND = { derrick: 1, watchtower: 2, depot: 3 } as const;
 
 export const SIZES: Record<MapSize, number> = { S: 96, M: 128, L: 160 };
 /** Side of the guaranteed flat build area around each start. */
@@ -300,12 +305,15 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     words[2 * n * n + 2 * k] = s.x;
     words[2 * n * n + 2 * k + 1] = s.y;
   });
+  // Capture points: one of each kind per player, on open ground between the bases (symmetric).
+  const points = params.points === 'some' ? placePoints(g, starts, along, dC) : undefined;
   return {
     width: n,
     height: n,
     terrain: g.terrain,
     echo: g.echo,
     starts,
+    points,
     params,
     seedUsed: seed,
     symmetry: symKind,
@@ -315,6 +323,68 @@ export function generateOnce(params: MapParams, seed: number): GeneratedMap {
     landmark: g.landmark,
     hash: xxh32Words(words),
   };
+}
+
+/**
+ * One point of each kind for start 0 (at a share of the way to the center, a little to a side),
+ * mirrored to every other player by the map's symmetry. A point needs open ground with open ground
+ * around it, away from the bases, Echo and the other points, and reachable from the starts.
+ */
+function placePoints(
+  g: Grid,
+  starts: { x: number; y: number }[],
+  along: (dist: number, side: number) => { x: number; y: number },
+  dC: number,
+): { x: number; y: number; kind: number }[] {
+  const n = g.n;
+  // Reachable ground from start 0 (4-neighbour flood fill).
+  const reach = new Uint8Array(n * n);
+  const stack = [starts[0]!.y * n + starts[0]!.x];
+  reach[stack[0]!] = 1;
+  while (stack.length > 0) {
+    const t = stack.pop()!;
+    const x = t % n;
+    for (const m of [x > 0 ? t - 1 : -1, x < n - 1 ? t + 1 : -1, t - n, t + n]) {
+      if (m < 0 || m >= n * n || reach[m] === 1 || TERRAIN_SPEED_PCT[g.terrain[m]!] === 0) continue;
+      reach[m] = 1;
+      stack.push(m);
+    }
+  }
+  const out: { x: number; y: number; kind: number }[] = [];
+  const ok = (x: number, y: number) => {
+    if (x < 3 || y < 3 || x >= n - 3 || y >= n - 3) return false;
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const t = (y + dy) * n + x + dx;
+        if (g.terrain[t] !== TERRAIN.ground || g.echo[t] !== 0 || g.landmark[t] !== 0 || reach[t] !== 1) return false;
+      }
+    if (starts.some((s) => Math.abs(s.x - x) < BUILD_AREA && Math.abs(s.y - y) < BUILD_AREA)) return false;
+    return !out.some((p) => Math.abs(p.x - x) + Math.abs(p.y - y) < 8);
+  };
+  const plan: [number, number, number][] = [
+    [POINT_KIND.derrick, 45, 14],
+    [POINT_KIND.watchtower, 75, -10],
+    [POINT_KIND.depot, 55, -18],
+  ];
+  for (const [kind, pct, side] of plan) {
+    const target = along(idiv(dC * pct, 100), side);
+    // Spiral out from the target to the nearest tile whose whole orbit is good.
+    let found = false;
+    for (let r = 0; r <= 12 && !found; r++)
+      for (let dy = -r; dy <= r && !found; dy++)
+        for (let dx = -r; dx <= r && !found; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const x = target.x + dx;
+          const y = target.y + dy;
+          const images = g.sym.orbit(x, y);
+          if (images.length !== starts.length || !images.every(([ix, iy]) => ok(ix, iy))) continue;
+          // Images too close to each other (near the center) don't make a fair pair.
+          if (images.some(([ax, ay], i) => images.some(([bx, by], j) => i < j && Math.abs(ax - bx) + Math.abs(ay - by) < 10))) continue;
+          for (const [ix, iy] of images) out.push({ x: ix, y: iy, kind });
+          found = true;
+        }
+  }
+  return out;
 }
 
 function unit(dx: number, dy: number): { x: number; y: number } {

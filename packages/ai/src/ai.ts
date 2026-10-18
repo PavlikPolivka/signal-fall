@@ -107,6 +107,9 @@ export class AiPlayer implements Brain {
   private scoutHandle = -1;
   private scoutSentTick = -MINUTE * 10;
   private raiders = new Set<number>();
+  /** A small squad that takes and holds capture points (maps that have them). */
+  private holders = new Set<number>();
+  private holdTarget = -1;
   private ralliedFactories = new Set<number>();
   private lastRally = { x: -1, y: -1 };
   private cmds: Command[] = [];
@@ -158,6 +161,7 @@ export class AiPlayer implements Brain {
     this.defend(world, own);
     this.scout(world, own);
     this.harass(world, own);
+    this.capturePoints(world, own);
     this.waves(world, own);
     return this.cmds;
   }
@@ -807,7 +811,7 @@ export class AiPlayer implements Brain {
   /** Units not busy with a wave, scouting or raiding. */
   private reserve(world: World, own: Own): number[] {
     const e = world.entities;
-    return own.army.map((s) => e.handle(s)).filter((h) => !this.waveUnits.has(h) && !this.raiders.has(h) && h !== this.scoutHandle);
+    return own.army.map((s) => e.handle(s)).filter((h) => !this.waveUnits.has(h) && !this.raiders.has(h) && !this.holders.has(h) && h !== this.scoutHandle);
   }
 
   private defend(world: World, own: Own): void {
@@ -876,6 +880,55 @@ export class AiPlayer implements Brain {
       target = { x: ((echo % world.map.width) << FX_SHIFT) + FX_HALF, y: (idiv(echo, world.map.width) << FX_SHIFT) + FX_HALF };
     }
     this.act({ type: 'attackMove', units: [...this.raiders], x: target.x, y: target.y });
+  }
+
+  /**
+   * Capture points: from minute 4, the three fastest spare army units go to the nearest point on our half
+   * of the map that our team does not hold, take it, then rejoin the army.
+   */
+  private capturePoints(world: World, own: Own): void {
+    if (world.points.length === 0 || world.tick < 4 * MINUTE || (world.tick + this.player) % 100 !== 0) return;
+    const e = world.entities;
+    for (const h of this.holders) if (e.resolve(h) < 0) this.holders.delete(h);
+    const team = world.players[this.player]!.team;
+    const homeX = (this.home.x << FX_SHIFT) + FX_HALF;
+    const homeY = (this.home.y << FX_SHIFT) + FX_HALF;
+    let best = -1;
+    let bestD = 0;
+    world.points.forEach((p, i) => {
+      if (p.owner >= 0 && world.players[p.owner]!.team === team) return;
+      const d = ilength((p.x << FX_SHIFT) - homeX, (p.y << FX_SHIFT) - homeY);
+      // Only points on our side of the map: no squad marches into the enemy's half for one.
+      const enemy = this.enemyStarts.reduce((m, s) => Math.min(m, ilength((p.x - s.x) << FX_SHIFT, (p.y - s.y) << FX_SHIFT)), Infinity);
+      if (enemy < d) return;
+      if (best < 0 || d < bestD) {
+        best = i;
+        bestD = d;
+      }
+    });
+    // Taken (or nothing left to take): the squad goes back to the army.
+    if (this.holdTarget >= 0) {
+      const t = world.points[this.holdTarget]!;
+      if (t.owner >= 0 && world.players[t.owner]!.team === team) {
+        this.holders.clear();
+        this.holdTarget = -1;
+      }
+    }
+    if (best < 0) {
+      this.holders.clear();
+      return;
+    }
+    this.holdTarget = best;
+    const want = this.difficulty === 'easy' ? 1 : 3;
+    // Fast units first: a point goes to whoever gets there and stays.
+    const speed = (h: number) => world.rules.units[e.type[e.resolve(h)]!]!.speed;
+    for (const h of this.reserve(world, own).sort((a, b) => speed(b) - speed(a) || a - b)) {
+      if (this.holders.size >= want) break;
+      this.holders.add(h);
+    }
+    if (this.holders.size === 0) return;
+    const p = world.points[best]!;
+    this.act({ type: 'attackMove', units: [...this.holders], x: (p.x << FX_SHIFT) + FX_HALF, y: (p.y << FX_SHIFT) + FX_HALF });
   }
 
   private armyValue(world: World, handles: Iterable<number>): number {

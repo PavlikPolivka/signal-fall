@@ -13,6 +13,8 @@ export interface MapData {
   echo: Uint8Array;
   /** Start tile per player slot. */
   starts: { x: number; y: number }[];
+  /** Capture points (tile and POINT kind), on maps that have them. */
+  points?: { x: number; y: number; kind: number }[];
 }
 
 export interface MatchSetup {
@@ -34,6 +36,7 @@ export function createMatch(setup: MatchSetup): Sim {
     echo: map.echo,
     players: setup.players,
     victoryRules: true,
+    points: map.points,
   });
   setup.players.forEach((p, i) => {
     const start = map.starts[i]!;

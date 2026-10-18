@@ -45,6 +45,11 @@ for pid, (builder, frame, variants) in props.PROPS.items():
     for v in range(variants):
         render(f"{pid}_{v}", frame, lambda b=builder, s=v: b(STYLE, s))
     print("RENDERED", pid)
+for pid, (builder, frame) in props.POINTS.items():
+    if not wanted(pid):
+        continue
+    render(pid, frame, lambda b=builder: b(STYLE, 0))
+    print("RENDERED", pid)
 for lid, (builder, frame) in props.LANDMARKS.items():
     if not wanted(lid):
         continue

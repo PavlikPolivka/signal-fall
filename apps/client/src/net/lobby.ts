@@ -30,6 +30,7 @@ export interface LobbyMap {
   biome: Biome;
   resources: Resources;
   terrain: TerrainStyle;
+  points?: 'none' | 'some';
 }
 
 export interface LobbyState {

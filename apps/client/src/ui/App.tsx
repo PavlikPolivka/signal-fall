@@ -478,6 +478,17 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
           }
         }
       }
+      // Capture points: diamonds in the holder's color.
+      if (cur)
+        for (const p of cur.points()) {
+          ctx.fillStyle = p.owner >= 0 ? hex(TEAM_COLORS[p.owner % TEAM_COLORS.length]!) : '#c8ccd2';
+          ctx.beginPath();
+          ctx.moveTo(p.x + 0.5, p.y - 2);
+          ctx.lineTo(p.x + 2.5, p.y + 0.5);
+          ctx.lineTo(p.x + 0.5, p.y + 3);
+          ctx.lineTo(p.x - 1.5, p.y + 0.5);
+          ctx.fill();
+        }
       // Attack pings: red rings where own units/buildings were recently hit.
       const now = performance.now();
       for (const hit of state.hits) {

@@ -11,6 +11,7 @@ import {
   ORDER_CODE,
   P,
   PLAYER_STRIDE,
+  POINT_STRIDE,
   P_HARVESTED,
   P_POWER,
   PROD_STRIDE,
@@ -45,7 +46,7 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
   for (let s = 0; s < e.high; s++) if (e.alive[s] === 1) count++;
   const players = world.players.length;
   const projectiles = world.projectiles.length;
-  const a = new Int32Array(HEADER_LEN + players * PLAYER_STRIDE + count * ENT_STRIDE + projectiles * PROJ_STRIDE);
+  const a = new Int32Array(HEADER_LEN + players * PLAYER_STRIDE + count * ENT_STRIDE + projectiles * PROJ_STRIDE + world.points.length * POINT_STRIDE);
   a[H.tick] = world.tick;
   a[H.ended] = world.ended ? 1 : 0;
   a[H.winnerTeam] = world.winnerTeam;
@@ -53,6 +54,7 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
   a[H.projectileCount] = projectiles;
   a[H.playerCount] = players;
   a[H.stalled] = stalled ? 1 : 0;
+  a[H.pointCount] = world.points.length;
   let off = HEADER_LEN;
   for (const p of world.players) {
     a[off + P.credits] = p.credits;
@@ -150,6 +152,10 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + PR.ticks] = p.ticks;
     a[off + PR.total] = p.total;
     off += PROJ_STRIDE;
+  }
+  for (const p of world.points) {
+    a.set([p.x, p.y, p.kind, p.owner, p.capturer, p.progress], off);
+    off += POINT_STRIDE;
   }
   return a.buffer;
 }

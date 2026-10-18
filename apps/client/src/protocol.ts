@@ -106,7 +106,10 @@ export const H = {
   projectileCount: 4,
   playerCount: 5,
   stalled: 6,
+  pointCount: 7,
 } as const;
+/** Capture points after the projectiles: [x, y, kind, owner, capturer team, progress ticks]. */
+export const POINT_STRIDE = 6;
 export const HEADER_LEN = 8;
 
 export const P = {
@@ -206,6 +209,16 @@ export class Snapshot {
   }
   get projectileCount(): number {
     return this.a[H.projectileCount]!;
+  }
+  /** Capture points on this map (empty on most). */
+  points(): { x: number; y: number; kind: number; owner: number; capturer: number; progress: number }[] {
+    const out = [];
+    const base = this.projBase + this.projectileCount * PROJ_STRIDE;
+    for (let i = 0; i < (this.a[H.pointCount] ?? 0); i++) {
+      const o = base + i * POINT_STRIDE;
+      out.push({ x: this.a[o]!, y: this.a[o + 1]!, kind: this.a[o + 2]!, owner: this.a[o + 3]!, capturer: this.a[o + 4]!, progress: this.a[o + 5]! });
+    }
+    return out;
   }
   /** Field of a player record. */
   player(player: number, field: number): number {

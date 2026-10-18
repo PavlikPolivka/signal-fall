@@ -47,6 +47,7 @@ function scenarioFromUrl(): ScenarioSpec {
     biome: (params.get('biome') ?? 'wasteland') as Biome,
     resources: (params.get('resources') ?? 'normal') as Resources,
     terrain: (params.get('terrain') ?? 'normal') as TerrainStyle,
+    points: (params.get('points') ?? 'none') as 'none' | 'some',
   };
   // ?mode=2v2[&factions=0,2,1,0]: slots 0+1 against 2+3; every slot but ours is AI (all of them when spectating).
   if (params.get('mode') === '2v2') {
@@ -74,7 +75,7 @@ function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null 
 }
 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
-  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain };
+  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points };
   const style = s.personality && s.personality !== 'random' ? s.personality : null;
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
   if (s.mode === '2v2')

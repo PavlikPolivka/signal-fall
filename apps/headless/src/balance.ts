@@ -16,6 +16,8 @@ export interface MatchSpec {
   /** Swap start positions (removes positional bias across a batch). */
   swap: boolean;
   maxMinutes: number;
+  /** Capture points on the map. */
+  points?: 'none' | 'some';
 }
 
 export interface MatchOutcome {
@@ -35,7 +37,7 @@ const BIOMES: Biome[] = ['wasteland', 'city', 'crystal'];
 /** Play one AI vs AI match headless to the end (or the time limit). */
 export function playMatch(spec: MatchSpec): MatchOutcome {
   const rules = defaultRules();
-  const map = generateMap({ seed: spec.seed, size: spec.size, players: 2, biome: spec.biome, resources: 'normal', terrain: 'normal' });
+  const map = generateMap({ seed: spec.seed, size: spec.size, players: 2, biome: spec.biome, resources: 'normal', terrain: 'normal', points: spec.points });
   // Player slot k plays side order[k].
   const order = spec.swap ? [1, 0] : [0, 1];
   const sim = createMatch({
@@ -66,7 +68,7 @@ export function playMatch(spec: MatchSpec): MatchOutcome {
   };
 }
 
-export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: MapSize; seed: number; maxMinutes: number }): MatchSpec[] {
+export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: MapSize; seed: number; maxMinutes: number; points?: 'none' | 'some' }): MatchSpec[] {
   return Array.from({ length: opts.matches }, (_, i) => ({
     seed: opts.seed + i,
     size: opts.size,
@@ -74,6 +76,7 @@ export function batchSpecs(opts: { matches: number; sides: [Side, Side]; size: M
     sides: opts.sides,
     swap: i % 2 === 1,
     maxMinutes: opts.maxMinutes,
+    points: opts.points,
   }));
 }
 

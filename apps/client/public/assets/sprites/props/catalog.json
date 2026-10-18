@@ -890,6 +890,27 @@
    "dirs": 1,
    "anims": {},
    "turret": false
+  },
+  "pt_derrick": {
+   "kind": "prop",
+   "frame": 192,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "pt_watchtower": {
+   "kind": "prop",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
+  },
+  "pt_depot": {
+   "kind": "prop",
+   "frame": 192,
+   "dirs": 1,
+   "anims": {},
+   "turret": false
   }
  }
 }

@@ -1,3 +1,4 @@
+import type { CapturePoint } from './systems/points';
 import type { FactionIdx, Rules } from '@signal-fall/data';
 import { Entities } from './entities';
 import { IntWriter } from './hash';
@@ -158,6 +159,8 @@ export interface World {
   pending: Map<number, number>;
   /** Derived each tick: progress of each formation group (move/attack-move orders). */
   groups: Map<number, GroupInfo>;
+  /** Capture points on the map (none on most maps). */
+  points: CapturePoint[];
 }
 
 export interface GroupInfo {
@@ -181,6 +184,8 @@ export interface WorldOptions {
   /** Initial Echo crystals per tile (also each tile's regrowth cap). */
   echo?: Uint8Array;
   victoryRules?: boolean;
+  /** Capture points (tile and POINT kind). */
+  points?: { x: number; y: number; kind: number }[];
 }
 
 export function createWorld(o: WorldOptions): World {
@@ -226,6 +231,7 @@ export function createWorld(o: WorldOptions): World {
     winnerTeam: -1,
     pending: new Map(),
     groups: new Map(),
+    points: (o.points ?? []).map((p) => ({ x: p.x, y: p.y, kind: p.kind, owner: -1, capturer: -1, progress: 0 })),
   };
 }
 
@@ -288,6 +294,12 @@ export function serializeWorld(world: World, w: IntWriter): void {
   w.pushArray(world.map.echo);
   for (const r of world.aiRng) w.pushArray(r.s);
   world.entities.serialize(w);
+  // Only maps with capture points carry them (other states hash exactly as before).
+  for (const p of world.points) {
+    w.push(p.owner);
+    w.push(p.capturer);
+    w.push(p.progress);
+  }
   w.push(world.projectiles.length);
   for (const p of world.projectiles) {
     w.push(p.owner);

@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Matrix, Sprite, Texture } from 'pixi.js';
-import { KIND, TERRAIN } from '@signal-fall/sim';
+import { CAPTURE_RADIUS, CAPTURE_TICKS, KIND, POINT, TERRAIN } from '@signal-fall/sim';
 import { E, ENT_FLAG, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
@@ -102,6 +102,8 @@ export class Renderer {
   private echoVersion = -1;
   private propsReady = false;
   private echoSprites = new Map<number, Sprite>();
+  /** Capture point models placed so far (by tile). */
+  private pointSprites = new Set<number>();
   /** Shields per entity last frame: a drop means a hit, shown as a shimmer. */
   private lastShields = new Map<number, number>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
@@ -355,6 +357,7 @@ export class Renderer {
     top.removeChildren();
     this.culler.clear();
     this.echoSprites.clear();
+    this.pointSprites.clear();
     const hash = (x: number, y: number, k: number) => {
       let h = Math.imul(x + 1, 374761393) + Math.imul(y + 1, 668265263) + Math.imul(k, 982451653);
       h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -638,6 +641,7 @@ export class Renderer {
     this.overlay.clear();
     this.fx.clear();
     this.drawCoverage();
+    this.drawPoints();
     this.drawChorus();
     this.shimmerEcho();
     this.night.begin();
@@ -1204,6 +1208,68 @@ export class Renderer {
             .fill({ color: 0x9fd7ff, alpha: 0.08 + 0.22 * done })
             .stroke({ width: 1, color: 0x9fd7ff, alpha: 0.55 });
         }
+      }
+    }
+  }
+
+  /**
+   * Capture points: a pad with the site on it (derrick, watchtower, repair depot) in the holder's
+   * color (grey when neutral), the capture circle, and a filling ring while someone takes it.
+   */
+  private drawPoints(): void {
+    const s = this.state;
+    const cur = s.cur;
+    if (!cur) return;
+    const fog = s.fog;
+    for (const p of cur.points()) {
+      if (fog && !s.spectator && (fog[p.y * s.width + p.x]! & 2) === 0) continue;
+      const px = isoX(p.x + 0.5, p.y + 0.5);
+      const py = isoY(p.x + 0.5, p.y + 0.5);
+      const color = p.owner >= 0 ? TEAM_COLORS[p.owner % TEAM_COLORS.length]! : 0x9aa0a6;
+      const rx = CAPTURE_RADIUS * (TILE_W / 2) * Math.SQRT2;
+      this.decals.ellipse(px, py, rx, rx / 2).stroke({ width: 1.5, color, alpha: 0.45 });
+      this.decals.ellipse(px, py, 46, 23).stroke({ width: 2.5, color, alpha: 0.9 });
+      // The site itself: a rendered model (drawn shapes until the props atlas is in).
+      const key = p.y * s.width + p.x;
+      if (!this.pointSprites.has(key)) {
+        const id = p.kind === POINT.derrick ? 'pt_derrick' : p.kind === POINT.watchtower ? 'pt_watchtower' : 'pt_depot';
+        const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color');
+        if (tex) {
+          const sh = this.lib.texture(id, 'body', 'idle', 0, 0, 'shadow');
+          if (sh) {
+            const shadow = new Sprite(sh);
+            shadow.anchor.set(0.5);
+            shadow.position.set(px, py);
+            shadow.scale.set(p.kind === POINT.watchtower ? 1 : 1.3);
+            this.culler.add(shadow, this.propShadows, px, py);
+          }
+          const sp = new Sprite(tex);
+          sp.anchor.set(0.5);
+          sp.position.set(px, py);
+          sp.scale.set(p.kind === POINT.watchtower ? 1 : 1.3);
+          sp.zIndex = py;
+          this.culler.add(sp, this.ground, px, py);
+          this.pointSprites.add(key);
+        }
+      }
+      if (this.pointSprites.has(key)) {
+        // Drawn by the sprite.
+      } else if (p.kind === POINT.derrick) {
+        this.overlay.poly([px - 7, py, px - 3, py - 26, px + 3, py - 26, px + 7, py]).fill(0x3b3f45).stroke({ width: 1.5, color });
+        this.overlay.circle(px, py - 28, 4).fill(0x3ee6ff);
+      } else if (p.kind === POINT.watchtower) {
+        this.overlay.rect(px - 2, py - 38, 4, 38).fill(0x4a4036);
+        this.overlay.rect(px - 9, py - 44, 18, 7).fill(0x5a4c3e).stroke({ width: 1.5, color });
+      } else {
+        this.overlay.rect(px - 10, py - 14, 20, 12).fill(0x3b3f45).stroke({ width: 1.5, color });
+        this.overlay.rect(px - 1.5, py - 12, 3, 8).fill(0x6dff8a);
+        this.overlay.rect(px - 4, py - 9.5, 8, 3).fill(0x6dff8a);
+      }
+      if (p.capturer >= 0 && p.progress > 0) {
+        const team = s.players.findIndex((x) => x.team === p.capturer);
+        const c = TEAM_COLORS[Math.max(0, team) % TEAM_COLORS.length]!;
+        const t = p.progress / CAPTURE_TICKS;
+        this.overlay.arc(px, py - 70, 9, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).stroke({ width: 3, color: c });
       }
     }
   }

@@ -89,3 +89,17 @@ Each change was measured by running with one feature removed (150 matches per pa
 City maps now cut one-tile streets through big ruins clusters (mapgen, a lane every 5 tiles). Checked
 Halcyon vs Choir at 300 Hard matches with and without streets: 52.7% vs 53.0%, no measurable effect. Holdout
 vs Choir and Holdout vs Halcyon at 100 matches: 45% and 53%.
+
+### 2026-10-18: capture points (optional map setting)
+
+Derricks, watchtowers and repair depots ("Capture points" in the map options, off by default, so CI's default
+runs are unchanged). Checked with `--points some`, Hard vs Hard:
+
+- First version (derrick 10 credits/s, three AI units sent from minute 2 to the nearest untaken point, parked there):
+  Holdout vs Choir 36–41% over 100–300 matches, Halcyon vs Choir 62%. Ownership was even (each side took the first
+  point in 15 of 30 matches), and with the points on the map but the AI ignoring them the pairing was back to 46%:
+  the cost was the AI marching squads into the middle, where Choir's self-escaping units trade better.
+- Smaller effects (derrick 4/s, depots don't mend Choir crystal) did not change that on their own.
+- Fix: the AI takes only points on its own half of the map, sends its three fastest spare units from minute 4 and
+  releases them once the point is held. Now 44.5% / 55.5% / 49% (Holdout–Choir, Holdout–Halcyon, Halcyon–Choir,
+  200 matches each), in line with the default maps.

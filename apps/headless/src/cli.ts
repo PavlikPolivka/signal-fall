@@ -23,6 +23,7 @@ Commands:
          --b <faction:difficulty>   side B (default holdout:easy)
          --matches <n>     number of matches (default 50); sides alternate start positions
          --size <S|M|L>    map size (default M)
+         --points <none|some>  capture points on the maps (default none)
          --seed <n>        first seed (default 1)
          --minutes <n>     time limit per match (default 30)
          --threads <n>     worker threads (default cores - 1)
@@ -104,6 +105,7 @@ async function balance(args: string[]): Promise<void> {
       out: { type: 'string' },
       'min-win': { type: 'string' },
       'max-win': { type: 'string' },
+      points: { type: 'string', default: 'none' },
     },
   });
   const sides: [Side, Side] = [parseSide(values.a), parseSide(values.b)];
@@ -114,6 +116,7 @@ async function balance(args: string[]): Promise<void> {
     size: values.size as 'S' | 'M' | 'L',
     seed: Number(values.seed),
     maxMinutes: Number(values.minutes),
+    points: values.points === 'some' ? 'some' : 'none',
   });
   const start = Date.now();
   const outcomes = await runParallel(specs, values.threads ? Number(values.threads) : undefined, (done) => {

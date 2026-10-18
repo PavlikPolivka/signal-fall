@@ -593,6 +593,13 @@ function BuildingRules({ rules }: { rules: Rules }) {
         and deploy it (<kbd>D</kbd>) beside the field: it becomes a new construction yard ({rules.factions.map(conyard).join(', ')}), and the
         building rules above start from there. The {choir.name} can also grow straight onto a far field with a far seed.
       </p>
+      <h3>Capture points</h3>
+      <p>
+        With <b>Capture points</b> on in the map options, the land between the bases holds sites anyone can take: keep ground units next to
+        one, with no enemy beside them, for 10 seconds. An <b>Echo derrick</b> pumps a steady trickle of credits, a <b>watchtower</b> sees
+        far around it, and a <b>repair depot</b> mends your units that stand by it (machines and soldiers; Choir crystal heals on its own).
+        Enemy units next to a point stop a capture, and a defeated player's points go neutral.
+      </p>
       <h3>Refineries and harvesters</h3>
       <p>
         A refinery (◆{Math.min(...rules.factions.map((f) => refinery(f).cost))}–{Math.max(...rules.factions.map((f) => refinery(f).cost))}) comes with one free harvester. Harvesters

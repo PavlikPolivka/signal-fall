@@ -1,6 +1,7 @@
 import { FX_SHIFT } from '../fx';
 import { sightOf } from '../query';
 import { FOG_EXPLORED, FOG_INTERVAL, FOG_VISIBLE, type World } from '../world';
+import { POINT, WATCHTOWER_SIGHT } from './points';
 
 /** Circle stencils per radius in tiles: flat [dx0, dy0, dx1, dy1, ...]. */
 const STENCILS = new Map<number, Int32Array>();
@@ -43,6 +44,22 @@ export function fogSystem(world: World, force = false): void {
       for (let i = 0; i < st.length; i += 2) {
         const x = cx + st[i]!;
         const y = cy + st[i + 1]!;
+        if (x < 0 || y < 0 || x >= w || y >= h) continue;
+        f[y * w + x] = FOG_VISIBLE | FOG_EXPLORED;
+      }
+    }
+  }
+  // Watchtowers see far for their owner's team.
+  for (const pt of world.points) {
+    if (pt.kind !== POINT.watchtower || pt.owner < 0) continue;
+    const team = teams[pt.owner]!;
+    const st = stencil(WATCHTOWER_SIGHT);
+    for (let p = 0; p < world.players.length; p++) {
+      if (teams[p] !== team) continue;
+      const f = world.fog[p]!;
+      for (let i = 0; i < st.length; i += 2) {
+        const x = pt.x + st[i]!;
+        const y = pt.y + st[i + 1]!;
         if (x < 0 || y < 0 || x >= w || y >= h) continue;
         f[y * w + x] = FOG_VISIBLE | FOG_EXPLORED;
       }

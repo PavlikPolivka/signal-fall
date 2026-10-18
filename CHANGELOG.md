@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 21:24 UTC
+
+- **Capture points:** a new map option. Turn on **Capture points** in the skirmish or lobby map settings, and the land between the bases holds sites to fight over: an **Echo derrick** that pumps credits, a **watchtower** that sees far, and a **repair depot** that mends your units. Keep ground units next to one, with no enemy beside them, for 10 seconds to take it. The AI goes for the ones on its side of the map. Each site has its own 3D model, and they show on the minimap.
+
 ## 2026-10-18 19:49 UTC
 
 - **Ranked match:** press **Ranked match** on the Multiplayer screen to be paired with someone near your rating. The room is made for you and the match starts as soon as you're both connected. It counts for the leaderboard.

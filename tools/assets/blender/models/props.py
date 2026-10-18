@@ -7,7 +7,7 @@ import math
 import random
 
 import bpy
-from kit import box, cylinder, lattice_tower, material, strut, wedge
+from kit import box, cone, crates, cylinder, lattice_tower, material, strut, wedge
 from mathutils import Euler, Vector
 
 
@@ -297,6 +297,101 @@ def lm_monolith(style, seed):
 VARIANTS = 6
 
 import props_real as real  # noqa: E402  (real models: Poly Haven scans, the Meshy Echo cluster)
+def pt_derrick(style, seed):
+    """Echo derrick: a pumpjack nodding over a well, beside a tank with glowing crystal in it."""
+    steel = material("pj_steel", "5a5650", rough=0.55, metal=0.6, style=style)
+    paint = material("pj_paint", "a8742e", rough=0.6, metal=0.3, style=style)
+    conc = material("pj_concrete", "8a867e", rough=1.0, style=style)
+    glow = material("pj_echo", "3ee6ff", rough=0.2, emission="3ee6ff", style=style)
+    out = [box("pad", (1.8, 1.5, 0.12), (0, 0, 0.06), conc, bevel=0.03)]
+    out.append(box("skid", (1.2, 0.3, 0.1), (-0.1, 0, 0.17), steel))
+    # Samson post (A-frame) and the walking beam on top, tipped toward the well.
+    out.append(strut(Vector((-0.15, -0.13, 0.2)), Vector((0.0, 0, 0.95)), 0.035, steel))
+    out.append(strut(Vector((-0.15, 0.13, 0.2)), Vector((0.0, 0, 0.95)), 0.035, steel))
+    out.append(strut(Vector((0.15, 0, 0.2)), Vector((0.0, 0, 0.95)), 0.03, steel))
+    out.append(box("beam", (1.25, 0.1, 0.1), (0.05, 0, 0.98), paint, rot=(0, math.radians(-12), 0), bevel=0.02))
+    out.append(wedge("horsehead", (0.22, 0.14, 0.42), (0.68, 0, 0.98), paint, rot=(0, math.radians(-12), 0), taper=0.5))
+    out.append(cylinder("counterweight", 0.2, 0.12, (-0.55, 0, 0.6), paint, rot=(math.pi / 2, 0, 0), verts=20))
+    out.append(strut(Vector((-0.55, 0, 0.6)), Vector((-0.5, 0, 0.92)), 0.025, steel))
+    out.append(strut(Vector((0.72, 0, 0.72)), Vector((0.72, 0, 0.18)), 0.012, steel))
+    out.append(cylinder("wellhead", 0.08, 0.2, (0.72, 0, 0.22), steel, verts=12))
+    out.append(box("motor", (0.3, 0.25, 0.22), (-0.62, 0.0, 0.28), steel, bevel=0.02))
+    # The Echo tank: a short steel drum, open on top, crystals glowing inside.
+    out.append(cylinder("tank", 0.28, 0.45, (0.2, -0.5, 0.35), steel, verts=20))
+    for k, (dx, dy, h) in enumerate([(0.0, 0.0, 0.32), (0.08, 0.06, 0.22), (-0.08, 0.05, 0.25), (0.05, -0.09, 0.2)]):
+        out.append(wedge(f"echo{k}", (0.07, 0.07, h), (0.2 + dx, -0.5 + dy, 0.55 + h / 2), glow, taper=0.15))
+    out.append(strut(Vector((0.72, 0, 0.18)), Vector((0.2, -0.5, 0.2)), 0.02, steel))
+    return out
+
+
+def pt_watchtower(style, seed):
+    """Watchtower: a timber-and-steel lookout on four legs, ladder up one side, a roof against the sun."""
+    wood = material("wt_wood", "6b5238", rough=0.95, style=style)
+    steel = material("wt_steel", "5f5b55", rough=0.6, metal=0.5, style=style)
+    roof = material("wt_roof", "4a4a46", rough=0.8, metal=0.3, style=style)
+    conc = material("wt_concrete", "8a867e", rough=1.0, style=style)
+    out = [box("pad", (1.5, 1.5, 0.1), (0, 0, 0.05), conc, bevel=0.03)]
+    h = 2.1
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            out.append(strut(Vector((sx * 0.5, sy * 0.5, 0.1)), Vector((sx * 0.3, sy * 0.3, h)), 0.045, wood))
+    # Cross bracing.
+    for z0, z1 in ((0.15, 1.05), (1.05, 1.95)):
+        f0, f1 = 0.5 - 0.2 * (z0 / h), 0.5 - 0.2 * (z1 / h)
+        for sx, sy in ((1, 1), (-1, -1)):
+            out.append(strut(Vector((sx * f0, -f0, z0)), Vector((sx * f1, f1, z1)), 0.018, steel))
+            out.append(strut(Vector((-f0, sy * f0, z0)), Vector((f1, sy * f1, z1)), 0.018, steel))
+    out.append(box("deck", (0.85, 0.85, 0.08), (0, 0, h), wood, bevel=0.01))
+    for sx in (-1, 1):
+        out.append(box(f"railx{sx}", (0.85, 0.04, 0.25), (0, sx * 0.41, h + 0.16), wood))
+        out.append(box(f"raily{sx}", (0.04, 0.85, 0.25), (sx * 0.41, 0, h + 0.16), wood))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            out.append(strut(Vector((sx * 0.38, sy * 0.38, h)), Vector((sx * 0.38, sy * 0.38, h + 0.6)), 0.02, wood))
+    out.append(cone("roof", 0.72, 0.05, 0.35, (0, 0, h + 0.78), roof, verts=4))
+    out[-1].rotation_euler = (0, 0, math.pi / 4)
+    # Ladder.
+    out.append(strut(Vector((0.62, -0.12, 0.1)), Vector((0.42, -0.12, h)), 0.015, steel))
+    out.append(strut(Vector((0.62, 0.12, 0.1)), Vector((0.42, 0.12, h)), 0.015, steel))
+    for k in range(7):
+        t = (k + 0.5) / 7
+        x = 0.62 - 0.2 * t
+        out.append(strut(Vector((x, -0.12, 0.1 + t * (h - 0.1))), Vector((x, 0.12, 0.1 + t * (h - 0.1))), 0.01, steel))
+    out.append(cylinder("lamp", 0.07, 0.12, (0, -0.35, h + 0.35), steel, verts=10))
+    return out
+
+
+def pt_depot(style, seed):
+    """Repair depot: an open workshop shed with a gantry crane, tool crates and a green cross."""
+    steel = material("rd_steel", "5c5852", rough=0.6, metal=0.5, style=style)
+    sheet = material("rd_sheet", "6e7570", rough=0.7, metal=0.4, style=style)
+    conc = material("rd_concrete", "8a867e", rough=1.0, style=style)
+    green = material("rd_green", "3fbf5a", rough=0.5, emission="3fbf5a", style=style)
+    crate = material("rd_crate", "7a6040", rough=0.9, style=style)
+    out = [box("pad", (1.8, 1.8, 0.1), (0, 0, 0.05), conc, bevel=0.03)]
+    # The shed: back and side walls, roof, open front.
+    out.append(box("back", (1.2, 0.06, 0.8), (0, 0.55, 0.5), sheet))
+    out.append(box("left", (0.06, 0.8, 0.8), (-0.6, 0.18, 0.5), sheet))
+    out.append(box("right", (0.06, 0.8, 0.8), (0.6, 0.18, 0.5), sheet))
+    out.append(box("roof", (1.35, 1.0, 0.06), (0, 0.15, 0.93), sheet, rot=(math.radians(6), 0, 0)))
+    # Gantry crane over the bay.
+    for sx in (-0.75, 0.75):
+        out.append(strut(Vector((sx, -0.6, 0.1)), Vector((sx, -0.6, 1.15)), 0.035, steel))
+    out.append(box("gantry", (1.6, 0.08, 0.08), (0, -0.6, 1.15), steel))
+    out.append(strut(Vector((0.1, -0.6, 1.12)), Vector((0.1, -0.6, 0.6)), 0.01, steel))
+    out.append(box("hook", (0.08, 0.08, 0.1), (0.1, -0.6, 0.55), steel))
+    # Green cross on the roof edge.
+    out.append(box("crossv", (0.08, 0.04, 0.32), (0, -0.37, 1.18), green))
+    out.append(box("crossh", (0.32, 0.04, 0.08), (0, -0.37, 1.18), green))
+    out += crates(-0.75, -0.75, crate, n=3, seed=seed)
+    out.append(cylinder("drum", 0.1, 0.25, (0.75, -0.8, 0.22), steel, verts=14))
+    return out
+
+
+# Capture points: id -> (builder, frame px).
+POINTS = {"pt_derrick": (pt_derrick, 192), "pt_watchtower": (pt_watchtower, 288), "pt_depot": (pt_depot, 192)}
+
+
 import city  # noqa: E402  (buildings from Poly Haven's modular facade kits)
 
 # City blocks per footprint (w x d tiles): frame px. The client fills ruins clusters with these.

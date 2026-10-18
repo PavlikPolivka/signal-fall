@@ -7,6 +7,7 @@ import { fogSystem } from './systems/fog';
 import { buildSystem, computeFacts, echoRegrowSystem, harvestSystem, productionSystem, repairSystem, wreckSystem } from './systems/economy';
 import { movementSystem } from './systems/movement';
 import { victorySystem } from './systems/victory';
+import { pointsSystem } from './systems/points';
 import { abilitySystem, chordRegrowSystem, coverageSystem, researchSystem, sustainSystem } from './systems/faction';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
 import { autoPlaceSystem } from './orders';
@@ -73,6 +74,7 @@ export class Sim {
       movementSystem(w);
       w.spatial.rebuild(w.entities);
       repairSystem(w);
+      pointsSystem(w);
       weaponSystem(w);
       projectileSystem(w);
       deathSystem(w);

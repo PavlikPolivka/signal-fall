@@ -9,6 +9,8 @@ export interface MapChoice {
   resources: Resources;
   terrain: TerrainStyle;
   seed: number;
+  /** Capture points on the map. */
+  points?: 'none' | 'some';
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -50,8 +52,8 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
   const readOnly = !onChange;
   const set = (patch: Partial<MapChoice>) => onChange?.(patch);
   const map = useMemo(
-    () => generateMap({ seed: value.seed, size: value.size, players, biome: value.biome, resources: value.resources, terrain: value.terrain }),
-    [value.seed, value.size, value.biome, value.resources, value.terrain, players],
+    () => generateMap({ seed: value.seed, size: value.size, players, biome: value.biome, resources: value.resources, terrain: value.terrain, points: value.points }),
+    [value.seed, value.size, value.biome, value.resources, value.terrain, value.points, players],
   );
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -77,6 +79,10 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
     ctx.setTransform(scale, scale * 0.5, -scale, scale * 0.5, size / 2, size / 4);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(tile, 0, 0);
+    for (const p of map.points ?? []) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(p.x - 2, p.y - 2, 5, 5);
+    }
     map.starts.forEach((p, k) => {
       ctx.fillStyle = `#${TEAM_COLORS[k]!.toString(16).padStart(6, '0')}`;
       ctx.fillRect(p.x - 3, p.y - 3, 7, 7);
@@ -112,6 +118,17 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         ]}
         onChange={(v) => set({ terrain: v })}
         testid="terrain"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Capture points"
+        value={value.points ?? 'none'}
+        options={[
+          ['none', 'None'],
+          ['some', 'Derricks, towers, depots'],
+        ]}
+        onChange={(v) => set({ points: v })}
+        testid="points"
         disabled={readOnly}
       />
       <div class="choice">
