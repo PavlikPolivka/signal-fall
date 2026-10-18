@@ -191,6 +191,13 @@ export class Input {
     this.state.altHeld = e.altKey;
     this.held.add(e.code);
     if (e.repeat && !e.code.startsWith('Arrow')) return;
+    // Multiplayer: Enter opens the chat box.
+    if (e.code === 'Enter' && this.state.multiplayer && !this.state.menuOpen) {
+      e.preventDefault();
+      this.state.chatOpen = true;
+      this.state.changed();
+      return;
+    }
     const contexts = this.activeContexts();
     const letter = /^Key([A-Z])$/.exec(e.code)?.[1];
     const plain = !e.ctrlKey && !e.metaKey && !e.altKey;
@@ -471,6 +478,12 @@ export class Input {
       return;
     }
     if (e.button !== 0) return;
+    // Multiplayer: Alt+click pings the spot for your team.
+    if (e.altKey && this.state.multiplayer) {
+      const at = this.simPoint(p.x, p.y);
+      this.state.sendChat('', true, at);
+      return;
+    }
     // Clicking the battlefield closes an open production tab.
     if (UNIT_MENUS.includes(this.state.mode)) this.setMode('normal');
     if (this.state.placing) {

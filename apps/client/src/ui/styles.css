@@ -2301,3 +2301,36 @@ table.md-table td {
   color: #0b0d10;
   background: var(--accent);
 }
+.chat {
+  position: fixed;
+  left: 14px;
+  bottom: calc(176px * var(--ui-scale, 1) + 14px);
+  z-index: 24;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 460px;
+  pointer-events: none;
+}
+.chat-line {
+  padding: 2px 8px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 3px;
+}
+.chat-input {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  pointer-events: auto;
+}
+.chat-input input {
+  flex: 1;
+  padding: 4px 8px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+}

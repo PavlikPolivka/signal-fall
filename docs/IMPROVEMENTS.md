@@ -68,7 +68,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 50 | O | Interactive tutorial (5 short steps) for players new to RTS | 4 | M |
 | 51 ✅ | O | Skirmish presets ("Quick match", "Long game", "Rush") and a "same as last time" button | 3 | XS |
 | 52 | M | Rematch button for multiplayer; post-game lobby keeps the room | 4 | S |
-| 53 | M | In-game chat and pings (Alt+click to ping a spot for teammates in 2v2) | 4 | M |
+| 53 ✅ | M | In-game chat and pings (Alt+click to ping a spot for teammates in 2v2) | 4 | M |
 | 54 | M | Replace a disconnected player with the AI (2v2) | 4 | M |
 | 55 ✅ | U | Score screen MVP stats per player (units killed, Echo harvested, APM) | 3 | XS |
 
@@ -103,7 +103,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 80 ✅ | G | Selected-unit circles colored by health; hover outline on enemies | 2 | XS |
 | 81 ✅ | G | Water and shoreline animation; crystal shimmer on Echo | 3 | M |
 | 82 ✅ | G | Weather per biome (dust, rain, crystal motes), Reduced setting off | 2 | S |
-| 83 | G | Faction-specific UI frames polished (icons, fonts, sounds per faction) | 3 | M |
+| 83 ✅ | G | Faction-specific UI frames polished (icons, fonts, sounds per faction) | 3 | M |
 | 84 | G | Higher-resolution sprites (2× atlases for retina screens) | 3 | L |
 | 85 ✅ | G | Smoother zoom levels with sprite mip-mapping, no shimmering | 3 | S |
 | 86 ✅ | G | Damaged-building fire and smoke effects scaling with damage | 3 | S |

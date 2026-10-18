@@ -68,6 +68,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       )}
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
+      {state.multiplayer && <Chat state={state} />}
       {state.replay && <ReplayBar state={state} />}
       {state.reportOpen && (
         <MatchReport
@@ -487,6 +488,18 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
         ctx.beginPath();
         ctx.arc(hit.x / FX, hit.y / FX, 2 + age * 6, 0, Math.PI * 2);
         ctx.stroke();
+      }
+      // Team pings: rings in the pinger's color.
+      for (const p of state.mapPings) {
+        const age = (now - p.time) / 5000;
+        if (age >= 1) continue;
+        ctx.strokeStyle = hex(TEAM_COLORS[p.player % TEAM_COLORS.length]!);
+        ctx.globalAlpha = 1 - age;
+        ctx.lineWidth = 2 / scale;
+        ctx.beginPath();
+        ctx.arc(p.x / FX, p.y / FX, 3 + ((age * 5) % 1) * 6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
       }
       // Camera viewport.
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1184,6 +1197,60 @@ function KeyBindings({ state, onClose }: { state: ClientState; onClose: () => vo
           <button onClick={onClose}>Done</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Multiplayer chat: recent lines fade out; Enter opens the box, Enter sends, Esc closes. */
+function Chat({ state }: { state: ClientState }) {
+  const twoTeams = state.players.length > 2;
+  const [team, setTeam] = useState(twoTeams);
+  const [text, setText] = useState('');
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (state.chatOpen) ref.current?.focus();
+  }, [state.chatOpen]);
+  const now = performance.now();
+  const shown = state.chat.filter((c) => state.chatOpen || now - c.time < 12000).slice(-8);
+  const close = () => {
+    state.chatOpen = false;
+    setText('');
+    ref.current?.blur();
+    state.changed();
+  };
+  return (
+    <div class="chat" data-testid="chat">
+      {shown.map((c) => (
+        <div class="chat-line">
+          <b style={{ color: hex(TEAM_COLORS[c.player % TEAM_COLORS.length]!) }}>{c.name}</b>
+          {c.team && twoTeams ? <span class="muted"> (team)</span> : null}: {c.text}
+        </div>
+      ))}
+      {state.chatOpen && (
+        <div class="chat-input">
+          {twoTeams && (
+            <button onClick={() => setTeam(!team)} title="Who reads it">
+              {team ? 'Team' : 'All'}
+            </button>
+          )}
+          <input
+            ref={ref}
+            value={text}
+            maxLength={200}
+            data-testid="chat-input"
+            placeholder="Say something… (Enter sends, Esc closes)"
+            onInput={(e) => setText((e.currentTarget as HTMLInputElement).value)}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Escape') close();
+              else if (e.key === 'Enter') {
+                if (text.trim()) state.sendChat(text.trim(), team);
+                close();
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

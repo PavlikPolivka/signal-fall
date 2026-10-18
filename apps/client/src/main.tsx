@@ -117,6 +117,8 @@ function sendLive(msg: Extract<ToWorker, { type: 'live' }>): void {
   else post(msg);
   state.changed();
 }
+/** The room the multiplayer match came from (for a rematch). */
+let lastRoom: import('./net/lobby').LobbyState | null = null;
 /** Multiplayer: room code and account ids per slot, for the match record. */
 let netMatch: NetMatch | null = null;
 /** Lobby screen showing instead of the skirmish setup. */
@@ -323,6 +325,15 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         (m) => post({ type: 'net', msg: m }),
       );
       netSession.onPeerLost = lost;
+      netSession.onChat = (m) => {
+        // Team messages only count from teammates.
+        if (m.team && state.players[m.player]?.team !== state.players[localSlot]?.team) return;
+        state.addChat(m.player, m.text.slice(0, 200), m.team, m.at);
+      };
+      state.sendChat = (text, team, at) => {
+        netSession?.send({ kind: 'chat', player: localSlot, team, text: text.slice(0, 200), at });
+        state.addChat(localSlot, text.slice(0, 200), team, at);
+      };
     });
   } else if (replay) {
     state.spectator = true;
@@ -378,6 +389,8 @@ function renderUi(): void {
           localSlot = slot;
           peerLinks = links;
           netMatch = { room: room.code, uids: room.slots.map((x) => x.player?.uid ?? null) };
+          state.names = room.slots.map((x) => x.player?.name ?? null);
+          lastRoom = room;
           renderUi();
         }}
       />,

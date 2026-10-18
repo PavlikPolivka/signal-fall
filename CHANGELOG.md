@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-18 18:49 UTC
+
+- **Chat in multiplayer:** press <kbd>Enter</kbd>, type, <kbd>Enter</kbd> to send. In 2v2, a button picks whether your team or everyone reads it.
+- **Pings:** <kbd>Alt</kbd>+click the battlefield to mark a spot for your team: rings in your color on their screen and minimap, with a chirp.
+- **Faction sounds:** interface clicks and cues are pitched for your faction.
+
 ## 2026-10-18 18:43 UTC
 
 - **Formation move:** with several units selected, right-drag a line on the ground; they spread out evenly along it, each taking the spot nearest its place in line.

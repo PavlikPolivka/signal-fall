@@ -1,4 +1,4 @@
-import { ReliableLink, ReliableTransport, lossyPair, type Datagram, type NetMessage } from '@signal-fall/net';
+import { ReliableLink, ReliableTransport, lossyPair, type ChatMessage, type Datagram, type NetMessage } from '@signal-fall/net';
 
 /** No word from a peer for this long means they are gone. */
 export const PEER_TIMEOUT_MS = 10_000;
@@ -14,13 +14,15 @@ export class NetSession {
   private lost = false;
   /** Called when any peer goes silent for PEER_TIMEOUT_MS. */
   onPeerLost: () => void = () => undefined;
+  /** Chat and pings from the other people (handled here, not by the sim). */
+  onChat: (m: ChatMessage) => void = () => undefined;
 
   constructor(
     dgrams: Datagram[],
     private readonly toWorker: (msg: NetMessage) => void,
   ) {
     this.transport = new ReliableTransport(dgrams.map((d) => new ReliableLink(d, { now: () => performance.now() })));
-    this.transport.onMessage((m) => this.toWorker(m));
+    this.transport.onMessage((m) => (m.kind === 'chat' ? this.onChat(m) : this.toWorker(m)));
     this.timer = window.setInterval(() => {
       this.transport.tick();
       if (!this.lost && this.transport.silenceMs(performance.now()) > PEER_TIMEOUT_MS) {

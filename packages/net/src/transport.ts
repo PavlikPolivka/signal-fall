@@ -22,7 +22,18 @@ export interface PingMessage {
   t: number;
 }
 
-export type NetMessage = TurnMessage | HashMessage | PingMessage;
+/** Chat and map pings between people: never reaches the sim, so it can't desync anything. */
+export interface ChatMessage {
+  kind: 'chat';
+  player: number;
+  /** Only for the sender's team (2v2), or for everyone. */
+  team: boolean;
+  text: string;
+  /** A map ping (sim position, Q10) instead of, or with, text. */
+  at?: { x: number; y: number };
+}
+
+export type NetMessage = TurnMessage | HashMessage | PingMessage | ChatMessage;
 
 /**
  * A reliable, ordered message channel to all other peers. Implementations:

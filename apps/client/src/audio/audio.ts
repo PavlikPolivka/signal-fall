@@ -58,6 +58,9 @@ const VOICE_FOR: Record<string, VoiceLine> = {
 };
 const PLACEMENT_TEXTS = new Set<string>(Object.values(PLACEMENT_MESSAGES));
 
+/** Interface sounds (not battle sounds) that take the faction's pitch. */
+const UI_CUES = new Set(['click', 'complete', 'ready', 'error', 'ack', 'place']);
+
 /** Where the listener is: screen-relative position of a sim point (-1..1 = on screen). */
 export type Listener = (x: number, y: number) => { nx: number; ny: number };
 
@@ -87,6 +90,10 @@ export class GameAudio {
   /** Base ambience: a power hum and factory work near the camera. */
   private hum: { gain: GainNode } | null = null;
   private lastAmbience = 0;
+  private pingsSeen = 0;
+  private chatSeen = 0;
+  /** Interface cues pitched per faction: Holdout low and mechanical, Halcyon bright, Choir deep. */
+  private uiRate = 1;
 
   constructor(
     private readonly state: ClientState,
@@ -217,6 +224,7 @@ export class GameAudio {
     const faction = this.rules.factions[this.state.players[this.state.localPlayer]?.faction ?? 0]!.id;
     this.voice = new VoicePlayer(this.ctx, this.voiceGain, faction);
     this.music?.setTheme(faction);
+    this.uiRate = faction === 'halcyon' ? 1.3 : faction === 'choir' ? 0.72 : 0.88;
     this.voice.onSpeaking = (on) => {
       this.ducked = on;
       this.apply();
@@ -267,6 +275,17 @@ export class GameAudio {
     if (selection !== this.lastSelection) {
       this.lastSelection = selection;
       if (s.selectedUnits().some((h) => s.ruleOf(h).kind === 'unit')) ack('select');
+    }
+    // A ping or a chat line from someone else gets a short chirp.
+    const pinged = s.mapPings.length > 0 ? s.mapPings[s.mapPings.length - 1]!.time : 0;
+    if (pinged > this.pingsSeen) {
+      this.pingsSeen = pinged;
+      this.play('ready', undefined, undefined, 0.6);
+    }
+    const said = s.chat.length > 0 ? s.chat[s.chat.length - 1]!.time : 0;
+    if (said > this.chatSeen) {
+      this.chatSeen = said;
+      if (s.chat[s.chat.length - 1]!.player !== s.localPlayer) this.play('click', undefined, undefined, 0.7);
     }
     const now = performance.now();
     if (now - this.lastAmbience > 500) {
@@ -348,7 +367,8 @@ export class GameAudio {
     this.playing.set(name, (this.playing.get(name) ?? 0) + 1);
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.playbackRate.value = 0.93 + Math.random() * 0.14;
+    const ui = x === undefined && UI_CUES.has(name);
+    src.playbackRate.value = (0.93 + Math.random() * 0.14) * (ui ? this.uiRate : 1);
     const g = ctx.createGain();
     g.gain.value = gain;
     const p = ctx.createStereoPanner();

@@ -93,6 +93,21 @@ test('two clients play a networked match over a lossy link without desync', asyn
   const slots = await Promise.all([host, guest].map((p) => p.evaluate(() => (window as unknown as { __signalFall: { state: { localPlayer: number } } }).__signalFall.state.localPlayer)));
   expect(slots).toEqual([0, 1]);
 
+  // Chat: Enter, type, Enter; the other side reads it. Alt+click pings the map for your team.
+  await host.keyboard.press('Enter');
+  await host.fill('[data-testid=chat-input]', 'gl hf');
+  await host.press('[data-testid=chat-input]', 'Enter');
+  await expect(guest.getByTestId('chat')).toContainText('gl hf');
+  const box = (await host.locator('[data-testid=game] canvas').boundingBox())!;
+  await host.keyboard.down('Alt');
+  await host.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await host.keyboard.up('Alt');
+  // Pings are for teammates: the host sees its own, the opponent nothing.
+  const pings = (p: Page) => p.evaluate(() => (window as unknown as { __signalFall: { state: { mapPings: unknown[] } } }).__signalFall.state.mapPings.length);
+  await expect.poll(() => pings(host)).toBe(1);
+  await guest.waitForTimeout(1500);
+  expect(await pings(guest)).toBe(0);
+
   // The guest gives up: both see the end, and online the match is recorded and rated.
   await guest.evaluate(() => (window as unknown as { __signalFall: { state: { send: (c: unknown) => void } } }).__signalFall.state.send({ type: 'surrender' }));
   for (const p of [host, guest]) await expect(p.getByTestId('end-screen')).toBeVisible({ timeout: 30_000 });
@@ -160,5 +175,10 @@ test('2v2: three people and an AI over a full mesh stay in sync', async ({ brows
     expect(v.factions[3]).toBe(1); // Cat picked Halcyon
   }
   for (const p of [host, a, b]) await expect(p.getByTestId('desync')).toHaveCount(0);
+  // A team ping reaches the teammate (Bob), not the other team (Cat).
+  await host.evaluate(() => (window as unknown as { __signalFall: { state: { sendChat: (t: string, team: boolean, at: unknown) => void } } }).__signalFall.state.sendChat('', true, { x: 30 * 1024, y: 30 * 1024 }));
+  const pings = (p: Page) => p.evaluate(() => (window as unknown as { __signalFall: { state: { mapPings: unknown[] } } }).__signalFall.state.mapPings.length);
+  await expect.poll(() => pings(a)).toBe(1);
+  expect(await pings(b)).toBe(0);
   await ctx.close();
 });

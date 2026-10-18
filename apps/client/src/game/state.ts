@@ -146,6 +146,31 @@ export class ClientState {
   /** The last 20 match events (attacks, losses, completions), newest last, for the event log. */
   log: (Alert & { tick: number })[] = [];
   logOpen = false;
+  /** Multiplayer chat, newest last (the last 30). */
+  chat: { player: number; name: string; text: string; team: boolean; time: number }[] = [];
+  /** The chat box is open (Enter). */
+  chatOpen = false;
+  /** Names of the people per slot (multiplayer). */
+  names: (string | null)[] = [];
+  /** Map pings from teammates (and ourselves): sim position and when. */
+  mapPings: { x: number; y: number; time: number; player: number }[] = [];
+  /** Send a chat line or ping to the other people (set up by main in multiplayer). */
+  sendChat: (text: string, team: boolean, at?: { x: number; y: number }) => void = () => undefined;
+
+  /** A chat line or ping arrived (or we sent one). */
+  addChat(player: number, text: string, team: boolean, at?: { x: number; y: number }): void {
+    const now = performance.now();
+    if (text) {
+      this.chat.push({ player, name: this.names[player] ?? `Player ${player + 1}`, text, team, time: now });
+      if (this.chat.length > 30) this.chat.shift();
+    }
+    if (at) {
+      this.mapPings.push({ x: at.x, y: at.y, time: now, player });
+      if (this.mapPings.length > 10) this.mapPings.shift();
+    }
+    this.changed();
+  }
+
   /** The announcer line being spoken, as a caption (when subtitles are on). */
   caption: { text: string; time: number } | null = null;
   /** Every command sent, newest last (for UI feedback and tests). */

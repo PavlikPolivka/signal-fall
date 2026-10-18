@@ -934,6 +934,20 @@ export class Renderer {
 
     // Click feedback: shrinking iso ellipse at ordered points.
     const now = performance.now();
+    // Team pings (Alt+click): rings pulsing outward for a few seconds, in the pinger's color.
+    for (const p of s.mapPings) {
+      const age = (now - p.time) / 1000;
+      if (age > 5) continue;
+      const px = isoX(p.x / FX, p.y / FX);
+      const py = isoY(p.x / FX, p.y / FX);
+      const color = TEAM_COLORS[p.player % TEAM_COLORS.length]!;
+      for (let k = 0; k < 2; k++) {
+        const t = ((age + k * 0.5) % 1);
+        const r = 10 + 50 * t;
+        this.overlay.ellipse(px, py, r, r / 2).stroke({ width: 2.5, color, alpha: (1 - t) * Math.min(1, 5 - age) });
+      }
+      this.overlay.poly([px - 6, py - 30, px + 6, py - 30, px, py - 16]).fill({ color, alpha: Math.min(1, 5 - age) });
+    }
     this.pings = this.pings.filter((p) => now - p.at < 500);
     for (const p of this.pings) {
       const t = (now - p.at) / 500;
