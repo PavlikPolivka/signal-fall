@@ -3,7 +3,7 @@ import type { Rules } from '@signal-fall/data';
 import type { ScenarioSpec } from '../protocol';
 import { Lobby, roomCode } from '../net/lobby';
 import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
-import { account, backend, publicRooms, rename, signIn, type PublicRoom } from '../net/backend';
+import { account, backend, findMatch, joinQueue, leaveQueue, publicRooms, rename, signIn, type PublicRoom } from '../net/backend';
 import type { LinkLike, LobbySlot, LobbyState } from '../net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
 import { MenuScreen } from './Setup';
@@ -42,6 +42,41 @@ export function Multiplayer({
   const [error, setError] = useState<string | null>(null);
   const [, refresh] = useReducer((n: number, _: undefined) => n + 1, 0);
   const [listed, setListed] = useState(false);
+  /** Ranked: waiting in the queue (since when), and whether this room came from it (it starts by itself). */
+  const [queued, setQueued] = useState<number | null>(null);
+  const [rankedRoom, setRankedRoom] = useState(false);
+  useEffect(() => {
+    const sb = backend();
+    if (!sb || queued === null) return;
+    let stop = false;
+    const poll = async () => {
+      if (stop) return;
+      try {
+        const m = await findMatch(sb);
+        if (m && !stop) {
+          stop = true;
+          await leaveQueue(sb);
+          setQueued(null);
+          void enter(m.host, undefined, m.host ? undefined : m.code, false, m.host ? m.code : undefined);
+          return;
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+        setQueued(null);
+        return;
+      }
+      // A little jitter, so two players polling together don't keep missing each other.
+      setTimeout(() => void poll(), 1500 + Math.random() * 1000);
+    };
+    void poll();
+    return () => {
+      stop = true;
+    };
+  }, [queued]);
+  // A ranked room starts as soon as both players are connected.
+  useEffect(() => {
+    if (rankedRoom && lobby?.isHost && lobby.canStart) lobby.start();
+  });
   const [open, setOpen] = useState<PublicRoom[]>([]);
   // The room browser: open public games, refreshed while this screen shows.
   useEffect(() => {
@@ -94,8 +129,8 @@ export function Multiplayer({
     [lobby],
   );
 
-  const enter = async (host: boolean, again?: LobbyState, join?: string, spectate = false) => {
-    const c = again ? again.code : host ? roomCode() : (join ?? code).trim().toUpperCase();
+  const enter = async (host: boolean, again?: LobbyState, join?: string, spectate = false, ranked?: string) => {
+    const c = ranked ?? (again ? again.code : host ? roomCode() : (join ?? code).trim().toUpperCase());
     if (c.length !== 4 || busy) return;
     try {
       localStorage.setItem(NAME_KEY, name);
@@ -111,7 +146,7 @@ export function Multiplayer({
         setProfileName(name.trim());
       }
       const uid = sb ? await signIn(sb) : undefined;
-      const r = await openRoom(host, c, roomCode, again ? { reopen: host, waitMs: 60_000 } : {});
+      const r = await openRoom(host, c, roomCode, again || ranked ? { reopen: host, waitMs: 60_000 } : {});
       // ?relay=1 forces every packet through the TURN relay (testing strict networks).
       const relayOnly = new URLSearchParams(location.search).get('relay') === '1';
       const mine = again?.slots.find((x) => x.player?.uid === uid || x.player?.name === name.trim())?.faction;
@@ -121,6 +156,7 @@ export function Multiplayer({
         if (host) r.started();
         onStart(scenario, slot, links, room, watchers);
       };
+      if (ranked) setRankedRoom(true);
       setRoom(r);
       setLobby(l);
     } catch (e) {
@@ -140,9 +176,41 @@ export function Multiplayer({
             <span class="label">Your name</span>
             <input value={name} maxLength={20} data-testid="mp-name" onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
           </label>
-          <button class="start" data-testid="mp-create" disabled={busy} onClick={() => void enter(true)}>
+          <button class="start" data-testid="mp-create" disabled={busy || queued !== null} onClick={() => void enter(true)}>
             {busy ? 'Connecting…' : 'Create a room'}
           </button>
+          {backend() &&
+            (queued === null ? (
+              <button
+                class="mp-btn"
+                data-testid="mp-ranked"
+                disabled={busy}
+                title="Play a rated 1v1 against someone near your rating"
+                onClick={() => {
+                  const sb = backend()!;
+                  setError(null);
+                  void joinQueue(sb).then(
+                    () => setQueued(Date.now()),
+                    (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+                  );
+                }}
+              >
+                Ranked match
+              </button>
+            ) : (
+              <div class="mp-status" data-testid="mp-queue">
+                Looking for an opponent near your rating…{' '}
+                <button
+                  class="link"
+                  onClick={() => {
+                    setQueued(null);
+                    void leaveQueue(backend()!);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ))}
           <div class="choice">
             <span class="label">Join with a code</span>
             <div class="seed">

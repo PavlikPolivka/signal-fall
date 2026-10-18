@@ -66,6 +66,26 @@ describe.skipIf(!URL || !ANON)('backend row level security', () => {
     expect((await b.sb.from('rooms').select('public').eq('code', c).single()).data?.public).toBe(true);
   });
 
+  it('the ranked queue pairs two waiting players into one fresh room', async () => {
+    const c = await player();
+    const d = await player();
+    expect((await c.sb.from('queue').insert({})).error).toBeNull();
+    // Alone in the queue: no match yet. (Other test players may be waiting too: only look at our pair.)
+    expect((await d.sb.from('queue').insert({})).error).toBeNull();
+    const first = await c.sb.rpc('find_match');
+    expect(first.error).toBeNull();
+    const mine = (first.data as { code: string; host: boolean }[])[0]!;
+    expect(mine.host).toBe(true);
+    const theirs = (await d.sb.rpc('find_match')).data as { code: string; host: boolean }[];
+    expect(theirs[0]).toEqual({ code: mine.code, host: false });
+    expect((await d.sb.from('rooms').select('status').eq('code', mine.code).single()).data?.status).toBe('open');
+    // Nobody can see or change someone else's place in the queue.
+    expect((await c.sb.from('queue').select('player').eq('player', d.id)).data).toHaveLength(0);
+    expect((await c.sb.from('queue').insert({ player: d.id })).error).not.toBeNull();
+    await c.sb.from('queue').delete().eq('player', c.id);
+    await d.sb.from('queue').delete().eq('player', d.id);
+  });
+
   it('crash reports are write-only for players and size-capped', async () => {
     const r = await a.sb.from('client_errors').insert({ message: 'boom', stack: 'at x', path: '/play/', context: 'menu', client_version: 'test' });
     expect(r.error).toBeNull();

@@ -245,6 +245,26 @@ export async function publicRooms(sb: SupabaseClient): Promise<PublicRoom[]> {
   return (data ?? []).map((r: { code: string; title: string | null; mode: '1v1' | '2v2'; open_seats: number }) => ({ code: r.code, title: r.title ?? `Room ${r.code}`, mode: r.mode, openSeats: r.open_seats }));
 }
 
+/** Ranked queue: wait for an opponent of similar rating. */
+export async function joinQueue(sb: SupabaseClient): Promise<void> {
+  await sb.from('queue').delete().eq('player', await signIn(sb));
+  const { error } = await sb.from('queue').insert({});
+  if (error) throw new Error(error.message);
+}
+
+export async function leaveQueue(sb: SupabaseClient): Promise<void> {
+  const { data } = await sb.auth.getSession();
+  if (data.session) await sb.from('queue').delete().eq('player', data.session.user.id);
+}
+
+/** Paired yet? The room to meet in and whether we host it, or null while waiting. */
+export async function findMatch(sb: SupabaseClient): Promise<{ code: string; host: boolean } | null> {
+  const { data, error } = await sb.rpc('find_match');
+  if (error) throw new Error(error.message);
+  const row = (data as { code: string; host: boolean }[] | null)?.[0];
+  return row ? { code: row.code, host: row.host } : null;
+}
+
 /** STUN plus short-lived TURN relay servers from the Edge Function (STUN only if it is unavailable). */
 export async function iceServers(sb: SupabaseClient): Promise<RTCIceServer[]> {
   const { data, error } = await sb.functions.invoke<{ iceServers: RTCIceServer[] }>('turn-credentials', { method: 'POST' });

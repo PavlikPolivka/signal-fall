@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 19:49 UTC
+
+- **Ranked match:** press **Ranked match** on the Multiplayer screen to be paired with someone near your rating. The room is made for you and the match starts as soon as you're both connected. It counts for the leaderboard.
+
 ## 2026-10-18 19:47 UTC
 
 - **Reload and carry on:** if you refresh the page (or the browser restarts the tab) during a multiplayer match, you rejoin it automatically: the game reconnects to the other players, catches up on everything that happened, and puts you back in your seat, in step with everyone.

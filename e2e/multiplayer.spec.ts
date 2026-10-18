@@ -315,3 +315,20 @@ test('a player who reloads the page rejoins the running match and stays in sync'
   await expect(host.getByTestId('peer-lost')).toHaveCount(0);
   await ctx.close();
 });
+
+test('two players in the ranked queue are paired and the match starts by itself', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!process.env.SUPABASE_URL, 'needs the backend (queue)');
+  test.setTimeout(120_000);
+  const contexts = await Promise.all([browser.newContext({ viewport: { width: 640, height: 400 } }), browser.newContext({ viewport: { width: 640, height: 400 } })]);
+  const pages = await Promise.all(contexts.map((c) => c.newPage()));
+  for (const p of pages) {
+    await p.goto('/play/');
+    await p.click('[data-testid=open-multiplayer]');
+    await p.click('[data-testid=mp-ranked]');
+  }
+  for (const p of pages) await p.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall.state.cur !== null, null, { timeout: 60_000 });
+  const slots = await Promise.all(pages.map((p) => p.evaluate(() => (window as unknown as { __signalFall: { state: { localPlayer: number } } }).__signalFall.state.localPlayer)));
+  expect(slots.sort()).toEqual([0, 1]);
+  for (const c of contexts) await c.close();
+});
