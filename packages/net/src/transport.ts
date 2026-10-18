@@ -46,7 +46,21 @@ export interface DropMessage {
   turns: [number, Command[]][];
 }
 
-export type NetMessage = TurnMessage | HashMessage | PingMessage | ChatMessage | DropMessage;
+/**
+ * Catching up a player who reconnects (sent by each other player over the new link): the orders
+ * already played up to turn `taken`, and every input held for later turns. In parts, `last` on
+ * the final one.
+ */
+export interface CatchupMessage {
+  kind: 'catchup';
+  player: number;
+  taken: number;
+  log: { tick: number; player: number; cmd: Command }[];
+  inputs: [number, number, Command[]][];
+  last: boolean;
+}
+
+export type NetMessage = TurnMessage | HashMessage | PingMessage | ChatMessage | DropMessage | CatchupMessage;
 
 /**
  * A reliable, ordered message channel to all other peers. Implementations:

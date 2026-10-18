@@ -273,3 +273,45 @@ test('a spectator joins with the code and watches the match as it is played', as
   await expect(watcher.getByTestId('end-screen')).toBeVisible({ timeout: 60_000 });
   await ctx.close();
 });
+
+test('a player who reloads the page rejoins the running match and stays in sync', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
+  test.skip(!!process.env.SUPABASE_URL, 'offline test (one browser profile)');
+  test.setTimeout(180_000);
+  type W = { __signalFall: { state: { cur: { tick: number } | null; send: (c: unknown) => void; localPlayer: number } } };
+  const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  const [host, guest] = await Promise.all([ctx.newPage(), ctx.newPage()]);
+  for (const p of [host, guest]) p.on('pageerror', (e) => console.error(e.message));
+  await host.goto('/play/');
+  await host.click('[data-testid=open-multiplayer]');
+  await host.click('[data-testid=mp-create]');
+  const code = (await host.getByTestId('room-code').textContent())!.trim();
+  await guest.goto('/play/');
+  await guest.click('[data-testid=open-multiplayer]');
+  await guest.fill('[data-testid=mp-code]', code);
+  await guest.click('[data-testid=mp-join]');
+  await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
+  await host.click('[data-testid=mp-start]');
+  await guest.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 150, null, { timeout: 60_000 });
+  await play(host, 0);
+  await play(guest, 100);
+  await host.waitForTimeout(1000);
+  const before = await host.evaluate(() => (window as unknown as W).__signalFall.state.cur!.tick);
+  await guest.reload();
+  // Back in the match, in the same seat, past where it was, and in step with the host.
+  await guest
+    .waitForFunction((t) => ((window as unknown as W).__signalFall?.state?.cur?.tick ?? 0) > t + 250, before, { timeout: 90_000 })
+    .catch(async (e: unknown) => {
+      // On failure, show where each side is stuck (tick, who it waits on).
+      type D = { __signalFall?: { state?: { cur?: { tick: number }; net?: unknown; peerLost?: boolean } } };
+      const info = await Promise.all([host, guest].map((p) => p.evaluate(() => { const s = (window as unknown as D).__signalFall?.state; return { tick: s?.cur?.tick, net: s?.net, lost: s?.peerLost }; })));
+      console.log('rejoin stuck', before, JSON.stringify(info));
+      throw e;
+    });
+  expect(await guest.evaluate(() => (window as unknown as W).__signalFall.state.localPlayer)).toBe(1);
+  await play(guest, 101);
+  await host.waitForFunction((t) => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > t + 400, before, { timeout: 90_000 });
+  for (const p of [host, guest]) await expect(p.getByTestId('desync')).toHaveCount(0);
+  await expect(host.getByTestId('peer-lost')).toHaveCount(0);
+  await ctx.close();
+});

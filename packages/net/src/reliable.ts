@@ -127,6 +127,13 @@ export class ReliableTransport implements Transport {
     for (const l of links) l.onMessage((m) => this.handlers.forEach((h) => h(m)));
   }
 
+  /** Swap in a new link for one that died (a player reconnecting). */
+  replace(index: number, link: ReliableLink): void {
+    this.links[index]?.close();
+    this.links[index] = link;
+    link.onMessage((m) => this.handlers.forEach((h) => h(m)));
+  }
+
   send(msg: NetMessage): void {
     for (const l of this.links) l.send(msg);
   }

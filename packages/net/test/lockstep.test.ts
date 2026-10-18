@@ -179,4 +179,35 @@ describe('lockstep', () => {
     const n = Math.min(taken[0]!.length, taken[1]!.length);
     expect(taken[0]!.slice(0, n)).toEqual(taken[1]!.slice(0, n));
   });
+
+  it('a peer rebuilt mid-match from what is held plays on in step', () => {
+    const clock = new VirtualClock();
+    const ts = LoopbackTransport.mesh(2, clock.link(() => 30));
+    const a = new LockstepScheduler({ localPlayer: 0, peers: [0, 1], transport: ts[0]!, delayTurns: 2, now: () => clock.time });
+    let b = new LockstepScheduler({ localPlayer: 1, peers: [0, 1], transport: ts[1]!, delayTurns: 2, now: () => clock.time });
+    const log: string[][] = [[], []];
+    const ticks = [0, 0];
+    const step = (ms: number) => {
+      for (let t = 0; t < ms; t += TICK_MS) {
+        for (const [p, l] of [[0, a], [1, b]] as const) {
+          if (!l.ready(ticks[p]!)) continue;
+          for (const c of l.take(ticks[p]!)) log[p]!.push(`${c.tick}:${c.player}:${c.cmd.type}`);
+          if (ticks[p]! % 6 === 0) l.submit({ type: 'stop', units: [p] });
+          ticks[p]!++;
+        }
+        clock.advance(TICK_MS);
+      }
+    };
+    step(1500);
+    // Player 1 "reloads": a new scheduler from the held inputs, starting after the last turn played.
+    const taken = b.takenTurn;
+    const inputs = b.heldInputs();
+    const own = inputs.filter(([, p]) => p === 1).map(([t]) => t);
+    b = new LockstepScheduler({ localPlayer: 1, peers: [0, 1], transport: ts[1]!, delayTurns: 2, now: () => clock.time, startTurn: taken + 1, restore: { inputs, ownNext: Math.max(taken + 1, ...own.map((t) => t + 1)) } });
+    ticks[1] = (taken + 1) * TICKS_PER_TURN;
+    step(2000);
+    const n = Math.min(log[0]!.length, log[1]!.length);
+    expect(n).toBeGreaterThan(20);
+    expect(log[1]!.slice(0, n)).toEqual(log[0]!.slice(0, n));
+  });
 });

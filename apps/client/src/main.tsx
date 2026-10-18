@@ -16,6 +16,8 @@ import { NetSession, SpectatorFeed, degrade } from './net/session';
 import { backend, fileDesyncReport, finishEmailLink } from './net/backend';
 import { recordMatch, type NetMatch } from './net/history';
 import { reportErrors } from './net/errors';
+import { RejoinHost, forgetMatch, matchToRejoin, rejoin, rememberMatch, type CatchupData, type Rejoined } from './net/rejoin';
+import { matchChannel } from './net/connect';
 import type { LinkLike } from './net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
@@ -95,6 +97,41 @@ function rematch(): ScenarioSpec | null {
   if (!params.has('rematch') || saved.seed === undefined) return null;
   history.replaceState(null, '', location.pathname);
   return scenarioFromSetup(saved as SkirmishSettings);
+}
+/** Reloaded during a multiplayer match: get back into it. */
+let comeback = !autostart && !new URLSearchParams(location.search).has('continue') ? matchToRejoin() : null;
+let rejoined: Rejoined | null = null;
+/** Players: answers anyone reconnecting to our match. */
+let rejoinHost: RejoinHost | null = null;
+const catchupWaiters: ((d: CatchupData) => void)[] = [];
+/** Players who reconnected (their first link is dead for good). */
+const rejoinedSlots = new Set<number>();
+/** Listen for players reconnecting, and remember the match so we can rejoin after a reload ourselves. */
+function hostRejoins(code: string, scenario: ScenarioSpec): void {
+  if (scenario.kind !== 'skirmish') return;
+  const humans = scenario.humans ?? [0, 1];
+  rememberMatch({ code, slot: localSlot, scenario, names: state.names, humans });
+  void matchChannel(code).then(({ signaling, iceServers }) => {
+    rejoinHost = new RejoinHost(
+      signaling,
+      iceServers,
+      localSlot,
+      humans,
+      () =>
+        new Promise<CatchupData>((resolve) => {
+          catchupWaiters.push(resolve);
+          post({ type: 'catchupRequest' });
+        }),
+      (slot, link, taken) => {
+        rejoinedSlots.add(slot);
+        netSession?.replaceLink(slot, link);
+        // Turns we sent after the catch-up snapshot went down the dead link: send them again.
+        post({ type: 'resendOwn', from: taken + 1 });
+        state.peerLost = false;
+        state.notice(`${state.names[slot] ?? `Player ${slot + 1}`} is back`);
+      },
+    );
+  });
 }
 /** ?continue: the saved skirmish, picked up where it was saved. */
 const resume = params.has('continue') ? (savedGame()?.replay ?? null) : null;
@@ -254,6 +291,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       return;
     }
     if (msg.type === 'final') {
+      // Over: nothing to rejoin after a reload.
+      forgetMatch();
+      rejoinHost?.close();
+      rejoinHost = null;
       // Keep the replay in the recent-matches list on the main menu.
       if (!replay) post({ type: 'saveReplay', purpose: 'recent' });
       // Match history (online builds; not for spectating or replays).
@@ -270,6 +311,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     if (msg.type === 'replayEnd') {
       if (state.replay) state.replay.verified = msg.ok;
       state.changed();
+      return;
+    }
+    if (msg.type === 'catchup') {
+      for (const w of catchupWaiters.splice(0)) w({ log: msg.log, taken: msg.taken, inputs: msg.inputs });
       return;
     }
     if (msg.type === 'dropped') {
@@ -352,14 +397,17 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.peerLost = true;
       state.changed();
     };
-    for (const l of links) l.onFailed = lost;
+    // A link that dies after its player came back (reload) no longer matters.
+    for (const [slot, l] of peerLinks) l.onFailed = () => !rejoinedSlots.has(slot) && lost();
     void Promise.all([Promise.all(links.map((l) => l.ready)), Promise.all(watcherLinks.map((l) => l.ready))]).then(([dgrams, watchers]) => {
       const netsim = params.get('netsim');
       netSession = new NetSession(
         dgrams.map((d) => (netsim ? degrade(d, netsim) : d)),
         (m) => post({ type: 'net', msg: m }),
         watchers,
+        [...peerLinks!.keys()],
       );
+      if (lastRoom && scenario) hostRejoins(lastRoom.code, scenario);
       netSession.onPeerLost = lost;
       netSession.onChat = (m) => {
         // Team messages only count from teammates.
@@ -371,6 +419,33 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         state.addChat(localSlot, text.slice(0, 200), team, at);
       };
     });
+  } else if (rejoined && comeback && scenario?.kind === 'skirmish') {
+    // Back in after a reload: new links to everyone, then play on from where they are.
+    const back = rejoined;
+    state.multiplayer = true;
+    netSession = new NetSession([...back.links.values()], (m) => post({ type: 'net', msg: m }), [], [...back.links.keys()]);
+    netSession.onPeerLost = () => {
+      state.peerLost = true;
+      state.changed();
+    };
+    netSession.onChat = (m) => {
+      if (m.team && state.players[m.player]?.team !== state.players[localSlot]?.team) return;
+      state.addChat(m.player, m.text.slice(0, 200), m.team, m.at);
+    };
+    state.sendChat = (text, team, at) => {
+      netSession?.send({ kind: 'chat', player: localSlot, team, text: text.slice(0, 200), at });
+      state.addChat(localSlot, text.slice(0, 200), team, at);
+    };
+    post({
+      type: 'start',
+      scenario,
+      localPlayer: localSlot,
+      net: { peers: scenario.humans ?? [0, 1] },
+      rejoin: { log: back.log, taken: back.taken, inputs: back.inputs, ownNext: back.ownNext },
+    });
+    // Turns that came in while we were catching up go to the worker now, after its start.
+    back.release((m) => netSession?.deliver(m));
+    hostRejoins(comeback.code, scenario);
   } else if (spectateLinks && scenario?.kind === 'skirmish') {
     // Watching a multiplayer match: the players' turns arrive over the links and play as a live replay.
     state.spectator = true;
@@ -408,7 +483,49 @@ void introUrl().then((u) => {
 /** Message after returning from an account email link, shown on the main menu once. */
 let accountNotice: string | null = null;
 let mounted = false;
+let rejoining = false;
 function renderUi(): void {
+  if (!scenario && comeback) {
+    const m = comeback;
+    render(
+      <MenuScreen testid="rejoining">
+        <div class="setup-panel">
+          <h1>Rejoining your match…</h1>
+          <p class="muted">Connecting to the other players and catching up.</p>
+          <button
+            class="codex-btn"
+            onClick={() => {
+              forgetMatch();
+              location.href = location.pathname;
+            }}
+          >
+            Leave the match
+          </button>
+        </div>
+      </MenuScreen>,
+      root,
+    );
+    if (rejoining) return;
+    rejoining = true;
+    void matchChannel(m.code)
+      .then(({ signaling, iceServers }) => rejoin(signaling, iceServers, m).finally(() => signaling.close()))
+      .then(
+        (r) => {
+          rejoined = r;
+          scenario = m.scenario;
+          localSlot = m.slot;
+          state.names = m.names;
+          renderUi();
+        },
+        () => {
+          forgetMatch();
+          comeback = null;
+          accountNotice = 'Could not rejoin the match: it may have ended.';
+          renderUi();
+        },
+      );
+    return;
+  }
   if (!scenario && watchStream) {
     render(
       <MenuScreen testid="watch-connecting">

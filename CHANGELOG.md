@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-18 19:47 UTC
+
+- **Reload and carry on:** if you refresh the page (or the browser restarts the tab) during a multiplayer match, you rejoin it automatically: the game reconnects to the other players, catches up on everything that happened, and puts you back in your seat, in step with everyone.
+
 ## 2026-10-18 19:06 UTC
 
 - **Watch your friends play:** enter a room code and press **Watch** instead of Join. You see the whole match live, with no fog, without taking a seat. Up to four people can watch, and the players never wait for them.

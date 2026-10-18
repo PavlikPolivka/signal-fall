@@ -22,11 +22,13 @@ export class NetSession {
   private readonly watchers: ReliableTransport;
 
   constructor(
-    dgrams: Datagram[],
+    dgrams: (Datagram | ReliableLink)[],
     private readonly toWorker: (msg: NetMessage) => void,
     watcherDgrams: Datagram[] = [],
+    /** Player slot of each link, in order (for swapping one when that player reconnects). */
+    private readonly slots: number[] = [],
   ) {
-    this.transport = new ReliableTransport(dgrams.map((d) => new ReliableLink(d, { now: () => performance.now() })));
+    this.transport = new ReliableTransport(dgrams.map((d) => (d instanceof ReliableLink ? d : new ReliableLink(d, { now: () => performance.now() }))));
     this.transport.onMessage((m) => (m.kind === 'chat' ? this.onChat(m) : this.toWorker(m)));
     this.watchers = new ReliableTransport(watcherDgrams.map((d) => new ReliableLink(d, { now: () => performance.now() })));
     this.watchers.onMessage(() => undefined);
@@ -38,6 +40,20 @@ export class NetSession {
         this.onPeerLost();
       }
     }, 20);
+  }
+
+  /** Handle a message as if it had just arrived (messages held while rejoining). */
+  deliver(m: NetMessage): void {
+    if (m.kind === 'chat') this.onChat(m);
+    else this.toWorker(m);
+  }
+
+  /** A player reconnected: their new link takes the dead one's place, and they count as present again. */
+  replaceLink(slot: number, link: ReliableLink): void {
+    const i = this.slots.indexOf(slot);
+    if (i < 0) return;
+    this.transport.replace(i, link);
+    this.lost = false;
   }
 
   /** A lockstep message from our worker for the other peers. */

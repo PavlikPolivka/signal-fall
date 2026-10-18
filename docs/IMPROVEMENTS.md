@@ -119,7 +119,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 96 ✅ | M | Room browser for public games | 3 | M |
 | 97 ✅ | T | Performance: render culling, batch effects; 60 fps with 400 units on mid laptops | 4 | M |
 | 98 ✅ | T | Save and load skirmish (from the command log, like replays) | 4 | S |
-| 99 | T | Reconnect to a multiplayer match after a refresh | 3 | M |
+| 99 ✅ | T | Reconnect to a multiplayer match after a refresh | 3 | M |
 | 100 ✅ | T | Error reporting (anonymous) so crashes reach us | 3 | S |
 
 ## Tier 4: big bets

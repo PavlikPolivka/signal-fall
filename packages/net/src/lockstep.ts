@@ -19,6 +19,11 @@ export interface LockstepOptions {
   now?: () => number;
   /** First turn to play (a resumed match starts mid-way). */
   startTurn?: number;
+  /**
+   * Rejoining a running match: inputs the others already hold (turn, player, commands), and our
+   * own next turn to send (after any of ours they already have).
+   */
+  restore?: { inputs: [number, number, Command[]][]; ownNext: number };
 }
 
 /**
@@ -65,9 +70,16 @@ export class LockstepScheduler {
     this.now = o.now ?? (() => Date.now());
     // Turns before the first possible input are empty for everyone.
     const start = o.startTurn ?? 0;
-    for (let t = start; t < start + this.delay; t++) for (const p of this.peers) this.record(t, p, []);
-    this.nextSendTurn = start + this.delay;
     this.lastFlushedTurn = start - 1;
+    this.taken = start - 1;
+    if (o.restore) {
+      // Back in a running match: everyone's inputs as the others hold them; ours resume after.
+      for (const [turn, p, cmds] of o.restore.inputs) if (turn >= start) this.record(turn, p, cmds);
+      this.nextSendTurn = Math.max(start, o.restore.ownNext);
+    } else {
+      for (let t = start; t < start + this.delay; t++) for (const p of this.peers) this.record(t, p, []);
+      this.nextSendTurn = start + this.delay;
+    }
     this.transport.onMessage((m) => this.receive(m));
   }
 
@@ -77,6 +89,26 @@ export class LockstepScheduler {
 
   setDelay(turns: number): void {
     this.delay = clampDelay(turns);
+  }
+
+  /** Highest turn handed to the sim so far. */
+  get takenTurn(): number {
+    return this.taken;
+  }
+
+  /** Every input held for turns not yet played: (turn, player, commands). */
+  heldInputs(): [number, number, Command[]][] {
+    const out: [number, number, Command[]][] = [];
+    for (const [turn, m] of this.inputs) for (const [p, cmds] of m) out.push([turn, p, cmds]);
+    return out;
+  }
+
+  /**
+   * Send our own recent turns from `from` on again: after a player rejoins, so whatever went
+   * down the dead link (or was missed) reaches them. Duplicates are harmless.
+   */
+  resendOwn(from = this.taken + 1): void {
+    for (const [turn, cmds] of this.recent.get(this.localPlayer) ?? []) if (turn >= from) this.transport.send({ kind: 'turn', turn, player: this.localPlayer, commands: cmds });
   }
 
   /** Queue a local command for the next turn we send. */
@@ -237,6 +269,7 @@ export class LockstepScheduler {
         this.vote(m.player, m.lost, m.have, m.turns);
         return;
       case 'chat':
+      case 'catchup':
         return;
       case 'pong': {
         if (m.player !== this.localPlayer) return;

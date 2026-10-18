@@ -44,6 +44,14 @@ export async function openRoom(host: boolean, code: string, makeCode: () => stri
   };
 }
 
+/** The room's channel during a match (for players reconnecting), with ICE servers for new links. */
+export async function matchChannel(code: string): Promise<{ signaling: Signaling; iceServers: RTCIceServer[] }> {
+  const sb = backend();
+  if (!sb) return { signaling: new BroadcastSignaling(code), iceServers: DEFAULT_ICE };
+  await signIn(sb);
+  return { signaling: new SupabaseSignaling(sb, code), iceServers: await iceServers(sb) };
+}
+
 export function signalingKind(): string {
   return backend() ? 'online' : 'this browser only (no backend configured)';
 }

@@ -322,6 +322,19 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       replayCmds = msg.replay ? commandsByTick(msg.replay.commands) : null;
       stats = { interval: STATS_INTERVAL, players: sim.world.players.map((p) => ({ faction: p.faction, team: p.team })), samples: [{ tick: 0, players: sampleStats(sim.world) }] };
       statsSent = false;
+      if (msg.rejoin) {
+        // Back in a running multiplayer match: replay what was played, up to the first turn not yet played.
+        const played = commandsByTick(msg.rejoin.log);
+        const end = (msg.rejoin.taken + 1) * 2;
+        while (sim.tick < end && !sim.world.ended) {
+          for (const c of played.get(sim.tick) ?? []) {
+            scheduleCommand(sim, c, starts);
+            commandLog.push(c);
+          }
+          sim.step();
+          recordStats();
+        }
+      }
       if (msg.resume) {
         // A saved skirmish: replay its orders as fast as possible, then hand over (on a turn boundary).
         const saved = commandsByTick(msg.resume.commands);
@@ -340,6 +353,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       replayEnd = msg.replay && !msg.live ? { tick: msg.replay.endTick, hash: msg.replay.hash } : null;
       lockstep = new LockstepScheduler({
         startTurn: Math.ceil(sim.tick / 2),
+        restore: msg.rejoin ? { inputs: msg.rejoin.inputs, ownNext: msg.rejoin.ownNext } : undefined,
         localPlayer,
         peers: msg.net ? msg.net.peers : [localPlayer],
         transport: port ?? new NullTransport(),
@@ -351,6 +365,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
           post({ type: 'desync', tick, local, remote, player, report });
         },
       });
+      // Rejoined: send our own turns the others held again, for any peer that missed some.
+      if (msg.rejoin) lockstep.resendOwn();
       lockstep.onDropped = (player, turn) => {
         takeovers.set(turn * 2, player);
         post({ type: 'dropped', player });
@@ -380,6 +396,12 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     }
     case 'command':
       lockstep?.submit(msg.cmd);
+      return;
+    case 'resendOwn':
+      lockstep?.resendOwn(msg.from);
+      return;
+    case 'catchupRequest':
+      if (sim && lockstep) post({ type: 'catchup', log: commandLog, taken: lockstep.takenTurn, inputs: lockstep.heldInputs() });
       return;
     case 'dropPeer':
       lockstep?.proposeDrop(msg.player);

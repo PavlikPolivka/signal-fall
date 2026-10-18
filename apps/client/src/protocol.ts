@@ -23,6 +23,8 @@ export type ToWorker =
       live?: boolean;
       /** Continue a saved skirmish: fast-forward through its orders, then play on. */
       resume?: Replay;
+      /** Rejoin a running multiplayer match: what the others played and hold (see CatchupMessage). */
+      rejoin?: { log: ScheduledCommand[]; taken: number; inputs: [number, number, Command[]][]; ownNext: number };
     }
   | { type: 'speed'; speed: number }
   /**
@@ -39,6 +41,10 @@ export type ToWorker =
   | { type: 'pause'; paused: boolean }
   /** Multiplayer: vote to let the AI take over a person who left. */
   | { type: 'dropPeer'; player: number }
+  /** Multiplayer: a player reconnects; send what they need to catch up. */
+  | { type: 'catchupRequest' }
+  /** Multiplayer: their new link is up; send our turns from `from` on again (some went down the dead link). */
+  | { type: 'resendOwn'; from: number }
   /** A lockstep message from a remote peer. */
   | { type: 'net'; msg: NetMessage };
 
@@ -50,6 +56,8 @@ export interface PlayerInfo {
 export type FromWorker =
   /** Everyone agreed: this person is gone and the AI plays their seat. */
   | { type: 'dropped'; player: number }
+  /** What a reconnecting player needs: orders played so far, and inputs held for later turns. */
+  | { type: 'catchup'; log: ScheduledCommand[]; taken: number; inputs: [number, number, Command[]][] }
   | {
       type: 'ready';
       width: number;
