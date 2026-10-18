@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { defaultRules } from '@signal-fall/data';
-import { ClientState, seatLabels, saveSettings } from './game/state';
+import { ClientState, seatLabels, saveSettings, setColorblind } from './game/state';
 import { Input } from './input/input';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import type { ScheduledCommand } from '@signal-fall/sim';
@@ -112,6 +112,8 @@ state.applySettings = () => {
   saveSettings(state.settings);
   renderer.effects.reduced = state.settings.effects === 'reduced';
   renderer.setGraphics(state.settings.graphics);
+  setColorblind(state.settings.colorblind);
+  document.documentElement.style.setProperty('--ui-scale', String(state.settings.uiScale / 100));
   state.changed();
 };
 state.saveReplay = () => post({ type: 'saveReplay' });

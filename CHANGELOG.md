@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-18 18:21 UTC
+
+- **Units talk back:** select or order your units and they answer, in your faction's voice: Holdout troops on the radio ("Moving out", "Open fire!"), Halcyon machines ("Executing", "Target acquired"), the Choir in chorus ("We flow", "Silence them"). Replies are short and never pile up; turn them off with **Unit voices** in the menu.
+- **Subtitles** for the announcer, under the battlefield.
+- **Color-blind team colors:** a palette whose colors stay apart for every common color blindness.
+- **Interface size:** scale the sidebar, top bar and command panel from 80% to 140%.
+
 ## 2026-10-18 18:14 UTC
 
 - **Weapon ranges:** a selected defense shows how far it shoots, and so does one you are placing. Hold <kbd>Alt</kbd> to see the range of everything you have selected.

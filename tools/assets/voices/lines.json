@@ -26,5 +26,32 @@
   "choir": {
     "victory": "Victory. The song endures.",
     "defeat": "Defeat. The song falls silent."
+  },
+  "_acks": "Unit acknowledgements: short replies when you select or order units (select / move / attack, two each).",
+  "acks": {
+    "holdout": {
+      "ack_select_0": "Ready, sir.",
+      "ack_select_1": "Go ahead.",
+      "ack_move_0": "Moving out.",
+      "ack_move_1": "On it.",
+      "ack_attack_0": "Engaging!",
+      "ack_attack_1": "Open fire!"
+    },
+    "halcyon": {
+      "ack_select_0": "Online.",
+      "ack_select_1": "Awaiting input.",
+      "ack_move_0": "Executing.",
+      "ack_move_1": "Route computed.",
+      "ack_attack_0": "Target acquired.",
+      "ack_attack_1": "Neutralizing."
+    },
+    "choir": {
+      "ack_select_0": "We hear you.",
+      "ack_select_1": "We listen.",
+      "ack_move_0": "We flow.",
+      "ack_move_1": "We go.",
+      "ack_attack_0": "Silence them.",
+      "ack_attack_1": "We sing for war."
+    }
   }
 }

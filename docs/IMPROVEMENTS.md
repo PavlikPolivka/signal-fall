@@ -32,7 +32,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 19 ✅ | U | Selection panel: portraits grouped by type with counts; click a group to narrow the selection | 4 | S |
 | 20 ✅ | G | Health bars only when hurt or selected (cleaner screen), toggle to always show (Alt) | 3 | XS |
 | 21 ✅ | U | Under-attack pings on the minimap (red pulse) | 4 | XS |
-| 22 | V | Unit acknowledgements ("Moving out", "On it") per faction, short and rate-limited | 4 | S |
+| 22 ✅ | V | Unit acknowledgements ("Moving out", "On it") per faction, short and rate-limited | 4 | S |
 | 23 ✅ | C | Attack-move as the default right-click option when holding A is clumsy: A then left-click, plus Ctrl+right-click = attack-move | 3 | XS |
 | 24 ✅ | U | Credits counter ticks smoothly; income per minute shown on hover | 3 | XS |
 | 25 ✅ | O | First-match hints rewritten around the new flow (place-first, sticky tabs) | 3 | XS |
@@ -56,7 +56,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 38 ✅ | G | Building construction animation (scaffold rising / crystal growing) and destruction collapse | 4 | M |
 | 39 ✅ | G | Unit death: wrecks that stay a while (Holdout salvage), dissolve for Halcyon, shatter for Choir | 3 | S |
 | 40 | V | Music that follows the battle (already layered) with a faction theme per side | 3 | M |
-| 41 | V | Positional sound for combat and a mix that ducks music under announcer lines | 3 | S |
+| 41 ✅ | V | Positional sound for combat and a mix that ducks music under announcer lines | 3 | S |
 | 42 ✅ | U | Tooltips with full stats for every button, delay 400 ms, Shift shows numbers | 3 | S |
 | 43 ✅ | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
 | 44 ✅ | C | Control-group bar: shows each group's main unit and count; double-tap centers | 3 | S |
@@ -107,12 +107,12 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 84 | G | Higher-resolution sprites (2× atlases for retina screens) | 3 | L |
 | 85 | G | Smoother zoom levels with sprite mip-mapping, no shimmering | 3 | S |
 | 86 ✅ | G | Damaged-building fire and smoke effects scaling with damage | 3 | S |
-| 87 | V | Weapon sounds per unit type, distinct enough to hear what is fighting | 3 | M |
+| 87 ✅ | V | Weapon sounds per unit type, distinct enough to hear what is fighting | 3 | M |
 | 88 | V | Building ambient loops (power hum, factory clanks) quietly near the camera | 2 | S |
 | 89 ✅ | V | Victory/defeat stingers and a short voice line | 2 | XS |
 | 90 | O | Main menu: continue last skirmish setup, recent replays list | 2 | S |
 | 91 ✅ | O | Loading screen tips and faction art while the map generates | 2 | XS |
-| 92 | O | Accessibility: colorblind team palettes, UI scale, subtitles for announcer | 3 | S |
+| 92 ✅ | O | Accessibility: colorblind team palettes, UI scale, subtitles for announcer | 3 | S |
 | 93 ✅ | O | Codex search and "how to beat X" pages | 2 | S |
 | 94 | M | Spectator mode for multiplayer rooms (watch friends' matches) | 3 | M |
 | 95 | M | Ranked queue (matchmaking by rating) | 3 | L |

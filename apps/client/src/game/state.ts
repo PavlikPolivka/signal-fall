@@ -50,7 +50,15 @@ export function seatLabels(scenario: import('./scenario').ScenarioSpec, localPla
   });
 }
 
-export const TEAM_COLORS = [0x3d8bfd, 0xe5484d, 0x30a46c, 0xf5d90a, 0xa855f7, 0xf97316, 0x14b8a6, 0xec4899];
+const STANDARD_COLORS = [0x3d8bfd, 0xe5484d, 0x30a46c, 0xf5d90a, 0xa855f7, 0xf97316, 0x14b8a6, 0xec4899];
+/** Okabe–Ito colors: blue, orange, sky, yellow, pink, vermillion, green, white stay apart for all common color blindness. */
+const COLORBLIND_COLORS = [0x0072b2, 0xe69f00, 0x56b4e9, 0xf0e442, 0xcc79a7, 0xd55e00, 0x009e73, 0xffffff];
+/** Team colors by player slot (swapped in place by the color-blind setting). */
+export const TEAM_COLORS = [...STANDARD_COLORS];
+
+export function setColorblind(on: boolean): void {
+  TEAM_COLORS.splice(0, TEAM_COLORS.length, ...(on ? COLORBLIND_COLORS : STANDARD_COLORS));
+}
 
 /**
  * Everything the main thread knows: the latest two sim snapshots (for
@@ -134,6 +142,8 @@ export class ClientState {
   /** The last 20 match events (attacks, losses, completions), newest last, for the event log. */
   log: (Alert & { tick: number })[] = [];
   logOpen = false;
+  /** The announcer line being spoken, as a caption (when subtitles are on). */
+  caption: { text: string; time: number } | null = null;
   /** Every command sent, newest last (for UI feedback and tests). */
   sent: Command[] = [];
   /** Totals ever pushed to `sent` / `alerts` (the arrays are trimmed), for consumers that track new entries. */
@@ -181,6 +191,13 @@ export class ClientState {
     this.sentTotal++;
     if (this.sent.length > 200) this.sent.shift();
     this.post({ type: 'command', cmd });
+  }
+
+  /** Show an announcer line as a caption for a few seconds. */
+  subtitle(text: string): void {
+    if (!this.settings.subtitles) return;
+    this.caption = { text, time: performance.now() };
+    this.changed();
   }
 
   /** Skirmish only: run the match faster or slower. */
@@ -499,10 +516,18 @@ export interface Settings {
   hints: boolean;
   /** Mouse wheel zooms the other way. */
   invertWheel: boolean;
+  /** Units reply when selected or ordered. */
+  unitVoices: boolean;
+  /** Announcer lines also shown as captions. */
+  subtitles: boolean;
+  /** Team colors picked to stay apart for red-green color blindness. */
+  colorblind: boolean;
+  /** Interface size, percent. */
+  uiScale: number;
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, uiScale: 100 };
 
 export function loadSettings(): Settings {
   try {

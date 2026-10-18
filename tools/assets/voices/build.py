@@ -82,10 +82,13 @@ def main():
             onnx = model(path)
             out_dir = os.path.join(OUT, faction)
             os.makedirs(out_dir, exist_ok=True)
-            for line_id, text in {**lines['common'], **lines[faction]}.items():
+            for line_id, text in {**lines['common'], **lines[faction], **lines['acks'][faction]}.items():
+                dest = os.path.join(out_dir, f'{line_id}.mp3')
+                # Existing lines are kept (FORCE=1 rebuilds everything).
+                if os.path.exists(dest) and not os.environ.get('FORCE'):
+                    continue
                 raw = os.path.join(tmp, f'{faction}-{line_id}.wav')
                 subprocess.run([piper, '-m', onnx, '--length-scale', str(pace), '-f', raw], input=text.encode(), check=True, capture_output=True)
-                dest = os.path.join(out_dir, f'{line_id}.mp3')
                 graph = TREATMENT[faction] + ';[out]silenceremove=stop_periods=-1:stop_duration=0.25:stop_threshold=-45dB,loudnorm=I=-16:TP=-1.5:LRA=7[final]'
                 subprocess.run(
                     ['ffmpeg', '-loglevel', 'error', '-y', '-i', raw, '-filter_complex', graph, '-map', '[final]',

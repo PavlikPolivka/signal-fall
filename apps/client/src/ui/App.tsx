@@ -60,6 +60,11 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
         />
       )}
       {!state.ready && <Loading state={state} />}
+      {state.caption && performance.now() - state.caption.time < 3500 && (
+        <div class="caption" data-testid="caption">
+          {state.caption.text}
+        </div>
+      )}
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
       {state.replay && <ReplayBar state={state} />}
@@ -1270,6 +1275,45 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             </button>
           ))}
         </div>
+        <label class="slider">
+          Interface
+          <input
+            type="range"
+            min={80}
+            max={140}
+            step={10}
+            value={state.settings.uiScale}
+            data-testid="setting-ui-scale"
+            onInput={(e) => {
+              state.settings.uiScale = Number((e.currentTarget as HTMLInputElement).value);
+              state.applySettings();
+            }}
+          />
+          <span>{state.settings.uiScale}%</span>
+        </label>
+        {(
+          [
+            ['unitVoices', 'Unit voices', 'Units reply when you select or order them'],
+            ['subtitles', 'Subtitles', 'Show what the announcer says'],
+            ['colorblind', 'Team colors', 'Color-blind friendly team colors'],
+          ] as const
+        ).map(([key, label, title]) => (
+          <div class="seg-row" title={title}>
+            <span>{label}</span>
+            {[true, false].map((v) => (
+              <button
+                class={state.settings[key] === v ? 'active' : ''}
+                data-testid={`setting-${key}-${v ? 'on' : 'off'}`}
+                onClick={() => {
+                  state.settings[key] = v;
+                  state.applySettings();
+                }}
+              >
+                {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : v ? 'On' : 'Off'}
+              </button>
+            ))}
+          </div>
+        ))}
         <div class="seg-row">
           <span>Hints</span>
           {[true, false].map((v) => (

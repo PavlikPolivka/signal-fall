@@ -16,6 +16,30 @@ export type VoiceLine =
   | 'victory'
   | 'defeat';
 
+/** What each line says, for subtitles (faction lines for victory and defeat differ slightly). */
+export const LINE_TEXT: Record<VoiceLine, string> = {
+  construction_complete: 'Construction complete.',
+  unit_ready: 'Unit ready.',
+  base_attack: 'Our base is under attack!',
+  harvester_attack: 'Harvester under attack.',
+  units_attack: 'Units under attack.',
+  low_power: 'Low power.',
+  no_money: 'Insufficient funds.',
+  cant_build: 'Cannot build there.',
+  structure_lost: 'Structure lost.',
+  unit_lost: 'Unit lost.',
+  research_complete: 'Research complete.',
+  new_options: 'New construction options.',
+  field_depleted: 'Echo field depleted.',
+  victory: 'Victory.',
+  defeat: 'Defeat.',
+};
+
+/** Unit replies: when units are selected or ordered (two takes each, per faction). */
+export type AckKind = 'select' | 'move' | 'attack';
+/** No reply sooner than this after the last one, so clicking around stays quiet. */
+const ACK_GAP_MS = 1600;
+
 /** Never repeat a line sooner than this (ms); busy battles would otherwise talk over themselves. */
 const COOLDOWN: Partial<Record<VoiceLine, number>> = {
   base_attack: 15000,
@@ -47,6 +71,10 @@ export class VoicePlayer {
   readonly history: VoiceLine[] = [];
   /** Called when a line starts and stops (to duck the music). */
   onSpeaking: (speaking: boolean) => void = () => undefined;
+  /** Called with each announcer line as it starts (subtitles). */
+  onLine: (line: VoiceLine) => void = () => undefined;
+  private lastAck = -1e9;
+  private ackBuffers = new Map<string, Promise<AudioBuffer | null>>();
 
   constructor(
     private readonly ctx: AudioContext,
@@ -64,6 +92,29 @@ export class VoicePlayer {
       this.buffers.set(line, p);
     }
     return p;
+  }
+
+  /** A short unit reply, unless one just played or the announcer is talking. */
+  ack(kind: AckKind, out: AudioNode): void {
+    const now = performance.now();
+    if (this.speaking || now - this.lastAck < ACK_GAP_MS) return;
+    this.lastAck = now;
+    const id = `ack_${kind}_${Math.floor(Math.random() * 2)}`;
+    let p = this.ackBuffers.get(id);
+    if (!p) {
+      p = fetch(`${import.meta.env.BASE_URL}assets/voice/${this.faction}/${id}.mp3`)
+        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+        .then((b) => this.ctx.decodeAudioData(b))
+        .catch(() => null);
+      this.ackBuffers.set(id, p);
+    }
+    void p.then((buf) => {
+      if (!buf || this.speaking) return;
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(out);
+      src.start();
+    });
   }
 
   /** Warm the cache for the lines every match uses. */
@@ -99,6 +150,7 @@ export class VoicePlayer {
     src.buffer = buf;
     src.connect(this.out);
     this.onSpeaking(true);
+    this.onLine(item.line);
     this.history.push(item.line);
     // Done when playback ends, or after the line's length if the audio clock never reports it
     // (no output device): one stuck line must not silence the announcer for the rest of the match.

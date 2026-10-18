@@ -4,7 +4,7 @@ import type { ClientState } from '../game/state';
 import { isoX, isoY } from '../game/iso';
 import { Music } from './music';
 import { renderSfx } from './sfx';
-import { VoicePlayer, type VoiceLine } from './voice';
+import { LINE_TEXT, VoicePlayer, type AckKind, type VoiceLine } from './voice';
 import { PLACEMENT_MESSAGES } from '@signal-fall/sim';
 
 const FX = 1024;
@@ -81,6 +81,8 @@ export class GameAudio {
   private voice: VoicePlayer | null = null;
   private ducked = false;
   private ended = false;
+  /** The selection last frame, to reply when the player picks units. */
+  private lastSelection = '';
 
   constructor(
     private readonly state: ClientState,
@@ -214,6 +216,7 @@ export class GameAudio {
       this.ducked = on;
       this.apply();
     };
+    this.voice.onLine = (line) => this.state.subtitle(LINE_TEXT[line]);
     this.voice.preload();
     return this.voice;
   }
@@ -243,11 +246,22 @@ export class GameAudio {
     }
     const newSent = s.sent.slice(Math.max(0, s.sent.length - (s.sentTotal - this.sentSeen)));
     this.sentSeen = s.sentTotal;
+    const ack = (kind: AckKind) => {
+      if (s.settings.unitVoices && !s.spectator && !s.replay && this.voiceGain) voice?.ack(kind, this.voiceGain);
+    };
     for (const c of newSent) {
       if (c.type === 'place') this.play('place');
       else if (c.type === 'sell') this.play('cash');
-      else if (c.type === 'move' || c.type === 'attackMove' || c.type === 'attack' || c.type === 'patrol' || c.type === 'guard') this.play('ack', undefined, undefined, 0.6);
-      else if (c.type === 'build' || c.type === 'train') this.play('click');
+      else if (c.type === 'move' || c.type === 'attackMove' || c.type === 'attack' || c.type === 'patrol' || c.type === 'guard') {
+        this.play('ack', undefined, undefined, 0.6);
+        ack(c.type === 'attack' ? 'attack' : 'move');
+      } else if (c.type === 'build' || c.type === 'train') this.play('click');
+    }
+    // Picking units gets a reply too (not buildings).
+    const selection = s.selection.join(',');
+    if (selection !== this.lastSelection) {
+      this.lastSelection = selection;
+      if (s.selectedUnits().some((h) => s.ruleOf(h).kind === 'unit')) ack('select');
     }
     const now = performance.now();
     this.combat = this.combat.filter((t) => now - t < 15000);

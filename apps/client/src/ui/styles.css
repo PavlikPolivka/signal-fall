@@ -42,8 +42,8 @@ body,
 .layout {
   display: grid;
   height: 100%;
-  grid-template-columns: 1fr 276px;
-  grid-template-rows: 34px 1fr 176px;
+  grid-template-columns: 1fr calc(276px * var(--ui-scale, 1));
+  grid-template-rows: calc(34px * var(--ui-scale, 1)) 1fr calc(176px * var(--ui-scale, 1));
 }
 
 .topbar {
@@ -2220,4 +2220,24 @@ table.md-table td {
 
 .menu-pair > .menu:first-child {
   width: 380px;
+}
+/* Interface size setting: the panels around the battlefield scale, the battlefield does not. */
+.topbar,
+.sidebar,
+.bottom,
+.menu-overlay .menu {
+  zoom: var(--ui-scale, 1);
+}
+.caption {
+  position: fixed;
+  left: calc(50% - 138px * var(--ui-scale, 1));
+  bottom: calc(176px * var(--ui-scale, 1) + 24px);
+  transform: translateX(-50%);
+  z-index: 25;
+  padding: 4px 12px;
+  font-size: 16px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  pointer-events: none;
 }
