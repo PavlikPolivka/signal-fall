@@ -37,6 +37,8 @@ export type ScenarioSpec =
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
       map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
+      /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */
+      time?: 'day' | 'dusk' | 'night';
     }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };

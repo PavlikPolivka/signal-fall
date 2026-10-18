@@ -82,8 +82,9 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       ai: [null, s.allyDifficulty, s.difficulty, s.difficulty],
       teams: [0, 0, 1, 1],
       map,
+      time: s.time,
     };
-  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map };
+  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map, time: s.time };
 }
 
 /** ?rematch: the last skirmish setup again (same map, sides and AI), straight into the match. */
@@ -127,6 +128,7 @@ state.spectator = spectate !== null;
 state.applySettings = () => {
   saveSettings(state.settings);
   renderer.effects.reduced = state.settings.effects === 'reduced';
+  renderer.weather.enabled = state.settings.effects !== 'reduced';
   renderer.setGraphics(state.settings.graphics);
   setColorblind(state.settings.colorblind);
   document.documentElement.style.setProperty('--ui-scale', String(state.settings.uiScale / 100));
@@ -143,6 +145,7 @@ state.replaySpeed = (speed) => {
 };
 const renderer = new Renderer(state);
 renderer.effects.reduced = state.settings.effects === 'reduced';
+renderer.weather.enabled = state.settings.effects !== 'reduced';
 const audio = new GameAudio(
   state,
   state.rules,
@@ -261,6 +264,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.players = msg.players;
       state.localPlayer = msg.localPlayer;
       renderer.buildMap();
+      renderer.weather.setBiome(msg.biome);
+      const lit = replay ? replay.scenario : scenario;
+      const time = lit?.kind === 'skirmish' ? lit.time : null;
+      renderer.night.setTime((params.get('time') as 'day' | 'dusk' | 'night' | null) ?? time ?? 'day');
       // Load rendered art for the factions in this match (placeholders draw until it arrives).
       for (const p of msg.players) {
         const id = state.rules.factions[p.faction]!.id;

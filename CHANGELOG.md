@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-18 18:34 UTC
+
+- **Dusk and night:** pick the time of day in the skirmish setup. At night the battlefield goes dark blue, buildings throw warm pools of light, units carry lamps and Echo glows cyan. It changes the look only: vision is the same.
+- **Weather:** dust blows across the wasteland, ash drifts down over the city, and violet motes rise in crystal country. Off with Reduced visual effects.
+- **Parked tanks look around:** idle turrets turn to scan now and then.
+- **Smoother zoom:** units and buildings no longer shimmer when zoomed out.
+
 ## 2026-10-18 18:28 UTC
 
 - **Save and continue:** **Save game** in the menu keeps your skirmish in this browser; **Continue** on the main menu picks it up where you left it.

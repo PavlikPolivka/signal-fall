@@ -51,7 +51,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 33 | E | Unit roles sharpened: every unit has one clear job and one clear counter, shown in the Codex and on hover | 4 | M |
 | 34 | E | Faster mid-game: unit caps, build times and costs tuned so the first real fight is around minute 5–7 | 4 | S |
 | 35 ✅ | G | Better terrain: blended texture transitions, cliffs with edges, decals (craters, tracks) that persist | 5 | M |
-| 36 | G | Lighting pass: soft shadows, glow on Echo and energy weapons, night-time maps with light radius | 4 | M |
+| 36 ✅ | G | Lighting pass: soft shadows, glow on Echo and energy weapons, night-time maps with light radius | 4 | M |
 | 37 ✅ | G | Combat effects: muzzle flashes, tracers, impact sparks, smoke trails, screen shake on big explosions (Reduced setting honored) | 4 | M |
 | 38 ✅ | G | Building construction animation (scaffold rising / crystal growing) and destruction collapse | 4 | M |
 | 39 ✅ | G | Unit death: wrecks that stay a while (Holdout salvage), dissolve for Halcyon, shatter for Choir | 3 | S |
@@ -99,13 +99,13 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 76 | A | AI personalities with names in skirmish (Aggressive Ada, Turtle Tomas) | 3 | S |
 | 77 ✅ | A | AI uses abilities well (blink in, override, phase) at Hard+ | 3 | M |
 | 78 ✅ | A | AI scouts and harasses harvesters on Normal+ | 3 | S |
-| 79 | G | Unit idle animations and turret tracking even when not firing | 3 | M |
+| 79 ✅ | G | Unit idle animations and turret tracking even when not firing | 3 | M |
 | 80 ✅ | G | Selected-unit circles colored by health; hover outline on enemies | 2 | XS |
-| 81 | G | Water and shoreline animation; crystal shimmer on Echo | 3 | M |
-| 82 | G | Weather per biome (dust, rain, crystal motes), Reduced setting off | 2 | S |
+| 81 ✅ | G | Water and shoreline animation; crystal shimmer on Echo | 3 | M |
+| 82 ✅ | G | Weather per biome (dust, rain, crystal motes), Reduced setting off | 2 | S |
 | 83 | G | Faction-specific UI frames polished (icons, fonts, sounds per faction) | 3 | M |
 | 84 | G | Higher-resolution sprites (2× atlases for retina screens) | 3 | L |
-| 85 | G | Smoother zoom levels with sprite mip-mapping, no shimmering | 3 | S |
+| 85 ✅ | G | Smoother zoom levels with sprite mip-mapping, no shimmering | 3 | S |
 | 86 ✅ | G | Damaged-building fire and smoke effects scaling with damage | 3 | S |
 | 87 ✅ | V | Weapon sounds per unit type, distinct enough to hear what is fighting | 3 | M |
 | 88 | V | Building ambient loops (power hum, factory clanks) quietly near the camera | 2 | S |

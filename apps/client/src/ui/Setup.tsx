@@ -23,6 +23,8 @@ export interface SkirmishSettings extends MapChoice {
   allyFaction: number;
   allyDifficulty: Difficulty;
   enemy2Faction: number;
+  /** Lighting: day, dusk or night (looks only). */
+  time?: 'day' | 'dusk' | 'night';
 }
 
 const DIFFICULTY_OPTIONS: [Difficulty, string][] = [
@@ -299,6 +301,17 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
               ))}
             </div>
             <MapSettings value={s} onChange={set} players={s.mode === '2v2' ? 4 : 2} />
+            <Choice
+              label="Time of day"
+              value={s.time ?? 'day'}
+              options={[
+                ['day', 'Day'],
+                ['dusk', 'Dusk'],
+                ['night', 'Night'],
+              ]}
+              onChange={(v) => set({ time: v })}
+              testid="time"
+            />
           </section>
         </div>
         <div class="setup-foot">

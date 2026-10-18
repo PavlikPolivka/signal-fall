@@ -103,7 +103,10 @@ export class UnitSpriteView {
       this.shadow.position.set(o.px, o.py);
     }
     if (this.turret && this.turretTeam) {
-      const tdir = SpriteLibrary.dirFor(o.facing, info.dirs);
+      // Parked and quiet: the turret looks around now and then (one direction left or right).
+      const idle = !o.firing && !o.wreck && Math.abs(o.vx) + Math.abs(o.vy) < 0.01;
+      const look = idle ? Math.round(Math.sin(performance.now() / 4000 + this.tie * 40) * 1.4) * (4096 / info.dirs) : 0;
+      const tdir = SpriteLibrary.dirFor(o.facing + look, info.dirs);
       const tc = this.lib.texture(this.id, 'turret', 'idle', tdir, 0, 'color');
       const tm = this.lib.texture(this.id, 'turret', 'idle', tdir, 0, 'mask');
       this.turret.visible = tc !== null;

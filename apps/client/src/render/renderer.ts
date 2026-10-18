@@ -5,6 +5,8 @@ import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
 import { SpriteLibrary } from './sprites';
 import { Culler } from './culler';
+import { Weather } from './weather';
+import { NightLight } from './night';
 import { TerrainLayer } from './terrain';
 import { DeathEffect, StructureSpriteView, UnitSpriteView } from './views';
 import { Effects } from './effects';
@@ -73,6 +75,10 @@ export class Renderer {
   private readonly scorchLayer = new Container();
   readonly effects: Effects;
   private readonly fogLayer = new Container();
+  /** Dust, ash or crystal motes in the air (cosmetic). */
+  readonly weather = new Weather();
+  /** Dusk and night maps: a light map over the battlefield. */
+  readonly night = new NightLight();
   private readonly overlay = new Graphics();
   /** Screen-space overlay (selection box). */
   readonly screen = new Graphics();
@@ -125,7 +131,7 @@ export class Renderer {
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;
-    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.coverageGfx, this.decals, this.propShadows, this.shadows, this.flat, this.ground, this.fx, this.air, this.particles, this.fogLayer, this.overlay);
+    this.world.addChild(this.terrainLayer, this.scorchLayer, this.echoLayer, this.coverageGfx, this.decals, this.propShadows, this.shadows, this.flat, this.ground, this.fx, this.air, this.night.sprite, this.particles, this.weather.layer, this.fogLayer, this.overlay);
     this.app.stage.addChild(this.world, this.screen);
     this.makeTextures();
   }
@@ -618,6 +624,7 @@ export class Renderer {
     const hw = this.width / 2 / this.camera.zoom;
     const hh = this.height / 2 / this.camera.zoom;
     this.culler.update(this.camera.x - hw, this.camera.y - hh, this.camera.x + hw, this.camera.y + hh);
+    this.weather.update(this.camera.x - hw, this.camera.y - hh, this.camera.x + hw, this.camera.y + hh);
 
     const alpha = Math.min(1, (performance.now() - s.curAt) / 50);
     const nowMs = performance.now();
@@ -633,6 +640,7 @@ export class Renderer {
     this.drawCoverage();
     this.drawChorus();
     this.shimmerEcho();
+    this.night.begin();
     const lowPower = !s.spectator && s.lowPower;
     const ghosts = new Set<number>();
     const salvage = !s.spectator && (s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.salvagePct ?? 0) > 0;
@@ -750,6 +758,11 @@ export class Renderer {
 
       const air = kind === KIND.unit && s.rules.units[cur.get(o, E.type)]!.isAir;
       const lift = air ? AIR_ALTITUDE : 0;
+      if (this.night.active) {
+        // Buildings throw warm pools of light; units carry small lamps.
+        if (kind === KIND.structure) this.night.add(px, py, 60 + s.rules.structures[cur.get(o, E.type)]!.footprintW * 34, 0xffcf96, 1);
+        else if (kind === KIND.unit) this.night.add(px, py - lift, 58, 0xfff1d6, 0.75);
+      }
       const isSel = selected.has(h);
       if (isSel && kind === KIND.structure && cur.get(o, E.rallyX) >= 0 && owner === s.localPlayer) {
         const rx2 = cur.get(o, E.rallyX) / FX;
@@ -932,6 +945,11 @@ export class Renderer {
     this.updateEcho();
     this.drawGhost();
     this.updateFog();
+    if (this.night.active) {
+      // Echo glows faintly in the dark.
+      for (const sp of this.echoSprites.values()) if (sp.parent) this.night.add(sp.x, sp.y, 40, 0x3ee6ff, 0.5);
+      this.night.end(this.app.renderer, this.camera.x - hw, this.camera.y - hh, this.camera.x + hw, this.camera.y + hh, this.width, this.height);
+    }
   }
 
   private updateEcho(): void {

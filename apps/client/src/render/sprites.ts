@@ -53,6 +53,14 @@ export class SpriteLibrary {
     }
     for (let i = 0; i < catalog.pages; i++) {
       const sheet = (await Assets.load(`${root}atlas-${i}.json`)) as { textures: Record<string, Texture> };
+      // Mipmaps: zoomed out, sprites sample a pre-shrunk page instead of shimmering.
+      const source = Object.values(sheet.textures)[0]?.source;
+      if (source && !source.autoGenerateMipmaps) {
+        source.autoGenerateMipmaps = true;
+        source.style.mipmapFilter = 'linear';
+        source.style.update();
+        source.updateMipmaps();
+      }
       for (const [name, tex] of Object.entries(sheet.textures)) this.textures.set(name, tex);
     }
     for (const [id, info] of Object.entries(catalog.sprites)) this.sprites.set(id, info);
