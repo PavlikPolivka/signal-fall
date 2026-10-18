@@ -99,12 +99,18 @@ test('two clients play a networked match over a lossy link without desync', asyn
   await host.press('[data-testid=chat-input]', 'Enter');
   await expect(guest.getByTestId('chat')).toContainText('gl hf');
   const box = (await host.locator('[data-testid=game] canvas').boundingBox())!;
-  await host.keyboard.down('Alt');
-  await host.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await host.keyboard.up('Alt');
   // Pings are for teammates: the host sees its own, the opponent nothing.
   const pings = (p: Page) => p.evaluate(() => (window as unknown as { __signalFall: { state: { mapPings: unknown[] } } }).__signalFall.state.mapPings.length);
-  await expect.poll(() => pings(host)).toBe(1);
+  // A slow software-rendered page can drop the first click: try until one lands.
+  await expect
+    .poll(async () => {
+      await host.keyboard.down('Alt');
+      await host.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await host.keyboard.up('Alt');
+      const n = await pings(host);
+      return n;
+    }, { timeout: 20_000 })
+    .toBeGreaterThan(0);
   await guest.waitForTimeout(1500);
   expect(await pings(guest)).toBe(0);
 

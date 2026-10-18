@@ -15,6 +15,8 @@ export class NetSession {
   private lost = false;
   /** Called when any peer goes silent for PEER_TIMEOUT_MS. */
   onPeerLost: () => void = () => undefined;
+  /** Called when everyone is heard from again after that (a hiccup, not a disconnect). */
+  onPeerBack: () => void = () => undefined;
   /** Chat and pings from the other people (handled here, not by the sim). */
   onChat: (m: ChatMessage) => void = () => undefined;
 
@@ -35,9 +37,13 @@ export class NetSession {
     this.timer = window.setInterval(() => {
       this.transport.tick();
       this.watchers.tick();
-      if (!this.lost && this.transport.silenceMs(performance.now()) > PEER_TIMEOUT_MS) {
+      const silence = this.transport.silenceMs(performance.now());
+      if (!this.lost && silence > PEER_TIMEOUT_MS) {
         this.lost = true;
         this.onPeerLost();
+      } else if (this.lost && silence < 2000) {
+        this.lost = false;
+        this.onPeerBack();
       }
     }, 20);
   }

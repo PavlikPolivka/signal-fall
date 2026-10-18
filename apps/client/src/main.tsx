@@ -410,6 +410,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       );
       if (lastRoom && scenario) hostRejoins(lastRoom.code, scenario);
       netSession.onPeerLost = lost;
+      netSession.onPeerBack = () => {
+        state.peerLost = false;
+        state.changed();
+      };
       netSession.onChat = (m) => {
         // Team messages only count from teammates.
         if (m.team && state.players[m.player]?.team !== state.players[localSlot]?.team) return;
@@ -427,6 +431,10 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     netSession = new NetSession([...back.links.values()], (m) => post({ type: 'net', msg: m }), [], [...back.links.keys()]);
     netSession.onPeerLost = () => {
       state.peerLost = true;
+      state.changed();
+    };
+    netSession.onPeerBack = () => {
+      state.peerLost = false;
       state.changed();
     };
     netSession.onChat = (m) => {

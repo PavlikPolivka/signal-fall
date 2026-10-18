@@ -1130,12 +1130,19 @@ function EndScreen({ state }: { state: ClientState }) {
  */
 function KeyBindings({ state, onClose }: { state: ClientState; onClose: () => void }) {
   const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
-  const [waiting, setWaiting] = useState<string | null>(null);
+  const [waiting, setWaitingState] = useState<string | null>(null);
+  // The listener reads this, so a key pressed right after the click is never missed.
+  const waitingRef = useRef<string | null>(null);
+  const setWaiting = (a: string | null) => {
+    waitingRef.current = a;
+    setWaitingState(a);
+  };
   const [error, setError] = useState<string | null>(null);
-  const map = withOverrides(state.rules.keymap, state.settings.keys);
   useEffect(() => {
-    if (!waiting) return;
     const onKey = (e: KeyboardEvent) => {
+      const waiting = waitingRef.current;
+      if (!waiting) return;
+      const map = withOverrides(state.rules.keymap, state.settings.keys);
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.code === 'Escape') return setWaiting(null);
@@ -1159,7 +1166,8 @@ function KeyBindings({ state, onClose }: { state: ClientState; onClose: () => vo
     };
     window.addEventListener('keydown', onKey, { capture: true });
     return () => window.removeEventListener('keydown', onKey, { capture: true });
-  }, [waiting]);
+  }, []);
+  const map = withOverrides(state.rules.keymap, state.settings.keys);
   return (
     <div class="menu-overlay" data-testid="keys">
       <div class="menu keys-menu">
