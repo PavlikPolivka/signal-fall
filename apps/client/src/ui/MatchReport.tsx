@@ -131,6 +131,16 @@ export function MatchReport({ state, onClose }: { state: ClientState; onClose: (
               );
             })}
           </tbody>
+          {stats.actions && last.tick > 0 && (
+            <tbody>
+              <tr>
+                <td title="Orders per minute of game time (people only)">Actions per minute</td>
+                {stats.actions.map((a, i) => (
+                  <td>{state.seats[i]?.kind === 'ai' ? '—' : Math.round((a * 1200) / last.tick)}</td>
+                ))}
+              </tr>
+            </tbody>
+          )}
         </table>
         <nav class="report-tabs">
           {CHARTS.map((c) => (

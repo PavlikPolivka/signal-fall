@@ -925,6 +925,11 @@ export class Input {
     return { harvesters, army };
   }
 
+  /** Center the camera on a sim position (Q10). */
+  lookAt(x: number, y: number): void {
+    this.renderer.centerOnSim(x, y);
+  }
+
   /** Top bar: select idle harvesters (cycling one at a time) or the whole idle army, and look at them. */
   selectIdle(kind: 'harvesters' | 'army'): void {
     const s = this.state;

@@ -1,5 +1,23 @@
 # What's new
 
+## 2026-10-18 18:14 UTC
+
+- **Weapon ranges:** a selected defense shows how far it shoots, and so does one you are placing. Hold <kbd>Alt</kbd> to see the range of everything you have selected.
+- **Health at a glance:** selection rings turn yellow and red as units get hurt, and hovering an enemy outlines it in red.
+- **Veterans stand out:** rank chevrons are bigger, and a selected veteran shows its rank (Veteran, Elite, Heroic).
+- **Event log:** the **Log** button in the top bar lists the last 20 events (attacks, losses, completions). Click one to look there.
+- **Control groups** show the main unit type in each group.
+- **Ability recharge** drains as a bar on the ability button.
+- **Minimap:** buildings show their real size, units are sized by class (infantry small, heavy vehicles big), and Echo fields show in cyan.
+- **Sell and repair:** in sell mode, hovering a building shows what it sells for; in repair mode, what a full repair costs.
+- **Unit cards** list the research that improves the unit, ticked when done.
+- **Pause menu briefing:** how to win, tips for your faction and the main keys, beside the settings.
+- **Loading screen** with key art, who fights whom and a tip.
+- **Skirmish setup:** each AI difficulty explains what it does, and three presets (Quick match, Long game, Rush) set up the map in one click.
+- **Match report** shows actions per minute for each player.
+- **Codex search:** type a unit or building name to find it, with what it is weak to and which units of each faction beat it.
+- **Credits** are linked from the front page.
+
 ## 2026-10-18 18:04 UTC
 
 - **No more dollars:** credits show with an Echo crystal mark (◆) everywhere: the sidebar, prices, the Codex and the "+◆" payouts on the battlefield.

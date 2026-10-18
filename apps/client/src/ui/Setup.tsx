@@ -31,6 +31,21 @@ const DIFFICULTY_OPTIONS: [Difficulty, string][] = [
   ['brutal', 'Brutal'],
 ];
 
+/** What each AI level does, in the setup screen. */
+const DIFFICULTY_INFO: Record<Difficulty, string> = {
+  easy: 'Builds slowly and attacks with small groups from about minute 6. Never scouts, raids or uses abilities. For learning the game.',
+  normal: 'A steady opponent: scouts, picks units that counter yours and attacks from minute 4, but does not raid or use abilities.',
+  hard: 'Plays like a good player: fast, raids your harvesters, retreats from lost fights, focuses fire and uses every ability.',
+  brutal: 'Hard, plus 25% more income from every harvest. The only level that cheats.',
+};
+
+/** One-click setups; the map seed is fresh each time. */
+const PRESETS: { id: string; label: string; title: string; patch: Partial<SkirmishSettings> }[] = [
+  { id: 'quick', label: 'Quick match', title: 'Small open map with normal Echo: a short match', patch: { size: 'S', terrain: 'open', resources: 'normal' } },
+  { id: 'long', label: 'Long game', title: 'Large map with rich Echo and choke points: room to expand and tech up', patch: { size: 'L', terrain: 'choke', resources: 'rich' } },
+  { id: 'rush', label: 'Rush', title: 'Small map, little Echo: build fast and strike first', patch: { size: 'S', terrain: 'open', resources: 'low' } },
+];
+
 const STORAGE_KEY = 'signal-fall.setup';
 
 /** The last skirmish setup (also what a rematch replays). */
@@ -82,7 +97,8 @@ export function Setup({
   const [changes, setChanges] = useState(false);
   const [replayError, setReplayError] = useState<string | null>(null);
   const [codex, setCodex] = useState(false);
-  const [credits, setCredits] = useState(false);
+  // ?menu=credits (from the landing page) opens the credits.
+  const [credits, setCredits] = useState(() => new URLSearchParams(location.search).get('menu') === 'credits');
   const [accountOpen, setAccountOpen] = useState(!!notice);
   const [statsOpen, setStatsOpen] = useState(false);
   useEffect(() => {
@@ -234,9 +250,17 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
             <Choice label={s.mode === '2v2' ? 'Enemy 1' : 'Opponent'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
             {s.mode === '2v2' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
             <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
+            <p class="setup-note" data-testid="difficulty-info">{DIFFICULTY_INFO[s.difficulty]}</p>
           </section>
           <section>
             <h2>Map</h2>
+            <div class="presets" data-testid="presets">
+              {PRESETS.map((p) => (
+                <button title={p.title} data-testid={`preset-${p.id}`} onClick={() => set({ ...p.patch, seed: randomSeed() })}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
             <MapSettings value={s} onChange={set} players={s.mode === '2v2' ? 4 : 2} />
           </section>
         </div>

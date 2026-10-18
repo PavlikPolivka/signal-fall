@@ -99,7 +99,7 @@ export class Renderer {
   /** Shields per entity last frame: a drop means a hit, shown as a shimmer. */
   private lastShields = new Map<number, number>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
-  placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number }; error: string | null } | null = () => null;
+  placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number; weapon?: { range: number } | null }; error: string | null } | null = () => null;
   /** The sim point (Q10) under the cursor, for targeting previews. */
   cursorPoint: () => { x: number; y: number } | null = () => null;
   /** Click feedback markers in world px. */
@@ -759,9 +759,18 @@ export class Renderer {
         this.overlay.moveTo(px, py).lineTo(fx, fy).stroke({ width: 1, color: 0xe8c35a, alpha: 0.7 });
         this.overlay.rect(fx - 1, fy - 16, 2, 16).fill(0xe8c35a).poly([fx + 1, fy - 16, fx + 10, fy - 13, fx + 1, fy - 10]).fill(0xe8c35a);
       }
-      if (isSel) {
+      const enemy = s.players[owner]?.team !== s.players[s.localPlayer]?.team;
+      if (isSel || (h === s.hoverEntity && enemy && kind !== KIND.wreck)) {
+        // Own selection rings take the unit's health color; enemies are red (also when only hovered).
         const rx = kind === KIND.structure ? 40 : 14;
-        this.decals.ellipse(px, py, rx, rx / 2).stroke({ width: 1.5, color: owner === s.localPlayer ? 0x6dff8a : 0xff6d6d });
+        const life = cur.get(o, E.hp) / Math.max(1, cur.get(o, E.maxHp));
+        const ring = owner !== s.localPlayer ? 0xff6d6d : life > 0.6 ? 0x6dff8a : life > 0.3 ? 0xfacc15 : 0xef4444;
+        this.decals.ellipse(px, py, rx, rx / 2).stroke({ width: isSel ? 1.5 : 1, color: ring, alpha: isSel ? 1 : 0.7 });
+        // Weapon range: selected defenses always, any selection while Alt is held.
+        const rule = kind === KIND.structure ? s.rules.structures[cur.get(o, E.type)]! : kind === KIND.unit ? s.rules.units[cur.get(o, E.type)]! : null;
+        if (isSel && rule?.weapon && (s.altHeld || kind === KIND.structure)) this.rangeRing(px, py, rule.weapon.range / FX, ring);
+      }
+      if (isSel) {
         // Order line (and, with Shift held, the whole queued path with markers).
         const ox = cur.get(o, E.orderX);
         const order = cur.get(o, E.order);
@@ -816,8 +825,14 @@ export class Renderer {
         }
         const cargo = cur.get(o, E.cargo);
         if (cargo > 0) this.overlay.rect(px - w / 2, top + 4, (w * Math.min(700, cargo)) / 700, 2).fill(0x3ee6ff);
+        // Veterancy chevrons beside the health bar, stacked upward.
         const rank = cur.get(o, E.rank);
-        for (let r = 0; r < rank; r++) this.overlay.rect(px + w / 2 + 2, top + 1 - r * 4, 3, 3).fill(0xfacc15);
+        for (let r = 0; r < rank; r++) {
+          const cx = px + w / 2 + 6;
+          const cy = top + 2 - r * 4;
+          this.overlay.poly([cx - 4, cy - 2, cx, cy + 1, cx + 4, cy - 2], false).stroke({ width: 3.5, color: 0x1a1406 });
+          this.overlay.poly([cx - 4, cy - 2, cx, cy + 1, cx + 4, cy - 2], false).stroke({ width: 1.8, color: 0xfacc15 });
+        }
       }
     }
 
@@ -1161,6 +1176,12 @@ export class Renderer {
     }
   }
 
+  /** A weapon range circle of r tiles around a world point (an ellipse on the iso grid). */
+  private rangeRing(px: number, py: number, r: number, color: number): void {
+    const rx = r * (TILE_W / 2) * Math.SQRT2;
+    this.decals.ellipse(px, py, rx, rx / 2).fill({ color, alpha: 0.04 }).stroke({ width: 1, color, alpha: 0.4 });
+  }
+
   /** Targeting a support power: its area under the cursor. */
   private drawPowerTarget(): void {
     const s = this.state;
@@ -1185,6 +1206,12 @@ export class Renderer {
     if (!ghost) return;
     this.drawBuildRange();
     const color = ghost.error ? 0xff5a5a : 0x6dff8a;
+    // A defense being placed shows how far it will shoot.
+    if (ghost.rule.weapon) {
+      const cx = ghost.tx + ghost.rule.footprintW / 2;
+      const cy = ghost.ty + ghost.rule.footprintH / 2;
+      this.rangeRing(isoX(cx, cy), isoY(cx, cy), ghost.rule.weapon.range / FX, 0xffb46d);
+    }
     for (let y = ghost.ty; y < ghost.ty + ghost.rule.footprintH; y++) {
       for (let x = ghost.tx; x < ghost.tx + ghost.rule.footprintW; x++) {
         const px = isoX(x, y);

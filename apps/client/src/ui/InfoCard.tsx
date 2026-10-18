@@ -4,19 +4,19 @@ import { Icon } from './Icon';
 import { money, roleNames } from '../game/names';
 
 const FX = 1024;
-const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
-const DAMAGE_LABEL = ['Kinetic', 'Explosive', 'Energy', 'Flak', 'Siege'];
+export const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
+export const DAMAGE_LABEL = ['Kinetic', 'Explosive', 'Energy', 'Flak', 'Siege'];
 
 const secs = (ticks: number, rate: number) => `${Math.round((ticks / rate) * 10) / 10}s`;
 const tiles = (fx: number) => `${Math.round((fx / FX) * 10) / 10}`;
 
 /** Armor classes this damage type does at least full damage to. */
-function strongVs(rules: Rules, type: number): string[] {
+export function strongVs(rules: Rules, type: number): string[] {
   return ARMOR.map((_, a) => a).filter((a) => rules.damageMatrix[type * ARMOR.length + a]! >= 100).map((a) => ARMOR_LABEL[a]!);
 }
 
 /** Damage types that hit this armor for at least full damage. */
-function weakTo(rules: Rules, armor: number): string[] {
+export function weakTo(rules: Rules, armor: number): string[] {
   return DAMAGE.map((_, d) => d).filter((d) => rules.damageMatrix[d * ARMOR.length + armor]! >= 100).map((d) => DAMAGE_LABEL[d]!);
 }
 
@@ -97,11 +97,39 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
         )}
         {rule.weapon && <WeaponRows rules={rules} w={rule.weapon} />}
       </dl>
+      {rule.kind === 'unit' && <UnitUpgrades state={state} rule={rule} />}
       {missing.length > 0 && <p class="req bad">Requires {roleNames(rules, rule.faction, missing)}</p>}
       <p class="hint muted">
-        {rule.kind === 'unit' ? 'Click: queue 1 · Shift+click: 5 · Right-click: cancel' : 'Click: build, then click again to place · Right-click: cancel'}
+        {rule.kind === 'unit' ? 'Click: queue 1 · Shift+click: 5 · Ctrl+click: repeat · Right-click: cancel' : 'Click: build, then click again to place · Right-click: cancel'}
       </p>
     </div>
+  );
+}
+
+/** Research that makes this unit stronger, ticked when done. */
+function UnitUpgrades({ state, rule }: { state: ClientState; rule: UnitRule }) {
+  const rules = state.rules;
+  const done = state.cur?.player(state.localPlayer, 7) ?? 0;
+  const lines: [string, boolean][] = [];
+  rules.upgrades.forEach((u) => {
+    if (u.faction !== rule.faction && u.faction !== -1) return;
+    const e = u.effect;
+    let what: string | null = null;
+    if (e.kind === 'damagePct' && rule.weapon) what = `+${e.pct}% damage`;
+    else if (e.kind === 'hpPct') what = `+${e.pct}% HP`;
+    else if (e.kind === 'shieldPct' && rule.shields > 0) what = `+${e.pct}% shields`;
+    else if (e.kind === 'vehicleEnergyResistPct' && rule.tab === 'vehicles') what = `-${e.pct}% energy damage taken`;
+    if (what) lines.push([`${u.name}: ${what}`, (done & (1 << u.index)) !== 0]);
+  });
+  if (lines.length === 0) return null;
+  return (
+    <ul class="upgrades" data-testid="unit-upgrades">
+      {lines.map(([text, has]) => (
+        <li class={has ? 'good' : 'muted'}>
+          {has ? '✓' : '○'} {text}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -147,6 +175,14 @@ export function EntityCard({ state, h }: { state: ClientState; h: number }) {
       )}
       {!own && !ally && <Matchup state={state} h={h} />}
       {own && rule.kind === 'unit' && <div class="activity">{activity(cur.get(off, 14), cur.get(off, 23), cur.get(off, 24))}</div>}
+      {rule.kind === 'structure' && own && state.mode === 'sell' && (
+        <div class="good" data-testid="sell-refund">Sell for {money(Math.floor((rule.cost * state.rules.constants.sellRefundPct) / 100))}</div>
+      )}
+      {rule.kind === 'structure' && own && state.mode === 'repair' && hp < maxHp && (
+        <div data-testid="repair-cost">
+          Full repair costs about {money(Math.ceil((((maxHp - hp) / maxHp) * rule.cost * state.rules.constants.repairCostPct) / 100))}
+        </div>
+      )}
       {rule.kind === 'structure' && <div class="muted">{rule.description}</div>}
     </div>
   );

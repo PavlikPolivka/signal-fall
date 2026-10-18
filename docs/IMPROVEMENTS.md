@@ -57,20 +57,20 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 39 ✅ | G | Unit death: wrecks that stay a while (Holdout salvage), dissolve for Halcyon, shatter for Choir | 3 | S |
 | 40 | V | Music that follows the battle (already layered) with a faction theme per side | 3 | M |
 | 41 | V | Positional sound for combat and a mix that ducks music under announcer lines | 3 | S |
-| 42 | U | Tooltips with full stats for every button, delay 400 ms, Shift shows numbers | 3 | S |
+| 42 ✅ | U | Tooltips with full stats for every button, delay 400 ms, Shift shows numbers | 3 | S |
 | 43 ✅ | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
-| 44 | C | Control-group bar: shows each group's main unit and count; double-tap centers | 3 | S |
+| 44 ✅ | C | Control-group bar: shows each group's main unit and count; double-tap centers | 3 | S |
 | 45 ✅ | C | Camera bookmarks (F1–F4 save with Ctrl, jump with F-key) | 3 | XS |
 | 46 | C | Formation move with right-drag (draw a line, units spread along it) | 3 | M |
-| 47 | U | Minimap: unit dots by size, structures as squares, click-drag to move the camera, right-click to order | 4 | S |
+| 47 ✅ | U | Minimap: unit dots by size, structures as squares, click-drag to move the camera, right-click to order | 4 | S |
 | 48 ✅ | U | Fog-of-war shows last-seen buildings as ghosts | 4 | S |
-| 49 | U | Pause menu shows objectives, faction tips and the keymap at a glance | 3 | XS |
+| 49 ✅ | U | Pause menu shows objectives, faction tips and the keymap at a glance | 3 | XS |
 | 50 | O | Interactive tutorial (5 short steps) for players new to RTS | 4 | M |
-| 51 | O | Skirmish presets ("Quick match", "Long game", "Rush") and a "same as last time" button | 3 | XS |
+| 51 ✅ | O | Skirmish presets ("Quick match", "Long game", "Rush") and a "same as last time" button | 3 | XS |
 | 52 | M | Rematch button for multiplayer; post-game lobby keeps the room | 4 | S |
 | 53 | M | In-game chat and pings (Alt+click to ping a spot for teammates in 2v2) | 4 | M |
 | 54 | M | Replace a disconnected player with the AI (2v2) | 4 | M |
-| 55 | U | Score screen MVP stats per player (units killed, Echo harvested, APM) | 3 | XS |
+| 55 ✅ | U | Score screen MVP stats per player (units killed, Echo harvested, APM) | 3 | XS |
 
 ## Tier 3: solid improvements
 
@@ -83,24 +83,24 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 60 ✅ | C | Stop / hold / scatter on the command card with hover hints | 2 | XS |
 | 61 | C | Smart cast: abilities on a group cast with the nearest available unit | 3 | S |
 | 62 ✅ | U | Build grid overlay while placing (green / red tiles, power coverage, growth range) | 4 | S |
-| 63 | U | Show attack range circles while hovering a defense button or selected unit (Alt) | 3 | S |
-| 64 | U | Notification log (last 20 events, click to jump) | 3 | S |
+| 63 ✅ | U | Show attack range circles while hovering a defense button or selected unit (Alt) | 3 | S |
+| 64 ✅ | U | Notification log (last 20 events, click to jump) | 3 | S |
 | 65 ✅ | U | Game speed for skirmish (0.5×–2×) | 3 | XS |
-| 66 | U | Unit veterancy chevrons more visible; veteran units named in the selection panel | 2 | XS |
-| 67 | U | Upgrade research shown on unit cards (what it improves) | 2 | XS |
-| 68 | U | Sell and repair with clear cursors and refund amounts on hover | 3 | XS |
+| 66 ✅ | U | Unit veterancy chevrons more visible; veteran units named in the selection panel | 2 | XS |
+| 67 ✅ | U | Upgrade research shown on unit cards (what it improves) | 2 | XS |
+| 68 ✅ | U | Sell and repair with clear cursors and refund amounts on hover | 3 | XS |
 | 69 | U | Warnings when a factory is blocked (rally point unreachable, exit blocked) | 3 | S |
 | 70 | E | Superweapon-lite per faction at tier 3 (long cooldown, visible charge timer for all) | 4 | L |
 | 71 | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers | 3 | M |
 | 72 | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles | 4 | L |
 | 73 | E | Harvester economy depth: refinery queue logic, harvester escorts matter, raids are punishing but recoverable | 3 | S |
 | 74 | E | Crates (rare pickups) on skirmish maps, optional | 2 | S |
-| 75 | A | AI difficulty describes itself in the menu (what it does, how fast) | 2 | XS |
+| 75 ✅ | A | AI difficulty describes itself in the menu (what it does, how fast) | 2 | XS |
 | 76 | A | AI personalities with names in skirmish (Aggressive Ada, Turtle Tomas) | 3 | S |
 | 77 ✅ | A | AI uses abilities well (blink in, override, phase) at Hard+ | 3 | M |
 | 78 ✅ | A | AI scouts and harasses harvesters on Normal+ | 3 | S |
 | 79 | G | Unit idle animations and turret tracking even when not firing | 3 | M |
-| 80 | G | Selected-unit circles colored by health; hover outline on enemies | 2 | XS |
+| 80 ✅ | G | Selected-unit circles colored by health; hover outline on enemies | 2 | XS |
 | 81 | G | Water and shoreline animation; crystal shimmer on Echo | 3 | M |
 | 82 | G | Weather per biome (dust, rain, crystal motes), Reduced setting off | 2 | S |
 | 83 | G | Faction-specific UI frames polished (icons, fonts, sounds per faction) | 3 | M |
@@ -111,9 +111,9 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 88 | V | Building ambient loops (power hum, factory clanks) quietly near the camera | 2 | S |
 | 89 ✅ | V | Victory/defeat stingers and a short voice line | 2 | XS |
 | 90 | O | Main menu: continue last skirmish setup, recent replays list | 2 | S |
-| 91 | O | Loading screen tips and faction art while the map generates | 2 | XS |
+| 91 ✅ | O | Loading screen tips and faction art while the map generates | 2 | XS |
 | 92 | O | Accessibility: colorblind team palettes, UI scale, subtitles for announcer | 3 | S |
-| 93 | O | Codex search and "how to beat X" pages | 2 | S |
+| 93 ✅ | O | Codex search and "how to beat X" pages | 2 | S |
 | 94 | M | Spectator mode for multiplayer rooms (watch friends' matches) | 3 | M |
 | 95 | M | Ranked queue (matchmaking by rating) | 3 | L |
 | 96 | M | Room browser for public games | 3 | M |
@@ -149,8 +149,8 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 116 ✅ | V | Mute announcer separately from sound effects and music | 2 | XS |
 | 117 ✅ | U | Unit counts per type in the top bar (army composition at a glance) | 2 | XS |
 | 118 ✅ | C | Tab cycles subgroups in a mixed selection (already) with a visible highlight | 2 | XS |
-| 119 | U | Visible cooldowns on ability buttons | 2 | XS |
-| 120 | O | Credits screen with the team and the tools used (already) linked from the landing page | 1 | XS |
+| 119 ✅ | U | Visible cooldowns on ability buttons | 2 | XS |
+| 120 ✅ | O | Credits screen with the team and the tools used (already) linked from the landing page | 1 | XS |
 
 ## Order of work
 

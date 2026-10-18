@@ -87,3 +87,17 @@ test('main menu links fit on one line', async ({ page }) => {
   expect(new Set(tops).size).toBe(1);
   await page.screenshot({ path: 'test-results/home-links.png', clip: { x: 0, y: 500, width: 900, height: 300 } });
 });
+
+test('codex search finds a unit and how to beat it', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-codex]');
+  await page.fill('[data-testid=codex-search]', 'bulldog');
+  const results = page.getByTestId('codex-results');
+  await expect(results).toContainText('Bulldog');
+  await expect(results).toContainText('How to beat it');
+});
+
+test('the landing page links to the credits', async ({ page }) => {
+  await page.goto('/play/?menu=credits');
+  await expect(page.getByTestId('credits')).toContainText('Unit and building sprites');
+});

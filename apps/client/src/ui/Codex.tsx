@@ -5,6 +5,7 @@ import { chordLabel } from '../input/keymap';
 import { money, roleNames } from '../game/names';
 import { FACTION_LORE } from './lore';
 import { BalanceReport } from './Balance';
+import { weakTo } from './InfoCard';
 
 const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
 const DAMAGE_LABEL = ['Kinetic', 'Explosive', 'Energy', 'Flak', 'Siege'];
@@ -41,6 +42,7 @@ const TABS: [Tab, string][] = [
 export function Codex({ rules, onClose }: { rules: Rules; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('story');
   const [faction, setFaction] = useState(0);
+  const [query, setQuery] = useState('');
   return (
     <div class="codex-overlay" data-testid="codex" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div class="codex">
@@ -53,11 +55,24 @@ export function Codex({ rules, onClose }: { rules: Rules; onClose: () => void })
               </button>
             ))}
           </nav>
+          <input
+            class="codex-search"
+            type="search"
+            placeholder="Search units and buildings…"
+            value={query}
+            data-testid="codex-search"
+            onInput={(e) => setQuery((e.currentTarget as HTMLInputElement).value)}
+          />
           <button class="close" onClick={onClose} title="Close (Esc)">
             ✕
           </button>
         </header>
-        {(tab === 'units' || tab === 'buildings') && (
+        {query.trim() !== '' && (
+          <div class="codex-body">
+            <Search rules={rules} query={query.trim().toLowerCase()} />
+          </div>
+        )}
+        {query.trim() === '' && (tab === 'units' || tab === 'buildings') && (
           <nav class="codex-factions">
             {rules.factions.map((f) => (
               <button class={`f-${f.id} ${faction === f.index ? 'active' : ''}`} onClick={() => setFaction(f.index)}>
@@ -66,7 +81,7 @@ export function Codex({ rules, onClose }: { rules: Rules; onClose: () => void })
             ))}
           </nav>
         )}
-        <div class="codex-body">
+        <div class="codex-body" hidden={query.trim() !== ''}>
           {tab === 'story' && <Story />}
           {tab === 'factions' && <Factions rules={rules} />}
           {tab === 'compare' && <Compare />}
@@ -77,6 +92,59 @@ export function Codex({ rules, onClose }: { rules: Rules; onClose: () => void })
           {tab === 'balance' && <BalanceReport rules={rules} />}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Search results: every matching unit or building, with how to beat it. */
+function Search({ rules, query }: { rules: Rules; query: string }) {
+  const hits = [...rules.units, ...rules.structures].filter(
+    (r) => r.name.toLowerCase().includes(query) || r.id.toLowerCase().includes(query) || (r.kind === 'unit' && r.role.toLowerCase().includes(query)),
+  );
+  if (hits.length === 0) return <p class="muted">Nothing matches "{query}".</p>;
+  return (
+    <div class="codex-search-results" data-testid="codex-results">
+      {hits.slice(0, 20).map((r) => {
+        const faction = rules.factions[r.faction]!;
+        const armor = r.kind === 'unit' ? r.armor : 4;
+        const air = armor === 3;
+        // Counters: other factions' units whose weapon hits this armor for full damage or more.
+        const counters = rules.units
+          .filter((u) => u.faction !== r.faction && u.weapon && (air ? u.weapon.targetsAir : u.weapon.targetsGround))
+          .map((u) => [u, rules.damageMatrix[u.weapon!.type * ARMOR.length + armor]!] as const)
+          .filter(([, pct]) => pct >= 100)
+          .sort((a, b) => b[1] - a[1]);
+        return (
+          <section class="codex-hit">
+            <h3>
+              {r.name} <span class="muted">· {faction.name} {r.kind === 'unit' ? 'unit' : 'building'}</span>
+            </h3>
+            <p>{r.kind === 'unit' ? r.role : r.description}</p>
+            <p>
+              <b>Cost</b> {money(r.cost)} · <b>HP</b> {r.hp} · <b>Armor</b> {ARMOR_LABEL[armor]} (weak to {weakTo(rules, armor).join(', ')})
+              {r.weapon && (
+                <>
+                  {' '}
+                  · <b>Strong vs</b> {strongVs(rules, r.weapon.type).join(', ')}
+                </>
+              )}
+            </p>
+            {counters.length > 0 && (
+              <p>
+                <b>How to beat it:</b>{' '}
+                {rules.factions
+                  .filter((f) => f.index !== r.faction)
+                  .map((f) => {
+                    const own = counters.filter(([u]) => u.faction === f.index).slice(0, 3);
+                    return own.length > 0 ? `${f.name}: ${own.map(([u, pct]) => `${u.name} (${pct}%)`).join(', ')}` : null;
+                  })
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -211,9 +211,20 @@ function recordStats(): void {
   if (sim.tick % STATS_INTERVAL === 0 || sim.world.ended) stats.samples.push({ tick: sim.tick, players: sampleStats(sim.world) });
   if (sim.world.ended && !statsSent) {
     statsSent = true;
-    post({ type: 'stats', stats });
+    post({ type: 'stats', stats: { ...stats, actions: actionCounts() } });
     if (!replayCmds) post({ type: 'final', tick: sim.tick, hash: sim.hash(), winnerTeam: sim.world.winnerTeam });
   }
+}
+/** Orders each player has given so far (played or replayed). */
+function actionCounts(): number[] {
+  const n = new Array<number>(sim?.world.players.length ?? 0).fill(0);
+  const count = (c: ScheduledCommand) => {
+    if (c.player < n.length) n[c.player]!++;
+  };
+  if (replayCmds) {
+    for (const [tick, list] of replayCmds) if (tick <= (sim?.tick ?? 0)) list.forEach(count);
+  } else commandLog.forEach(count);
+  return n;
 }
 let desynced = false;
 /** Multiplayer housekeeping: ping, adapt the input delay, exchange state hashes. */
@@ -248,7 +259,7 @@ function loop(): void {
         if (replayEnd && sim.tick >= replayEnd.tick) {
           const hash = sim.hash();
           post({ type: 'replayEnd', tick: sim.tick, ok: hash === replayEnd.hash });
-          if (stats) post({ type: 'stats', stats: { ...stats, samples: [...stats.samples, { tick: sim.tick, players: sampleStats(sim.world) }] } });
+          if (stats) post({ type: 'stats', stats: { ...stats, actions: actionCounts(), samples: [...stats.samples, { tick: sim.tick, players: sampleStats(sim.world) }] } });
           replayEnd = null;
           paused = true;
           break;
@@ -360,7 +371,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       } else liveUntil = msg.until;
       return;
     case 'requestStats':
-      if (sim && stats) post({ type: 'stats', stats: { ...stats, samples: [...stats.samples, { tick: sim.tick, players: sampleStats(sim.world) }] } });
+      if (sim && stats) post({ type: 'stats', stats: { ...stats, actions: actionCounts(), samples: [...stats.samples, { tick: sim.tick, players: sampleStats(sim.world) }] } });
       return;
     case 'saveReplay': {
       if (!sim || !scenario) return;

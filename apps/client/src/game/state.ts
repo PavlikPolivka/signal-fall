@@ -131,6 +131,9 @@ export class ClientState {
   menuOpen = false;
   codexOpen = false;
   alerts: Alert[] = [];
+  /** The last 20 match events (attacks, losses, completions), newest last, for the event log. */
+  log: (Alert & { tick: number })[] = [];
+  logOpen = false;
   /** Every command sent, newest last (for UI feedback and tests). */
   sent: Command[] = [];
   /** Totals ever pushed to `sent` / `alerts` (the arrays are trimmed), for consumers that track new entries. */
@@ -311,6 +314,8 @@ export class ClientState {
     this.alerts.push({ kind, text, x, y, time: now });
     this.alertTotal++;
     if (this.alerts.length > 5) this.alerts.shift();
+    this.log.push({ kind, text, x, y, time: now, tick: this.cur?.tick ?? 0 });
+    if (this.log.length > 20) this.log.shift();
     this.changed();
   }
 

@@ -152,6 +152,8 @@ export interface MatchStats {
   interval: number;
   players: { faction: number; team: number }[];
   samples: { tick: number; players: StatPoint[] }[];
+  /** Orders given per player over the match (people only; the built-in AI's are not logged). */
+  actions?: number[];
 }
 
 export const STATS_INTERVAL = 200;

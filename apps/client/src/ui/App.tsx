@@ -15,6 +15,7 @@ import { money, roleName, roleNames } from '../game/names';
 import { Credits } from './Credits';
 import { MatchReport } from './MatchReport';
 import type { GameAudio } from '../audio/audio';
+import { FACTION_TIPS, GENERAL_TIPS } from './tips';
 
 const FX = 1024;
 
@@ -58,6 +59,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
           }}
         />
       )}
+      {!state.ready && <Loading state={state} />}
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
       {state.replay && <ReplayBar state={state} />}
@@ -107,6 +109,20 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
       <span class={`alert ${fresh ? 'on' : ''} ${alert?.kind ?? ''}`} data-testid="alert">
         {fresh ? alert.text : ''}
       </span>
+      {state.log.length > 0 && (
+        <button
+          class={`log-btn ${state.logOpen ? 'active' : ''}`}
+          data-testid="log-btn"
+          title="Recent events: click one to look (Space jumps to the latest)"
+          onClick={() => {
+            state.logOpen = !state.logOpen;
+            state.changed();
+          }}
+        >
+          Log {state.log.length}
+        </button>
+      )}
+      {state.logOpen && <EventLog state={state} input={input} />}
       {state.net && (
         <span class="net-badge" data-testid="net-badge" title="Round trip and input delay">
           ping {state.net.rtt >= 0 ? `${Math.round(state.net.rtt)} ms` : '…'} · delay {state.net.delayTurns}
@@ -120,6 +136,29 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
         Menu <kbd>`</kbd>
       </button>
     </header>
+  );
+}
+
+/** The last 20 match events, newest first; clicking one with a place looks there. */
+function EventLog({ state, input }: { state: ClientState; input: Input }) {
+  const time = (t: number) => `${Math.floor(t / 1200)}:${String(Math.floor(t / 20) % 60).padStart(2, '0')}`;
+  return (
+    <div class="event-log" data-testid="event-log">
+      {[...state.log].reverse().map((a) => (
+        <button
+          class={a.kind}
+          disabled={a.x < 0}
+          onClick={() => {
+            input.lookAt(a.x, a.y);
+            state.logOpen = false;
+            state.changed();
+          }}
+        >
+          <span>{time(a.tick)}</span>
+          {a.text}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -395,6 +434,9 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
       }
       ctx.setTransform(scale, scale * 0.5, -scale, scale * 0.5, h * scale, SIZE * 0.25);
       ctx.drawImage(base, 0, 0);
+      // Echo crystals, so fields can be read from the minimap.
+      ctx.fillStyle = 'rgba(62,230,255,0.55)';
+      for (let i = 0; i < state.echo.length; i++) if (state.echo[i]! > 0) ctx.fillRect(i % w, Math.floor(i / w), 1, 1);
       if (state.fog) {
         for (let i = 0; i < state.fog.length; i++) {
           const f = state.fog[i]!;
@@ -409,9 +451,24 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
           const o = cur.ent(i);
           const handle = cur.get(o, E.handle);
           if (!renderer.visibleEntity(handle)) continue;
-          ctx.fillStyle = hex(TEAM_COLORS[cur.get(o, E.owner) % TEAM_COLORS.length]!);
-          const size = cur.get(o, E.kind) === KIND.structure ? 2.5 : 1.4;
-          ctx.fillRect(cur.get(o, E.x) / FX - size / 2, cur.get(o, E.y) / FX - size / 2, size, size);
+          const color = hex(TEAM_COLORS[cur.get(o, E.owner) % TEAM_COLORS.length]!);
+          const x = cur.get(o, E.x) / FX;
+          const y = cur.get(o, E.y) / FX;
+          const kind = cur.get(o, E.kind);
+          if (kind === KIND.structure) {
+            // Buildings: their footprint as an outlined square.
+            const r = state.rules.structures[cur.get(o, E.type)]!;
+            ctx.fillStyle = '#05070a';
+            ctx.fillRect(x - r.footprintW / 2 - 0.5, y - r.footprintH / 2 - 0.5, r.footprintW + 1, r.footprintH + 1);
+            ctx.fillStyle = color;
+            ctx.fillRect(x - r.footprintW / 2, y - r.footprintH / 2, r.footprintW, r.footprintH);
+          } else if (kind === KIND.unit) {
+            // Units: dots sized by class (infantry small, heavy vehicles big).
+            const r = state.rules.units[cur.get(o, E.type)]!;
+            const size = r.isAir ? 1.8 : r.armor === 0 ? 1.1 : r.armor === 2 ? 2.2 : 1.6;
+            ctx.fillStyle = color;
+            ctx.fillRect(x - size / 2, y - size / 2, size, size);
+          }
         }
       }
       // Attack pings: red rings where own units/buildings were recently hit.
@@ -558,6 +615,7 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
               title={ability ? ability.title : c.label}
               data-testid={c.action === 'ability' ? 'ability' : undefined}
             >
+              {ability && ability.cooling > 0 && <i class="cooldown" style={{ width: `${ability.cooling * 100}%` }} />}
               {label}
               <kbd>{chordLabel(c.key)}</kbd>
             </button>
@@ -610,9 +668,10 @@ function PowerButton({ state, input }: { state: ClientState; input: Input }) {
 }
 
 /** Label for the ability button: the selection's ability and its shortest cooldown. */
-function abilityInfo(state: ClientState): { label: string; title: string } | null {
+function abilityInfo(state: ClientState): { label: string; title: string; cooling: number } | null {
   let kind: string | null = null;
   let left = Infinity;
+  let full = 1;
   for (const h of state.selectedUnits()) {
     const rule = state.ruleOf(h);
     if (rule.kind !== 'unit') continue;
@@ -620,10 +679,11 @@ function abilityInfo(state: ClientState): { label: string; title: string } | nul
     if (!a) continue;
     kind ??= a.kind;
     left = Math.min(left, state.field(h, E.abilityLeft));
+    if ('cooldown' in a) full = Math.max(full, a.cooldown);
   }
   if (!kind) return null;
   const [name, title] = ABILITY_NAMES[kind]!;
-  return { label: left > 0 ? `${name} ${Math.ceil(left / 20)}s` : name, title };
+  return { label: left > 0 ? `${name} ${Math.ceil(left / 20)}s` : name, title, cooling: left > 0 ? Math.min(1, left / full) : 0 };
 }
 
 /** Control groups 1–9 and 0: click to select, Ctrl+click to assign the current selection. */
@@ -633,6 +693,11 @@ function GroupBar({ state }: { state: ClientState }) {
     <div class="groups" data-testid="groups" title="Ctrl+1–9 assigns · 1–9 selects · double-tap jumps">
       {order.map((d) => {
         const g = state.controlGroups[d]!;
+        // The group's most common type stands for it.
+        const tally = new Map<number, number>();
+        for (const h of g) if (state.isUnit(h)) tally.set(state.field(h, E.type), (tally.get(state.field(h, E.type)) ?? 0) + 1);
+        const main = [...tally].sort((a, b) => b[1] - a[1])[0]?.[0];
+        const rule = main !== undefined ? state.rules.units[main]! : null;
         return (
           <button
             class={g.length > 0 ? 'has' : ''}
@@ -645,6 +710,7 @@ function GroupBar({ state }: { state: ClientState }) {
             }}
           >
             <b>{d}</b>
+            {rule && <Icon state={state} faction={state.rules.factions[rule.faction]!.id} id={artId(rule)} color={TEAM_COLORS[state.localPlayer % TEAM_COLORS.length]!} />}
             <span>{g.length > 0 ? g.length : ''}</span>
           </button>
         );
@@ -683,6 +749,8 @@ function HarvestModeButton({ state, input }: { state: ClientState; input: Input 
   );
 }
 
+const RANK_NAMES = ['Veteran', 'Elite', 'Heroic'];
+
 function SelectedOne({ state, h }: { state: ClientState; h: number }) {
   const rule = state.ruleOf(h);
   const hp = state.field(h, E.hp);
@@ -699,6 +767,7 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
       <div>
         <div class={`title ${faction.monospaceNames ? 'mono' : ''}`}>
           {rule.name} {'★'.repeat(rank)}
+          {rank > 0 && <span class="rank-name"> {RANK_NAMES[rank - 1]}</span>}
         </div>
         <div class="bar">
           <i style={{ width: `${(hp / maxHp) * 100}%` }} />
@@ -1017,6 +1086,68 @@ function EndScreen({ state }: { state: ClientState }) {
   );
 }
 
+/** While the map generates: key art, the factions in this match and a tip. */
+function Loading({ state }: { state: ClientState }) {
+  const [tip] = useState(() => {
+    const faction = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]?.id ?? 'holdout';
+    const pool = [...GENERAL_TIPS, ...(FACTION_TIPS[faction] ?? [])];
+    return pool[Math.floor(Math.random() * pool.length)]!;
+  });
+  const names = state.players.map((p) => state.rules.factions[p.faction]?.name).filter(Boolean);
+  return (
+    <div class="loading" data-testid="loading" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}assets/ui/keyart.jpg)` }}>
+      <div class="loading-box">
+        <h2>{names.length > 0 ? names.join(' vs ') : 'Preparing the battlefield'}</h2>
+        <p class="muted">Generating the map…</p>
+        <p class="loading-tip">
+          <b>Tip:</b> {tip}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** Pause menu side panel: how to win, tips for your faction and the main keys. */
+function Briefing({ state }: { state: ClientState }) {
+  const faction = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]!;
+  return (
+    <div class="menu briefing" data-testid="briefing">
+      <h3>Objective</h3>
+      <p>Destroy every enemy building. Units left alone don't count.</p>
+      <h3>{faction.name}</h3>
+      <ul>
+        {(FACTION_TIPS[faction.id] ?? []).map((t) => (
+          <li>{t}</li>
+        ))}
+      </ul>
+      <h3>Keys</h3>
+      <table class="keys-glance">
+        <tbody>
+          {[
+            ['B / N', 'Build / defense, then a letter'],
+            ['I / V / Y', 'Infantry / vehicles / air, then letters'],
+            ['Click ground', 'Attack-move the selection'],
+            ['M, P, G', 'Move, patrol, guard, then click'],
+            ['F', 'Unit ability'],
+            ['Q', 'Support power'],
+            ['Ctrl+1–9', 'Make a control group'],
+            ['Space', 'Jump to alerts'],
+            ['Alt', 'Health bars and ranges'],
+          ].map(([k, v]) => (
+            <tr>
+              <td>
+                <kbd>{k}</kbd>
+              </td>
+              <td>{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="muted">The Codex has the full keymap.</p>
+    </div>
+  );
+}
+
 function Menu({ state, input, audio }: { state: ClientState; input: Input; audio: GameAudio }) {
   const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
   const [confirmSurrender, setConfirmSurrender] = useState(false);
@@ -1046,6 +1177,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
   };
   return (
     <div class="menu-overlay" data-testid="menu">
+      <div class="menu-pair">
       <div class="menu">
         <h2>{state.multiplayer ? 'Menu' : 'Paused'}</h2>
         <button onClick={() => input.toggleMenu()}>Resume</button>
@@ -1182,6 +1314,8 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             Surrender
           </button>
         )}
+      </div>
+      {!state.replay && !state.spectator && <Briefing state={state} />}
       </div>
     </div>
   );
