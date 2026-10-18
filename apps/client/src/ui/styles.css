@@ -2275,3 +2275,29 @@ table.md-table td {
   padding: 3px 0;
   font-size: 13px;
 }
+.keys-menu {
+  width: 520px;
+}
+.keys-menu h3 {
+  margin: 10px 0 4px;
+  font-size: 14px;
+  color: var(--accent);
+}
+.keys-menu table {
+  width: 100%;
+}
+.keys-menu td:first-child {
+  font-size: 13px;
+}
+.key-btn {
+  min-width: 140px;
+  padding: 2px 8px;
+  font: 500 12px var(--mono);
+}
+.key-btn.custom {
+  border-color: var(--accent);
+}
+.key-btn.active {
+  color: #0b0d10;
+  background: var(--accent);
+}

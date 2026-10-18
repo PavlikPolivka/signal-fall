@@ -77,3 +77,17 @@ export function chordLabel(s: string): string {
     .replace(/^Arrow/, '')
     .replace('Escape', 'Esc');
 }
+
+/** The keymap with the player's own bindings (action -> chords) laid over the defaults. */
+export function withOverrides(keymap: Keymap, overrides: Record<string, string[]>): Keymap {
+  const out = { ...keymap, global: { ...keymap.global }, units: { ...keymap.units }, base: { ...keymap.base } };
+  for (const ctx of ['global', 'units', 'base'] as const)
+    for (const action of Object.keys(out[ctx])) if (overrides[action]?.length) out[ctx][action] = overrides[action];
+  return out;
+}
+
+/** The chord a key press makes ("Ctrl+KeyQ"), or null for a lone modifier. */
+export function chordOf(e: KeyLike): string | null {
+  if (/^(Control|Shift|Alt|Meta)(Left|Right)$/.test(e.code)) return null;
+  return [e.ctrlKey || e.metaKey ? 'Ctrl' : '', e.shiftKey ? 'Shift' : '', e.altKey ? 'Alt' : '', e.code].filter(Boolean).join('+');
+}

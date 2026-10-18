@@ -32,3 +32,34 @@ test('settings persist across reloads', async ({ page }) => {
   const settings = await page.evaluate(() => (window as unknown as Win).__signalFall.state.settings);
   expect(settings).toMatchObject({ effects: 'reduced', scrollSpeed: 1.5 });
 });
+
+test('a key can be rebound in the menu and works in game', async ({ page }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type W = { __signalFall: any };
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
+  await page.keyboard.press('Backquote');
+  await page.click('[data-testid=menu-keys]');
+  await page.click('[data-action=stop]');
+  await page.keyboard.press('KeyK');
+  await expect(page.locator('[data-action=stop]')).toHaveText('K');
+  // A clash is refused.
+  await page.click('[data-action=hold]');
+  await page.keyboard.press('KeyK');
+  await expect(page.getByTestId('keys')).toContainText('already does');
+  await page.keyboard.press('Escape');
+  await page.getByText('Done').click();
+  await page.keyboard.press('Backquote');
+  await page.evaluate(() => {
+    const s = (window as unknown as W).__signalFall.state;
+    const out: number[] = [];
+    for (let i = 0; i < s.cur.entityCount; i++) {
+      const h = s.cur.get(s.cur.ent(i), 0);
+      if (s.isOwn(h) && s.isUnit(h)) out.push(h);
+    }
+    s.select(out);
+  });
+  await page.keyboard.press('KeyK');
+  expect(await page.evaluate(() => (window as unknown as W).__signalFall.state.sent.at(-1)?.type)).toBe('stop');
+  await page.evaluate(() => localStorage.removeItem('signalfall.settings'));
+});

@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-18 18:43 UTC
+
+- **Formation move:** with several units selected, right-drag a line on the ground; they spread out evenly along it, each taking the spot nearest its place in line.
+- **Rebind keys:** **Keys** in the menu lists every command; click one and press its new key (Ctrl, Shift and Alt combinations work). Clashes are refused, and **Reset to defaults** undoes it all. The Codex shows your keys.
+
 ## 2026-10-18 18:40 UTC
 
 - **Faction music:** the score plays in your faction's style: a gritty minor march for the Holdout, cold exact tones for Halcyon, slow unresolved chords for the Choir. It still swells with the fighting.

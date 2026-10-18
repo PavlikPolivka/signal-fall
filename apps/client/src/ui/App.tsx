@@ -5,7 +5,8 @@ import { E, H, P } from '../protocol';
 import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
-import { chordLabel } from '../input/keymap';
+import { chordLabel, chordOf, withOverrides } from '../input/keymap';
+import { ACTION_LABEL } from './Codex';
 import { GAME_SPEEDS, STANCE_NAMES } from '../input/input';
 import { EntityCard, ItemCard } from './InfoCard';
 import { Codex } from './Codex';
@@ -1091,6 +1092,102 @@ function EndScreen({ state }: { state: ClientState }) {
   );
 }
 
+/**
+ * Rebind keys: click an action, press the new key (with Ctrl, Shift or Alt if you like).
+ * Number and F-key actions (control groups, camera spots) keep their keys.
+ */
+function KeyBindings({ state, onClose }: { state: ClientState; onClose: () => void }) {
+  const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
+  const [waiting, setWaiting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const map = withOverrides(state.rules.keymap, state.settings.keys);
+  useEffect(() => {
+    if (!waiting) return;
+    const onKey = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.code === 'Escape') return setWaiting(null);
+      const chord = chordOf(e);
+      if (!chord) return;
+      // The same chord may not do two things where both apply (global keys apply everywhere).
+      const ctxOf = (a: string) => (['global', 'units', 'base'] as const).find((c) => a in map[c])!;
+      const mine = ctxOf(waiting);
+      const clash = (['global', 'units', 'base'] as const)
+        .filter((c) => c === mine || c === 'global' || mine === 'global')
+        .flatMap((c) => Object.entries(map[c]))
+        .find(([a, chords]) => a !== waiting && chords.includes(chord));
+      if (clash) {
+        setError(`${chordLabel(chord)} already does "${ACTION_LABEL[clash[0]] ?? clash[0]}"`);
+        return;
+      }
+      state.settings.keys = { ...state.settings.keys, [waiting]: [chord] };
+      state.applySettings();
+      setError(null);
+      setWaiting(null);
+    };
+    window.addEventListener('keydown', onKey, { capture: true });
+    return () => window.removeEventListener('keydown', onKey, { capture: true });
+  }, [waiting]);
+  return (
+    <div class="menu-overlay" data-testid="keys">
+      <div class="menu keys-menu">
+        <h2>Keys</h2>
+        <p class="muted">Click an action, then press its new key. Esc cancels.</p>
+        {error && <p class="bad">{error}</p>}
+        {(
+          [
+            ['global', 'Anytime'],
+            ['units', 'With units selected'],
+            ['base', 'Base and production'],
+          ] as const
+        ).map(([ctx, label]) => (
+          <section>
+            <h3>{label}</h3>
+            <table>
+              <tbody>
+                {Object.entries(map[ctx]).map(([action, chords]) => {
+                  const fixed = chords.some((c) => c.includes('#'));
+                  return (
+                    <tr>
+                      <td>{ACTION_LABEL[action] ?? action}</td>
+                      <td>
+                        <button
+                          class={`key-btn ${waiting === action ? 'active' : ''} ${state.settings.keys[action] ? 'custom' : ''}`}
+                          disabled={fixed}
+                          data-action={action}
+                          onClick={() => {
+                            setError(null);
+                            setWaiting(action);
+                          }}
+                        >
+                          {waiting === action ? 'Press a key…' : chords.map((c) => chordLabel(c)).join(' / ')}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        ))}
+        <div class="confirm-row">
+          <button
+            data-testid="keys-reset"
+            onClick={() => {
+              state.settings.keys = {};
+              state.applySettings();
+              force(undefined);
+            }}
+          >
+            Reset to defaults
+          </button>
+          <button onClick={onClose}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** While the map generates: key art, the factions in this match and a tip. */
 function Loading({ state }: { state: ClientState }) {
   const [tip] = useState(() => {
@@ -1156,6 +1253,8 @@ function Briefing({ state }: { state: ClientState }) {
 function Menu({ state, input, audio }: { state: ClientState; input: Input; audio: GameAudio }) {
   const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
   const [confirmSurrender, setConfirmSurrender] = useState(false);
+  const [keysOpen, setKeysOpen] = useState(false);
+  if (keysOpen) return <KeyBindings state={state} onClose={() => setKeysOpen(false)} />;
   const slider = (label: string, kind: 'music' | 'sfx' | 'voice') => (
     <label class="slider">
       {label}
@@ -1333,6 +1432,9 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             </button>
           ))}
         </div>
+        <button data-testid="menu-keys" onClick={() => setKeysOpen(true)}>
+          Keys
+        </button>
         <button
           data-testid="menu-credits"
           onClick={() => {

@@ -3,7 +3,7 @@ import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E } from '../protocol';
 import type { ClientState, Mode } from '../game/state';
 import type { Renderer } from '../render/renderer';
-import { bindings, matches, type Binding, type Context } from './keymap';
+import { bindings, matches, withOverrides, type Binding, type Context } from './keymap';
 import { roleName, roleNames } from '../game/names';
 
 /** Production tabs that stay open for several hotkeys in a row. */
@@ -71,7 +71,7 @@ const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability'
  * tests share the same code path.
  */
 export class Input {
-  private readonly bindings: Binding[];
+  private bindings: Binding[];
   private held = new Set<string>();
   private mouse = { x: -1, y: -1, inside: false };
   /** Direction the cursor left the window through (keeps scrolling until it returns), or null. */
@@ -90,7 +90,7 @@ export class Input {
     private readonly renderer: Renderer,
     private readonly canvas: HTMLCanvasElement,
   ) {
-    this.bindings = bindings(state.rules.keymap);
+    this.bindings = bindings(withOverrides(state.rules.keymap, state.settings.keys));
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
     window.addEventListener('keyup', (e) => {
       this.held.delete(e.code);
@@ -422,6 +422,11 @@ export class Input {
     else s.warn(`${power.name} needs ${roleName(s.rules, s.players[s.localPlayer]!.faction, power.requires)} and power`);
   }
 
+  /** Pick up changed key bindings (settings). */
+  reloadBindings(): void {
+    this.bindings = bindings(withOverrides(this.state.rules.keymap, this.state.settings.keys));
+  }
+
   /** Cursor set for the local player's faction (called once the match is known). */
   useFactionCursors(): void {
     const s = this.state;
@@ -457,6 +462,11 @@ export class Input {
       return;
     }
     if (e.button === 2) {
+      // Right-drag with units selected draws a formation line; a plain right-click backs out.
+      if (this.state.selectedUnits().length > 1 && this.state.mode === 'normal' && !this.state.placing) {
+        this.drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, button: 2 };
+        return;
+      }
       this.rightClick(p.x, p.y, e.shiftKey);
       return;
     }
@@ -496,6 +506,7 @@ export class Input {
     this.drag.x1 = p.x;
     this.drag.y1 = p.y;
     if (this.drag.button === 0 && this.dragSize() > 4) this.renderer.drawBox(this.drag);
+    if (this.drag.button === 2) this.renderer.drawLine(this.dragSize() > 12 ? this.drag : null, this.state.selectedUnits().length);
   }
 
   private onPointerUp(e: PointerEvent): void {
@@ -503,6 +514,11 @@ export class Input {
     const d = this.drag;
     this.drag = null;
     this.renderer.drawBox(null);
+    if (d.button === 2) {
+      if (Math.hypot(d.x1 - d.x0, d.y1 - d.y0) > 12) this.formationMove(d, e.shiftKey);
+      else this.rightClick(d.x1, d.y1, e.shiftKey);
+      return;
+    }
     if (d.button !== 0) return;
     if (Math.hypot(d.x1 - d.x0, d.y1 - d.y0) > 4) this.boxSelect(d, e.shiftKey);
     else this.leftClick(d.x1, d.y1, e.shiftKey, e.ctrlKey || e.metaKey);
@@ -603,6 +619,27 @@ export class Input {
       x: Math.round(Math.max(0, Math.min(s.width - 0.01, u)) * FX),
       y: Math.round(Math.max(0, Math.min(s.height - 0.01, v)) * FX),
     };
+  }
+
+  /**
+   * Formation move: spread the selection evenly along a line drawn on the ground. Units are
+   * matched to spots in order along the line, so they don't cross each other's paths.
+   */
+  formationMove(d: { x0: number; y0: number; x1: number; y1: number }, shift: boolean): void {
+    const s = this.state;
+    const units = s.selectedUnits();
+    if (units.length === 0) return;
+    const a = this.simPoint(d.x0, d.y0);
+    const b = this.simPoint(d.x1, d.y1);
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const along = (h: number) => (s.field(h, E.x) - a.x) * dx + (s.field(h, E.y) - a.y) * dy;
+    const sorted = [...units].sort((p, q) => along(p) - along(q));
+    sorted.forEach((h, i) => {
+      const t = sorted.length === 1 ? 0.5 : i / (sorted.length - 1);
+      s.send({ type: 'move', units: [h], x: Math.round(a.x + dx * t), y: Math.round(a.y + dy * t), queue: shift });
+    });
+    this.renderer.ping(d.x1, d.y1, 0x6dff8a);
   }
 
   /** Right click backs out: cancels placement or a targeting mode, otherwise clears the selection. */

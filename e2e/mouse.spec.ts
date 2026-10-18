@@ -44,6 +44,24 @@ test.describe('mouse', () => {
     expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.subgroups().length)).toBe(1);
   });
 
+  test('right-drag spreads the selection along a line', async ({ page }) => {
+    const n = await selectOwn(page);
+    const before = await page.evaluate(() => (window as unknown as Win).__signalFall.state.sentTotal as number);
+    const c = await canvasCenter(page);
+    await page.mouse.move(c.x - 120, c.y);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(c.x, c.y + 20, { steps: 5 });
+    await page.mouse.move(c.x + 120, c.y + 40, { steps: 5 });
+    await page.mouse.up({ button: 'right' });
+    const after = await page.evaluate(() => {
+      const s = (window as unknown as Win).__signalFall.state;
+      return { sent: s.sentTotal as number, last: s.sent[s.sent.length - 1]?.type as string, selected: s.selection.length as number };
+    });
+    expect(after.sent - before).toBe(n);
+    expect(after.last).toBe('move');
+    expect(after.selected).toBe(n);
+  });
+
   test('right-click clears the selection', async ({ page }) => {
     expect(await selectOwn(page)).toBeGreaterThan(0);
     const c = await canvasCenter(page);

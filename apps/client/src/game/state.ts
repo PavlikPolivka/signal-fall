@@ -528,10 +528,12 @@ export interface Settings {
   colorblind: boolean;
   /** Interface size, percent. */
   uiScale: number;
+  /** The player's own key bindings: action -> chords, replacing the default for that action. */
+  keys: Record<string, string[]>;
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, uiScale: 100 };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, uiScale: 100, keys: {} };
 
 export function loadSettings(): Settings {
   try {

@@ -1381,4 +1381,15 @@ export class Renderer {
       .fill({ color: 0x6dff8a, alpha: 0.08 })
       .stroke({ width: 1, color: 0x6dff8a, alpha: 0.8 });
   }
+
+  /** Formation line being drawn (right-drag), with a dot where each unit will stand. */
+  drawLine(line: { x0: number; y0: number; x1: number; y1: number } | null, count = 0): void {
+    this.screen.clear();
+    if (!line) return;
+    this.screen.moveTo(line.x0, line.y0).lineTo(line.x1, line.y1).stroke({ width: 2, color: 0x6dff8a, alpha: 0.8 });
+    for (let i = 0; i < count; i++) {
+      const t = count === 1 ? 0.5 : i / (count - 1);
+      this.screen.circle(line.x0 + (line.x1 - line.x0) * t, line.y0 + (line.y1 - line.y0) * t, 3).fill({ color: 0x6dff8a, alpha: 0.9 });
+    }
+  }
 }

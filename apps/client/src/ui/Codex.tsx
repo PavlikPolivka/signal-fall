@@ -1,7 +1,8 @@
 import { useState } from 'preact/hooks';
 import { ARMOR, DAMAGE, type FactionRule, type Rules, type StructureRule, type UnitRule } from '@signal-fall/data';
 import { CHOIR_ECHO_RANGE, CHOIR_ECHO_REACH, CHOIR_SEED_GROW_PCT, CHOIR_SEED_REACH, CHOIR_SEED_START_PCT } from '@signal-fall/sim';
-import { chordLabel } from '../input/keymap';
+import { chordLabel, withOverrides } from '../input/keymap';
+import { loadSettings } from '../game/state';
 import { money, roleNames } from '../game/names';
 import { FACTION_LORE } from './lore';
 import { BalanceReport } from './Balance';
@@ -602,7 +603,7 @@ function BuildingRules({ rules }: { rules: Rules }) {
   );
 }
 
-const ACTION_LABEL: Record<string, string> = {
+export const ACTION_LABEL: Record<string, string> = {
   panUp: 'Pan up',
   panDown: 'Pan down',
   panLeft: 'Pan left',
@@ -657,6 +658,7 @@ function Controls({ rules }: { rules: Rules }) {
           <li>With units selected: click the ground to attack-move there, click an enemy to attack it.</li>
           <li>With a factory or barracks selected: click the ground to set its rally point.</li>
           <li>Right-click anywhere: deselect (or cancel placing a building / a targeting mode).</li>
+          <li>Right-drag with several units selected: draw a line, and they spread out along it.</li>
           <li>Minimap: drag to pan, right-click to send the selection.</li>
           <li>Hold Shift to queue orders and see the queued path. Mouse at the window edge scrolls; wheel zooms.</li>
         </ul>
@@ -666,7 +668,7 @@ function Controls({ rules }: { rules: Rules }) {
           <h3>{label}</h3>
           <table>
             <tbody>
-              {Object.entries(rules.keymap[ctx]).map(([action, chords]) => (
+              {Object.entries(withOverrides(rules.keymap, loadSettings().keys)[ctx]).map(([action, chords]) => (
                 <tr>
                   <td>{ACTION_LABEL[action] ?? action}</td>
                   <td>

@@ -133,6 +133,7 @@ state.applySettings = () => {
   renderer.weather.enabled = state.settings.effects !== 'reduced';
   renderer.setGraphics(state.settings.graphics);
   setColorblind(state.settings.colorblind);
+  input?.reloadBindings();
   document.documentElement.style.setProperty('--ui-scale', String(state.settings.uiScale / 100));
   state.changed();
 };

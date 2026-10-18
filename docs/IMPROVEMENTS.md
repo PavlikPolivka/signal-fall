@@ -61,7 +61,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 43 ✅ | U | Production tab badges: how many items queued per tab, flashing when a factory sits idle | 4 | S |
 | 44 ✅ | C | Control-group bar: shows each group's main unit and count; double-tap centers | 3 | S |
 | 45 ✅ | C | Camera bookmarks (F1–F4 save with Ctrl, jump with F-key) | 3 | XS |
-| 46 | C | Formation move with right-drag (draw a line, units spread along it) | 3 | M |
+| 46 ✅ | C | Formation move with right-drag (draw a line, units spread along it) | 3 | M |
 | 47 ✅ | U | Minimap: unit dots by size, structures as squares, click-drag to move the camera, right-click to order | 4 | S |
 | 48 ✅ | U | Fog-of-war shows last-seen buildings as ghosts | 4 | S |
 | 49 ✅ | U | Pause menu shows objectives, faction tips and the keymap at a glance | 3 | XS |
@@ -76,7 +76,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 56 | C | Customizable keymap in settings (rebind, grid layout preset QWER) | 3 | M |
+| 56 ✅ | C | Customizable keymap in settings (rebind; a grid preset for production letters is not done: those letters come from each unit's data) | 3 | M |
 | 57 ✅ | C | Edge-scroll speed and camera zoom limits in settings; zoom to cursor | 3 | XS |
 | 58 ✅ | C | Select all of a type across the screen with Ctrl+double-click | 2 | XS |
 | 59 ✅ | C | Waypoint queue shown as lines when Shift is held | 3 | S |
