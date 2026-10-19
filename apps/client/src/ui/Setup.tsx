@@ -227,7 +227,6 @@ export function Setup({
         )}
         {notice && <p class="home-notice">{notice}</p>}
         <SavedAndRecent onReplay={onReplay} />
-        <DailyPanel />
         <div class="home-actions">
           <button class="mp-btn" onClick={() => setCampaign(true)} data-testid="open-campaign">
             Campaign
@@ -238,6 +237,7 @@ export function Setup({
           <button class="mp-btn" onClick={onMultiplayer} data-testid="open-multiplayer">
             Multiplayer
           </button>
+          <DailyPanel />
         </div>
         <nav class="setup-links">
           <button onClick={() => go(`${location.pathname}?tutorial=1`)} data-testid="open-tutorial" title="Learn to play in eight short steps">

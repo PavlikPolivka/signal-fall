@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 21:08 UTC
+
+- **Daily challenge moved:** it is now a main menu button under Multiplayer, with today's matchup on its second line.
+
 ## 2026-10-19 21:06 UTC
 
 - **Campaign targets on the minimap from the start:** objective markers now blink on the minimap even before you build a radar, so you can see where to go from the first second.

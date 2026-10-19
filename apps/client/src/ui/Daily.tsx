@@ -31,16 +31,21 @@ export function DailyBoard({ refresh = 0 }: { refresh?: number }) {
   );
 }
 
-/** Main menu: today's challenge and how it stands. */
+/** Main menu button: today's challenge (the matchup on a second line), and how it stands. */
 export function DailyPanel() {
   const d = dailyChallenge();
   return (
-    <div class="daily" data-testid="daily">
-      <button class="mp-btn" data-testid="open-daily" onClick={() => go(`${location.pathname}?daily=1`)} title="The same match for everyone today: the fastest wins top the board">
+    <>
+      <button
+        class="mp-btn daily-btn"
+        data-testid="open-daily"
+        onClick={() => go(`${location.pathname}?daily=1`)}
+        title="The same match for everyone today: the fastest wins top the board"
+      >
         Daily challenge
+        <small data-testid="daily">{d.label}</small>
       </button>
-      <p class="muted small">{d.label}</p>
       <DailyBoard />
-    </div>
+    </>
   );
 }
