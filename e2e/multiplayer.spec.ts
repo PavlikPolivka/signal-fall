@@ -126,11 +126,18 @@ test('two clients play a networked match over a lossy link without desync', asyn
     await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
   }
   if (online) {
-    await host.waitForTimeout(2000);
-    await host.goto('/play/');
-    await host.click('[data-testid=open-stats]');
-    await expect(host.getByTestId('stats-history')).toContainText('Win');
-    await expect(host.getByTestId('stats-history')).toContainText('rated');
+    // Rated once both clients have reported the result: the guest's report can land a little later.
+    await expect
+      .poll(
+        async () => {
+          await host.goto('/play/');
+          await host.click('[data-testid=open-stats]');
+          await expect(host.getByTestId('stats-history')).toContainText('Win');
+          return (await host.getByTestId('stats-history').textContent()) ?? '';
+        },
+        { timeout: 30_000, intervals: [2000] },
+      )
+      .toMatch(/\brated\b/);
   }
   await hostContext.close();
   if (online) await guestContext.close();
