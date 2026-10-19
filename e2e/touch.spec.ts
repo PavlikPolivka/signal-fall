@@ -16,6 +16,20 @@ async function touch(page: Page, type: 'pointerdown' | 'pointermove' | 'pointeru
   );
 }
 
+/** A quick tap: down and up in one go, so a slow test machine can't stretch it into a long press. */
+async function tap(page: Page, x: number, y: number) {
+  await page.evaluate(
+    ([x, y]) => {
+      const c = document.querySelector('[data-testid=game] canvas')!;
+      const r = c.getBoundingClientRect();
+      const o = { pointerId: 9, pointerType: 'touch', clientX: r.left + x!, clientY: r.top + y!, bubbles: true, button: 0 };
+      c.dispatchEvent(new PointerEvent('pointerdown', o));
+      window.dispatchEvent(new PointerEvent('pointerup', o));
+    },
+    [x, y] as const,
+  );
+}
+
 test('touch: drag pans, tap selects, long press backs out', async ({ page }) => {
   await page.goto('/play/?scenario=sandbox');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
@@ -39,8 +53,7 @@ test('touch: drag pans, tap selects, long press backs out', async ({ page }) => 
     return null;
   });
   expect(at).not.toBeNull();
-  await touch(page, 'pointerdown', at!.x, at!.y);
-  await touch(page, 'pointerup', at!.x, at!.y);
+  await tap(page, at!.x, at!.y);
   expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length)).toBeGreaterThan(0);
   // Long press: deselect.
   await touch(page, 'pointerdown', 300, 300);
