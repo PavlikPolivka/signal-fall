@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 21:46 UTC
+
+- **Campaign, Acts II to IV come alive:** in Divergence, purge squads hunt WREN and an ambush waits halfway to the exit. In The Silent Seed, Halcyon chases WREN on the ground and from the air. In Requiem, both strangers raid you, and at eight minutes the Requiem itself joins your side. In Signal Rise, HALCYON strikes back every few minutes, harder each time. Key places are revealed from the start.
+
 ## 2026-10-19 21:37 UTC
 
 - **Units come alive:** Hornet rotors spin, and Bulldog, Thumper and Flak Track treads crawl while they drive. Hover craft float and bob over their shadows, aircraft sway, wheeled vehicles rumble over rough ground, and the Ironclad lurches with every stride.

@@ -102,3 +102,14 @@ The first version was slow, easy and sometimes broken. What changed:
 - **Measuring.** `CAMPAIGN_RUN=1 pnpm --filter @signal-fall/scenario exec vitest run test/campaign-run.test.ts --silent=false`
   plays every mission with the built-in AI as the player. That AI ignores objectives, so read it as how much
   pressure a mission puts on a base, not as a pass mark.
+
+## Acts II–IV events (2026-10-19)
+
+The last four missions had no scripted events. Now:
+
+- **Divergence:** purge squads leave the core every 70 s (sentries, growing to 6) from 1:30, vectors every 100 s from 3:00, and an ambush of lances and sentries waits halfway; the exit corner is revealed from the start.
+- **The Silent Seed:** Halcyon hunters every minute along WREN's route, Seek drones from 4:00, an ambush at the midpoint; the Holdout base is revealed.
+- **Requiem:** the crater is revealed; Halcyon raids from 4:00 and the Holdout from 5:30, both growing; at 8:00 the Requiem joins you (new line).
+- **Signal Rise:** the HALCYON core is revealed; counterattacks every 4 minutes from 5:00, with Roots from 12:00.
+
+Headless check (AI as the player, Normal campaign difficulty): a Normal AI loses Requiem (5.8 min) and Signal Rise (7.2 min), a Hard AI wins both (6.1, 10.3 min); the escorts fail for the AI because it does not escort WREN.

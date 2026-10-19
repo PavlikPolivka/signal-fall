@@ -361,8 +361,13 @@ export const MISSIONS: MissionSpec[] = [
       { text: 'Get WREN to the far corner of the map', kind: 'reach', area: { ...pct(92, 8), r: 6 }, tag: 'wren' },
     ],
     triggers: [
-      { at: 20, actions: [{ kind: 'spawn', player: 0, unit: 'fork', count: 1, at: s(0, 3, 3), tag: 'wren' }] },
-      { at: 2 * MIN, actions: [{ kind: 'say', line: 0 }] },
+      { at: 20, actions: [{ kind: 'spawn', player: 0, unit: 'fork', count: 1, at: s(0, 3, 3), tag: 'wren' }, { kind: 'reveal', area: { ...pct(92, 8), r: 7 } }] },
+      // Purge squads: sent after WREN from the core, bigger each time.
+      { at: 90 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 90 * 20, every: 70 * 20, until: 10 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 2, grow: 1, max: 6, at: s(1, -5, 5), attack: s(0) }] },
+      { at: 3 * MIN, every: 100 * 20, until: 10 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'vector', count: 1, grow: 1, max: 3, at: s(1, -5, 5), attack: pct(50, 50) }] },
+      // Halfway: they were waiting.
+      { enter: { ...pct(52, 52), r: 12 }, actions: [{ kind: 'spawn', player: 1, unit: 'lance', count: 3, at: pct(66, 38), attack: pct(52, 52) }, { kind: 'spawn', player: 1, unit: 'sentry', count: 3, at: pct(40, 34), attack: pct(52, 52) }] },
       { objective: 1, actions: [{ kind: 'say', line: 1 }] },
     ],
   },
@@ -421,7 +426,7 @@ export const MISSIONS: MissionSpec[] = [
       'The great crater was our cradle. Now two kinds of strangers dig in it.',
       'Take it back from both. Grow your strongest voices: the Requiem walks there.',
     ],
-    lines: [['choir', 'One voice falls silent.']],
+    lines: [['choir', 'One voice falls silent.'], ['choir', 'The Requiem wakes. Walk with it.']],
     map: { seed: 3303, size: 'L', biome: 'crystal', resources: 'rich', terrain: 'normal' },
     seats: [
       { faction: 2, team: 0, start: 'base', credits: 9000 },
@@ -432,7 +437,16 @@ export const MISSIONS: MissionSpec[] = [
       { text: 'Drive Halcyon out', kind: 'destroy', player: 1 },
       { text: 'Drive the Holdout out', kind: 'destroy', player: 2 },
     ],
-    triggers: [{ objective: 0, actions: [{ kind: 'say', line: 0 }] }, { objective: 1, actions: [{ kind: 'say', line: 0 }] }],
+    triggers: [
+      { at: 20, actions: [{ kind: 'reveal', area: { ...pct(50, 50), r: 10 } }] },
+      // Both strangers raid the cradle's new song, more each time.
+      { at: 4 * MIN, every: 3 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'vector', count: 2, grow: 1, max: 5, at: s(1, -6, -6), attack: s(0) }] },
+      { at: 5 * MIN + 600, every: 3 * MIN, actions: [{ kind: 'spawn', player: 2, unit: 'bulldog', count: 2, grow: 1, max: 5, at: s(2, 6, -6), attack: s(0) }, { kind: 'spawn', player: 2, unit: 'grunt', count: 4, grow: 1, max: 8, at: s(2, 6, -6), attack: s(0) }] },
+      // As promised: the Requiem walks.
+      { at: 8 * MIN, actions: [{ kind: 'spawn', player: 0, unit: 'requiem', count: 1, at: s(0, 0, 7) }, { kind: 'say', line: 1 }] },
+      { objective: 0, actions: [{ kind: 'say', line: 0 }] },
+      { objective: 1, actions: [{ kind: 'say', line: 0 }] },
+    ],
   },
   {
     id: 'silent-seed',
@@ -455,8 +469,11 @@ export const MISSIONS: MissionSpec[] = [
       { text: 'Bring WREN to the Holdout base', kind: 'reach', area: { ...s(2), r: 8 }, tag: 'wren' },
     ],
     triggers: [
-      { at: 20, actions: [{ kind: 'spawn', player: 0, unit: 'fork', count: 1, at: s(0, 3, 3), tag: 'wren' }] },
-      { at: 3 * MIN, actions: [{ kind: 'say', line: 0 }] },
+      { at: 20, actions: [{ kind: 'spawn', player: 0, unit: 'fork', count: 1, at: s(0, 3, 3), tag: 'wren' }, { kind: 'reveal', area: { ...s(2), r: 8 } }] },
+      // Halcyon wants WREN back: hunters along the route, then from the air.
+      { at: MIN, every: 60 * 20, until: 12 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 2, grow: 1, max: 6, at: s(1, -5, -5), attack: pct(40, 50) }] },
+      { at: 4 * MIN, every: 90 * 20, until: 12 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'seek', count: 1, grow: 1, max: 3, at: s(1), attack: pct(40, 50) }] },
+      { enter: { ...pct(36, 50), r: 10 }, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'lance', count: 3, at: pct(52, 58), attack: pct(36, 50) }, { kind: 'spawn', player: 1, unit: 'vector', count: 2, at: pct(52, 58), attack: pct(36, 50) }] },
       { objective: 1, actions: [{ kind: 'say', line: 1 }] },
     ],
   },
@@ -480,6 +497,10 @@ export const MISSIONS: MissionSpec[] = [
     ],
     objectives: [{ text: 'Destroy HALCYON before the pulse fires (25:00)', kind: 'destroy', player: 2 }],
     triggers: [
+      { at: 20, actions: [{ kind: 'reveal', area: { ...s(2), r: 9 } }] },
+      // HALCYON hits back at the Holdout, harder each time.
+      { at: 5 * MIN, every: 4 * MIN, until: 23 * MIN, actions: [{ kind: 'spawn', player: 2, unit: 'vector', count: 3, grow: 1, max: 7, at: s(2, -7, -7), attack: s(0) }, { kind: 'spawn', player: 2, unit: 'lance', count: 3, grow: 1, max: 6, at: s(2, -7, -7), attack: s(0) }] },
+      { at: 12 * MIN, every: 4 * MIN, until: 23 * MIN, actions: [{ kind: 'spawn', player: 2, unit: 'root', count: 1, grow: 1, max: 2, at: s(2, -7, -7), attack: s(0) }] },
       { at: 10 * MIN, actions: [{ kind: 'say', line: 0 }] },
       { at: 20 * MIN, actions: [{ kind: 'say', line: 1 }] },
       { at: 25 * MIN, actions: [{ kind: 'lose' }] },

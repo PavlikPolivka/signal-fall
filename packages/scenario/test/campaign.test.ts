@@ -4,6 +4,14 @@ import { MARKER, missionMarkers } from '@signal-fall/sim';
 import { createSim, MISSIONS } from '../src';
 
 describe('campaign', () => {
+  it('every unit a mission spawns exists (an unknown id would silently spawn nothing)', () => {
+    const r = defaultRules();
+    const unknown: string[] = [];
+    for (const m of MISSIONS)
+      for (const t of m.triggers) for (const a of t.actions) if (a.kind === 'spawn' && !r.unitIndex.has(a.unit)) unknown.push(`${m.id}: ${a.unit}`);
+    expect(unknown).toEqual([]);
+  });
+
   it('everything a mission lets you build can actually be built there', () => {
     const r = defaultRules();
     const problems: string[] = [];
