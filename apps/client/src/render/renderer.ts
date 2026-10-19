@@ -1347,8 +1347,35 @@ export class Renderer {
     this.overlay.ellipse(px, py, rx * 0.6, rx * 0.3).stroke({ width: 1, color, alpha: 0.4 * pulse });
   }
 
+  /**
+   * Superweapons: the area under the cursor while targeting, and every strike on its way (seen by
+   * everyone, through fog): a red zone with a ring closing in until impact.
+   */
+  private drawStrikes(): void {
+    const s = this.state;
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 120);
+    const zone = (x: number, y: number, r: number, closing: number) => {
+      const rx = r * (TILE_W / 2) * Math.SQRT2;
+      const px = isoX(x / FX, y / FX);
+      const py = isoY(x / FX, y / FX);
+      this.overlay.ellipse(px, py, rx, rx / 2).fill({ color: 0xff3a2a, alpha: 0.1 + 0.08 * pulse }).stroke({ width: 2, color: 0xff5a3a, alpha: 0.9 });
+      if (closing >= 0) this.overlay.ellipse(px, py, rx * closing, (rx * closing) / 2).stroke({ width: 3, color: 0xffd0a0, alpha: 0.8 });
+      this.overlay.moveTo(px - 10, py).lineTo(px + 10, py).moveTo(px, py - 6).lineTo(px, py + 6).stroke({ width: 2, color: 0xffd0a0, alpha: 0.9 });
+    };
+    for (const st of s.strikes()) {
+      const sw = s.superweaponRule(st.player)?.superweapon;
+      if (sw) zone(st.x, st.y, sw.radius / FX, Math.max(0.05, st.left / sw.delay));
+    }
+    if (s.mode === 'superweapon') {
+      const sw = s.superweaponRule()?.superweapon;
+      const p = this.cursorPoint();
+      if (sw && p) zone(p.x, p.y, sw.radius / FX, -1);
+    }
+  }
+
   private drawGhost(): void {
     this.drawPowerTarget();
+    this.drawStrikes();
     this.drawPlannedSites();
     const ghost = this.placementGhost();
     if (!ghost) return;

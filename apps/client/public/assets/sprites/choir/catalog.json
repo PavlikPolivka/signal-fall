@@ -252,6 +252,17 @@
     1,
     1
    ]
+  },
+  "cadenza": {
+   "kind": "building",
+   "frame": 320,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
   }
  }
 }

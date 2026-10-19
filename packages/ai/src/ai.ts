@@ -11,6 +11,8 @@ import {
   inCoverage,
   nearOwnStructure,
   powerReady,
+  superweaponStatus,
+  costOf,
   AWAKEN_HOME_RANGE,
   idiv,
   teamOf,
@@ -481,6 +483,8 @@ export class AiPlayer implements Brain {
     for (const cmd of abilityOrders(world, this.player, this.home, own.army)) if (!this.act(cmd)) return;
     const power = powerOrder(world, this.player, own.army);
     if (power) this.act(power);
+    const strike = superweaponOrder(world, this.player);
+    if (strike) this.act(strike);
   }
 
   // --- economy ---
@@ -577,6 +581,9 @@ export class AiPlayer implements Brain {
     // Tech is a luxury: only with spare money or once the game has gone long.
     if (this.d.retreat && p.credits < 1500 && world.tick < 8 * MINUTE) return null;
     for (const role of this.profile.later) {
+      // Only AIs that use powers build a superweapon (Easy and Normal would leave it idle), and only
+      // once the match has gone long or money piles up: early on the credits belong in the army.
+      if (role === 'superweapon' && ((!this.d.abilities && !this.directed) || (world.tick < SUPERWEAPON_AFTER && p.credits < 2 * FLOAT_CREDITS))) continue;
       if (this.count(own, role) === 0) return role;
     }
     // Money piling up means production is the bottleneck: another barracks or factory
@@ -1262,4 +1269,36 @@ export function powerOrder(world: World, player: number, army: number[]): Comman
     if (n >= POWER_MIN_TARGETS && (!best || n > best.n)) best = { x: e.x[t]!, y: e.y[t]!, n };
   }
   return best ? { type: 'power', x: best.x, y: best.y } : null;
+}
+
+/** The AI builds its superweapon from this tick on (sooner with money piling up). */
+const SUPERWEAPON_AFTER = 14 * MINUTE;
+
+/** Least value (credits) under the blast worth a superweapon strike. */
+const STRIKE_MIN_VALUE = 2000;
+
+/**
+ * Superweapon for an AI player: once charged, strike the visible spot with the most enemy value
+ * under the blast (structures count double: they can't dodge). Same rules as players.
+ */
+export function superweaponOrder(world: World, player: number): Command | null {
+  if ((world.tick + player) % 20 !== 0 || superweaponStatus(world, player) !== 0) return null;
+  const f = world.rules.factions[world.players[player]!.faction]!;
+  const sw = f.structures.map((i) => world.rules.structures[i]!.superweapon).find((x) => x !== null);
+  if (!sw) return null;
+  const e = world.entities;
+  const team = world.players[player]!.team;
+  let best: { x: number; y: number; v: number } | null = null;
+  for (let c = 0; c < e.high; c++) {
+    if (e.alive[c] !== 1 || e.kind[c] !== KIND.structure || teamOf(world, c) === team || !visibleTo(world, player, c)) continue;
+    let v = 0;
+    world.spatial.query(e.x[c]!, e.y[c]!, sw.radius, (o) => {
+      if (e.alive[o] !== 1 || (e.kind[o] !== KIND.unit && e.kind[o] !== KIND.structure) || !visibleTo(world, player, o)) return;
+      if (ilength(e.x[o]! - e.x[c]!, e.y[o]! - e.y[c]!) > sw.radius) return;
+      const worth = costOf(world, o) * (e.kind[o] === KIND.structure ? 2 : 1);
+      v += teamOf(world, o) === team ? 0 : worth;
+    });
+    if (v >= STRIKE_MIN_VALUE && (!best || v > best.v)) best = { x: e.x[c]!, y: e.y[c]!, v };
+  }
+  return best ? { type: 'superweapon', x: best.x, y: best.y } : null;
 }

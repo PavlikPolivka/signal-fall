@@ -15,6 +15,7 @@ const ROLE_FALLBACK: Record<string, string> = {
   antiAir: 'Anti-air',
   heavyDefense: 'Heavy defense',
   wall: 'Wall',
+  superweapon: 'Superweapon',
 };
 
 /** The name of a faction's building that fills a role (Holdout "barracks" = Bunkhouse, Halcyon = spawn, Choir = Loft). */

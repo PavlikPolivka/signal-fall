@@ -70,6 +70,9 @@ export interface PlayerState {
   research: { item: number; progress: number; spent: number };
   /** Tick from which the faction's support power can be cast again. */
   powerReady: number;
+  /** Superweapon: ticks charged while one stands, and the pending strike (at = -1 none). */
+  superCharge: number;
+  strike: { x: number; y: number; at: number };
 }
 
 export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
@@ -111,7 +114,7 @@ export interface Projectile {
  * credits: a = amount, b = 1 recompile / 2 salvage / 3 crate (a < 0: crate kind -a), owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
-export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6, mission: 7 } as const;
+export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6, mission: 7, superweapon: 8 } as const;
 /** Why credits were gained (FX_EVENT.credits b). */
 export const CREDIT_REASON = { recompile: 1, salvage: 2, crate: 3 } as const;
 export const FX_STRIDE = 8;
@@ -248,6 +251,8 @@ export function createWorld(o: WorldOptions): World {
       upgrades: o.rules.upgrades.map(() => 0),
       research: { item: -1, progress: 0, spent: 0 },
       powerReady: 0,
+      superCharge: 0,
+      strike: { x: 0, y: 0, at: -1 },
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -304,6 +309,10 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.pushArray(p.upgrades);
     w.push(p.research.item);
     w.push(p.powerReady);
+    w.push(p.superCharge);
+    w.push(p.strike.x);
+    w.push(p.strike.y);
+    w.push(p.strike.at);
     w.push(p.research.progress);
     w.push(p.research.spent);
     for (const b of p.build) {

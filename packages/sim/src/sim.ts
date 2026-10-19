@@ -12,6 +12,7 @@ import { cratesSystem } from './systems/crates';
 import { survivalSystem } from './systems/survival';
 import { missionSystem } from './systems/mission';
 import { garrisonSystem } from './systems/garrison';
+import { superweaponSystem } from './systems/superweapon';
 import { abilitySystem, chordRegrowSystem, coverageSystem, researchSystem, sustainSystem } from './systems/faction';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
 import { autoPlaceSystem } from './orders';
@@ -85,6 +86,7 @@ export class Sim {
       missionSystem(w);
       weaponSystem(w);
       projectileSystem(w);
+      superweaponSystem(w);
       deathSystem(w);
       shieldSystem(w);
       sustainSystem(w);

@@ -637,4 +637,6 @@ BUILDINGS = {
     "flak_nest": dict(footprint=(2, 2), frame=160, build=flak_nest),
     "bastion": dict(footprint=(2, 2), frame=176, build=bastion),
     "barricade": dict(footprint=(1, 1), frame=80, build=barricade),
+    # Superweapon; the Meshy model stands in (the procedural fallback reuses the Foundry).
+    "long_tom": dict(footprint=(3, 3), frame=288, build=foundry),
 }

@@ -584,4 +584,6 @@ BUILDINGS = {
     "descant": dict(footprint=(2, 2), frame=224, build=grown(descant, 1.2)),
     "fortissimo": dict(footprint=(2, 2), frame=224, build=grown(fortissimo, 1.2)),
     "fermata": dict(footprint=(1, 1), frame=96, build=fermata),
+    # Superweapon; the Meshy model stands in (the procedural fallback reuses the Conservatory).
+    "cadenza": dict(footprint=(3, 3), frame=320, build=grown(conservatory, 1.2)),
 }

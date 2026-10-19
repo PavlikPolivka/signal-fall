@@ -1,7 +1,7 @@
 {
   "faction": "halcyon",
   "opening": ["power", "refinery", "barracks", "refinery", "power", "factory", "radar", "special"],
-  "later": ["power", "special", "tech", "airfield", "power"],
+  "later": ["power", "special", "tech", "airfield", "power", "superweapon"],
   "defenses": ["defense", "defense", "antiAir", "heavyDefense"],
   "harvestersPerRefinery": 2,
   "maxRefineries": 4,

@@ -262,6 +262,17 @@
     1,
     1
    ]
+  },
+  "long_tom": {
+   "kind": "building",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
   }
  }
 }

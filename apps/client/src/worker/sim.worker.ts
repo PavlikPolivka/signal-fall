@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
-import { KIND, Sim, inCoverage, powerStatus, type ScheduledCommand, type World } from '@signal-fall/sim';
+import { KIND, Sim, inCoverage, powerStatus, superweaponStatus, type ScheduledCommand, type World } from '@signal-fall/sim';
 import { STATS_INTERVAL, commandsByTick, createSim, sampleStats, scheduleCommand, type MatchStats, type Replay } from '../game/scenario';
 import {
   E,
@@ -11,6 +11,10 @@ import {
   ORDER_CODE,
   P,
   PLAYER_STRIDE,
+  P_SUPER,
+  P_STRIKE_X,
+  P_STRIKE_Y,
+  P_STRIKE_LEFT,
   POINT_STRIDE,
   CRATE_STRIDE,
   P_HARVESTED,
@@ -91,6 +95,10 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     a[off + P_POWER] = powerStatus(world, p.index);
     a[off + P_HARVESTED] = p.harvested;
     a[off + P_HILL] = world.hillScore[p.team] ?? 0;
+    a[off + P_SUPER] = superweaponStatus(world, p.index);
+    a[off + P_STRIKE_X] = p.strike.x;
+    a[off + P_STRIKE_Y] = p.strike.y;
+    a[off + P_STRIKE_LEFT] = p.strike.at >= 0 ? p.strike.at - world.tick : -1;
     off += PLAYER_STRIDE;
   }
   for (let s = 0; s < e.high; s++) {

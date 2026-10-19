@@ -9,6 +9,7 @@ import { removeEntity, spawnStructure } from './spawn';
 import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
 import { BUILD_CATEGORY_INDEX, type World } from './world';
 import { canResearch, useAbility, usePower } from './systems/faction';
+import { fireSuperweapon } from './systems/superweapon';
 import { sanitizeDirectives } from './directives';
 
 /** Groups of at least this many units share a flow field instead of running A* each. */
@@ -159,6 +160,9 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
     case 'power':
       usePower(world, c.player, cmd.x, cmd.y);
       return;
+    case 'superweapon':
+      fireSuperweapon(world, c.player, cmd.x, cmd.y);
+      return;
     case 'ability': {
       const units = ownedUnits(world, c.player, cmd.units);
       if (cmd.x !== undefined && cmd.y !== undefined && units.length > 0) {
@@ -294,7 +298,10 @@ function startBuild(world: World, player: number, category: 'structures' | 'defe
   if (!rule || rule.category !== category || rule.faction !== p.faction) return;
   const q = p.build[BUILD_CATEGORY_INDEX[category]]!;
   if (q.item >= 0) return; // one at a time per category
-  if (!requirementsMet(computeFacts(world)[player]!, rule.requires)) return;
+  const facts = computeFacts(world)[player]!;
+  if (!requirementsMet(facts, rule.requires)) return;
+  // One superweapon per player.
+  if (rule.superweapon && (facts.roles.get(rule.role) ?? 0) > 0) return;
   q.item = item;
   q.progress = 0;
   q.spent = 0;

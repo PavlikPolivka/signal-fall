@@ -163,6 +163,7 @@ export class Effects {
       else if (kind === FX_EVENT.ability) this.ability(a, x, y, events[i + 6]!, events[i + 7]!);
       else if (kind === FX_EVENT.credits && this.isLocal(events[i + 3]!)) this.credits(a, x, y);
       else if (kind === FX_EVENT.power) this.power(a, b, x, y);
+      else if (kind === FX_EVENT.superweapon && a === 1) this.superStrike(b, x, y, events[i + 6]!);
     }
   }
 
@@ -412,6 +413,26 @@ export class Effects {
       const a = (k / 16) * Math.PI * 2;
       this.spawn(this.glow, px + Math.cos(a) * r * 0.5, py + Math.sin(a) * r * 0.25, 4, { life: 0.5, scale0: 0.35, scale1: 0.1, tint, alpha: 0.6 });
     }
+  }
+
+  /** A superweapon landing: fireballs across the zone (shells), or a flash of energy for energy strikes. */
+  private superStrike(radius: number, x: number, y: number, type: number): void {
+    const r = radius / FX;
+    const energy = type === 2;
+    const n = this.reduced ? 6 : 14;
+    for (let k = 0; k < n; k++) {
+      const a = Math.random() * Math.PI * 2;
+      const d = Math.sqrt(Math.random()) * r;
+      const tx = x / FX + Math.cos(a) * d;
+      const ty = y / FX + Math.sin(a) * d;
+      const px = isoX(tx, ty);
+      const py = isoY(tx, ty);
+      if (energy) this.spawn(this.hot, px, py, 10, { life: 0.5, scale0: 0.6, scale1: 2.4, tint: 0x9ff6ff, delay: k * 0.03 });
+      else this.explosion(px, py, 1.6, 1.5, k * 0.12);
+    }
+    const cx = isoX(x / FX, y / FX);
+    const cy = isoY(x / FX, y / FX);
+    this.spawn(this.hot, cx, cy, 24, { life: 0.6, scale0: 1, scale1: 4, tint: energy ? 0xc8fbff : 0xfff2c0 });
   }
 
   /** "+◆N" rising and fading where Recompile or salvage paid out. */

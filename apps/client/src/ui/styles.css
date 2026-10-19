@@ -2597,3 +2597,35 @@ label.check {
   gap: 8px;
   margin-top: 12px;
 }
+
+.super-btn i {
+  background: rgba(255, 90, 60, 0.16);
+}
+.super-btn.ready {
+  border-color: #ff6a4a;
+  box-shadow: 0 0 12px rgba(255, 106, 74, 0.35);
+}
+.super-timers {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.super-timer {
+  padding: 1px 6px;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.super-timer.soon {
+  color: #ffb46d;
+}
+.super-timer.ready {
+  color: #ff6a4a;
+  animation: super-blink 1s steps(2) infinite;
+}
+@keyframes super-blink {
+  50% {
+    opacity: 0.45;
+  }
+}

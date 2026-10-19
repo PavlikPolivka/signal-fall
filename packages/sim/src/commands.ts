@@ -54,6 +54,8 @@ export type Command =
   | { type: 'ability'; units: number[]; x?: number; y?: number; target?: number }
   /** Cast the faction's support power (Jam, Awaken) at a map point. */
   | { type: 'power'; x: number; y: number }
+  /** Fire the charged superweapon at a map point. */
+  | { type: 'superweapon'; x: number; y: number }
   /** Research an upgrade (rules.upgrades index) at the tech center; one at a time. */
   | { type: 'research'; upgrade: number }
   | { type: 'cancelResearch' }

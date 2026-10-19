@@ -512,6 +512,24 @@
       "faction": "props",
       "kind": "prop",
       "prompt": "A natural cluster of glowing cyan Echo crystals growing out of the ground: many sharp translucent hexagonal crystal spikes of different sizes and angles, the tallest in the middle, on a small dark rocky base. Game asset, seen from above."
+    },
+    "long_tom": {
+      "faction": "holdout",
+      "prompt": "Superweapon artillery battery: one enormous long-barrel railway-style howitzer raised at a steep angle on a heavy rotating concrete and steel emplacement, ammunition hoist, shell crates, square footprint."
+    },
+    "rmrf": {
+      "faction": "halcyon",
+      "prompt": "Superweapon orbital uplink: a squat wide hexagonal white composite base with a large satellite dish tilted up at the sky in the middle, four short emitter pylons at the corners linked by glowing cyan light lines, compact square footprint, as wide as it is tall.",
+      "v1": {
+        "preview_id": "01a151fd-7f65-7375-9006-a55301d132aa",
+        "refine_id": "01a151fd-f6e3-714f-9d2c-fdb36e6bfb9a",
+        "prompt": "Superweapon orbital uplink: a tall white composite spire with a ring of angled emitter dishes aimed at the sky, a glowing cyan beam column in the center, on a hexagonal platform, square footprint.",
+        "note": "regenerated: came out as a long bar lying on its side"
+      }
+    },
+    "cadenza": {
+      "faction": "choir",
+      "prompt": "Superweapon resonance spire: a huge cluster of tall violet crystal spikes rising to one sharp point, a large glowing amber crystal core held in the middle, floating crystal rings around it, on a rock base, square footprint."
     }
   }
 }

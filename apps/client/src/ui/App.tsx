@@ -111,6 +111,7 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
       )}
       {!state.spectator && <ArmyCounts state={state} />}
       <HillScore state={state} />
+      <SuperTimers state={state} />
       <WaveCounter state={state} />
       {idle.harvesters.length > 0 && (
         <button class="idle-btn warn" data-testid="idle-harvesters" title="Idle harvesters: click (or E) to jump to one" onClick={() => input.selectIdle('harvesters')}>
@@ -217,6 +218,28 @@ function HillScore({ state }: { state: ClientState }) {
   );
 }
 
+const mss = (t: number) => `${Math.floor(Math.ceil(t / 20) / 60)}:${String(Math.ceil(t / 20) % 60).padStart(2, '0')}`;
+
+/** Every standing superweapon's charge, in each owner's color: they are public, so nobody gets surprised. */
+function SuperTimers({ state }: { state: ClientState }) {
+  if (!state.cur) return null;
+  const rows = state.players.map((_, k) => ({ k, status: state.superStatus(k), rule: state.superweaponRule(k) })).filter((r) => r.status >= 0 && r.rule?.superweapon);
+  if (rows.length === 0) return null;
+  return (
+    <span class="super-timers" data-testid="super-timers">
+      {rows.map(({ k, status, rule }) => (
+        <span
+          class={`super-timer ${status === 0 ? 'ready' : status < 60 * 20 ? 'soon' : ''}`}
+          style={{ borderColor: hex(TEAM_COLORS[k % TEAM_COLORS.length]!) }}
+          title={`${state.names[k] ?? `Player ${k + 1}`}: ${rule!.name} (${rule!.superweapon!.name})${status === 0 ? ' is charged' : ` charges in ${mss(status)}`}`}
+        >
+          ☢ <b>{status === 0 ? 'Ready' : mss(status)}</b>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /** Own army at a glance: how many of each combat unit type (click a type to select them all). */
 function ArmyCounts({ state }: { state: ClientState }) {
   const cur = state.cur;
@@ -318,6 +341,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
         </div>
       </div>
       {faction.power && <PowerButton state={state} input={input} />}
+      <SuperweaponButton state={state} input={input} />
       <nav class="tabs" data-testid="sidebar-tabs">
         {TABS.map((t) => {
           // Badge: how much is queued on the tab; a dot when its producer stands idle.
@@ -385,9 +409,12 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
             count = pq.items.filter((x) => x === it.index).length;
             if (pq.items[0] === it.index) progress = pq.progress;
           }
-          const disabled = !hasProducer || missing.length > 0 || busy;
-          const title =
-            missing.length > 0
+          // One superweapon per player.
+          const oneOnly = it.kind === 'structure' && state.rules.structures[it.index]!.superweapon !== null && (roles.get('superweapon') ?? 0) > 0 && !ready && progress === 0;
+          const disabled = !hasProducer || missing.length > 0 || busy || oneOnly;
+          const title = oneOnly
+            ? `${it.name} — one per player`
+            : missing.length > 0
               ? `${it.name} — requires ${roleNames(state.rules, faction.index, missing)}`
               : `${it.name} — ${money(it.cost)}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, Ctrl+click: repeat, right-click: cancel one, Shift+right-click: cancel all' : ready ? ' · click to place' : ' · right-click: cancel'}`;
           const repeating = it.kind === 'unit' && state.repeat.has(it.index);
@@ -743,6 +770,27 @@ function PowerButton({ state, input }: { state: ClientState; input: Input }) {
       <b>{power.name}</b>
       <span>{label}</span>
       <kbd>Q</kbd>
+    </button>
+  );
+}
+
+/** The superweapon: charge fill and time, then click and pick the target. */
+function SuperweaponButton({ state, input }: { state: ClientState; input: Input }) {
+  const rule = state.superweaponRule();
+  const status = state.superStatus();
+  if (!rule?.superweapon || status < 0) return null;
+  const sw = rule.superweapon;
+  const fill = status > 0 ? 1 - status / sw.charge : 1;
+  return (
+    <button
+      class={`power-btn super-btn ${status === 0 ? 'ready' : ''} ${state.mode === 'superweapon' ? 'active' : ''}`}
+      data-testid="superweapon"
+      title={`${sw.name}: strikes ${sw.radius / 1024} tiles around the point after ${sw.delay / 20} s. Everyone sees the target and your timer.`}
+      onClick={() => input.superweapon()}
+    >
+      <i style={{ width: `${Math.round(fill * 100)}%` }} />
+      <b>☢ {sw.name}</b>
+      <span>{status === 0 ? 'Ready' : state.lowPower ? `Paused ${mss(status)}` : mss(status)}</span>
     </button>
   );
 }

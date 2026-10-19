@@ -565,6 +565,7 @@ function BuildingRules({ rules }: { rules: Rules }) {
       .filter((s) => s[key] > 0)
       .map((s) => `${s.name} ${tiles(s[key])}`)
       .join(', ');
+  const supers = rules.structures.filter((s) => s.superweapon);
   const conyard = (f: FactionRule) => f.structures.map((i) => rules.structures[i]!).find((s) => s.role === 'conyard')!.name;
   const refinery = (f: FactionRule) => rules.structures[f.structures.find((i) => rules.structures[i]!.role === 'refinery')!]!;
   return (
@@ -599,6 +600,21 @@ function BuildingRules({ rules }: { rules: Rules }) {
         enemies within 6 tiles (and by anyone who could see it, once it shoots). Lay ambushes there, and scout before you march through. <b>Roads</b> in the city let ground units move a fifth
         faster.
       </p>
+      <h3>Superweapons</h3>
+      <p>
+        At tier 3 each faction can build one superweapon. It charges for {Math.round((supers[0]?.superweapon?.charge ?? 0) / 1200)} minutes while it stands
+        and has power. The charge is <b>public</b>: every player sees every superweapon's timer in the top bar. When it is ready, click its button
+        and pick a spot. Everyone sees the target, and the strike lands a few seconds later, so move out of the red circle. It hurts every enemy
+        in the blast, most at the center and half at the edge, and never your own side.
+      </p>
+      <ul>
+        {supers.map((s) => (
+          <li>
+            <b>{s.name}</b> ({rules.factions[s.faction]!.name}): <b>{s.superweapon!.name}</b>, {s.superweapon!.damage} {DAMAGE[s.superweapon!.type]} damage across{' '}
+            {tiles(s.superweapon!.radius)} tiles, {s.superweapon!.delay / 20} s warning{s.superweapon!.jam > 0 ? `, and jams what survives for ${s.superweapon!.jam / 20} s` : ''}.
+          </li>
+        ))}
+      </ul>
       <h3>Garrisons</h3>
       <p>
         In the city, select infantry and click a ruined building: they climb in, one soldier per spot. Inside they take half damage, shoot one

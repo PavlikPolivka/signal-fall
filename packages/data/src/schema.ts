@@ -24,6 +24,7 @@ export const ROLES = [
   'antiAir',
   'heavyDefense',
   'wall',
+  'superweapon',
 ] as const;
 
 export type FactionId = (typeof FACTIONS)[number];
@@ -123,6 +124,22 @@ export const unitSchema = z
   })
   .strict();
 
+/** A tier-3 superweapon: charges slowly (everyone sees the timer), then strikes a map point after a warning. */
+export const superweaponSchema = z
+  .object({
+    name: z.string().min(1),
+    /** Seconds to charge, from when the building stands (paused while power is low). */
+    charge: z.number().positive(),
+    /** Seconds between firing and impact; everyone sees the target. */
+    delay: z.number().positive(),
+    radius: z.number().positive(),
+    damage: z.number().int().positive(),
+    type: z.enum(DAMAGE),
+    /** Enemy weapons in the blast fire slower for this many seconds (0 = no jam). */
+    jam: z.number().nonnegative().default(0),
+  })
+  .strict();
+
 export const structureSchema = z
   .object({
     id,
@@ -146,6 +163,7 @@ export const structureSchema = z
     growthRadius: z.number().nonnegative().default(0),
     repairRadius: z.number().nonnegative().default(0),
     echoRegrowPct: pct.default(0),
+    superweapon: superweaponSchema.optional(),
   })
   .strict();
 

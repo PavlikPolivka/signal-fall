@@ -1,6 +1,6 @@
 import type { Role, Rules, StructureRule, Tab } from '@signal-fall/data';
 import { FX_SHIFT, KIND, type Command, type PlacedStructure, type PlacementView } from '@signal-fall/sim';
-import { E, P_HARVESTED, P_POWER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
+import { E, P_HARVESTED, P_POWER, P_STRIKE_LEFT, P_STRIKE_X, P_STRIKE_Y, P_SUPER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
 
 export type Mode =
   | 'normal'
@@ -10,6 +10,7 @@ export type Mode =
   | 'guard'
   | 'ability'
   | 'power'
+  | 'superweapon'
   | 'repair'
   | 'sell'
   | 'buildMenu'
@@ -456,6 +457,8 @@ export class ClientState {
   private lastLowPower = false;
   private lastUpgrades = -1;
   private lastOptions = -1;
+  private lastStrikes = 0;
+  private lastSuperReady = false;
 
   private detectEconomyEvents(): void {
     const cur = this.cur;
@@ -471,6 +474,15 @@ export class ClientState {
       this.lastQueueLengths[t] = n;
     }
     if (this.lowPower && !this.lastLowPower) this.alert('Low power', -1, -1);
+    // Superweapons are public: everyone hears a launch, and where it will land.
+    const strikes = this.strikes();
+    for (const st of strikes)
+      if (!(this.lastStrikes & (1 << st.player)))
+        this.alert(st.player === this.localPlayer ? `${this.superweaponRule()?.superweapon?.name ?? 'Superweapon'} launched` : 'Superweapon launch detected', st.x, st.y, st.player === this.localPlayer ? 'notice' : 'alert');
+    this.lastStrikes = strikes.reduce((bits, st) => bits | (1 << st.player), 0);
+    const ready = this.superStatus() === 0;
+    if (ready && !this.lastSuperReady) this.notice(`${this.superweaponRule()?.superweapon?.name ?? 'Superweapon'} ready`);
+    this.lastSuperReady = ready;
     this.lastLowPower = this.lowPower;
     // Research finished: one more upgrade bit.
     const upgrades = cur.player(this.localPlayer, 7);
@@ -498,6 +510,30 @@ export class ClientState {
   /** Support power: -2 none, -1 unavailable, 0 ready, else ticks left. */
   powerStatus(): number {
     return this.cur ? this.cur.player(this.localPlayer, P_POWER) : -2;
+  }
+
+  /** A player's superweapon (public): -2 none in the faction, -1 none built, 0 ready, else ticks left. */
+  superStatus(player = this.localPlayer): number {
+    return this.cur && player < this.players.length ? this.cur.player(player, P_SUPER) : -2;
+  }
+
+  /** The faction's superweapon building and its strike, if any. */
+  superweaponRule(player = this.localPlayer): StructureRule | null {
+    const f = this.rules.factions[this.players[player]?.faction ?? 0];
+    for (const i of f?.structures ?? []) if (this.rules.structures[i]!.superweapon) return this.rules.structures[i]!;
+    return null;
+  }
+
+  /** Superweapon strikes on their way: target (Q10) and ticks until impact. */
+  strikes(): { player: number; x: number; y: number; left: number }[] {
+    const out: { player: number; x: number; y: number; left: number }[] = [];
+    const cur = this.cur;
+    if (!cur) return out;
+    for (let p = 0; p < this.players.length; p++) {
+      const left = cur.player(p, P_STRIKE_LEFT);
+      if (left >= 0) out.push({ player: p, x: cur.player(p, P_STRIKE_X), y: cur.player(p, P_STRIKE_Y), left });
+    }
+    return out;
   }
 
   warn(text: string): void {

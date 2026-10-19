@@ -137,3 +137,12 @@ up ground units. Hard vs Hard (CI's baseline before: Holdout–Halcyon 54.7%, Ho
 - Brush within 3 tiles: Holdout–Halcyon 57.3% over 300 (dug-in, stationary Holdout infantry). Within 5: 56.7%.
 - Shooting from the brush reveals the shooter, and brush within 6 tiles: Holdout–Halcyon 54% (300),
   Holdout–Choir 49.5%, Halcyon–Choir 50.5% (200 each).
+
+### 2026-10-19: superweapons
+
+A tier-3 superweapon per faction (Long Tom / Barrage, rm -rf / Purge, Cadenza / Shatter): 5-minute charge, public
+timer, a warning before the strike. Hard vs Hard, 100 matches each:
+
+- Hard AIs built it as soon as tier 3 allowed (minute 5–6, 2500 credits out of the army): Holdout–Choir 41%.
+- The AI builds it only after 14 minutes, or with 5000 credits banked: Holdout–Choir 48%, Holdout–Halcyon 46%,
+  Halcyon–Choir 51%. Easy and Normal never build it (they don't use powers either).

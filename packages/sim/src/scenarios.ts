@@ -207,8 +207,8 @@ export function sandbox(rules: Rules, opts: { unitsPerSide?: number; size?: numb
   const w = sim.world;
   const per = opts.unitsPerSide ?? 24;
   const sides: [number, string[], string[], number][] = [
-    [0, ['grunt', 'grunt', 'tankbuster', 'jackrabbit', 'bulldog', 'flak_track', 'thumper', 'hornet', 'mule', 'homestead'], ['holdfast', 'dynamo', 'bunkhouse', 'motor_pool', 'pillbox'], 6],
-    [1, ['sentry', 'sentry', 'lance', 'ping', 'vector', 'firewall', 'broadcast', 'seek', 'fetch', 'init'], ['kernel', 'powerd', 'spawn', 'make', 'guard'], size - 22],
+    [0, ['grunt', 'grunt', 'tankbuster', 'jackrabbit', 'bulldog', 'flak_track', 'thumper', 'hornet', 'mule', 'homestead'], ['holdfast', 'dynamo', 'bunkhouse', 'motor_pool', 'pillbox', 'dynamo', 'long_tom'], 6],
+    [1, ['sentry', 'sentry', 'lance', 'ping', 'vector', 'firewall', 'broadcast', 'seek', 'fetch', 'init'], ['kernel', 'powerd', 'spawn', 'make', 'guard', 'powerd', 'rmrf'], size - 26],
   ];
   for (const [owner, units, structures, x0] of sides) {
     let sx = x0;

@@ -511,6 +511,29 @@ def sudo(style, team=None):
     return {"body": b}
 
 
+def rmrf(style, team=None):
+    """Superweapon (3x3): stepped hex base, a big dish tilted at the sky over a cyan beam column, four emitter pylons."""
+    m = mats(style, team)
+    b = pad(3, 3, m)
+    b.append(hexprism("base", 1.25, 0.3, (0, 0, 0.23), m["shell_dim"], bevel=0.03))
+    b.append(hexprism("base2", 0.95, 0.25, (0, 0, 0.5), m["shell"], bevel=0.03))
+    b.append(hexprism("team_band", 0.96, 0.06, (0, 0, 0.6), m["team"]))
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2
+        x, y = 1.15 * math.cos(a), 1.15 * math.sin(a)
+        b.append(box("pylon", (0.2, 0.2, 1.1), (x, y, 0.63), m["graphite"], rot=(0, 0, a), bevel=0.02))
+        b.append(box("pylon_light", (0.04, 0.21, 0.9), (x - 0.1 * math.cos(a), y - 0.1 * math.sin(a), 0.65), m["cyan"], rot=(0, 0, a)))
+        b.append(cone("pylon_tip", 0.12, 0.0, 0.25, (x, y, 1.3), m["shell"], verts=6))
+    b.append(cylinder("mast", 0.16, 0.7, (0, 0, 0.95), m["graphite"], verts=12))
+    beam = material("hc_beam", "7ff0ff", emission="2fd8f5", style="sleek")
+    b.append(cylinder("beam", 0.07, 1.0, (0, 0, 1.3), beam, verts=10))
+    b.append(cone("dish", 0.12, 0.95, 0.35, (0.05, 0, 1.45), m["shell"], rot=(0, math.radians(-25), 0), verts=16))
+    b.append(cone("dish_rim", 0.9, 0.97, 0.05, (0.13, 0, 1.6), m["cyan_dim"], rot=(0, math.radians(-25), 0), verts=16))
+    b.append(cylinder("feed", 0.03, 0.7, (0.2, 0, 1.75), m["metal"], rot=(0, math.radians(-25), 0), verts=6))
+    b.append(hexprism("feed_core", 0.08, 0.1, (0.33, 0, 2.05), m["cyan"]))
+    return {"body": b}
+
+
 def guard(style, team=None):
     """Laser turret (1x1): stepped hex base, rotating emitter head."""
     m = mats(style, team)
@@ -602,4 +625,6 @@ BUILDINGS = {
     "filter": dict(footprint=(2, 2), frame=160, build=filter_bld),
     "sigkill": dict(footprint=(2, 2), frame=192, build=sigkill),
     "block": dict(footprint=(1, 1), frame=80, build=block),
+    # Superweapon: procedural for now (the first Meshy try came out as a bar; see models.json).
+    "rmrf": dict(footprint=(3, 3), frame=288, build=rmrf),
 }

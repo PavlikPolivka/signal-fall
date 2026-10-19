@@ -63,7 +63,7 @@ export const GAME_SPEEDS = [0.5, 0.75, 1, 1.5, 2];
 export const STANCE_NAMES = ['Guard area', 'Hold ground', 'Aggressive', 'Hold fire'];
 
 /** Modes that wait for a target click. */
-const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability', 'power', 'repair', 'sell'];
+const TARGET_MODES: Mode[] = ['move', 'attackMove', 'patrol', 'guard', 'ability', 'power', 'superweapon', 'repair', 'sell'];
 
 /**
  * Keyboard and mouse handling. Every keyboard action goes through keymap.json;
@@ -427,6 +427,18 @@ export class Input {
     if (status === 0) this.setMode('power');
     else if (status > 0) s.warn(`${power.name} is ready in ${Math.ceil(status / 20)} s`);
     else s.warn(`${power.name} needs ${roleName(s.rules, s.players[s.localPlayer]!.faction, power.requires)} and power`);
+  }
+
+  /** The superweapon button: target it once charged. */
+  superweapon(): void {
+    const s = this.state;
+    const rule = s.superweaponRule();
+    if (!rule?.superweapon || s.spectator) return;
+    if (s.mode === 'superweapon') return this.setMode('normal');
+    const status = s.superStatus();
+    if (status === 0) this.setMode('superweapon');
+    else if (status > 0) s.warn(`${rule.superweapon.name} is ready in ${clock(status)}`);
+    else s.warn(`${rule.superweapon.name} needs a ${rule.name}`);
   }
 
   /** Pick up changed key bindings (settings). */
@@ -863,6 +875,9 @@ export class Input {
       case 'power':
         s.send({ type: 'power', x: p.x, y: p.y });
         break;
+      case 'superweapon':
+        s.send({ type: 'superweapon', x: p.x, y: p.y });
+        break;
       case 'repair':
       case 'sell':
         if (h >= 0 && s.isOwn(h) && !s.isUnit(h)) s.send({ type: s.mode, target: h });
@@ -1233,4 +1248,10 @@ export class Input {
       return p !== null && p.x >= 0 && p.y >= 0 && p.x <= this.renderer.width && p.y <= this.renderer.height;
     });
   }
+}
+
+/** Ticks as m:ss. */
+function clock(ticks: number): string {
+  const sec = Math.ceil(ticks / 20);
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
 }

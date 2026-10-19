@@ -31,7 +31,7 @@ describe('bundled data', () => {
     expect(rules.factions.map((f) => f.id)).toEqual(['holdout', 'halcyon', 'choir']);
     expect(rules.units).toHaveLength(12 + 11 + 11 + 1); // + the summoned Choir shard
     for (const f of rules.factions) expect(f.units.every((i) => !rules.units[i]!.summoned)).toBe(true);
-    for (const f of rules.factions) expect(f.structures).toHaveLength(13);
+    for (const f of rules.factions) expect(f.structures).toHaveLength(14);
   });
 
   it('converts units to fixed point and ticks', () => {

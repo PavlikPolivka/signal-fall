@@ -146,7 +146,13 @@ export const P_POWER = P.production + 3 * PROD_STRIDE;
 export const P_HARVESTED = P_POWER + 1;
 /** King of the hill: ticks this player's team has held the hill. */
 export const P_HILL = P_POWER + 2;
-export const PLAYER_STRIDE = P_POWER + 3;
+/** Superweapon (public): -2 none in the faction, -1 none built, 0 ready, else ticks left. */
+export const P_SUPER = P_POWER + 3;
+/** Pending superweapon strike: target x, y (Q10) and ticks until impact (-1 none). */
+export const P_STRIKE_X = P_POWER + 4;
+export const P_STRIKE_Y = P_POWER + 5;
+export const P_STRIKE_LEFT = P_POWER + 6;
+export const PLAYER_STRIDE = P_POWER + 7;
 
 export const E = {
   handle: 0,

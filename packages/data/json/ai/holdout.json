@@ -1,7 +1,7 @@
 {
   "faction": "holdout",
   "opening": ["power", "refinery", "barracks", "refinery", "power", "factory", "radar", "power"],
-  "later": ["special", "power", "tech", "airfield", "power"],
+  "later": ["special", "power", "tech", "airfield", "power", "superweapon"],
   "defenses": ["defense", "defense", "antiAir", "heavyDefense"],
   "harvestersPerRefinery": 2,
   "maxRefineries": 4,

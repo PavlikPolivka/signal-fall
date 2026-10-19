@@ -90,7 +90,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 67 ✅ | U | Upgrade research shown on unit cards (what it improves) | 2 | XS |
 | 68 ✅ | U | Sell and repair with clear cursors and refund amounts on hover | 3 | XS |
 | 69 ✅ | U | Warnings when a factory is blocked (rally point unreachable, exit blocked) | 3 | S |
-| 70 | E | Superweapon-lite per faction at tier 3 (long cooldown, visible charge timer for all) | 4 | L |
+| 70 ✅ | E | Superweapon-lite per faction at tier 3 (long cooldown, visible charge timer for all) | 4 | L |
 | 71 ✅ | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers (depots and watchtowers as capture points; infantry garrison city ruins) | 3 | M |
 | 72 ✅ | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles (brush hides units, roads speed ground units; the sim has no elevation, so no high ground) | 4 | L |
 | 73 ✅ | E | Harvester economy depth: refinery queue logic, harvester escorts matter, raids are punishing but recoverable (harvesters queue to unload, flee raids and return, comeback from a refinery) | 3 | S |

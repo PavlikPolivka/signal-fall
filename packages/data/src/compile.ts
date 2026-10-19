@@ -117,6 +117,18 @@ export interface StructureRule {
   growthRadius: number;
   repairRadius: number;
   echoRegrowPct: number;
+  superweapon: SuperweaponRule | null;
+}
+
+/** Compiled superweapon (radius Q10, times in ticks, damage type as an index). */
+export interface SuperweaponRule {
+  name: string;
+  charge: number;
+  delay: number;
+  radius: number;
+  damage: number;
+  type: DamageIdx;
+  jam: number;
 }
 
 export interface UpgradeRule {
@@ -413,6 +425,9 @@ function compileStructure(
     growthRadius: fx(s.growthRadius),
     repairRadius: fx(s.repairRadius),
     echoRegrowPct: s.echoRegrowPct,
+    superweapon: s.superweapon
+      ? { ...s.superweapon, charge: ticks(s.superweapon.charge), delay: ticks(s.superweapon.delay), radius: fx(s.superweapon.radius), type: damageIndex(s.superweapon.type), jam: s.superweapon.jam > 0 ? ticks(s.superweapon.jam) : 0 }
+      : null,
   };
 }
 
