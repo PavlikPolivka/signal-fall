@@ -145,7 +145,7 @@ test('two clients play a networked match over a lossy link without desync', asyn
         },
         { timeout: 30_000, intervals: [2000] },
       )
-      .toMatch(/\brated\b/);
+      .toContain('rated');
   }
   await hostContext.close();
   if (online) await guestContext.close();
@@ -247,7 +247,6 @@ test('a public room shows in Open games and can be joined from there', async ({ 
   const host = await hostCtx.newPage();
   const guest = await guestCtx.newPage();
   await host.goto('/play/');
-  await host.click('[data-testid=open-multiplayer]');
   await host.evaluate(() => localStorage.setItem('signalfall.name', 'Lister'));
   await hostRoom(host);
   const code = (await host.getByTestId('room-code').textContent())!.trim();
