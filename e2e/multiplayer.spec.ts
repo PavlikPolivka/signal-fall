@@ -63,7 +63,6 @@ test('two clients play a networked match over a lossy link without desync', asyn
   // The host picks the map; the guest sees it (read-only).
   await host.click('[data-testid=mp-map] [data-testid=size] [data-value=S]');
   await host.fill('[data-testid=mp-map] [data-testid=seed]', '777');
-  await host.locator('[data-testid=mp-map] [data-testid=seed]').dispatchEvent('change');
   await expect(guest.locator('[data-testid=mp-map] [data-testid=size] [data-value=S]')).toHaveClass(/active/);
   await expect(guest.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('777');
   await expect(guest.locator('[data-testid=mp-map] [data-testid=seed-random]')).toHaveCount(0);

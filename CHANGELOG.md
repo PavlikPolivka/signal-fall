@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 21:14 UTC
+
+- **Typing a map seed sticks:** in a multiplayer lobby, a seed typed by the host could jump back to the old one when the lobby refreshed. It now takes effect as you type.
+
 ## 2026-10-19 21:08 UTC
 
 - **Daily challenge moved:** it is now a main menu button under Multiplayer, with today's matchup on its second line.

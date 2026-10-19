@@ -17,4 +17,4 @@ the status column is updated as each one lands.
 | 9 | **Objective markers without a radar**: mission targets show on the minimap even before a radar is built | The minimap is dark early, exactly when you look for the target | done |
 | 11 | **One match setup for skirmish and multiplayer**: one screen where each seat is you, an AI or an open slot for a friend; skirmish is simply a match with only AI seats | Two near-identical setup screens to learn and maintain | to do |
 | 12 | **Daily challenge button**: find it a better place on the main menu (now a main button under Multiplayer) | Its placement looks off | done |
-| 10 | **Multiplayer test flake**: the guest sometimes misses the host's map seed in the lobby test | CI failed once on it (a rerun passed) | to do |
+| 10 | **Multiplayer test flake**: the guest sometimes misses the host's map seed in the lobby test | CI failed once on it (a rerun passed). Cause: the seed box only saved on leaving the field, and a lobby refresh in between put the old seed back; it now saves as you type | done |

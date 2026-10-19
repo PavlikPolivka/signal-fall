@@ -200,7 +200,8 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
               value={value.seed}
               readOnly={readOnly}
               data-testid="seed"
-              onChange={(e) => set({ seed: Number((e.currentTarget as HTMLInputElement).value) || 0 })}
+              // Every keystroke counts: a re-render (a lobby update) before the field loses focus would put the old seed back.
+              onInput={(e) => set({ seed: Number((e.currentTarget as HTMLInputElement).value) || 0 })}
             />
             {!readOnly && (
               <button onClick={() => set({ seed: randomSeed() })} data-testid="seed-random">

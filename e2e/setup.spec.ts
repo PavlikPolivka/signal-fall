@@ -11,7 +11,6 @@ test('skirmish setup starts a game with the chosen options', async ({ page }) =>
   await page.click('[data-testid=size] [data-value=S]');
   await page.click('[data-testid=difficulty] [data-value=easy]');
   await page.fill('[data-testid=seed]', '4242');
-  await page.locator('[data-testid=seed]').dispatchEvent('change');
   await expect(page.locator('[data-testid=map-preview]')).toBeVisible();
   await page.click('[data-testid=start]');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.ready);
