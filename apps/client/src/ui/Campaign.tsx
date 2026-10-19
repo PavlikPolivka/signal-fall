@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { MISSIONS, type MissionSpec } from '../game/scenario';
+import { MISSIONS, type CampaignDifficulty, type MissionSpec } from '../game/scenario';
 import { MenuScreen } from './Setup';
 
 const PROGRESS_KEY = 'signalfall.campaign';
@@ -19,6 +19,31 @@ export function markMissionWon(id: string): void {
   done.add(id);
   try {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify([...done]));
+  } catch {
+    // Not kept.
+  }
+}
+
+const DIFFICULTY_KEY = 'signalfall.campaignDifficulty';
+const DIFFICULTIES: [CampaignDifficulty, string, string][] = [
+  ['story', 'Story', 'Smaller enemy waves, a weaker enemy AI and 3,000 extra credits: for the story.'],
+  ['normal', 'Normal', 'The campaign as designed: it gets harder as you go.'],
+  ['hard', 'Hard', 'Half again as many attackers, and a sharper enemy AI.'],
+];
+
+/** The chosen campaign difficulty (Normal unless changed). */
+export function campaignDifficulty(): CampaignDifficulty {
+  try {
+    const v = localStorage.getItem(DIFFICULTY_KEY);
+    return v === 'story' || v === 'hard' ? v : 'normal';
+  } catch {
+    return 'normal';
+  }
+}
+
+function setCampaignDifficulty(v: CampaignDifficulty): void {
+  try {
+    localStorage.setItem(DIFFICULTY_KEY, v);
   } catch {
     // Not kept.
   }
@@ -65,6 +90,7 @@ export function Campaign({ onBack, onPlay }: { onBack: () => void; onPlay: (m: M
   const firstOpen = MISSIONS.findIndex((m) => !done.has(m.id));
   const [chosen, setChosen] = useState<MissionSpec | null>(MISSIONS[firstOpen < 0 ? 0 : firstOpen]!);
   const voice = useBriefingVoice(chosen);
+  const [difficulty, setDifficulty] = useState(campaignDifficulty());
   return (
     <MenuScreen testid="campaign">
       <div class="campaign">
@@ -103,6 +129,25 @@ export function Campaign({ onBack, onPlay }: { onBack: () => void; onPlay: (m: M
                 <li>{o.text}</li>
               ))}
             </ul>
+            <div class="choice campaign-difficulty" data-testid="campaign-difficulty">
+              <span class="label">Difficulty</span>
+              <div class="seg">
+                {DIFFICULTIES.map(([id, label, hint]) => (
+                  <button
+                    class={difficulty === id ? 'active' : ''}
+                    title={hint}
+                    data-difficulty={id}
+                    onClick={() => {
+                      setCampaignDifficulty(id);
+                      setDifficulty(id);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <span class="muted small">{DIFFICULTIES.find(([id]) => id === difficulty)![2]}</span>
+            </div>
             <div class="briefing-actions">
               <button onClick={() => (voice.playing ? voice.stop() : voice.play())} data-testid="briefing-voice">
                 {voice.playing ? 'Stop' : '▶ Listen'}

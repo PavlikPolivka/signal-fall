@@ -10,6 +10,7 @@ import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
 import { MenuScreen, Setup, loadSaved, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
+import { campaignDifficulty } from './ui/Campaign';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
 import { missionById, type Replay } from './game/scenario';
 import { addRecent, clock, saveGame, savedGame } from './game/saves';
@@ -185,7 +186,7 @@ function hostRejoins(code: string, scenario: ScenarioSpec): void {
 /** ?continue: the saved skirmish, picked up where it was saved. */
 const resume = params.has('continue') ? (savedGame()?.replay ?? null) : null;
 if (params.has('continue')) history.replaceState(null, '', location.pathname);
-let scenario: ScenarioSpec | null = (missionParam ? ({ kind: 'mission', id: missionParam, seed: 0 } as ScenarioSpec) : null) ?? tutorial ?? (daily ? daily.scenario : null) ?? (autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch());
+let scenario: ScenarioSpec | null = (missionParam ? ({ kind: 'mission', id: missionParam, seed: 0, difficulty: campaignDifficulty() } as ScenarioSpec) : null) ?? tutorial ?? (daily ? daily.scenario : null) ?? (autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch());
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */
@@ -232,7 +233,8 @@ const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
 state.daily = daily ? daily.label : null;
 state.tutorial = !!tutorial;
-state.mission = missionParam ? missionById(missionParam) : null;
+state.mission = scenario?.kind === 'mission' ? missionById(scenario.id) : null;
+state.campaignDifficulty = scenario?.kind === 'mission' ? (scenario.difficulty ?? 'normal') : 'normal';
 state.rematch = () => {
   if (!lastRoom) return;
   const me = lastRoom.slots[localSlot]?.player?.id;

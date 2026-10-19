@@ -17,7 +17,8 @@ export type MissionObjective = { text: string } & (
 );
 
 export type MissionAction =
-  | { kind: 'spawn'; player: number; unit: string; count: number; at: Pos; tag?: string; attack?: Pos }
+  /** `grow` more each time a repeating trigger fires, up to `max` (waves that build up). */
+  | { kind: 'spawn'; player: number; unit: string; count: number; grow?: number; max?: number; at: Pos; tag?: string; attack?: Pos }
   | { kind: 'say'; line: number }
   | { kind: 'credits'; player: number; amount: number }
   | { kind: 'reveal'; area: PArea }
@@ -89,21 +90,25 @@ export const MISSIONS: MissionSpec[] = [
       ['holdout', 'Drones inbound from the city! Grunts, on me.'],
       ['holdout', 'Good. Power is up. Now a barracks, so we can train more hands.'],
       ['holdout', 'That was the last patrol. We have a home. For now.'],
+      ['holdout', 'Big one coming in from the city. Everyone on the line!'],
     ],
     map: { seed: 1101, size: 'S', biome: 'city', resources: 'normal', terrain: 'open' },
     seats: [
       { faction: 0, team: 0, start: 'vehicle', units: [['grunt', 4]] },
       { faction: 1, team: 1, start: 'none' },
     ],
-    allow: HOLDOUT_EARLY,
+    allow: [...HOLDOUT_EARLY, 'pillbox', 'barricade'],
     objectives: [
       { text: 'Deploy the Homestead (select it, press D)', kind: 'have', role: 'conyard', count: 1 },
       { text: 'Build a power plant (B, then P)', kind: 'have', role: 'power', count: 1 },
       { text: 'Build a barracks (B, then B)', kind: 'have', role: 'barracks', count: 1 },
-      { text: 'Hold out until the patrols stop (7:00)', kind: 'survive', ticks: 7 * MIN },
+      { text: 'Hold out until the patrols stop (5:00)', kind: 'survive', ticks: 5 * MIN },
     ],
     triggers: [
-      { at: 2 * MIN, every: 80 * 20, until: 6 * MIN, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'sentry', count: 2, at: s(1), attack: s(0) }] },
+      { at: 75 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 75 * 20, every: 45 * 20, until: 4 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 2, grow: 1, max: 5, at: s(1), attack: s(0) }] },
+      { at: 3 * MIN, every: 60 * 20, until: 4 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'lance', count: 1, grow: 1, at: s(1, 2, 0), attack: s(0) }] },
+      { at: 4 * MIN + 15 * 20, actions: [{ kind: 'say', line: 3 }, { kind: 'spawn', player: 1, unit: 'sentry', count: 5, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'lance', count: 2, at: s(1, 2, 2), attack: s(0) }] },
       { objective: 1, actions: [{ kind: 'say', line: 1 }] },
       { objective: 3, actions: [{ kind: 'say', line: 2 }] },
     ],
@@ -115,22 +120,26 @@ export const MISSIONS: MissionSpec[] = [
     speaker: 'holdout',
     briefing: [
       'Diesel runs out. Echo does not. Those blue crystals burn hotter than anything we ever pumped out of the ground.',
-      'Build a smelter by the field and let the Mules haul. I want eight thousand credits in the bank before Halcyon notices.',
+      'Build a smelter by the field and let the Mules haul. I want twelve thousand credits in the bank before Halcyon notices.',
       'It will notice. Put a pillbox where the raids come from.',
     ],
     lines: [
       ['holdout', 'Raiders on the field! Protect the Mules.'],
-      ['holdout', 'Eight thousand. That will keep the lights on. Well done.'],
+      ['holdout', 'Twelve thousand. That will keep the lights on. Well done.'],
+      ['halcyon', 'Raids ineffective. Committing ground units.'],
     ],
     map: { seed: 1202, size: 'S', biome: 'wasteland', resources: 'normal', terrain: 'normal' },
     seats: [
       { faction: 0, team: 0, start: 'base', units: [['grunt', 3]] },
       { faction: 1, team: 1, start: 'none' },
     ],
-    allow: [...HOLDOUT_EARLY, 'smelter', 'mule', 'pillbox'],
-    objectives: [{ text: 'Harvest 8,000 credits of Echo', kind: 'harvest', amount: 8000 }],
+    allow: [...HOLDOUT_EARLY, 'smelter', 'mule', 'pillbox', 'barricade', 'motor_pool', 'jackrabbit'],
+    objectives: [{ text: 'Harvest 12,000 credits of Echo', kind: 'harvest', amount: 12000 }],
     triggers: [
-      { at: 3 * MIN, every: 90 * 20, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'ping', count: 2, at: s(1), attack: s(0, 6, 6) }] },
+      { at: 90 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 90 * 20, every: 70 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'ping', count: 2, grow: 1, max: 6, at: s(1), attack: s(0, 6, 6) }] },
+      { at: 4 * MIN, actions: [{ kind: 'say', line: 2 }] },
+      { at: 4 * MIN, every: 100 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 3, grow: 1, max: 8, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'lance', count: 1, grow: 1, max: 4, at: s(1, 2, 2), attack: s(0) }] },
       { objective: 0, actions: [{ kind: 'say', line: 1 }] },
     ],
   },
@@ -142,6 +151,7 @@ export const MISSIONS: MissionSpec[] = [
     briefing: [
       'Halcyon lays relays the way we used to lay cable. Inside their reach its machines shoot faster and patch themselves up.',
       'Three relays stand between us and the river. Take them down. Bring a Wrench: our engineer can strip a wreck for parts.',
+      'Their guns run on the same power as everything else. Knock out the power and the guards go dark.',
     ],
     lines: [
       ['holdout', 'Relay down. Two to go.'],
@@ -150,12 +160,23 @@ export const MISSIONS: MissionSpec[] = [
     map: { seed: 1303, size: 'M', biome: 'city', resources: 'normal', terrain: 'normal' },
     seats: [
       { faction: 0, team: 0, start: 'base', credits: 6000 },
-      { faction: 1, team: 1, start: 'none', structures: [['kernel', -2, -2], ['relay', -10, 4], ['relay', 6, -10], ['relay', 8, 8], ['guard', -6, 0], ['guard', 2, -6]] },
+      {
+        faction: 1,
+        team: 1,
+        start: 'none',
+        structures: [['kernel', -2, -2], ['powerd', 3, 1], ['powerd', -4, 3], ['relay', -10, 4], ['relay', 6, -10], ['relay', 8, 8], ['guard', -8, 6], ['guard', 8, -8], ['guard', 6, 10], ['guard', -6, 0], ['guard', 2, -6]],
+      },
     ],
-    allow: [...HOLDOUT_EARLY, 'smelter', 'mule', 'pillbox', 'wrench', 'motor_pool', 'bulldog', 'jackrabbit'],
-    objectives: [{ text: 'Destroy the three Halcyon relays', kind: 'destroy', player: 1, role: 'special' }],
+    allow: [...HOLDOUT_EARLY, 'smelter', 'mule', 'pillbox', 'barricade', 'wrench', 'motor_pool', 'radio_mast', 'garage', 'bulldog', 'jackrabbit', 'thumper', 'patch'],
+    objectives: [
+      { text: 'Take down a relay', kind: 'destroy', player: 1, role: 'special', count: 1 },
+      { text: 'Destroy all three Halcyon relays', kind: 'destroy', player: 1, role: 'special' },
+    ],
     triggers: [
-      { at: 4 * MIN, every: 2 * MIN, actions: [{ kind: 'say', line: 1 }, { kind: 'spawn', player: 1, unit: 'sentry', count: 4, at: s(1), attack: s(0) }] },
+      { at: 3 * MIN, actions: [{ kind: 'say', line: 1 }] },
+      { at: 3 * MIN, every: 90 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 3, grow: 1, max: 6, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'lance', count: 1, grow: 1, max: 3, at: s(1, 2, 2), attack: s(0) }] },
+      { at: 7 * MIN, every: 2 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'vector', count: 1, grow: 1, max: 3, at: s(1, -2, 2), attack: s(0) }] },
+      { objective: 0, actions: [{ kind: 'say', line: 0 }] },
     ],
   },
   {
@@ -183,8 +204,10 @@ export const MISSIONS: MissionSpec[] = [
     allow: [...HOLDOUT_EARLY, 'smelter', 'mule', 'pillbox', 'wrench', 'motor_pool', 'bulldog', 'jackrabbit', 'radio_mast', 'flak_track'],
     objectives: [{ text: 'Hold the crater rim (center of the map) for 3:00', kind: 'hold', area: { ...pct(50, 50), r: 6 }, ticks: 3 * MIN }],
     triggers: [
+      { at: 20, actions: [{ kind: 'reveal', area: { ...pct(50, 50), r: 9 } }] },
       { enter: { ...pct(50, 50), r: 12 }, actions: [{ kind: 'say', line: 0 }, { kind: 'say', line: 1 }, { kind: 'spawn', player: 2, unit: 'shard', count: 6, at: pct(50, 50), attack: pct(50, 50) }] },
-      { at: 5 * MIN, every: 100 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'lance', count: 3, at: s(1), attack: pct(50, 50) }, { kind: 'spawn', player: 2, unit: 'shard', count: 3, at: pct(55, 45), attack: pct(50, 50) }] },
+      { at: 3 * MIN, every: 75 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'lance', count: 2, grow: 1, max: 6, at: s(1), attack: pct(50, 50) }, { kind: 'spawn', player: 1, unit: 'sentry', count: 2, grow: 1, max: 6, at: s(1, 2, 2), attack: pct(50, 50) }] },
+      { at: 4 * MIN, every: 80 * 20, actions: [{ kind: 'spawn', player: 2, unit: 'shard', count: 3, grow: 1, max: 8, at: pct(55, 45), attack: pct(50, 50) }] },
       { objective: 0, actions: [{ kind: 'say', line: 2 }] },
     ],
   },
@@ -195,22 +218,26 @@ export const MISSIONS: MissionSpec[] = [
     speaker: 'holdout',
     briefing: [
       'Kessel Dam is the last bridge over the river for a hundred kilometers. If Halcyon takes it, it takes the valley.',
-      'It is coming with everything. Walls, bastions, every gun we have. Hold for twenty minutes.',
+      'It is coming with everything. Walls, bastions, every gun we have. Hold for twelve minutes.',
     ],
     lines: [
       ['holdout', 'Here they come. Hold the line!'],
       ['holdout', 'Ten more minutes. Patch the walls!'],
       ['halcyon', 'Anomaly detected at the crater. Reallocating forces.'],
+      ['holdout', 'This is their last push. Everything they have. Hold!'],
     ],
     map: { seed: 1505, size: 'M', biome: 'wasteland', resources: 'normal', terrain: 'choke' },
     seats: [
       { faction: 0, team: 0, start: 'base', credits: 8000, units: [['bulldog', 2], ['tankbuster', 4]] },
       { faction: 1, team: 1, ai: 'normal', start: 'base', credits: 9000 },
     ],
-    objectives: [{ text: 'Hold out for 20:00', kind: 'survive', ticks: 20 * MIN }],
+    objectives: [{ text: 'Hold out for 12:00', kind: 'survive', ticks: 12 * MIN }],
     triggers: [
+      { at: 2 * MIN, actions: [{ kind: 'say', line: 1 }] },
       { at: 3 * MIN, actions: [{ kind: 'say', line: 0 }] },
-      { at: 10 * MIN, actions: [{ kind: 'say', line: 1 }] },
+      { at: 3 * MIN, every: 100 * 20, until: 10 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'lance', count: 3, grow: 1, max: 8, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'vector', count: 1, grow: 1, max: 5, at: s(1, 2, 2), attack: s(0) }] },
+      { at: 6 * MIN, every: 2 * MIN, until: 10 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'broadcast', count: 1, grow: 1, max: 3, at: s(1, -2, 2), attack: s(0) }] },
+      { at: 10 * MIN + 30 * 20, actions: [{ kind: 'say', line: 3 }, { kind: 'spawn', player: 1, unit: 'vector', count: 6, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'root', count: 1, at: s(1, 2, 2), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'lance', count: 8, at: s(1, -2, 2), attack: s(0) }] },
       { objective: 0, actions: [{ kind: 'say', line: 2 }] },
     ],
   },
@@ -233,14 +260,16 @@ export const MISSIONS: MissionSpec[] = [
       { faction: 1, team: 0, start: 'vehicle', credits: 6000, units: [['sentry', 4]] },
       { faction: 0, team: 1, start: 'none' },
     ],
-    allow: ['kernel', 'powerd', 'ingest', 'spawn', 'relay', 'sentry', 'lance', 'fetch', 'guard', 'init'],
+    allow: ['kernel', 'powerd', 'ingest', 'spawn', 'make', 'relay', 'sentry', 'lance', 'ping', 'fetch', 'guard', 'block', 'init'],
     objectives: [
       { text: 'Place two relays', kind: 'have', role: 'special', count: 2 },
       { text: 'Build an intake (refinery)', kind: 'have', role: 'refinery', count: 1 },
-      { text: 'Take in 4,000 credits of Echo', kind: 'harvest', amount: 4000 },
+      { text: 'Take in 8,000 credits of Echo', kind: 'harvest', amount: 8000 },
     ],
     triggers: [
-      { at: 3 * MIN, every: 2 * MIN, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'jackrabbit', count: 2, at: s(1), attack: s(0) }] },
+      { at: 2 * MIN + 30 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 2 * MIN + 30 * 20, every: 80 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'jackrabbit', count: 2, grow: 1, max: 5, at: s(1), attack: s(0) }] },
+      { at: 4 * MIN, every: 90 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'grunt', count: 3, grow: 1, max: 8, at: s(1, 2, 2), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'tankbuster', count: 1, grow: 1, max: 4, at: s(1, -2, 2), attack: s(0) }] },
       { objective: 2, actions: [{ kind: 'say', line: 1 }] },
     ],
   },
@@ -253,7 +282,7 @@ export const MISSIONS: MissionSpec[] = [
       'Budget fixed. Reinforcement queue: none. The Holdout will test this sector for ten minutes.',
       'Fight inside the network. Units lost there are recompiled: part of their cost returns. Outside it, losses are final.',
     ],
-    lines: [['halcyon', 'Hostile wave detected.'], ['halcyon', 'Sector held. Attrition within tolerance.']],
+    lines: [['halcyon', 'Hostile wave detected.'], ['halcyon', 'Sector held. Attrition within tolerance.'], ['holdout', 'Bring up the Thumpers. Shell that network flat.']],
     map: { seed: 2202, size: 'S', biome: 'wasteland', resources: 'low', terrain: 'open' },
     seats: [
       { faction: 1, team: 0, start: 'base', credits: 7000, units: [['vector', 2], ['lance', 4]] },
@@ -261,7 +290,10 @@ export const MISSIONS: MissionSpec[] = [
     ],
     objectives: [{ text: 'Hold the sector for 10:00', kind: 'survive', ticks: 10 * MIN }],
     triggers: [
-      { at: 90 * 20, every: 75 * 20, until: 9 * MIN, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'bulldog', count: 2, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'grunt', count: 5, at: s(1, 2, 2), attack: s(0) }] },
+      { at: 75 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 75 * 20, every: 60 * 20, until: 9 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'bulldog', count: 1, grow: 1, max: 4, at: s(1), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'grunt', count: 4, grow: 1, max: 8, at: s(1, 2, 2), attack: s(0) }] },
+      { at: 5 * MIN, actions: [{ kind: 'say', line: 2 }] },
+      { at: 5 * MIN, every: 2 * MIN, until: 9 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'thumper', count: 1, grow: 1, max: 3, at: s(1, -2, 2), attack: s(0) }, { kind: 'spawn', player: 1, unit: 'tankbuster', count: 2, grow: 1, max: 5, at: s(1, -2, 0), attack: s(0) }] },
       { objective: 0, actions: [{ kind: 'say', line: 1 }] },
     ],
   },
@@ -274,14 +306,20 @@ export const MISSIONS: MissionSpec[] = [
       'Target: the largest Echo field on record. Strip it.',
       'Field anomalies reported. Harvesters have been lost to shapes that do not register as machines. Escort them.',
     ],
-    lines: [['choir', 'You cut our sleeping. We wake.'], ['halcyon', 'Quota met. Anomaly unexplained. Logging.']],
+    lines: [['choir', 'You cut our sleeping. We wake.'], ['halcyon', 'Quota met. Anomaly unexplained. Logging.'], ['choir', 'More of us wake. More, and more.']],
     map: { seed: 2303, size: 'M', biome: 'crystal', resources: 'rich', terrain: 'normal' },
     seats: [
       { faction: 1, team: 0, start: 'base', credits: 6000 },
       { faction: 2, team: 1, start: 'none' },
     ],
-    objectives: [{ text: 'Take in 15,000 credits of Echo', kind: 'harvest', amount: 15000 }],
-    triggers: [{ at: 3 * MIN, every: 80 * 20, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'shard', count: 5, at: pct(50, 50), attack: s(0, 8, 8) }] }, { objective: 0, actions: [{ kind: 'say', line: 1 }] }],
+    objectives: [{ text: 'Take in 18,000 credits of Echo', kind: 'harvest', amount: 18000 }],
+    triggers: [
+      { at: 90 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 90 * 20, every: 70 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'shard', count: 4, grow: 1, max: 10, at: pct(50, 50), attack: s(0, 8, 8) }] },
+      { at: 4 * MIN, actions: [{ kind: 'say', line: 2 }] },
+      { at: 4 * MIN, every: 100 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'grace', count: 2, grow: 1, max: 6, at: pct(50, 50), attack: s(0, 8, 8) }, { kind: 'spawn', player: 1, unit: 'basso', count: 1, grow: 1, max: 3, at: pct(52, 48), attack: s(0) }] },
+      { objective: 0, actions: [{ kind: 'say', line: 1 }] },
+    ],
   },
   {
     id: 'override',
@@ -297,7 +335,7 @@ export const MISSIONS: MissionSpec[] = [
     map: { seed: 2404, size: 'M', biome: 'city', resources: 'normal', terrain: 'normal' },
     seats: [
       { faction: 1, team: 0, start: 'base', credits: 8000, units: [['fork', 3], ['vector', 3]] },
-      { faction: 0, team: 1, ai: 'easy', start: 'base', credits: 6000 },
+      { faction: 0, team: 1, ai: 'normal', start: 'base', credits: 6000 },
     ],
     objectives: [{ text: 'Destroy the Holdout base', kind: 'destroy', player: 1 }],
     triggers: [{ enter: { ...s(1), r: 16 }, actions: [{ kind: 'say', line: 0 }] }],
@@ -343,13 +381,18 @@ export const MISSIONS: MissionSpec[] = [
       { faction: 2, team: 0, start: 'vehicle', credits: 6000, units: [['grace', 4]] },
       { faction: 0, team: 1, start: 'none' },
     ],
-    allow: ['opus', 'bell', 'coda', 'loft', 'grace', 'staccato', 'refrain', 'discord', 'overture'],
+    allow: ['opus', 'bell', 'coda', 'loft', 'pit', 'chord', 'fermata', 'grace', 'staccato', 'glissando', 'refrain', 'discord', 'overture'],
     objectives: [
       { text: 'Grow a coda (refinery)', kind: 'have', role: 'refinery', count: 1 },
       { text: 'Grow a loft (barracks)', kind: 'have', role: 'barracks', count: 1 },
-      { text: 'Gather 6,000 credits of Echo', kind: 'harvest', amount: 6000 },
+      { text: 'Gather 12,000 credits of Echo', kind: 'harvest', amount: 12000 },
     ],
-    triggers: [{ at: 3 * MIN, every: 2 * MIN, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'grunt', count: 4, at: s(1), attack: s(0) }] }, { objective: 2, actions: [{ kind: 'say', line: 1 }] }],
+    triggers: [
+      { at: 90 * 20, actions: [{ kind: 'say', line: 0 }] },
+      { at: 90 * 20, every: 75 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'grunt', count: 3, grow: 2, max: 11, at: s(1), attack: s(0) }] },
+      { at: 3 * MIN, every: 90 * 20, actions: [{ kind: 'spawn', player: 1, unit: 'jackrabbit', count: 2, grow: 1, max: 5, at: s(1, 2, 2), attack: s(0, 6, 6) }, { kind: 'spawn', player: 1, unit: 'tankbuster', count: 1, grow: 1, max: 5, at: s(1, -2, 2), attack: s(0) }] },
+      { objective: 2, actions: [{ kind: 'say', line: 1 }] },
+    ],
   },
   {
     id: 'phase',
@@ -358,16 +401,16 @@ export const MISSIONS: MissionSpec[] = [
     speaker: 'choir',
     briefing: [
       'The iron ones carry our seeds away in their crawling boxes. They cut them into fuel.',
-      'Strike, vanish, strike again. Staccato blinks in; the hurt phase out. Never trade evenly. Break twelve of their machines.',
+      'Strike, vanish, strike again. Staccato blinks in; the hurt phase out. Never trade evenly. Break twenty of their machines.',
     ],
     lines: [['holdout', 'Convoy under attack! Where are they coming from?'], ['choir', 'The seeds are free.']],
     map: { seed: 3202, size: 'M', biome: 'wasteland', resources: 'normal', terrain: 'choke' },
     seats: [
       { faction: 2, team: 0, start: 'base', credits: 7000, units: [['staccato', 6], ['glissando', 3]] },
-      { faction: 0, team: 1, ai: 'normal', start: 'base', credits: 6000 },
+      { faction: 0, team: 1, ai: 'hard', start: 'base', credits: 6000 },
     ],
-    objectives: [{ text: 'Destroy 12 Holdout units', kind: 'kill', player: 1, count: 12 }],
-    triggers: [{ at: 2 * MIN, every: 2 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'mule', count: 2, at: s(1), attack: pct(30, 70) }, { kind: 'spawn', player: 1, unit: 'bulldog', count: 2, at: s(1, 3, 0), attack: pct(30, 70) }] }, { at: 3 * MIN, actions: [{ kind: 'say', line: 0 }] }, { objective: 0, actions: [{ kind: 'say', line: 1 }] }],
+    objectives: [{ text: 'Destroy 20 Holdout units', kind: 'kill', player: 1, count: 20 }],
+    triggers: [{ at: 2 * MIN, every: 2 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'mule', count: 2, at: s(1), attack: pct(30, 70) }, { kind: 'spawn', player: 1, unit: 'bulldog', count: 2, grow: 1, max: 5, at: s(1, 3, 0), attack: pct(30, 70) }] }, { at: 3 * MIN, actions: [{ kind: 'say', line: 0 }] }, { objective: 0, actions: [{ kind: 'say', line: 1 }] }],
   },
   {
     id: 'requiem',

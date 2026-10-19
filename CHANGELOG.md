@@ -1,5 +1,13 @@
 # What's new
 
+## 2026-10-19 17:12 UTC
+
+- **Campaign: you always know where to go.** Targets to destroy, places to reach or hold, and the unit you must protect are marked in gold on the map and the minimap, even under fog. Click an objective in the mission panel to look at it; click again for the next target.
+- **Campaign: tanks in Cut the Cable.** The Radio Mast is now allowed there, so Bulldogs unlock, and Thumper artillery and the Garage join them. Diesel and Iron, Initialization and First Note now let you build a factory, so lost harvesters can be replaced.
+- **Campaign: tighter and tougher.** Enemy waves grow every time they come instead of the same small raid on repeat. Dead Air is five minutes, Kessel Dam is twelve with assaults and a final push, the harvest goals are bigger, and raids start sooner. Relays in Cut the Cable are guarded, and their guns go dark if you knock out the power plants.
+- **Campaign difficulty:** pick Story, Normal or Hard on the campaign screen. Story sends smaller waves and gives you extra credits; Hard sends half again as many attackers and a sharper enemy.
+- New spoken lines for the new moments in five missions.
+
 ## 2026-10-19 16:25 UTC
 
 - **Codex catches up:** the How to play page now covers research upgrades and each faction's doctrine choice, and every game mode: the tutorial, the campaign, free-for-all, the daily challenge, ranked matches, open games, watching a match, saved games and the map editor. Superweapon buildings show their role on the building cards.

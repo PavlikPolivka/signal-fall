@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { LockstepScheduler, NullTransport, type NetMessage, type Transport } from '@signal-fall/net';
-import { KIND, Sim, inCoverage, powerStatus, superweaponStatus, type ScheduledCommand, type World } from '@signal-fall/sim';
+import { KIND, Sim, inCoverage, missionMarkers, powerStatus, superweaponStatus, type ScheduledCommand, type World } from '@signal-fall/sim';
 import { STATS_INTERVAL, commandsByTick, createSim, sampleStats, scheduleCommand, type MatchStats, type Replay } from '../game/scenario';
 import {
   E,
@@ -8,6 +8,7 @@ import {
   ENT_STRIDE,
   H,
   HEADER_LEN,
+  MARKER_STRIDE,
   ORDER_CODE,
   P,
   PLAYER_STRIDE,
@@ -52,7 +53,10 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
   for (let s = 0; s < e.high; s++) if (e.alive[s] === 1) count++;
   const players = world.players.length;
   const projectiles = world.projectiles.length;
-  const a = new Int32Array(HEADER_LEN + players * PLAYER_STRIDE + count * ENT_STRIDE + projectiles * PROJ_STRIDE + world.points.length * POINT_STRIDE + (world.crates?.list.length ?? 0) * CRATE_STRIDE + (world.mission?.status.length ?? 0));
+  const markers = missionMarkers(world);
+  const a = new Int32Array(
+    HEADER_LEN + players * PLAYER_STRIDE + count * ENT_STRIDE + projectiles * PROJ_STRIDE + world.points.length * POINT_STRIDE + (world.crates?.list.length ?? 0) * CRATE_STRIDE + (world.mission?.status.length ?? 0) + markers.length * MARKER_STRIDE,
+  );
   a[H.tick] = world.tick;
   a[H.ended] = world.ended ? 1 : 0;
   a[H.winnerTeam] = world.winnerTeam;
@@ -63,6 +67,7 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
   a[H.pointCount] = world.points.length;
   a[H.crateCount] = world.crates?.list.length ?? 0;
   a[H.objectives] = world.mission?.status.length ?? 0;
+  a[H.markers] = markers.length;
   const sv = world.survival;
   a[H.wave] = sv?.wave ?? 0;
   a[H.waves] = sv?.waves ?? 0;
@@ -180,6 +185,10 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     off += CRATE_STRIDE;
   }
   for (const st of world.mission?.status ?? []) a[off++] = st;
+  for (const m of markers) {
+    a.set([m.objective, m.kind, m.x, m.y, m.r], off);
+    off += MARKER_STRIDE;
+  }
   return a.buffer;
 }
 

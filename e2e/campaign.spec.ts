@@ -25,3 +25,20 @@ test('campaign: pick the first mission, read the briefing, play it and tick off 
   await page.keyboard.press('KeyD');
   await expect(page.locator('[data-testid=mission-panel] [data-objective="0"]')).toHaveClass(/done/, { timeout: 20_000 });
 });
+
+test('campaign: objectives are marked on the map, and clicking one looks at it', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-campaign]');
+  // The difficulty choice is kept for the missions.
+  await page.click('[data-testid=campaign-difficulty] [data-difficulty=hard]');
+  await expect(page.locator('[data-testid=campaign-difficulty] [data-difficulty=hard]')).toHaveClass(/active/);
+  await page.goto('/play/?mission=cut-the-cable');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur, null, { timeout: 30_000 });
+  await expect(page.getByTestId('mission-panel')).toContainText('Hard');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.cur.markers().length >= 3, null, { timeout: 20_000 });
+  const before = await page.evaluate(() => (window as unknown as Win).__signalFall.state.cur.markers().filter((m: { objective: number }) => m.objective === 1).length);
+  expect(before).toBe(3);
+  await page.locator('[data-testid=mission-panel] [data-objective="1"] button').click();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/campaign-markers.png' });
+});

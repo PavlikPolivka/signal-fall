@@ -2553,6 +2553,37 @@ label.check {
 .mission-panel li.failed {
   color: var(--bad);
 }
+.campaign-difficulty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+}
+.campaign-difficulty .seg {
+  display: flex;
+  gap: 4px;
+}
+.campaign-difficulty .seg button {
+  flex: 1;
+}
+.campaign-difficulty .seg button.active {
+  color: #111;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.mission-panel .objective-link {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+.mission-panel .objective-link:hover {
+  color: #ffd34d;
+}
+.mission-panel .objective-pin {
+  color: #ffd34d;
+}
 .campaign {
   display: flex;
   gap: 18px;

@@ -114,12 +114,16 @@ export const H = {
   waveIn: 11,
   /** Campaign mission: how many objectives (their status follows the crates). */
   objectives: 12,
+  /** Campaign mission: map markers for pending objectives (after the statuses, MARKER_STRIDE each). */
+  markers: 13,
 } as const;
+/** Objective markers: [objective, kind (sim MARKER), x, y (Q10), radius in tiles]. */
+export const MARKER_STRIDE = 5;
 /** Crates after the capture points: [x, y, kind]. */
 export const CRATE_STRIDE = 3;
 /** Capture points after the projectiles: [x, y, kind, owner, capturer team, progress ticks]. */
 export const POINT_STRIDE = 6;
-export const HEADER_LEN = 13;
+export const HEADER_LEN = 14;
 
 export const P = {
   credits: 0,
@@ -241,6 +245,16 @@ export class Snapshot {
   objectives(): number[] {
     const base = this.projBase + this.projectileCount * PROJ_STRIDE + (this.a[H.pointCount] ?? 0) * POINT_STRIDE + (this.a[H.crateCount] ?? 0) * CRATE_STRIDE;
     return Array.from(this.a.subarray(base, base + (this.a[H.objectives] ?? 0)));
+  }
+  /** Where the pending mission objectives are: areas, targets and units to protect. */
+  markers(): { objective: number; kind: number; x: number; y: number; r: number }[] {
+    const out = [];
+    const base = this.projBase + this.projectileCount * PROJ_STRIDE + (this.a[H.pointCount] ?? 0) * POINT_STRIDE + (this.a[H.crateCount] ?? 0) * CRATE_STRIDE + (this.a[H.objectives] ?? 0);
+    for (let i = 0; i < (this.a[H.markers] ?? 0); i++) {
+      const o = base + i * MARKER_STRIDE;
+      out.push({ objective: this.a[o]!, kind: this.a[o + 1]!, x: this.a[o + 2]!, y: this.a[o + 3]!, r: this.a[o + 4]! });
+    }
+    return out;
   }
   /** Crates lying on the map (only with the crates setting). */
   crates(): { x: number; y: number; kind: number }[] {

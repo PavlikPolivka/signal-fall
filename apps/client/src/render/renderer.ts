@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Matrix, Sprite, Texture } from 'pixi.js';
-import { CAPTURE_RADIUS, CAPTURE_TICKS, KIND, POINT, TERRAIN } from '@signal-fall/sim';
+import { CAPTURE_RADIUS, CAPTURE_TICKS, KIND, MARKER, POINT, TERRAIN } from '@signal-fall/sim';
 import { E, ENT_FLAG, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { TILE_H, TILE_W, facingToRotation, isoX, isoY, tileU, tileV } from '../game/iso';
@@ -646,6 +646,7 @@ export class Renderer {
     this.drawCoverage();
     this.drawPoints();
     this.drawCrates();
+    this.drawObjectives();
     this.drawChorus();
     this.shimmerEcho();
     this.night.begin();
@@ -1287,6 +1288,37 @@ export class Renderer {
         const c = TEAM_COLORS[Math.max(0, team) % TEAM_COLORS.length]!;
         const t = p.progress / CAPTURE_TICKS;
         this.overlay.arc(px, py - 70, 9, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).stroke({ width: 3, color: c });
+      }
+    }
+  }
+
+  /**
+   * Campaign objectives, through fog: a gold ring on areas to reach or hold, a bouncing gold arrow over
+   * targets to destroy, and a green ring around the unit to keep alive.
+   */
+  private drawObjectives(): void {
+    const cur = this.state.cur;
+    if (!cur || !this.state.mission) return;
+    const t = performance.now() / 1000;
+    const bob = 4 * Math.sin(t * 4);
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3);
+    // Two objectives can point at the same target (the first relay, then all of them): draw it once.
+    const drawn = new Set<string>();
+    for (const m of cur.markers()) {
+      const key = `${m.kind}:${m.x}:${m.y}`;
+      if (drawn.has(key)) continue;
+      drawn.add(key);
+      const px = isoX(m.x / FX, m.y / FX);
+      const py = isoY(m.x / FX, m.y / FX);
+      if (m.kind === MARKER.area) {
+        const rx = m.r * (TILE_W / 2) * Math.SQRT2;
+        this.decals.ellipse(px, py, rx, rx / 2).fill({ color: 0xffd34d, alpha: 0.05 + 0.05 * pulse }).stroke({ width: 2.5, color: 0xffd34d, alpha: 0.9 });
+        this.overlay.poly([px - 9, py - 46 + bob, px + 9, py - 46 + bob, px, py - 32 + bob]).fill(0xffd34d).stroke({ width: 1.5, color: 0x1a1a1a });
+      } else if (m.kind === MARKER.target) {
+        this.decals.ellipse(px, py, 34, 17).stroke({ width: 2, color: 0xffd34d, alpha: 0.5 + 0.4 * pulse });
+        this.overlay.poly([px - 10, py - 78 + bob, px + 10, py - 78 + bob, px, py - 62 + bob]).fill(0xffd34d).stroke({ width: 1.5, color: 0x1a1a1a });
+      } else {
+        this.decals.ellipse(px, py, 22, 11).stroke({ width: 2.5, color: 0x6dff8a, alpha: 0.6 + 0.4 * pulse });
       }
     }
   }

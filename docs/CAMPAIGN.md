@@ -83,3 +83,22 @@ You are the Cantor's chorus. Mechanics: grown structures, shields instead of hul
 
 Rough size: a trigger system and mission format (M), a mission select and briefing screen (S), and then about one
 day per mission for map, script and tuning.
+
+## Tuning (2026-10-19)
+
+The first version was slow, easy and sometimes broken. What changed:
+
+- **Build lists checked by a test.** Several missions allowed a unit without what it needs: tanks in Cut the Cable
+  needed a radar that wasn't allowed, and three missions had no factory to replace harvesters.
+  `packages/scenario/test/campaign.test.ts` now fails if anything allowed can't be built.
+- **Objective markers.** Targets to destroy, areas to reach or hold, and the unit to protect are marked in gold on
+  the map and minimap, through fog. Clicking an objective in the mission panel moves the camera to it (cycling targets).
+- **Waves that build up.** A spawn action can `grow` each time its trigger repeats, up to `max`. Missions use this
+  in place of the same small raid every two minutes.
+- **Shorter, denser missions.** Dead Air 7:00 → 5:00, Kessel Dam 20:00 → 12:00 with scripted assaults and a final
+  push. Quotas went up where an efficient player hit them in minutes, and raids start at 1:30.
+- **Difficulty.** Story (60% waves, enemy AI a level lower, +3,000 credits), Normal, Hard (150% waves, enemy AI a
+  level higher). It is part of the replay spec, so mission replays reproduce.
+- **Measuring.** `CAMPAIGN_RUN=1 pnpm --filter @signal-fall/scenario exec vitest run test/campaign-run.test.ts --silent=false`
+  plays every mission with the built-in AI as the player. That AI ignores objectives, so read it as how much
+  pressure a mission puts on a base, not as a pass mark.

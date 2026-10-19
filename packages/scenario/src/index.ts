@@ -46,9 +46,14 @@ export type ScenarioSpec =
       time?: 'day' | 'dusk' | 'night';
     }
   /** A campaign mission (see missions.ts). */
-  | { kind: 'mission'; id: string; seed: number }
+  | { kind: 'mission'; id: string; seed: number; difficulty?: CampaignDifficulty }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };
+
+/** Campaign difficulty: scales scripted waves and moves enemy AIs a level down or up. */
+export type CampaignDifficulty = 'story' | 'normal' | 'hard';
+export const CAMPAIGN_WAVE_PCT: Record<CampaignDifficulty, number> = { story: 60, normal: 100, hard: 150 };
+const AI_LEVELS: Difficulty[] = ['easy', 'normal', 'hard', 'brutal'];
 
 export interface MapExtras {
   decoration: Uint8Array;
@@ -97,7 +102,7 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
       };
     }
     case 'mission':
-      return createMission(spec.id);
+      return createMission(spec.id, spec.difficulty ?? 'normal');
     case 'sandbox':
     case 'stress': {
       const sim = sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
@@ -227,9 +232,15 @@ export function missionById(id: string): MissionSpec {
 }
 
 /** A mission's match: its map, seats, preset forces, objectives and triggers. */
-function createMission(id: string): { sim: Sim; extras: MapExtras } {
+function createMission(id: string, difficulty: CampaignDifficulty): { sim: Sim; extras: MapExtras } {
   const rules = defaultRules();
   const m = missionById(id);
+  const pct = CAMPAIGN_WAVE_PCT[difficulty];
+  // Enemy waves scale with the difficulty (never below one unit); the player's own reinforcements don't.
+  const scale = (n: number, player: number) => (player === 0 || m.seats[player]?.team === m.seats[0]!.team ? n : Math.max(1, Math.round((n * pct) / 100)));
+  const shift = difficulty === 'story' ? -1 : difficulty === 'hard' ? 1 : 0;
+  const enemyAi = (k: number, level: Difficulty) =>
+    m.seats[k]!.team === m.seats[0]!.team ? level : AI_LEVELS[Math.max(0, Math.min(AI_LEVELS.length - 1, AI_LEVELS.indexOf(level) + shift))]!;
   const map = generateMap({ seed: m.map.seed, players: m.seats.length, size: m.map.size, biome: m.map.biome, resources: m.map.resources, terrain: m.map.terrain });
   const n = map.width;
   const clamp = (v: number) => Math.max(2, Math.min(n - 3, v));
@@ -265,7 +276,18 @@ function createMission(id: string): { sim: Sim; extras: MapExtras } {
       actions: t.actions.map((a): MissionRuleAction => {
         if (a.kind === 'spawn') {
           const p = at(a.at);
-          return { kind: 'spawn', player: a.player, unit: a.unit, count: a.count, x: p.x, y: p.y, tag: a.tag, attack: a.attack ? at(a.attack) : undefined };
+          return {
+            kind: 'spawn',
+            player: a.player,
+            unit: a.unit,
+            count: scale(a.count, a.player),
+            grow: a.grow === undefined ? undefined : a.grow === 0 ? 0 : scale(a.grow, a.player),
+            max: a.max === undefined ? undefined : scale(a.max, a.player),
+            x: p.x,
+            y: p.y,
+            tag: a.tag,
+            attack: a.attack ? at(a.attack) : undefined,
+          };
         }
         if (a.kind === 'reveal') return { kind: 'reveal', area: area(a.area) };
         return a;
@@ -283,6 +305,8 @@ function createMission(id: string): { sim: Sim; extras: MapExtras } {
     }
     else if (seat.start === 'none') for (let s = 0; s < w.entities.high; s++) if (w.entities.alive[s] === 1 && w.entities.owner[s] === k) w.entities.free(s);
     if (seat.credits !== undefined) w.players[k]!.credits = seat.credits;
+    // Story: a cushion of credits for the player.
+    if (k === 0 && difficulty === 'story') w.players[k]!.credits += 3000;
     for (const [unit, count] of seat.units ?? []) {
       const ri = rules.unitIndex.get(unit);
       if (ri === undefined) continue;
@@ -292,7 +316,7 @@ function createMission(id: string): { sim: Sim; extras: MapExtras } {
       const ri = rules.structures.findIndex((x) => x.id === sid);
       if (ri >= 0) spawnStructure(w, ri, k, clamp(start.x + dx), clamp(start.y + dy));
     }
-    if (seat.ai) attachAi(sim, k, seat.ai, map.starts);
+    if (seat.ai) attachAi(sim, k, enemyAi(k, seat.ai), map.starts);
   });
   return {
     sim,

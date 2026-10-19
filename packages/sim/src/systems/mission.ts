@@ -34,7 +34,8 @@ export type Objective =
   | { kind: 'kill'; player: number; count: number };
 
 export type Action =
-  | { kind: 'spawn'; player: number; unit: string; count: number; x: number; y: number; tag?: string; attack?: { x: number; y: number } }
+  /** Waves: `grow` more units each time the trigger repeats, up to `max`. */
+  | { kind: 'spawn'; player: number; unit: string; count: number; grow?: number; max?: number; x: number; y: number; tag?: string; attack?: { x: number; y: number } }
   | { kind: 'say'; line: number }
   | { kind: 'credits'; player: number; amount: number }
   | { kind: 'reveal'; area: Area }
@@ -68,12 +69,14 @@ export interface MissionState {
   tags: Map<string, number>;
   /** Ticks held so far, per 'hold' objective. */
   held: number[];
+  /** How many times each trigger has fired. */
+  fired: number[];
 }
 
 const STEP = 10;
 
 export function makeMission(rules: MissionRules): MissionState {
-  return { rules, status: rules.objectives.map(() => 0), next: rules.triggers.map((t) => t.at ?? 0), tags: new Map(), held: rules.objectives.map(() => 0) };
+  return { rules, status: rules.objectives.map(() => 0), next: rules.triggers.map((t) => t.at ?? 0), tags: new Map(), held: rules.objectives.map(() => 0), fired: rules.triggers.map(() => 0) };
 }
 
 const inArea = (x: number, y: number, a: Area) => {
@@ -82,12 +85,13 @@ const inArea = (x: number, y: number, a: Area) => {
   return dx * dx + dy * dy <= a.r * a.r;
 };
 
-function act(world: World, m: MissionState, a: Action, index: number): void {
+function act(world: World, m: MissionState, a: Action, index: number, fired: number): void {
   if (a.kind === 'spawn') {
     const rule = world.rules.unitIndex.get(a.unit);
     if (rule === undefined) return;
     const made: number[] = [];
-    for (let k = 0; k < a.count; k++) {
+    const count = Math.min(a.max ?? 99, a.count + (a.grow ?? 0) * fired);
+    for (let k = 0; k < count; k++) {
       const h = spawnUnit(world, rule, a.player, ((a.x + (k % 3) - 1) << FX_SHIFT) + (FX_ONE >> 1), ((a.y + (idiv(k, 3) % 3) - 1) << FX_SHIFT) + (FX_ONE >> 1));
       made.push(h);
       if (a.tag && k === 0) m.tags.set(a.tag, h);
@@ -191,9 +195,47 @@ export function missionSystem(world: World): void {
       for (let s = 0; s < e.high && !inside; s++) if (e.alive[s] === 1 && e.owner[s] === 0 && e.kind[s] === KIND.unit && inArea(e.x[s]!, e.y[s]!, t.enter)) inside = true;
       if (!inside) return;
     }
-    t.actions.forEach((a, k) => act(world, m, a, i * 16 + k));
+    t.actions.forEach((a, k) => act(world, m, a, i * 16 + k, m.fired[i]!));
+    m.fired[i]! += 1;
     m.next[i] = t.every && (t.until === undefined || world.tick + t.every <= t.until) ? world.tick + t.every : -1;
   });
   // Every objective that isn't a 'protect' done: won.
   if (m.rules.objectives.length > 0 && m.rules.objectives.every((o, i) => o.kind === 'protect' || m.status[i] === 1)) end(world, true);
+}
+
+/** Where a marker points: an area to reach or hold, a target to destroy, a unit to protect. */
+export const MARKER = { area: 0, target: 1, protect: 2 } as const;
+
+export interface Marker {
+  objective: number;
+  kind: number;
+  /** Q10 world position. */
+  x: number;
+  y: number;
+  /** Radius in tiles (areas), else 0. */
+  r: number;
+}
+
+/** Map markers for the pending objectives (targets are known to the player even under fog). */
+export function missionMarkers(world: World, limit = 32): Marker[] {
+  const m = world.mission;
+  const out: Marker[] = [];
+  if (!m) return out;
+  const e = world.entities;
+  const centre = (v: number) => (v << FX_SHIFT) + (FX_ONE >> 1);
+  m.rules.objectives.forEach((o, i) => {
+    if (m.status[i] !== 0) return;
+    if (o.kind === 'reach' || o.kind === 'hold') out.push({ objective: i, kind: MARKER.area, x: centre(o.area.x), y: centre(o.area.y), r: o.area.r });
+    if (o.kind === 'protect' || (o.kind === 'reach' && o.tag)) {
+      const s = e.resolve(m.tags.get(o.tag!) ?? -1);
+      if (s >= 0) out.push({ objective: i, kind: MARKER.protect, x: e.x[s]!, y: e.y[s]!, r: 0 });
+    }
+    if (o.kind === 'destroy')
+      for (let s = 0; s < e.high; s++) {
+        if (e.alive[s] !== 1 || e.owner[s] !== o.player || e.kind[s] !== KIND.structure) continue;
+        if (o.role && world.rules.structures[e.type[s]!]!.role !== o.role) continue;
+        out.push({ objective: i, kind: MARKER.target, x: e.x[s]!, y: e.y[s]!, r: 0 });
+      }
+  });
+  return out.slice(0, limit);
 }

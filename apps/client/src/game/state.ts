@@ -106,6 +106,8 @@ export class ClientState {
   touched = false;
   /** A campaign mission being played. */
   mission: import('./scenario').MissionSpec | null = null;
+  /** Campaign difficulty of the mission being played. */
+  campaignDifficulty: import('./scenario').CampaignDifficulty = 'normal';
   /** The tutorial match. */
   tutorial = false;
   /** Playing today's daily challenge (its description), or null. */

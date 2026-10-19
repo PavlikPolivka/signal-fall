@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'preact/hooks';
-import { HILL_TICKS, KIND, POINT } from '@signal-fall/sim';
+import { HILL_TICKS, KIND, MARKER, POINT } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E, H, P, P_HILL } from '../protocol';
 import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
@@ -85,7 +85,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
         />
       )}
       {state.tutorial && <Tutorial state={state} renderer={props.renderer} />}
-      {state.mission && <MissionPanel state={state} />}
+      {state.mission && <MissionPanel state={state} input={props.input} />}
       {!state.tutorial && !state.mission && !state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
     </div>
   );
@@ -566,6 +566,28 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
           ctx.lineTo(p.x - 1.5, p.y + 0.5);
           ctx.fill();
         }
+      // Mission objectives: blinking gold diamonds (green for the unit to protect), area rings.
+      if (cur && state.mission) {
+        const on = Math.floor(performance.now() / 400) % 2 === 0;
+        for (const m of cur.markers()) {
+          const x = m.x / FX;
+          const y = m.y / FX;
+          ctx.fillStyle = m.kind === MARKER.protect ? '#6dff8a' : on ? '#ffd34d' : '#a07a10';
+          ctx.beginPath();
+          ctx.moveTo(x, y - 3);
+          ctx.lineTo(x + 3, y);
+          ctx.lineTo(x, y + 3);
+          ctx.lineTo(x - 3, y);
+          ctx.fill();
+          if (m.kind === MARKER.area) {
+            ctx.strokeStyle = '#ffd34d';
+            ctx.lineWidth = 1.5 / scale;
+            ctx.beginPath();
+            ctx.arc(x, y, m.r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      }
       // Attack pings: red rings where own units/buildings were recently hit.
       const now = performance.now();
       for (const hit of state.hits) {
@@ -1340,20 +1362,50 @@ function MissionResult({ state, won }: { state: ClientState; won: boolean }) {
   return <p class="muted">{won ? `${state.mission!.title}: mission complete.` : 'Mission failed. Try again from the menu, or with Retry.'}</p>;
 }
 
-/** Campaign mission: the objectives, ticked off as they are done. */
-function MissionPanel({ state }: { state: ClientState }) {
+/** Which marker an objective's next click jumps to (cycles through its targets). */
+const objectiveCycle = new Map<number, number>();
+
+/** Campaign mission: the objectives, ticked off as they are done; click one to look at it on the map. */
+function MissionPanel({ state, input }: { state: ClientState; input: Input }) {
   const m = state.mission!;
   const status = state.cur?.objectives() ?? [];
+  const markers = state.cur?.markers() ?? [];
   return (
     <div class="tutorial mission-panel" data-testid="mission-panel">
       <b>{m.title}</b>
+      {state.campaignDifficulty !== 'normal' && <span class="muted small"> · {state.campaignDifficulty === 'story' ? 'Story' : 'Hard'}</span>}
       <ul>
-        {m.objectives.map((o, i) => (
-          <li class={status[i] === 1 ? 'done' : status[i] === 2 ? 'failed' : ''} data-objective={i}>
-            {status[i] === 1 ? '✓' : status[i] === 2 ? '✗' : '○'} {o.text}
-          </li>
-        ))}
+        {m.objectives.map((o, i) => {
+          const mine = markers.filter((k) => k.objective === i);
+          const label = (
+            <>
+              {status[i] === 1 ? '✓' : status[i] === 2 ? '✗' : '○'} {o.text}
+              {mine.length > 1 && o.kind === 'destroy' && o.count === undefined && <span class="muted"> ({mine.length} left)</span>}
+            </>
+          );
+          return (
+            <li class={status[i] === 1 ? 'done' : status[i] === 2 ? 'failed' : ''} data-objective={i}>
+              {mine.length > 0 ? (
+                <button
+                  class="link objective-link"
+                  title="Show on the map (click again for the next one)"
+                  onClick={() => {
+                    const n = (objectiveCycle.get(i) ?? -1) + 1;
+                    objectiveCycle.set(i, n);
+                    const k = mine[n % mine.length]!;
+                    input.lookAt(k.x, k.y);
+                  }}
+                >
+                  {label} <span class="objective-pin">◎</span>
+                </button>
+              ) : (
+                label
+              )}
+            </li>
+          );
+        })}
       </ul>
+      {markers.length > 0 && <p class="muted small">Gold markers on the map and minimap show where to go. Click an objective to look at it.</p>}
     </div>
   );
 }

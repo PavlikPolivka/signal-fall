@@ -27,6 +27,10 @@
       {
         "speaker": "holdout",
         "text": "That was the last patrol. We have a home. For now."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Big one coming in from the city. Everyone on the line!"
       }
     ]
   },
@@ -39,7 +43,7 @@
       },
       {
         "speaker": "holdout",
-        "text": "Build a smelter by the field and let the Mules haul. I want eight thousand credits in the bank before Halcyon notices."
+        "text": "Build a smelter by the field and let the Mules haul. I want twelve thousand credits in the bank before Halcyon notices."
       },
       {
         "speaker": "holdout",
@@ -53,7 +57,11 @@
       },
       {
         "speaker": "holdout",
-        "text": "Eight thousand. That will keep the lights on. Well done."
+        "text": "Twelve thousand. That will keep the lights on. Well done."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Raids ineffective. Committing ground units."
       }
     ]
   },
@@ -67,6 +75,10 @@
       {
         "speaker": "holdout",
         "text": "Three relays stand between us and the river. Take them down. Bring a Wrench: our engineer can strip a wreck for parts."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Their guns run on the same power as everything else. Knock out the power and the guards go dark."
       }
     ],
     "lines": [
@@ -120,7 +132,7 @@
       },
       {
         "speaker": "holdout",
-        "text": "It is coming with everything. Walls, bastions, every gun we have. Hold for twenty minutes."
+        "text": "It is coming with everything. Walls, bastions, every gun we have. Hold for twelve minutes."
       }
     ],
     "lines": [
@@ -135,6 +147,10 @@
       {
         "speaker": "halcyon",
         "text": "Anomaly detected at the crater. Reallocating forces."
+      },
+      {
+        "speaker": "holdout",
+        "text": "This is their last push. Everything they have. Hold!"
       }
     ]
   },
@@ -185,6 +201,10 @@
       {
         "speaker": "halcyon",
         "text": "Sector held. Attrition within tolerance."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Bring up the Thumpers. Shell that network flat."
       }
     ]
   },
@@ -208,6 +228,10 @@
       {
         "speaker": "halcyon",
         "text": "Quota met. Anomaly unexplained. Logging."
+      },
+      {
+        "speaker": "choir",
+        "text": "More of us wake. More, and more."
       }
     ]
   },
@@ -293,7 +317,7 @@
       },
       {
         "speaker": "choir",
-        "text": "Strike, vanish, strike again. Staccato blinks in; the hurt phase out. Never trade evenly. Break twelve of their machines."
+        "text": "Strike, vanish, strike again. Staccato blinks in; the hurt phase out. Never trade evenly. Break twenty of their machines."
       }
     ],
     "lines": [

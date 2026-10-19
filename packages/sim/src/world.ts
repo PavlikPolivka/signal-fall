@@ -338,6 +338,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     for (const v of world.mission.status) w.push(v);
     for (const v of world.mission.next) w.push(v);
     for (const v of world.mission.held) w.push(v);
+    for (const v of world.mission.fired) w.push(v);
   }
   if (world.survival) {
     w.push(world.survival.wave);
