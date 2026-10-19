@@ -14,7 +14,22 @@
       "render": {
         "length": 3.0,
         "turret_cut": 0.6,
-        "turret_radius": 0.28
+        "turret_radius": 0.28,
+        "tracks": {
+          "y": [
+            -0.6,
+            0.6
+          ],
+          "z": [
+            0.004,
+            0.042
+          ],
+          "x": [
+            -1.24,
+            0.4
+          ],
+          "pitch": 0.09
+        }
       },
       "v1": {
         "preview_id": "01a14589-984a-7192-98f4-48f3936876c9",
@@ -33,15 +48,32 @@
       "faction": "holdout",
       "prompt": "Armored six-wheeled ore harvester truck: armored cab, big ore hopper on the back, wide front scoop shovel, hydraulic pistons.",
       "render": {
-        "length": 2.9
-      }
+        "length": 2.9,
+        "turn": 180
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "flak_track": {
       "faction": "holdout",
       "prompt": "Half-track anti-aircraft vehicle: wheels at the front, tracks at the rear, and on the back a big turret with four long anti-aircraft gun barrels raised toward the sky, clearly visible.",
       "render": {
         "length": 2.7,
-        "turret_cut": 0.55
+        "turret_cut": 0.55,
+        "tracks": {
+          "y": [
+            -0.69,
+            0.69
+          ],
+          "z": [
+            0.004,
+            0.042
+          ],
+          "x": [
+            -1.0,
+            1.0
+          ],
+          "pitch": 0.09
+        }
       },
       "v1": {
         "note": "regenerated: did not match the unit"
@@ -54,36 +86,68 @@
       "faction": "holdout",
       "prompt": "Self-propelled heavy howitzer on tracks: open-top armored casemate, huge long artillery barrel angled upward, ammunition racks.",
       "render": {
-        "length": 3.1
+        "length": 3.1,
+        "tracks": {
+          "y": [
+            -0.7,
+            0.7
+          ],
+          "z": [
+            0.004,
+            0.042
+          ],
+          "x": [
+            -1.1,
+            0.55
+          ],
+          "pitch": 0.09
+        }
       }
     },
     "patch": {
       "faction": "holdout",
       "prompt": "Repair truck: flatbed truck with a crane arm, welding rig, gas cylinders, tool boxes and spare parts.",
       "render": {
-        "length": 2.7
-      }
+        "length": 2.7,
+        "turn": 180
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "hornet": {
       "faction": "holdout",
       "prompt": "Military gunship helicopter with twin rotors, rocket pods and side machine guns, riveted armor plates.",
       "render": {
-        "length": 2.9
-      }
+        "length": 2.9,
+        "rotors": {
+          "band": [
+            0.73,
+            0.87
+          ],
+          "radius": 1.15,
+          "blades": 4
+        },
+        "turn": 180
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19).",
+      "note_anim": "The rotor layer is cut off the mesh and spun across the fly frames."
     },
     "ironclad": {
       "faction": "holdout",
       "prompt": "Huge crewed four-legged armored walker war machine with a heavy cannon, riveted armor, exhaust stacks, searchlight.",
       "render": {
-        "length": 3.3
-      }
+        "length": 3.3,
+        "turn": 180
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "homestead": {
       "faction": "holdout",
       "prompt": "Mobile construction vehicle: big eight-wheeled truck carrying a folded workshop container and a folded crane.",
       "render": {
-        "length": 3.4
-      }
+        "length": 3.4,
+        "turn": 180
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "holdfast": {
       "faction": "holdout",
@@ -186,8 +250,10 @@
       "faction": "halcyon",
       "prompt": "Hover artillery: hover base carrying a tall tesla emitter coil that throws arcing energy bolts.",
       "render": {
-        "length": 2.9
-      }
+        "length": 2.9,
+        "turn": 90
+      },
+      "note_turn": "Turned 90 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "seek": {
       "faction": "halcyon",
@@ -208,8 +274,10 @@
       "faction": "halcyon",
       "prompt": "Construction unit: big hover carrier holding a folded hexagonal core node.",
       "render": {
-        "length": 3.4
-      }
+        "length": 3.4,
+        "turn": 90
+      },
+      "note_turn": "Turned 90 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "kernel": {
       "faction": "halcyon",
@@ -279,36 +347,44 @@
       "faction": "choir",
       "prompt": "A long crystal shard lying flat and hovering horizontally just above the ground like a skimming boat, longer than it is tall, with amber fins along both sides.",
       "render": {
-        "length": 2.3
+        "length": 2.3,
+        "turn": 180
       },
       "v1": {
         "note": "regenerated: did not match the unit"
-      }
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "refrain": {
       "faction": "choir",
       "prompt": "Harvester: a floating geode split open, its crystal bowl gathering ore, an amber glowing maw at the front.",
       "render": {
-        "length": 2.9
-      }
+        "length": 2.9,
+        "turn": 90
+      },
+      "note_turn": "Turned 90 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "basso": {
       "faction": "choir",
       "prompt": "A heavy hover tank made of a large faceted violet crystal hull floating above the ground, a long prism crystal cannon on top, a few small violet shards orbiting it. Mostly violet and amber, only small green accents.",
       "render": {
         "length": 3.0,
-        "turret_cut": 0.55
+        "turret_cut": 0.55,
+        "turn": 180
       },
       "v1": {
         "note": "regenerated: did not match the unit"
-      }
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "falsetto": {
       "faction": "choir",
       "prompt": "Mobile anti-aircraft: twin tuning-fork crystal spires over a small floating keel.",
       "render": {
-        "length": 2.6
-      }
+        "length": 2.6,
+        "turn": 180
+      },
+      "note_turn": "Turned 180 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "crescendo": {
       "faction": "choir",
@@ -321,8 +397,10 @@
       "faction": "choir",
       "prompt": "Flying unit: a violet crystal with two long blade wings.",
       "render": {
-        "length": 2.7
-      }
+        "length": 2.7,
+        "turn": 90
+      },
+      "note_turn": "Turned 90 degrees: the import guessed the front from the tallest far reach and got it wrong (checked in side views, 2026-10-19)."
     },
     "requiem": {
       "faction": "choir",

@@ -1,0 +1,43 @@
+{
+  "_comment": "Gemini text-to-speech casting (tools/assets/voices/gemini.py). Each line is sent as a short audio profile, director's notes (style, pace) and the transcript, kept apart: a bare 'Say X:' cue gets read aloud on short lines. The faction treatment (radio, synthetic, chorus) from build.py goes on top.",
+  "model": "gemini-3.8-flash-tts",
+  "check_model": "gemini-3.5-flash",
+  "campaign": {
+    "holdout": {
+      "voice": "Gacrux",
+      "profile": "Captain Varga, a tough, tired woman leading the last human resistance, speaking to her troops by radio.",
+      "style": "grim, firm and steady; dry, never theatrical"
+    },
+    "halcyon": {
+      "voice": "Iapetus",
+      "profile": "HALCYON, a planetary AI, and WREN, one of its processes: a machine reporting.",
+      "style": "flat, precise and calm; no emotion"
+    },
+    "choir": {
+      "voice": "Vindemiatrix",
+      "profile": "The Cantor, voice of an ancient crystal people who were a song before they were stone.",
+      "style": "soft, ancient and sorrowful, a little otherworldly",
+      "pace": "unhurried but flowing"
+    }
+  },
+  "announcer": {
+    "holdout": {
+      "voice": "Algenib",
+      "profile": "A gruff human radio operator calling out battle reports.",
+      "style": "gruff, clipped and urgent",
+      "pace": "quick"
+    },
+    "halcyon": {
+      "voice": "Iapetus",
+      "profile": "A machine announcer: system notifications in a war.",
+      "style": "flat, precise and calm",
+      "pace": "quick"
+    },
+    "choir": {
+      "voice": "Vindemiatrix",
+      "profile": "The voice of a crystal people in battle.",
+      "style": "soft and serene",
+      "pace": "natural"
+    }
+  }
+}

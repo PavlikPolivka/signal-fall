@@ -606,7 +606,7 @@ UNITS = {
     "vector": dict(kind="vehicle", frame=128, dirs=16, build=vector),
     "firewall": dict(kind="vehicle", frame=112, dirs=16, build=firewall),
     "broadcast": dict(kind="vehicle", frame=128, dirs=16, build=broadcast),
-    "seek": dict(kind="air", frame=128, dirs=16, anims={"fly": 2}, build=seek, pose=pose_seek),
+    "seek": dict(kind="air", frame=128, dirs=16, anims={"fly": 1}, build=seek, pose=pose_seek),
     "root": dict(kind="vehicle", frame=160, dirs=16, build=root_unit),
     "init": dict(kind="vehicle", frame=144, dirs=16, build=init),
 }

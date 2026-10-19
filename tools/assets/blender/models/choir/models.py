@@ -539,7 +539,7 @@ UNITS = {
     "basso": dict(kind="vehicle", frame=128, dirs=16, build=basso),
     "falsetto": dict(kind="vehicle", frame=112, dirs=16, build=falsetto),
     "crescendo": dict(kind="vehicle", frame=144, dirs=16, build=crescendo),
-    "aria": dict(kind="air", frame=128, dirs=16, anims={"fly": 2}, build=aria, pose=pose_aria),
+    "aria": dict(kind="air", frame=128, dirs=16, anims={"fly": 1}, build=aria, pose=pose_aria),
     "requiem": dict(kind="vehicle", frame=160, dirs=16, build=requiem),
     "overture": dict(kind="vehicle", frame=160, dirs=16, build=overture),
 }

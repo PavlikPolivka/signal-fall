@@ -203,20 +203,154 @@ def _split(obj, cut_frac, radius_frac):
     return obj, turret
 
 
-def load(sid, *, length=None, footprint=None, turret_cut=None, turret_radius=0.3, key="magenta", building=False):
-    """Import, orient, scale; returns {"hull"/"body": [...], "turret": [...]}."""
+def _cut_rotor(obj, band, radius):
+    """Move the faces in a height band (a share of the model's height) and within `radius` of the hub into
+    their own object, pivoting on the hub."""
+    vs = [v.co for v in obj.data.vertices]
+    zmax = max(v.z for v in vs)
+    lo, hi = band[0] * zmax, band[1] * zmax
+    inside = [v for v in vs if lo <= v.z <= hi]
+    # The blades crowd around the hub: the median of the band is the hub, whatever else pokes into it.
+    hub = Vector((sorted(v.x for v in inside)[len(inside) // 2], sorted(v.y for v in inside)[len(inside) // 2], (lo + hi) / 2))
+
+    def is_rotor(f):
+        c = f.calc_center_median()
+        return lo <= c.z <= hi and math.hypot(c.x - hub.x, c.y - hub.y) <= radius
+    rotor = obj.copy()
+    rotor.data = obj.data.copy()
+    rotor.name = "rotor"
+    bpy.context.scene.collection.objects.link(rotor)
+
+    def keep(o, want):
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if is_rotor(f) != want], context="FACES")
+        bm.to_mesh(o.data)
+        bm.free()
+        o.data.update()
+
+    keep(obj, False)
+    keep(rotor, True)
+    rotor.data.transform(Matrix.Translation(-hub))
+    rotor.location = hub
+    reach = max(math.hypot(v.co.x, v.co.y) for v in rotor.data.vertices)
+    return rotor, hub, reach
+
+
+def _blur_disc(hub, reach):
+    """A faint dark disc where the blades sweep: reads as a spinning rotor at sprite size."""
+    bpy.ops.mesh.primitive_circle_add(vertices=48, radius=reach * 0.98, fill_type="NGON", location=hub)
+    disc = bpy.context.active_object
+    disc.name = "rotor_blur"
+    mat = bpy.data.materials.new("rotor_blur")
+    mat.use_nodes = True
+    bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Base Color"].default_value = (0.03, 0.03, 0.03, 1)
+    bsdf.inputs["Alpha"].default_value = 0.16
+    bsdf.inputs["Roughness"].default_value = 1.0
+    if "Specular IOR Level" in bsdf.inputs:
+        bsdf.inputs["Specular IOR Level"].default_value = 0.0
+    if hasattr(mat, "surface_render_method"):
+        mat.surface_render_method = "BLENDED"
+    else:
+        mat.blend_method = "BLEND"
+    disc.data.materials.append(mat)
+    disc.visible_shadow = False
+    return disc
+
+
+def _tread_links(tracks):
+    """Grousers along the outer side of each track's lower run, stepped back one link spacing across the
+    "walk" frames: the run on the ground stays put while the hull rolls over it."""
+    mat = bpy.data.materials.new("tread")
+    mat.use_nodes = True
+    bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    # Worn steel: lighter than the dark track, so the moving links read at sprite size.
+    bsdf.inputs["Base Color"].default_value = (0.11, 0.105, 0.095, 1)
+    bsdf.inputs["Roughness"].default_value = 0.45
+    bsdf.inputs["Metallic"].default_value = 0.6
+    x0, x1 = tracks["x"]
+    z0, z1 = tracks["z"]
+    pitch = tracks.get("pitch", 0.1)
+    links = []
+    for y in tracks["y"]:
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+        link = bpy.context.active_object
+        link.scale = (pitch * 0.3, 0.012, z1 - z0)
+        bpy.ops.object.transform_apply(scale=True)
+        link.data.materials.append(mat)
+        arr = link.modifiers.new("links", "ARRAY")
+        arr.use_relative_offset = False
+        arr.use_constant_offset = True
+        arr.constant_offset_displace = (pitch, 0, 0)
+        arr.count = max(1, int((x1 - x0) / pitch))
+        # Just outside the track face.
+        link.location = (x0 + pitch, y + math.copysign(0.01, y), (z0 + z1) / 2)
+        link["x0"] = x0 + pitch
+        link.name = "tread"
+        links.append(link)
+    return links, pitch
+
+
+def load(sid, *, length=None, footprint=None, turret_cut=None, turret_radius=0.3, key="magenta", building=False, turn=0, rotors=None, tracks=None):
+    """Import, orient, scale; returns {"hull"/"body": [...], "turret": [...]}.
+
+    turn: degrees to turn the model after import when it guessed the front wrong (180 = it faced backwards,
+        90 = its front looked to the side).
+    rotors: {"band": [lo, hi], "radius": r, "blades": n}, the height band (share of the model's height) and
+        reach around the hub the rotor blades sit in; they become their own part, spun across the "fly" frames, with a blur disc.
+    tracks: {"y": [left, right] outer faces, "z": [bottom, top] of the visible lower run, "x": [rear, front],
+        "pitch": link spacing}; grousers that crawl along the tracks across the "walk" frames.
+    """
     global _key
     _key = KEYS[key]
     obj = _import(sid)
     _orient(obj, length, footprint)
+    if turn:
+        obj.data.transform(Matrix.Rotation(math.radians(turn), 4, "Z"))
+        obj.data.update()
     for slot in obj.material_slots:
         if slot.material:
             _team_material(slot.material)
     part = "body" if building else "hull"
+    extra = []
+    poses = []
+    if rotors:
+        rotor, hub, reach = _cut_rotor(obj, rotors["band"], rotors.get("radius", 1.2))
+        extra += [rotor, _blur_disc(hub, reach)]
+        step = 2 * math.pi / rotors.get("blades", 4)
+
+        def spin(_model, anim, frame):
+            count = max(1, POSE_COUNTS.get(anim, 1))
+            # One blade spacing across the loop: the last frame leads straight back into the first.
+            rotor.rotation_euler = (0, 0, step * frame / count)
+
+        poses.append(spin)
+    if tracks:
+        links, pitch = _tread_links(tracks)
+        extra += links
+
+        def crawl(_model, anim, frame):
+            count = max(1, POSE_COUNTS.get(anim, 1))
+            shift = -pitch * frame / count if anim == "walk" else 0.0
+            for link in links:
+                link.location.x = link["x0"] + shift
+
+        poses.append(crawl)
+
+    def pose(model, anim, frame):
+        for p in poses:
+            p(model, anim, frame)
+
+    out = {part: [obj] + extra, "meshy": True}
+    if poses:
+        out["pose"] = pose
     if turret_cut is None:
-        return {part: [obj], "meshy": True}
+        return out
     hull, turret = _split(obj, turret_cut, turret_radius)
-    return {part: [hull], "turret": [turret], "meshy": True}
+    out[part] = [hull] + extra
+    out["turret"] = [turret]
+    return out
 
 
 # --- characters (rigged and animated) -----------------------------------------
@@ -359,6 +493,8 @@ def build(sid, spec, procedural):
             return load_character(sid, **cfg)
         return procedural()
     if entry and has_model(sid):
+        POSE_COUNTS.clear()
+        POSE_COUNTS.update(spec.get("anims", {}))
         if "footprint" in spec:
             cfg.setdefault("footprint", spec["footprint"])
             cfg["building"] = True

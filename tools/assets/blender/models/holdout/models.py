@@ -613,12 +613,12 @@ UNITS = {
     "wrench": dict(kind="infantry", frame=64, dirs=8, anims={"idle": 1, "walk": 6, "fire": 3, "death": 4}, build=wrench, pose=pose_soldier),
     "jackrabbit": dict(kind="vehicle", frame=96, dirs=16, build=jackrabbit),
     "mule": dict(kind="vehicle", frame=128, dirs=16, build=mule),
-    "bulldog": dict(kind="vehicle", frame=128, dirs=16, build=bulldog),
-    "flak_track": dict(kind="vehicle", frame=112, dirs=16, build=flak_track),
-    "thumper": dict(kind="vehicle", frame=128, dirs=16, build=thumper),
+    "bulldog": dict(kind="vehicle", frame=128, dirs=16, anims={"idle": 1, "walk": 4}, build=bulldog),
+    "flak_track": dict(kind="vehicle", frame=112, dirs=16, anims={"idle": 1, "walk": 4}, build=flak_track),
+    "thumper": dict(kind="vehicle", frame=128, dirs=16, anims={"idle": 1, "walk": 4}, build=thumper),
     "patch": dict(kind="vehicle", frame=112, dirs=16, build=patch),
-    "hornet": dict(kind="air", frame=128, dirs=16, anims={"fly": 2}, build=hornet, pose=pose_hornet),
-    "ironclad": dict(kind="vehicle", frame=160, dirs=16, anims={"idle": 1, "walk": 4}, build=ironclad, pose=pose_ironclad),
+    "hornet": dict(kind="air", frame=128, dirs=16, anims={"fly": 4}, build=hornet, pose=pose_hornet),
+    "ironclad": dict(kind="vehicle", frame=160, dirs=16, anims={"idle": 1}, build=ironclad, pose=pose_ironclad),
     "homestead": dict(kind="vehicle", frame=144, dirs=16, build=homestead),
 }
 

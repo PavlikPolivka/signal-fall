@@ -1,12 +1,12 @@
 /**
  * Pack rendered sprite frames into PixiJS spritesheets.
  *
- *   pnpm --filter @signal-fall/assets atlas holdout       (1x, PNG)
+ *   pnpm --filter @signal-fall/assets atlas holdout       (1x, WebP)
  *   pnpm --filter @signal-fall/assets atlas holdout 2x    (2x for high-DPI screens, WebP, into <faction>@2x/)
  *
  * Reads tools/assets/build/raw/<faction>/manifest.json + 2x PNG passes, downsamples
  * to 1x, trims transparent borders, packs into 2048x2048 pages and writes:
- *   apps/client/public/assets/sprites/<faction>/atlas-<n>.png + atlas-<n>.json
+ *   apps/client/public/assets/sprites/<faction>/atlas-<n>.webp + atlas-<n>.json
  *   apps/client/public/assets/sprites/<faction>/catalog.json  (sprite metadata)
  *   apps/client/public/assets/icons/<faction>/<id>.png        (sidebar icons / portraits; <id>.mask.png team areas)
  */
@@ -153,7 +153,7 @@ async function main(): Promise<void> {
   packer.addArray(items.map((p) => ({ width: p.w, height: p.h, data: p })) as never);
   let page = 0;
   for (const bin of packer.bins) {
-    const image = `atlas-${page}.${SCALE === 2 ? 'webp' : 'png'}`;
+    const image = `atlas-${page}.webp`;
     const frames: Record<string, unknown> = {};
     const comps = bin.rects.map((r) => {
       const p = (r as unknown as { data: Packed }).data;
@@ -169,7 +169,8 @@ async function main(): Promise<void> {
     });
     const sheet = sharp({ create: { width: bin.width, height: bin.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite(comps);
     // The 2x pages are four times the pixels: lossy WebP with exact alpha keeps the download near the 1x PNGs.
-    await (SCALE === 2 ? sheet.webp({ quality: 88, alphaQuality: 100, effort: 6 }) : sheet.png({ compressionLevel: 9, adaptiveFiltering: true })).toFile(join(OUT, image));
+    // WebP at both scales: about half the size of PNG, with the alpha (and the team masks) kept sharp.
+    await sheet.webp({ quality: 88, alphaQuality: 100, effort: 6 }).toFile(join(OUT, image));
     // meta.scale: PixiJS gives the textures this resolution, so 2x frames keep their 1x size on screen.
     writeFileSync(join(OUT, `atlas-${page}.json`), JSON.stringify({ frames, meta: { image, size: { w: bin.width, h: bin.height }, scale: SCALE, format: 'RGBA8888' } }));
     page++;

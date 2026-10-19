@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-19 21:37 UTC
+
+- **Units come alive:** Hornet rotors spin, and Bulldog, Thumper and Flak Track treads crawl while they drive. Hover craft float and bob over their shadows, aircraft sway, wheeled vehicles rumble over rough ground, and the Ironclad lurches with every stride.
+- **Vehicles face the right way:** the Hornet flew tail first, and the Homestead, Mule, Patch, Ironclad, Basso, Glissando and Falsetto drove backwards. They all lead with their front now, and the Refrain, Broadcast, Init and Aria no longer move sideways. Their portraits show the front too.
+- **Faster loading:** unit graphics are about 60% smaller to download, with no visible change.
+
 ## 2026-10-19 21:14 UTC
 
 - **Typing a map seed sticks:** in a multiplayer lobby, a seed typed by the host could jump back to the old one when the lobby refreshed. It now takes effect as you type.

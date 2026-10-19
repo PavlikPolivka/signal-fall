@@ -19,6 +19,36 @@ function velocityAngle(vx: number, vy: number): number | null {
   return Math.round(((a / (2 * Math.PI)) * 4096 + 4096) % 4096);
 }
 
+/** How a unit moves, for the motion drawn on top of its frames. */
+type Motion = 'hover' | 'air' | 'wheels' | 'tracks' | 'walker';
+const MOTION: Record<string, Motion> = {
+  jackrabbit: 'wheels',
+  mule: 'wheels',
+  patch: 'wheels',
+  homestead: 'wheels',
+  flak_track: 'tracks',
+  ironclad: 'walker',
+  bulldog: 'tracks',
+  thumper: 'tracks',
+  ping: 'hover',
+  fetch: 'hover',
+  vector: 'hover',
+  firewall: 'hover',
+  broadcast: 'hover',
+  root: 'hover',
+  init: 'hover',
+  glissando: 'hover',
+  refrain: 'hover',
+  basso: 'tracks',
+  falsetto: 'hover',
+  crescendo: 'hover',
+  requiem: 'hover',
+  overture: 'hover',
+  hornet: 'air',
+  seek: 'air',
+  aria: 'air',
+};
+
 /**
  * A rendered unit made of: shadow (shadow layer), color sprite + team mask
  * (multiplied with the team color), and for turreted vehicles a separately
@@ -36,6 +66,7 @@ export class UnitSpriteView {
   private readonly tie = (nextTie++ % 997) / 1000;
   private animStart = performance.now();
   private lastAnim = '';
+  private readonly motion: Motion | undefined;
 
   constructor(
     private readonly lib: SpriteLibrary,
@@ -52,6 +83,29 @@ export class UnitSpriteView {
     this.turretTeam = info.turret ? sprite(this.root) : null;
     if (this.turretTeam) this.turretTeam.blendMode = 'multiply';
     this.hullAngle = facing;
+    this.motion = MOTION[id];
+  }
+
+  /**
+   * Height above the drawn position, in pixels: hover craft float and bob over their shadow, aircraft
+   * sway, and wheels and tracks shake over rough ground while they drive.
+   */
+  private lift(moving: boolean, wreck: boolean): { y: number; x: number } {
+    if (wreck || !this.motion) return { x: 0, y: 0 };
+    const t = performance.now() / 1000 + this.tie * 13;
+    switch (this.motion) {
+      case 'hover':
+        return { x: 0, y: 3 + 1.4 * Math.sin(t * 2.2) + (moving ? 0.5 * Math.sin(t * 9) : 0) };
+      case 'air':
+        return { x: 1.2 * Math.sin(t * 0.9), y: 2 * Math.sin(t * 1.7) };
+      case 'wheels':
+        return { x: 0, y: moving ? 0.6 * Math.sin(t * 23) + 0.4 * Math.sin(t * 37) : 0 };
+      case 'tracks':
+        return { x: 0, y: moving ? 0.45 * Math.sin(t * 31) : 0.15 * Math.sin(t * 40) };
+      case 'walker':
+        // A heavy stride: up on each step, a little roll from side to side.
+        return moving ? { x: 0.8 * Math.sin(t * 4), y: 1.6 * Math.abs(Math.sin(t * 4)) } : { x: 0, y: 0 };
+    }
   }
 
   /** Last animation and direction, for the death effect. */
@@ -88,6 +142,8 @@ export class UnitSpriteView {
     // Rounded depth plus a fixed per-view tie-break: units at nearly the same depth keep a stable
     // order instead of trading places every frame as they jostle (the flicker in crowds).
     this.root.zIndex = Math.round(o.py) + this.tie;
+    const lift = this.lift(moving !== null, o.wreck);
+    for (const sp of [this.body, this.team, this.turret, this.turretTeam]) sp?.position.set(lift.x, -lift.y);
     this.body.texture = tex('color') ?? this.body.texture;
     this.body.tint = o.wreck ? WRECK_TINT : 0xffffff;
     const mask = o.wreck ? null : tex('mask');
