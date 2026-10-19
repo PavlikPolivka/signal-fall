@@ -66,6 +66,26 @@ describe('pathfinding', () => {
 });
 
 describe('movement', () => {
+  it('a tank group sent onto a building parks spaced out around it and then sits still', () => {
+    const sim = makeSim({ size: 40 });
+    const e = sim.world.entities;
+    spawnStructure(sim.world, structure('bunkhouse'), 0, 26, 18);
+    const hs: number[] = [];
+    for (let i = 0; i < 12; i++) hs.push(spawnUnit(sim.world, unit('bulldog'), 0, at(4 + 2 * (i % 4)), at(4 + 2 * Math.trunc(i / 4))));
+    // Onto the building itself: every slot there is blocked and must find its own open ground.
+    sim.schedule({ tick: 0, player: 0, cmd: { type: 'move', units: hs, x: at(27), y: at(19) } });
+    sim.run(20 * 50);
+    const ss = hs.map((h) => h & 0xffff);
+    for (const s of ss) expect(e.orders[s]).toHaveLength(0);
+    for (let i = 0; i < ss.length; i++)
+      for (let j = i + 1; j < ss.length; j++) expect(ilength(e.x[ss[i]!]! - e.x[ss[j]!]!, e.y[ss[i]!]! - e.y[ss[j]!]!)).toBeGreaterThan(FX_ONE);
+    // Parked: nobody keeps shuffling.
+    const before = ss.map((s) => [e.x[s]!, e.y[s]!] as const);
+    sim.run(20 * 5);
+    const drift = ss.reduce((sum, s, k) => sum + ilength(e.x[s]! - before[k]![0], e.y[s]! - before[k]![1]), 0);
+    expect(drift).toBeLessThan(FX_ONE >> 2);
+  });
+
   it('a single unit walks around a wall to its destination', () => {
     const sim = makeSim({ terrain: wallTerrain() });
     const e = sim.world.entities;

@@ -59,7 +59,8 @@ export function formationSlots(world: World, units: number[], x: number, y: numb
   const rows: number[][] = [[], [], [], []];
   for (let i = 0; i < n; i++) rows[formationRow(world.rules.units[e.type[units[i]!]!]!)]!.push(i);
 
-  // Spacing per unit: a bit more than its diameter.
+  // Spacing per unit: a bit more than its diameter. (Wider vehicle slots moved the faction balance; parked
+  // vehicles get their extra room from separation instead, see movement.ts.)
   const spacing = (i: number) => Math.max(FX_ONE, world.rules.units[e.type[units[i]!]!]!.radius * 2 + (FX_ONE >> 2));
   // Rows wider than this wrap into sub-rows, keeping the block roughly square.
   const maxPerRow = Math.max(3, isqrt(n) + 2);
@@ -89,6 +90,8 @@ export function formationSlots(world: World, units: number[], x: number, y: numb
   const shift = depth >> 1;
   const maxX = world.map.width * FX_ONE - 1;
   const maxY = world.map.height * FX_ONE - 1;
+  // Open tiles already given to a displaced slot: each displaced unit gets its own.
+  const used: number[] = [];
   return local.map(({ f, l }) => {
     const ff = f + shift;
     let px = x + ((fx * ff + lx * l) >> FX_SHIFT);
@@ -99,14 +102,36 @@ export function formationSlots(world: World, units: number[], x: number, y: numb
     const m = world.map;
     const tile = (py >> FX_SHIFT) * m.width + (px >> FX_SHIFT);
     if (m.nav[tile] !== 1) {
-      const open = world.paths.nearestPassable(tile, 6);
+      const open = freeOpenTile(world, tile, used);
       if (open >= 0) {
+        used.push(open);
         px = ((open % m.width) << FX_SHIFT) + (FX_ONE >> 1);
         py = (idiv(open, m.width) << FX_SHIFT) + (FX_ONE >> 1);
       }
     }
     return { x: px, y: py };
   });
+}
+
+/**
+ * The nearest walkable tile to `tile` that no other displaced slot took (ring by ring, fixed order).
+ * Slots on a building all used to snap to the same nearest open tile, and their units piled up there.
+ */
+function freeOpenTile(world: World, tile: number, used: number[]): number {
+  const m = world.map;
+  const cx = tile % m.width;
+  const cy = idiv(tile, m.width);
+  for (let r = 1; r <= 8; r++)
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const x = cx + dx;
+        const y = cy + dy;
+        if (x < 0 || y < 0 || x >= m.width || y >= m.height) continue;
+        const t = y * m.width + x;
+        if (m.nav[t] === 1 && !used.includes(t)) return t;
+      }
+  return world.paths.nearestPassable(tile, 6);
 }
 
 function lateralOf(dx: number, dy: number, lx: number, ly: number): number {

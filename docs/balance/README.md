@@ -146,3 +146,19 @@ timer, a warning before the strike. Hard vs Hard, 100 matches each:
 - Hard AIs built it as soon as tier 3 allowed (minute 5–6, 2500 credits out of the army): Holdout–Choir 41%.
 - The AI builds it only after 14 minutes, or with 5000 credits banked: Holdout–Choir 48%, Holdout–Halcyon 46%,
   Halcyon–Choir 51%. Easy and Normal never build it (they don't use powers either).
+
+## Movement and spacing (2026-10-20)
+
+Fixes for groups dancing and piling up (rally spots sized to the unit, a group's units leave the shared flow field for good
+once at its bottom, displaced formation slots each get their own tile, a small dead zone in separation, parked vehicles keep
+3/8 tile more room). 300 Hard-vs-Hard matches per pairing, against the code before the change:
+
+| Pairing | Before | First try | Shipped |
+|---|---|---|---|
+| Holdout vs Halcyon | 46% (100) | 58% (100) | 52.3% (gap only for parked vehicles; same code otherwise) |
+| Halcyon vs Choir | 51% (100) | 56.7% | 53% |
+| Holdout vs Choir | 48.7% | 42.3% | 47.3% |
+
+The first try also gave vehicles hull-length formation slots and kept the vehicle gap while moving: Choir moved by about six
+points both ways (vehicle-heavy armies fought more spread out). Dropping the wider slots (variant A) put every pairing back in
+the gate; dropping the rally spacing instead (variant B) left Holdout vs Choir at 45.3%. Hard beats Easy 50-0.

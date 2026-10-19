@@ -67,6 +67,9 @@ export class UnitSpriteView {
   private animStart = performance.now();
   private lastAnim = '';
   private readonly motion: Motion | undefined;
+  /** Fastest this unit was seen moving lately (sim units per tick): a nudge is a fraction of it. */
+  private topSpeed = 0;
+  private turnedAt = performance.now();
 
   constructor(
     private readonly lib: SpriteLibrary,
@@ -115,11 +118,24 @@ export class UnitSpriteView {
 
   update(o: { px: number; py: number; color: number; facing: number; vx: number; vy: number; firing: boolean; visible: boolean; wreck: boolean }): void {
     const info = this.info;
-    const moving = velocityAngle(o.vx, o.vy);
+    // Really driving, or only being nudged by a neighbour? Nudges must not spin the sprite around.
+    const speed = Math.hypot(o.vx, o.vy);
+    this.topSpeed = Math.max(this.topSpeed * 0.995, speed);
+    const moving = speed > 0 && speed >= this.topSpeed * 0.4 ? velocityAngle(o.vx, o.vy) : null;
     // Infantry face where they shoot when standing, where they walk when moving.
-    if (info.kind === 'infantry') this.hullAngle = moving !== null && !o.firing ? moving : o.facing;
-    else if (moving !== null) this.hullAngle = moving;
-    else if (!info.turret) this.hullAngle = o.facing;
+    let want = this.hullAngle;
+    if (info.kind === 'infantry') want = moving !== null && !o.firing ? moving : o.facing;
+    else if (moving !== null) want = moving;
+    else if (!info.turret) want = o.facing;
+    // Turn one sprite direction at a time, a few per second: no flicker between two directions.
+    const now = performance.now();
+    const step = 4096 / info.dirs;
+    const diff = ((want - this.hullAngle + 6144) % 4096) - 2048;
+    if (Math.abs(diff) <= step / 2) this.hullAngle = want;
+    else if (now - this.turnedAt >= 45) {
+      this.hullAngle = (this.hullAngle + Math.sign(diff) * step + 4096) % 4096;
+      this.turnedAt = now;
+    }
 
     let anim = 'idle';
     if (info.kind === 'air') anim = 'fly';

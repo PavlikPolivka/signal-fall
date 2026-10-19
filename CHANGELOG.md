@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-19 23:08 UTC
+
+- **Calmer groups:** units sent to a building or a crowded spot no longer dance in place. Each finds its own open ground, and parked vehicles keep more room between them.
+- **Reinforcements line up:** vehicles from a factory park on spots sized for vehicles around the rally point, instead of nose to tail on top of each other.
+- **No more flicker:** a unit's sprite turns only when it really drives, and turns smoothly, instead of flipping back and forth when a neighbor nudges it.
+
 ## 2026-10-19 22:06 UTC
 
 - **Play shows the seats like a room does:** you, your allies and your enemies, team by team. Every seat beside yours is an AI with its own faction and skill, or open for a player. Open a seat and Start becomes Create room. Join a game is now only for joining: a code, an open game, ranked, or watching.

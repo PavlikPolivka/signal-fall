@@ -11,6 +11,10 @@ const DIRECT_RANGE = 6 * FX_ONE;
 const REPATH_SLACK = 2;
 /** Separation looks this far beyond the unit's own radius. */
 const NEIGHBOR_RANGE = FX_ONE;
+/** Overlaps smaller than this are left alone: nudging them only makes a parked group shimmer. */
+const SEPARATION_SLACK = FX_ONE >> 5;
+/** Extra room two parked ground vehicles keep between them (their hulls are longer than they are wide). */
+const VEHICLE_GAP = (FX_ONE * 3) >> 3;
 
 export function movementSystem(world: World): void {
   const e = world.entities;
@@ -63,20 +67,26 @@ export function movementSystem(world: World): void {
     let py = 0;
     const r = e.radius[s]!;
     const moving = e.hasGoal[s] === 1;
+    const vehicle = !air && rule.tab === 'vehicles';
     world.spatial.query(x, y, r + NEIGHBOR_RANGE, (n) => {
       if (n === s || e.kind[n] !== KIND.unit) return;
-      if (world.rules.units[e.type[n]!]!.isAir !== air) return;
+      const nrule = world.rules.units[e.type[n]!]!;
+      if (nrule.isAir !== air) return;
       const dx = x - e.x[n]!;
       const dy = y - e.y[n]!;
-      const minD = r + e.radius[n]!;
+      // Parked vehicles keep extra room (their hulls are long); moving and fighting ones pack as before.
+      const minD = r + e.radius[n]! + (vehicle && !moving && e.hasGoal[n] === 0 && nrule.tab === 'vehicles' ? VEHICLE_GAP : 0);
       if (dx >= minD || dx <= -minD || dy >= minD || dy <= -minD) return;
       const dist = ilength(dx, dy);
       if (dist >= minD) return;
       let overlap = minD - dist;
+      if (overlap < SEPARATION_SLACK) return;
       // Idle units make way: a moving unit barely yields to them, and they take the whole shove.
+      // Two parked units ease apart gently instead of bouncing.
       const other = e.hasGoal[n] === 1;
       if (moving && !other) overlap >>= 2;
       else if (!moving && other) overlap <<= 1;
+      else if (!moving) overlap >>= 1;
       if (dist === 0) {
         px += s < n ? -(overlap >> 1) : overlap >> 1;
       } else {
@@ -159,7 +169,9 @@ function groundSteer(world: World, s: number, cur: number, gx: number, gy: numbe
     const field = paths.flowField(tileAt(m, o.cx, o.cy));
     const next = paths.flowStep(field, cur);
     if (next >= 0) return next;
-    // At the bottom of the field (group center) but not at our own slot: fall through to A*.
+    // At the bottom of the field (group center) but not at our own slot: A* from here on. Going back to
+    // the field next tick pulled the unit back toward the center (a building, say) and it danced in place.
+    o.flow = false;
   }
 
   let path = e.paths[s];
