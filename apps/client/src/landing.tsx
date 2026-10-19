@@ -31,7 +31,7 @@ const SHOTS = [
 ] as const;
 
 const FEATURES: [string, string][] = [
-  ['Skirmish vs AI', 'Four difficulties, 1 vs 1 or 2 vs 2 with an AI ally. Pick factions, map size, biome, resources and terrain.'],
+  ['Play your way', 'Against four AI difficulties, with friends, or both: 1 vs 1, 2 vs 2, free-for-all or Survival. Pick factions, map size, biome, resources and terrain.'],
   ['Online multiplayer', '1 vs 1 or 2 vs 2 with friends, any seat filled by an AI. Share a four-letter room code; games connect directly, player to player.'],
   ['Never the same map', 'Every map is generated from a seed: three sizes, wasteland, ruined city or crystal fields, open plains or chokepoints.'],
   ['Replays and reports', 'Save any match and watch it again at up to 8×. After every game: a breakdown with income, army and losses over time.'],

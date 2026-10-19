@@ -523,17 +523,17 @@ function HowTo({ rules }: { rules: Rules }) {
           <b>Campaign</b> — fifteen missions across all three factions, each with a spoken briefing. Every mission stresses one mechanic.
         </li>
         <li>
-          <b>Skirmish vs AI</b> — 1 vs 1, 2 vs 2 with an AI ally against two AIs, a free-for-all against two or three AIs, or Survival. Pick
-          factions, difficulty and the map. <b>Save game</b> in the menu keeps a skirmish to <b>Continue</b> later from the main menu.
+          <b>Play</b> — set up a match: 1 vs 1, 2 vs 2, a free-for-all for three or four, or Survival. Every seat beside yours is an AI (pick
+          its faction and skill) or <b>a player</b>: leave seats to players and the match opens as a room they join with its code. With only AI
+          seats it starts right away. <b>Save game</b> in the menu keeps a match against the AI to <b>Continue</b> later from the main menu.
         </li>
         <li>
           <b>Daily challenge</b> — the same map, factions and opponent for everyone today. The fastest wins top the day's board.
         </li>
         <li>
-          <b>Multiplayer</b> — create a room and send its four-letter code, or list it publicly so it shows under <b>Open games</b>. 1 vs 1, 2 vs
-          2, free-for-all or co-op survival; the host fills any seat with an AI, so two friends can take on two AIs together. Everyone connects
-          directly to everyone else. <b>Ranked match</b> finds a rated 1 vs 1 opponent near your rating. <b>Watch</b> with a room's code
-          follows a match without playing.
+          <b>Join a game</b> — join a friend's room with its four-letter code, pick one under <b>Open games</b> (rooms their hosts listed
+          publicly), or play a <b>Ranked match</b> against a rated opponent near your rating. Everyone connects directly to everyone else.
+          <b>Watch</b> with a room's code follows a match without playing.
         </li>
         <li>
           <b>Maps</b> — every match can use a generated map (from its seed) or a hand-made one. The <b>Map editor</b> lets you paint your own and

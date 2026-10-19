@@ -6,7 +6,7 @@ import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
 import { account, backend, findMatch, joinQueue, leaveQueue, publicRooms, rename, signIn, type PublicRoom } from '../net/backend';
 import type { LinkLike, LobbySlot, LobbyState } from '../net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
-import { MenuScreen } from './Setup';
+import { MenuScreen, type RoomPreset } from './Setup';
 import { Choice, MapSettings } from './MapSettings';
 import { TEAM_COLORS } from '../game/state';
 
@@ -26,16 +26,19 @@ export function Multiplayer({
   onStart,
   onBack,
   rematch,
+  preset,
 }: {
   rules: Rules;
   onStart: (scenario: ScenarioSpec, slot: number, links: Map<number, LinkLike>, room: LobbyState, watchers: LinkLike[]) => void;
   onBack: () => void;
   /** Back to the same room after a match: the host reopens it, the others rejoin. */
   rematch?: { host: boolean; room: LobbyState };
+  /** Set up on the Play screen: host a room with this mode, these seats and this map. */
+  preset?: RoomPreset;
 }) {
   const [name, setName] = useState(savedName() || `Commander ${Math.floor(Math.random() * 90 + 10)}`);
   const [code, setCode] = useState('');
-  const [faction, setFaction] = useState(0);
+  const [faction, setFaction] = useState(preset?.faction ?? 0);
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [room, setRoom] = useState<RoomConnection | null>(null);
   const [busy, setBusy] = useState(false);
@@ -112,9 +115,10 @@ export function Multiplayer({
         () => undefined,
       );
   }, []);
-  // Rematch: straight back into the room.
+  // Rematch: straight back into the room. From the Play screen: straight into a room set up like the match.
   useEffect(() => {
     if (rematch) void enter(rematch.host, rematch.room);
+    else if (preset) void enter(true);
   }, []);
   // Join links: ?room=ABCD opens the join form prefilled.
   useEffect(() => {
@@ -152,6 +156,14 @@ export function Multiplayer({
       const mine = again?.slots.find((x) => x.player?.uid === uid || x.player?.name === name.trim())?.faction;
       const l = new Lobby(r.signaling, host, { name: name.trim(), faction: mine ?? faction, uid, spectate }, r.code, { iceServers: r.iceServers, relayOnly }, host ? again : undefined);
       l.onChange = () => refresh(undefined);
+      if (host && preset && !again) {
+        l.setMode(preset.mode);
+        preset.slots.forEach((x, i) => {
+          l.setSeat(i + 1, x.kind);
+          if (x.kind === 'ai') l.setAi(i + 1, { faction: x.faction, difficulty: x.difficulty });
+        });
+        l.setMap(preset.map);
+      }
       l.onStart = (scenario, slot, links, room, watchers) => {
         if (host) r.started();
         onStart(scenario, slot, links, room, watchers);
@@ -170,14 +182,16 @@ export function Multiplayer({
     return (
       <MenuScreen testid="multiplayer">
         <div class="setup-panel">
-          <h1>Multiplayer</h1>
-          <p class="muted small">1v1 over a direct peer-to-peer connection. Signaling: {signalingKind()}.</p>
+          <h1>Join a game</h1>
+          <p class="muted small">
+            Join a friend's room with its code, pick an open game, or play ranked. To host, set up the match on Play and leave seats to players (or create an empty room here). Signaling: {signalingKind()}.
+          </p>
           <label class="choice">
             <span class="label">Your name</span>
             <input value={name} maxLength={20} data-testid="mp-name" onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
           </label>
           <button class="start" data-testid="mp-create" disabled={busy || queued !== null} onClick={() => void enter(true)}>
-            {busy ? 'Connecting…' : 'Create a room'}
+            {busy ? 'Connecting…' : 'Create an empty room'}
           </button>
           {backend() &&
             (queued === null ? (

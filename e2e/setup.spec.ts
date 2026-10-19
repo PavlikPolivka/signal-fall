@@ -91,3 +91,21 @@ test('survival: the wave counter shows the waves to come', async ({ page }) => {
   await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur, null, { timeout: 30_000 });
   await expect(page.getByTestId('wave-counter')).toContainText('Wave 0/15');
 });
+
+test('Play: leaving a seat to a player opens the match as a room, set up the same way', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-skirmish]');
+  await page.click('[data-testid=mode] [data-value="2v2"]');
+  await page.fill('[data-testid=seed]', '4321');
+  await expect(page.getByTestId('start')).toHaveText('Start match');
+  await page.click('[data-testid=by-enemy] [data-value=person]');
+  await expect(page.getByTestId('start')).toHaveText('Create room');
+  await page.screenshot({ path: 'test-results/play.png' });
+  await page.click('[data-testid=start]');
+  await expect(page.getByTestId('room-code')).toHaveText(/^[A-Z]{4}$/, { timeout: 20_000 });
+  // 2v2: you and the AI ally against an open seat and an AI.
+  await expect(page.getByTestId('seat-1')).toContainText('AI');
+  await expect(page.getByTestId('seat-2')).toContainText('Open seat');
+  await expect(page.getByTestId('seat-3')).toContainText('AI');
+  await expect(page.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('4321');
+});

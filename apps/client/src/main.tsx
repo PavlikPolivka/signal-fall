@@ -226,6 +226,8 @@ const rematchRoom = (() => {
   }
 })();
 let multiplayerScreen = new URLSearchParams(location.search).has('room') || !!rematchRoom;
+/** A room set up on the Play screen (seats left for people). */
+let roomPreset: import('./ui/Setup').RoomPreset | undefined;
 
 const worker = new Worker(new URL('./worker/sim.worker.ts', import.meta.url), { type: 'module' });
 const post = (msg: ToWorker) => worker.postMessage(msg);
@@ -640,9 +642,11 @@ function renderUi(): void {
     render(
       <Multiplayer
         rematch={rematchRoom}
+        preset={roomPreset}
         rules={state.rules}
         onBack={() => {
           multiplayerScreen = false;
+          roomPreset = undefined;
           renderUi();
         }}
         onStart={(sc, slot, links, room, watchers) => {
@@ -690,7 +694,8 @@ function renderUi(): void {
                 )
             : undefined
         }
-        onMultiplayer={() => {
+        onMultiplayer={(preset) => {
+          roomPreset = preset;
           multiplayerScreen = true;
           renderUi();
         }}

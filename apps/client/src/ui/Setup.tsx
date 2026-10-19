@@ -16,6 +16,7 @@ import { Choice, MapSettings, randomSeed, type MapChoice } from './MapSettings';
 import { Account } from './Account';
 import { Stats } from './Stats';
 import { account, backend, type Account as AccountInfo } from '../net/backend';
+import type { LobbyMap, LobbyMode } from '../net/lobby';
 
 export interface SkirmishSettings extends MapChoice {
   /** 1v1, 2v2 (you and an AI ally against two AIs), or free-for-all against two or three AIs. */
@@ -34,6 +35,45 @@ export interface SkirmishSettings extends MapChoice {
   personality?: StrategyName | 'random';
   /** Lighting: day, dusk or night (looks only). */
   time?: 'day' | 'dusk' | 'night';
+  /** Seats left for people instead of the AI: the match then opens as a multiplayer room. */
+  people?: SeatKey[];
+}
+
+/** The seats beside yours, by role. */
+export type SeatKey = 'ally' | 'enemy' | 'enemy2' | 'enemy3';
+
+/** A room set up on the Play screen: what the host's lobby starts with. */
+export interface RoomPreset {
+  mode: LobbyMode;
+  faction: number;
+  /** Seats 1, 2, ... (yours is 0). */
+  slots: { kind: 'ai' | 'open'; faction: number; difficulty: Difficulty }[];
+  map: Partial<LobbyMap> & { seed: number };
+}
+
+/** The seats a mode has beside yours, in lobby order. */
+function seatsOf(s: SkirmishSettings): SeatKey[] {
+  if (s.mode === '2v2') return ['ally', 'enemy', 'enemy2'];
+  if (s.mode === 'ffa3') return ['enemy', 'enemy2'];
+  if (s.mode === 'ffa4') return ['enemy', 'enemy2', 'enemy3'];
+  if (s.mode === 'survival') return s.survivalAlly ? ['ally'] : [];
+  return ['enemy'];
+}
+
+function seatFaction(s: SkirmishSettings, k: SeatKey): number {
+  return k === 'ally' || k === 'enemy3' ? s.allyFaction : k === 'enemy' ? s.enemyFaction : s.enemy2Faction;
+}
+
+/** Seats given to people, in this mode. */
+const peopleSeats = (s: SkirmishSettings) => seatsOf(s).filter((k) => s.people?.includes(k));
+
+export function roomPreset(s: SkirmishSettings): RoomPreset {
+  return {
+    mode: s.mode === 'survival' ? 'coop' : s.mode,
+    faction: s.faction,
+    slots: seatsOf(s).map((k) => ({ kind: s.people?.includes(k) ? 'open' : 'ai', faction: seatFaction(s, k), difficulty: k === 'ally' ? s.allyDifficulty : s.difficulty })),
+    map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, seed: s.seed },
+  };
 }
 
 const DIFFICULTY_OPTIONS: [Difficulty, string][] = [
@@ -148,7 +188,7 @@ export function MenuScreen({ testid, children }: { testid: string; children: pre
   );
 }
 
-/** Main menu: Skirmish vs AI or Multiplayer, plus the Codex, replays, intro and credits. */
+/** Main menu: Campaign, Play (against the AI and/or friends), Join a game, the daily challenge; Codex, replays, intro and credits. */
 export function Setup({
   rules,
   onStart,
@@ -159,7 +199,8 @@ export function Setup({
 }: {
   rules: Rules;
   onStart: (s: SkirmishSettings) => void;
-  onMultiplayer: () => void;
+  /** Join a game, or (with a preset from the Play screen) host a room set up like that. */
+  onMultiplayer: (preset?: RoomPreset) => void;
   /** One-line message to show on the menu (e.g. after returning from an email link). */
   notice?: string | null;
   /** Play the intro cutscene (absent when there is no intro video). */
@@ -212,7 +253,7 @@ export function Setup({
     }
   };
 
-  if (skirmish) return <Skirmish rules={rules} onStart={onStart} onBack={() => setSkirmish(false)} />;
+  if (skirmish) return <Skirmish rules={rules} onStart={onStart} onHost={onMultiplayer} onBack={() => setSkirmish(false)} />;
   if (editor) return <Editor onBack={() => setEditor(false)} />;
   if (campaign) return <Campaign brief={brief} onBack={() => setCampaign(false)} onPlay={(m) => go(`${location.pathname}?mission=${m.id}`)} />;
 
@@ -231,11 +272,11 @@ export function Setup({
           <button class="mp-btn" onClick={() => setCampaign(true)} data-testid="open-campaign">
             Campaign
           </button>
-          <button class="start" onClick={() => setSkirmish(true)} data-testid="open-skirmish">
-            Skirmish vs AI
+          <button class="start" onClick={() => setSkirmish(true)} data-testid="open-skirmish" title="Set up a match: against the AI, with friends, or both">
+            Play
           </button>
-          <button class="mp-btn" onClick={onMultiplayer} data-testid="open-multiplayer">
-            Multiplayer
+          <button class="mp-btn" onClick={() => onMultiplayer()} data-testid="open-multiplayer" title="Join a friend's room, an open game or a ranked match">
+            Join a game
           </button>
           <DailyPanel />
         </div>
@@ -283,7 +324,7 @@ export function Setup({
 }
 
 /** Skirmish setup: sides and difficulty on the left, the map on the right. Remembered between visits. */
-function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: SkirmishSettings) => void; onBack: () => void }) {
+function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (s: SkirmishSettings) => void; onHost: (p: RoomPreset) => void; onBack: () => void }) {
   const [s, setS] = useState<SkirmishSettings>(() => ({
     mode: '1v1',
     faction: 0,
@@ -311,17 +352,44 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
 
   const start = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      // Seats for people are chosen fresh each time.
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...s, people: undefined }));
     } catch {
       // Private mode etc.: settings just aren't remembered.
     }
-    onStart(s);
+    // A seat for a person: the same match, as a room others join.
+    if (peopleSeats(s).length > 0) onHost(roomPreset(s));
+    else onStart(s);
   };
+  /** Who plays a seat: the AI, or a person who joins the room. */
+  const by = (k: SeatKey) => (
+    <div class="choice seat-by" data-testid={`by-${k}`}>
+      <span class="label" />
+      <div class="seg">
+        {(
+          [
+            ['ai', 'AI'],
+            ['person', 'A player'],
+          ] as const
+        ).map(([v, label]) => (
+          <button
+            class={(s.people?.includes(k) ? 'person' : 'ai') === v ? 'active' : ''}
+            data-value={v}
+            onClick={() => set({ people: v === 'person' ? [...(s.people ?? []).filter((x) => x !== k), k] : (s.people ?? []).filter((x) => x !== k) })}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+  const hosting = peopleSeats(s).length > 0;
 
   return (
     <MenuScreen testid="setup">
       <div class="setup-panel wide">
-        <h1>Skirmish vs AI</h1>
+        <h1>Play</h1>
+        <p class="muted small setup-sub">Against the AI, with friends, or both: leave a seat to a player and the match opens as a room they join with a code.</p>
         <div class="setup-cols">
           <section>
             <h2>Sides</h2>
@@ -331,9 +399,9 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
               options={[
                 ['1v1', '1 vs 1'],
                 ['2v2', '2 vs 2'],
-                ['ffa3', 'Free-for-all (3)'],
-                ['ffa4', 'Free-for-all (4)'],
-                ['survival', 'Survival (waves)'],
+                ['ffa3', 'FFA 3'],
+                ['ffa4', 'FFA 4'],
+                ['survival', 'Survival'],
               ]}
               onChange={(v) => set({ mode: v })}
               testid="mode"
@@ -368,12 +436,24 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
             {(s.mode === '2v2' || (s.mode === 'survival' && s.survivalAlly)) && (
               <>
                 <Choice label="Ally" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="ally" />
+                {by('ally')}
                 <Choice label="Ally skill" value={s.allyDifficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ allyDifficulty: v })} testid="ally-difficulty" />
               </>
             )}
             <Choice label={s.mode === '1v1' ? 'Opponent' : s.mode === 'survival' ? 'The waves' : 'Enemy 1'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
-            {s.mode !== '1v1' && s.mode !== 'survival' && <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />}
-            {s.mode === 'ffa4' && <Choice label="Enemy 3" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="enemy3" />}
+            {s.mode !== 'survival' && by('enemy')}
+            {s.mode !== '1v1' && s.mode !== 'survival' && (
+              <>
+                <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />
+                {by('enemy2')}
+              </>
+            )}
+            {s.mode === 'ffa4' && (
+              <>
+                <Choice label="Enemy 3" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="enemy3" />
+                {by('enemy3')}
+              </>
+            )}
             {s.mode !== 'survival' && (
               <>
             <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
@@ -417,7 +497,7 @@ function Skirmish({ rules, onStart, onBack }: { rules: Rules; onStart: (s: Skirm
             Back
           </button>
           <button class="start" onClick={start} data-testid="start">
-            Start match
+            {hosting ? 'Create room' : 'Start match'}
           </button>
         </div>
       </div>
