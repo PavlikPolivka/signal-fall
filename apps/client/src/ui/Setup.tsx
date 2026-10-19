@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { go } from '../nav';
+import { go, isFullscreen, onFullscreenChange, toggleFullscreen } from '../nav';
 import type { Rules } from '@signal-fall/data';
 import type { Difficulty, StrategyName } from '@signal-fall/ai';
 import { clock, recentMatches, savedGame } from '../game/saves';
@@ -115,6 +115,26 @@ function SavedAndRecent({ onReplay }: { onReplay: (r: Replay) => void }) {
 }
 
 /** The menu frame: background video, the logo on top, content anchored to the bottom. */
+/** Top-right corner of every menu: in and out of fullscreen (it now lasts from menu to match and back). */
+function FullscreenButton() {
+  const [on, setOn] = useState(isFullscreen());
+  useEffect(() => onFullscreenChange(() => setOn(isFullscreen())), []);
+  if (!document.fullscreenEnabled && !on) return null;
+  return (
+    <button
+      class="fullscreen-btn"
+      data-testid="menu-fullscreen"
+      title={on ? 'Leave fullscreen' : 'Fullscreen'}
+      aria-label={on ? 'Leave fullscreen' : 'Fullscreen'}
+      onClick={() => void toggleFullscreen().catch(() => undefined)}
+    >
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        {on ? <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
+      </svg>
+    </button>
+  );
+}
+
 export function MenuScreen({ testid, children }: { testid: string; children: preact.ComponentChildren }) {
   return (
     <div class="setup" data-testid={testid}>
@@ -122,6 +142,7 @@ export function MenuScreen({ testid, children }: { testid: string; children: pre
       <header class="setup-head">
         <Logo size={56} />
       </header>
+      <FullscreenButton />
       <div class="setup-body">{children}</div>
     </div>
   );

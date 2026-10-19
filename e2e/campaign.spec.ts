@@ -78,3 +78,11 @@ test('fullscreen survives going from a match to the menus and into the next matc
   await expect(page).toHaveURL(/mission=/);
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBe(true);
 });
+
+test('menus have a fullscreen button in the corner', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=menu-fullscreen]');
+  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+  await page.click('[data-testid=menu-fullscreen]');
+  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(false);
+});

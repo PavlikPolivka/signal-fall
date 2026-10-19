@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 20:54 UTC
+
+- **Fullscreen button on every menu:** top right corner, in and out with one click. Fullscreen now carries on from the menus into the match and back.
+
 ## 2026-10-19 20:51 UTC
 
 - **Campaign screen fits without scrolling:** the missions sit in tabs, one act at a time, opening on the act you're playing. The mission title over the painting is bigger, and the Listen button is back to a normal size.

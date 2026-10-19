@@ -44,11 +44,27 @@ export function go(url: string): void {
 
 /** The document to put in fullscreen: the outer page when we are its frame. */
 export function toggleFullscreen(): Promise<void> {
-  const doc = embedded ? window.parent.document : document;
+  const doc = topDocument();
   if (doc.fullscreenElement) return doc.exitFullscreen();
   return doc.documentElement.requestFullscreen().then(async () => {
     // Keyboard Lock lets the game receive Ctrl+W/T/N-style chords in fullscreen (Chromium).
     const kb = ((embedded ? window.parent.navigator : navigator) as Navigator & { keyboard?: { lock?: () => Promise<void> } }).keyboard;
     await kb?.lock?.().catch(() => undefined);
   });
+}
+
+/** The page that holds fullscreen (the outer one when we are its frame). */
+function topDocument(): Document {
+  return embedded ? window.parent.document : document;
+}
+
+export function isFullscreen(): boolean {
+  return !!topDocument().fullscreenElement;
+}
+
+/** Call `fn` whenever fullscreen turns on or off; returns the unsubscribe. */
+export function onFullscreenChange(fn: () => void): () => void {
+  const doc = topDocument();
+  doc.addEventListener('fullscreenchange', fn);
+  return () => doc.removeEventListener('fullscreenchange', fn);
 }

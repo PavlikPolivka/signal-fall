@@ -1493,6 +1493,26 @@ table.md-table td {
   min-height: 100%;
   padding: clamp(20px, 5vh, 48px) clamp(16px, 5vw, 72px);
 }
+.fullscreen-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--text);
+  background: rgba(11, 13, 16, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.fullscreen-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
 .setup-head {
   display: flex;
   justify-content: center;
