@@ -17,6 +17,7 @@ import { Account } from './Account';
 import { Stats } from './Stats';
 import { account, backend, type Account as AccountInfo } from '../net/backend';
 import type { LobbyMap, LobbyMode } from '../net/lobby';
+import { TEAM_COLORS } from '../game/state';
 
 export interface SkirmishSettings extends MapChoice {
   /** 1v1, 2v2 (you and an AI ally against two AIs), or free-for-all against two or three AIs. */
@@ -37,6 +38,8 @@ export interface SkirmishSettings extends MapChoice {
   time?: 'day' | 'dusk' | 'night';
   /** Seats left for people instead of the AI: the match then opens as a multiplayer room. */
   people?: SeatKey[];
+  /** AI skill per seat (falls back to `difficulty` for enemies, `allyDifficulty` for the ally). */
+  skills?: Partial<Record<SeatKey, Difficulty>>;
 }
 
 /** The seats beside yours, by role. */
@@ -60,9 +63,25 @@ function seatsOf(s: SkirmishSettings): SeatKey[] {
   return ['enemy'];
 }
 
+/** The AI skill of a seat. */
+export function seatSkill(s: SkirmishSettings, k: SeatKey): Difficulty {
+  return s.skills?.[k] ?? (k === 'ally' ? s.allyDifficulty : s.difficulty);
+}
+
 function seatFaction(s: SkirmishSettings, k: SeatKey): number {
   return k === 'ally' || k === 'enemy3' ? s.allyFaction : k === 'enemy' ? s.enemyFaction : s.enemy2Faction;
 }
+
+/** The sides, as teams of seats (yours first). */
+function teamsOf(s: SkirmishSettings): ('you' | 'waves' | SeatKey)[][] {
+  if (s.mode === '2v2') return [['you', 'ally'], ['enemy', 'enemy2']];
+  if (s.mode === 'ffa3') return [['you'], ['enemy'], ['enemy2']];
+  if (s.mode === 'ffa4') return [['you'], ['enemy'], ['enemy2'], ['enemy3']];
+  if (s.mode === 'survival') return [s.survivalAlly ? ['you', 'ally'] : ['you'], ['waves']];
+  return [['you'], ['enemy']];
+}
+
+const swatch = (k: number) => `#${TEAM_COLORS[k % TEAM_COLORS.length]!.toString(16).padStart(6, '0')}`;
 
 /** Seats given to people, in this mode. */
 const peopleSeats = (s: SkirmishSettings) => seatsOf(s).filter((k) => s.people?.includes(k));
@@ -71,7 +90,7 @@ export function roomPreset(s: SkirmishSettings): RoomPreset {
   return {
     mode: s.mode === 'survival' ? 'coop' : s.mode,
     faction: s.faction,
-    slots: seatsOf(s).map((k) => ({ kind: s.people?.includes(k) ? 'open' : 'ai', faction: seatFaction(s, k), difficulty: k === 'ally' ? s.allyDifficulty : s.difficulty })),
+    slots: seatsOf(s).map((k) => ({ kind: s.people?.includes(k) ? 'open' : 'ai', faction: seatFaction(s, k), difficulty: seatSkill(s, k) })),
     map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, seed: s.seed },
   };
 }
@@ -361,29 +380,13 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
     if (peopleSeats(s).length > 0) onHost(roomPreset(s));
     else onStart(s);
   };
-  /** Who plays a seat: the AI, or a person who joins the room. */
-  const by = (k: SeatKey) => (
-    <div class="choice seat-by" data-testid={`by-${k}`}>
-      <span class="label" />
-      <div class="seg">
-        {(
-          [
-            ['ai', 'AI'],
-            ['person', 'A player'],
-          ] as const
-        ).map(([v, label]) => (
-          <button
-            class={(s.people?.includes(k) ? 'person' : 'ai') === v ? 'active' : ''}
-            data-value={v}
-            onClick={() => set({ people: v === 'person' ? [...(s.people ?? []).filter((x) => x !== k), k] : (s.people ?? []).filter((x) => x !== k) })}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
   const hosting = peopleSeats(s).length > 0;
+  const setSeatFaction = (k: SeatKey, v: number) => set(k === 'ally' || k === 'enemy3' ? { allyFaction: v } : k === 'enemy' ? { enemyFaction: v } : { enemy2Faction: v });
+  const setSeatBy = (k: SeatKey, v: Difficulty | 'player') => {
+    const people = (s.people ?? []).filter((x) => x !== k);
+    if (v === 'player') set({ people: [...people, k] });
+    else set({ people, skills: { ...s.skills, [k]: v } });
+  };
 
   return (
     <MenuScreen testid="setup">
@@ -397,8 +400,8 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
               label="Mode"
               value={s.mode}
               options={[
-                ['1v1', '1 vs 1'],
-                ['2v2', '2 vs 2'],
+                ['1v1', '1v1'],
+                ['2v2', '2v2'],
                 ['ffa3', 'FFA 3'],
                 ['ffa4', 'FFA 4'],
                 ['survival', 'Survival'],
@@ -407,67 +410,94 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
               testid="mode"
             />
             {s.mode === 'survival' && (
+              <Choice
+                label="Ally"
+                value={s.survivalAlly ? 'yes' : 'no'}
+                options={[
+                  ['no', 'Alone'],
+                  ['yes', 'With an ally'],
+                ]}
+                onChange={(v) => set({ survivalAlly: v === 'yes' })}
+                testid="survival-ally"
+              />
+            )}
+            <div data-testid="seats">
+              {teamsOf(s).map((team, i) => (
+                <div class="lobby-team">
+                  {i > 0 && <div class="lobby-vs">vs</div>}
+                  <ul class="lobby-players">
+                    {team.map((k) =>
+                      k === 'you' ? (
+                        <li class="lobby-seat human me" data-testid="seat-you">
+                          <i class="swatch" style={{ background: swatch(0) }} />
+                          <b>You</b>
+                          <div class="seg" data-testid="faction">
+                            {factions.map(([v, label]) => (
+                              <button class={s.faction === v ? 'active' : ''} data-value={String(v)} onClick={() => set({ faction: v })}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </li>
+                      ) : k === 'waves' ? (
+                        <li class="lobby-seat ai" data-testid="seat-waves">
+                          <i class="swatch" style={{ background: swatch(1) }} />
+                          <b>The waves</b>
+                          <select value={s.enemyFaction} data-testid="seat-waves-faction" onChange={(e) => set({ enemyFaction: Number((e.currentTarget as HTMLSelectElement).value) })}>
+                            {factions.map(([v, label]) => (
+                              <option value={v}>{label}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={s.survivalLevel ?? 'normal'}
+                            data-testid="survival-level"
+                            onChange={(e) => set({ survivalLevel: (e.currentTarget as HTMLSelectElement).value as 'easy' | 'normal' | 'hard' })}
+                          >
+                            <option value="easy">Easy waves</option>
+                            <option value="normal">Normal waves</option>
+                            <option value="hard">Hard waves</option>
+                          </select>
+                        </li>
+                      ) : (
+                        <li class={`lobby-seat ${s.people?.includes(k) ? 'open' : 'ai'}`} data-testid={`seat-${k}`}>
+                          <i class="swatch" style={{ background: swatch(seatsOf(s).indexOf(k) + 1) }} />
+                          <b>{s.people?.includes(k) ? 'Player' : 'AI'}</b>
+                          <select value={seatFaction(s, k)} data-testid={`seat-${k}-faction`} onChange={(e) => setSeatFaction(k, Number((e.currentTarget as HTMLSelectElement).value))}>
+                            {factions.map(([v, label]) => (
+                              <option value={v}>{label}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={s.people?.includes(k) ? 'player' : seatSkill(s, k)}
+                            data-testid={`seat-${k}-by`}
+                            title={s.people?.includes(k) ? 'A player joins this seat with the room code' : DIFFICULTY_INFO[seatSkill(s, k)]}
+                            onChange={(e) => setSeatBy(k, (e.currentTarget as HTMLSelectElement).value as Difficulty | 'player')}
+                          >
+                            {DIFFICULTY_OPTIONS.map(([v, label]) => (
+                              <option value={v}>AI · {label}</option>
+                            ))}
+                            <option value="player">Open for a player</option>
+                          </select>
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            {seatsOf(s).some((k) => k !== 'ally' && !s.people?.includes(k)) && (
               <>
                 <Choice
-                  label="Waves"
-                  value={s.survivalLevel ?? 'normal'}
-                  options={[
-                    ['easy', 'Easy'],
-                    ['normal', 'Normal'],
-                    ['hard', 'Hard'],
-                  ]}
-                  onChange={(v) => set({ survivalLevel: v })}
-                  testid="survival-level"
+                  label="AI style"
+                  value={s.personality ?? 'random'}
+                  options={PERSONALITIES.map(([v, label]) => [v, label] as [StrategyName | 'random', string])}
+                  onChange={(v) => set({ personality: v })}
+                  testid="personality"
                 />
-                <Choice
-                  label="Ally"
-                  value={s.survivalAlly ? 'yes' : 'no'}
-                  options={[
-                    ['no', 'Alone'],
-                    ['yes', 'With an AI ally'],
-                  ]}
-                  onChange={(v) => set({ survivalAlly: v === 'yes' })}
-                  testid="survival-ally"
-                />
-                <p class="setup-note">Hold out through 15 waves from the map edges; the first comes at 2:30. The waves are made of the "Opponent" faction.</p>
+                <p class="setup-note">{PERSONALITIES.find(([v]) => v === (s.personality ?? 'random'))![2]}</p>
               </>
             )}
-            <Choice label="You play" value={s.faction} options={factions} onChange={(v) => set({ faction: v })} testid="faction" />
-            {(s.mode === '2v2' || (s.mode === 'survival' && s.survivalAlly)) && (
-              <>
-                <Choice label="Ally" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="ally" />
-                {by('ally')}
-                <Choice label="Ally skill" value={s.allyDifficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ allyDifficulty: v })} testid="ally-difficulty" />
-              </>
-            )}
-            <Choice label={s.mode === '1v1' ? 'Opponent' : s.mode === 'survival' ? 'The waves' : 'Enemy 1'} value={s.enemyFaction} options={factions} onChange={(v) => set({ enemyFaction: v })} testid="enemy" />
-            {s.mode !== 'survival' && by('enemy')}
-            {s.mode !== '1v1' && s.mode !== 'survival' && (
-              <>
-                <Choice label="Enemy 2" value={s.enemy2Faction} options={factions} onChange={(v) => set({ enemy2Faction: v })} testid="enemy2" />
-                {by('enemy2')}
-              </>
-            )}
-            {s.mode === 'ffa4' && (
-              <>
-                <Choice label="Enemy 3" value={s.allyFaction} options={factions} onChange={(v) => set({ allyFaction: v })} testid="enemy3" />
-                {by('enemy3')}
-              </>
-            )}
-            {s.mode !== 'survival' && (
-              <>
-            <Choice label="Difficulty" value={s.difficulty} options={DIFFICULTY_OPTIONS} onChange={(v) => set({ difficulty: v })} testid="difficulty" />
-            <p class="setup-note" data-testid="difficulty-info">{DIFFICULTY_INFO[s.difficulty]}</p>
-            <Choice
-              label="Opponent style"
-              value={s.personality ?? 'random'}
-              options={PERSONALITIES.map(([v, label]) => [v, label] as [StrategyName | 'random', string])}
-              onChange={(v) => set({ personality: v })}
-              testid="personality"
-            />
-            <p class="setup-note">{PERSONALITIES.find(([v]) => v === (s.personality ?? 'random'))![2]}</p>
-              </>
-            )}
+            {hosting && <p class="setup-note" data-testid="hosting-note">Seats open for players: Create room gives you a code to send them. AI seats stay AI.</p>}
           </section>
           <section>
             <h2>Map</h2>

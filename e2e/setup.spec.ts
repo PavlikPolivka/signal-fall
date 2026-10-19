@@ -9,7 +9,7 @@ test('skirmish setup starts a game with the chosen options', async ({ page }) =>
   await expect(page.locator('[data-testid=setup]')).toBeVisible();
   await page.click('[data-testid=biome] [data-value=city]');
   await page.click('[data-testid=size] [data-value=S]');
-  await page.click('[data-testid=difficulty] [data-value=easy]');
+  await page.selectOption('[data-testid=seat-enemy-by]', 'easy');
   await page.fill('[data-testid=seed]', '4242');
   await expect(page.locator('[data-testid=map-preview]')).toBeVisible();
   await page.click('[data-testid=start]');
@@ -98,12 +98,12 @@ test('Play: leaving a seat to a player opens the match as a room, set up the sam
   await page.click('[data-testid=mode] [data-value="2v2"]');
   await page.fill('[data-testid=seed]', '4321');
   await expect(page.getByTestId('start')).toHaveText('Start match');
-  await page.click('[data-testid=by-enemy] [data-value=person]');
+  await page.selectOption('[data-testid=seat-enemy-by]', 'player');
   await expect(page.getByTestId('start')).toHaveText('Create room');
   await page.screenshot({ path: 'test-results/play.png' });
   await page.click('[data-testid=start]');
   await expect(page.getByTestId('room-code')).toHaveText(/^[A-Z]{4}$/, { timeout: 20_000 });
-  // 2v2: you and the AI ally against an open seat and an AI.
+  // 2v2: you and the AI ally against a seat open for a player and an AI.
   await expect(page.getByTestId('seat-1')).toContainText('AI');
   await expect(page.getByTestId('seat-2')).toContainText('Open seat');
   await expect(page.getByTestId('seat-3')).toContainText('AI');

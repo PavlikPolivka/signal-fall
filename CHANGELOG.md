@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-19 22:06 UTC
+
+- **Play shows the seats like a room does:** you, your allies and your enemies, team by team. Every seat beside yours is an AI with its own faction and skill, or open for a player. Open a seat and Start becomes Create room. Join a game is now only for joining: a code, an open game, ranked, or watching.
+- **Pause menu:** the surrender question no longer spills out of the menu.
+- Shorter mode buttons on Play (1v1, 2v2, FFA 3, FFA 4, Survival).
+
 ## 2026-10-19 21:58 UTC
 
 - **Steady campaign screen:** the briefing box keeps one size, so it no longer jumps as you click from mission to mission.

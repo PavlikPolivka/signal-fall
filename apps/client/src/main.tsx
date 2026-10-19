@@ -9,7 +9,7 @@ import type { ScheduledCommand } from '@signal-fall/sim';
 import { Renderer, ultraResolution } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
-import { MenuScreen, Setup, loadSaved, type SkirmishSettings } from './ui/Setup';
+import { MenuScreen, Setup, loadSaved, seatSkill, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { campaignDifficulty } from './ui/Campaign';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
@@ -104,7 +104,7 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       kind: 'skirmish',
       seed: s.seed,
       factions: [s.faction, s.allyFaction, s.enemyFaction, s.enemy2Faction],
-      ai: [null, s.allyDifficulty, s.difficulty, s.difficulty],
+      ai: [null, seatSkill(s, 'ally'), seatSkill(s, 'enemy'), seatSkill(s, 'enemy2')],
       teams: [0, 0, 1, 1],
       map,
       time: s.time,
@@ -117,7 +117,7 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       kind: 'skirmish',
       seed: s.seed,
       factions,
-      ai: s.survivalAlly ? [null, s.allyDifficulty, null] : [null, null],
+      ai: s.survivalAlly ? [null, seatSkill(s, 'ally'), null] : [null, null],
       teams: s.survivalAlly ? [0, 0, 1] : [0, 1],
       survival: s.survivalLevel ?? 'normal',
       map,
@@ -127,9 +127,10 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
   // Free-for-all: everyone on their own team.
   if (s.mode === 'ffa3' || s.mode === 'ffa4') {
     const factions = [s.faction, s.enemyFaction, s.enemy2Faction, s.allyFaction].slice(0, s.mode === 'ffa3' ? 3 : 4);
-    return { kind: 'skirmish', seed: s.seed, factions, ai: factions.map((_, k) => (k === 0 ? null : s.difficulty)), map, time: s.time, personality: factions.map((_, k) => (k === 0 ? null : style)) };
+    const enemies = ['enemy', 'enemy2', 'enemy3'] as const;
+    return { kind: 'skirmish', seed: s.seed, factions, ai: factions.map((_, k) => (k === 0 ? null : seatSkill(s, enemies[k - 1]!))), map, time: s.time, personality: factions.map((_, k) => (k === 0 ? null : style)) };
   }
-  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, s.difficulty], map, time: s.time, personality: [null, style] };
+  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, seatSkill(s, 'enemy')], map, time: s.time, personality: [null, style] };
 }
 
 /** ?rematch: the last skirmish setup again (same map, sides and AI), straight into the match. */

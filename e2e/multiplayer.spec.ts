@@ -33,6 +33,15 @@ async function play(page: Page, round: number): Promise<void> {
   }, round);
 }
 
+/** Host a room the way players do: Play, leave the opponent's seat open for a player, Create room. */
+async function hostRoom(page: import('@playwright/test').Page): Promise<void> {
+  await page.click('[data-testid=open-skirmish]');
+  await page.click('[data-testid=mode] [data-value="1v1"]');
+  await page.selectOption('[data-testid=seat-enemy-by]', 'player');
+  await page.click('[data-testid=start]');
+  await page.getByTestId('room-code').waitFor();
+}
+
 test('two clients play a networked match over a lossy link without desync', async ({ browser, browserName }) => {
   test.skip(browserName !== 'chromium', 'WebRTC loopback is exercised in Chromium');
   test.setTimeout(240_000);
@@ -47,8 +56,7 @@ test('two clients play a networked match over a lossy link without desync', asyn
   for (const p of [host, guest]) p.on('pageerror', (e) => console.error(e.message));
 
   await host.goto(`/play/?netsim=${NETSIM}`);
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   expect(code).toMatch(/^[A-Z]{4}$/);
 
@@ -153,8 +161,7 @@ test('2v2: three people and an AI over a full mesh stay in sync', async ({ brows
   for (const p of [host, a, b]) p.on('pageerror', (e) => console.error(e.message));
 
   await host.goto(`/play/?netsim=${NETSIM}`);
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   await host.click('[data-testid=mp-mode] [data-value="2v2"]');
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   for (const p of [a, b]) {
@@ -212,8 +219,7 @@ test('a player who leaves can be replaced by the AI, and the match goes on', asy
   const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
   const [host, guest] = await Promise.all([ctx.newPage(), ctx.newPage()]);
   await host.goto('/play/');
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   await guest.goto('/play/');
   await guest.click('[data-testid=open-multiplayer]');
@@ -242,8 +248,8 @@ test('a public room shows in Open games and can be joined from there', async ({ 
   const guest = await guestCtx.newPage();
   await host.goto('/play/');
   await host.click('[data-testid=open-multiplayer]');
-  await host.fill('[data-testid=mp-name]', 'Lister');
-  await host.click('[data-testid=mp-create]');
+  await host.evaluate(() => localStorage.setItem('signalfall.name', 'Lister'));
+  await hostRoom(host);
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   await host.check('[data-testid=mp-public] input');
   await guest.goto('/play/');
@@ -263,8 +269,7 @@ test('a spectator joins with the code and watches the match as it is played', as
   const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
   const [host, guest, watcher] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
   await host.goto('/play/');
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   await guest.goto('/play/');
   await guest.click('[data-testid=open-multiplayer]');
@@ -295,8 +300,7 @@ test('a player who reloads the page rejoins the running match and stays in sync'
   const [host, guest] = await Promise.all([ctx.newPage(), ctx.newPage()]);
   for (const p of [host, guest]) p.on('pageerror', (e) => console.error(e.message));
   await host.goto('/play/');
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   await guest.goto('/play/');
   await guest.click('[data-testid=open-multiplayer]');
@@ -353,8 +357,7 @@ test('free-for-all: three people, three teams, in sync', async ({ browser, brows
   const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
   const [host, a, b] = await Promise.all([ctx.newPage(), ctx.newPage(), ctx.newPage()]);
   await host.goto('/play/');
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   await host.click('[data-testid=mp-mode] [data-value="ffa3"]');
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   for (const p of [a, b]) {
@@ -381,8 +384,7 @@ test('co-op survival: two people on one team against the waves', async ({ browse
   const ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
   const [host, guest] = await Promise.all([ctx.newPage(), ctx.newPage()]);
   await host.goto('/play/');
-  await host.click('[data-testid=open-multiplayer]');
-  await host.click('[data-testid=mp-create]');
+  await hostRoom(host);
   await host.click('[data-testid=mp-mode] [data-value="coop"]');
   const code = (await host.getByTestId('room-code').textContent())!.trim();
   await guest.goto('/play/');

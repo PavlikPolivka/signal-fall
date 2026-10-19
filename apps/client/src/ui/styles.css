@@ -2886,3 +2886,19 @@ label.check {
 .choice.campaign-difficulty .small {
   grid-column: 2;
 }
+/* The pause menu's action column is narrow: the surrender question sits above its two answers. */
+.menu-actions .confirm-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.menu-actions .confirm-row > span {
+  text-align: center;
+}
+/* Mode buttons: one line each. */
+[data-testid='mode'] button {
+  white-space: nowrap;
+  padding-left: 8px;
+  padding-right: 8px;
+}

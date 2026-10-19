@@ -184,15 +184,12 @@ export function Multiplayer({
         <div class="setup-panel">
           <h1>Join a game</h1>
           <p class="muted small">
-            Join a friend's room with its code, pick an open game, or play ranked. To host, set up the match on Play and leave seats to players (or create an empty room here). Signaling: {signalingKind()}.
+            Join a friend's room with its code, pick an open game, or play ranked. To host, set up the match on Play and leave seats open for players. Signaling: {signalingKind()}.
           </p>
           <label class="choice">
             <span class="label">Your name</span>
             <input value={name} maxLength={20} data-testid="mp-name" onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
           </label>
-          <button class="start" data-testid="mp-create" disabled={busy || queued !== null} onClick={() => void enter(true)}>
-            {busy ? 'Connecting…' : 'Create an empty room'}
-          </button>
           {backend() &&
             (queued === null ? (
               <button
@@ -241,7 +238,7 @@ export function Multiplayer({
             <div class="choice" data-testid="open-games">
               <span class="label">Open games</span>
               {open.length === 0 ? (
-                <span class="muted small">None right now. Create a room and list it publicly.</span>
+                <span class="muted small">None right now. Host one from Play and list it publicly.</span>
               ) : (
                 <ul class="open-games">
                   {open.map((r) => (
