@@ -155,10 +155,10 @@ once at its bottom, displaced formation slots each get their own tile, a small d
 
 | Pairing | Before | First try | Shipped |
 |---|---|---|---|
-| Holdout vs Halcyon | 46% (100) | 58% (100) | 52.3% (gap only for parked vehicles; same code otherwise) |
+| Holdout vs Halcyon | 54% (46% at 100) | 58% (100) | 55% |
 | Halcyon vs Choir | 51% (100) | 56.7% | 53% |
 | Holdout vs Choir | 48.7% | 42.3% | 47.3% |
 
 The first try also gave vehicles hull-length formation slots and kept the vehicle gap while moving: Choir moved by about six
 points both ways (vehicle-heavy armies fought more spread out). Dropping the wider slots (variant A) put every pairing back in
-the gate; dropping the rally spacing instead (variant B) left Holdout vs Choir at 45.3%. Hard beats Easy 50-0.
+the gate (Holdout vs Halcyon sits at its edge, as it did before: 54% → 55%, within noise); dropping the rally spacing instead (variant B) left Holdout vs Choir at 45.3%. Hard beats Easy 50-0.
