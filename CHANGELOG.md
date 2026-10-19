@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 03:05 UTC
+
+- **Ultra graphics:** a new top graphics setting for Retina and other high-DPI screens. The game draws at your screen's full sharpness with sprites rendered at twice the detail. It needs a strong graphics card; High stays the default. Sharper sprites kick in from the next match.
+
 ## 2026-10-19 02:54 UTC
 
 - **Superweapons:** at tier 3 each faction can build one: the Holdout **Long Tom** shells an area, the Halcyon **rm -rf** burns one and jams what survives, and the Choir **Cadenza** shatters a wide one. It charges for 5 minutes, and every player sees every superweapon's timer in the top bar. When yours is ready, click its button and pick a spot: everyone sees the red target circle, and the strike lands a few seconds later, so there's time to get out. It never hurts your own side.

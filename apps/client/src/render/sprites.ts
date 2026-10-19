@@ -29,6 +29,9 @@ export class SpriteLibrary {
   private loading = new Map<string, Promise<void>>();
   private loaded = new Set<string>();
 
+  /** Load the 2x atlases (Ultra graphics on a high-DPI screen); set before anything loads. */
+  hiDpi = false;
+
   /** Base URL for assets (Vite serves /public at the root). */
   constructor(private readonly base = import.meta.env.BASE_URL) {}
 
@@ -42,10 +45,13 @@ export class SpriteLibrary {
   }
 
   private async doLoad(faction: string): Promise<void> {
-    const root = `${this.base}assets/sprites/${faction}/`;
+    let root = `${this.base}assets/sprites/${faction}/`;
     let catalog: Catalog;
     try {
-      const res = await fetch(`${root}catalog.json`);
+      // 2x pages when asked for and present, else the 1x ones.
+      let res = this.hiDpi ? await fetch(`${this.base}assets/sprites/${faction}@2x/catalog.json`) : null;
+      if (res?.ok) root = `${this.base}assets/sprites/${faction}@2x/`;
+      else res = await fetch(`${root}catalog.json`);
       if (!res.ok) return; // no art for this faction yet
       catalog = (await res.json()) as Catalog;
     } catch {

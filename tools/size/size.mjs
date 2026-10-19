@@ -20,7 +20,8 @@ const code = readdirSync(assets)
   .filter((f) => /\.(js|css|woff2)$/.test(f))
   .reduce((sum, f) => sum + size(join(assets, f)), 0);
 const sprites = dirs(join(assets, 'sprites'))
-  .filter((d) => d !== 'props')
+  // The 2x sets replace the 1x ones on Ultra (and are smaller), so they never add to a load.
+  .filter((d) => d !== 'props' && !d.endsWith('@2x'))
   .map((d) => size(join(assets, 'sprites', d)))
   .sort((a, b) => b - a);
 const parts = {

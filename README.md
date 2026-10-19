@@ -97,6 +97,7 @@ blender -b --factory-startup -P tools/assets/blender/render.py -- holdout tools/
 blender -b --factory-startup -P tools/assets/blender/render_icons.py -- holdout tools/assets/build/raw/holdout/icons
 blender -b --factory-startup -P tools/assets/blender/render_props.py -- tools/assets/build/raw/props
 pnpm --filter @signal-fall/assets atlas holdout      # and: atlas props
+pnpm --filter @signal-fall/assets atlas holdout 2x   # 2x WebP atlases for Ultra graphics (each faction and props)
 pnpm --filter @signal-fall/assets terrain            # procedural terrain textures
 ```
 

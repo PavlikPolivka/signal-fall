@@ -104,7 +104,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 81 ✅ | G | Water and shoreline animation; crystal shimmer on Echo | 3 | M |
 | 82 ✅ | G | Weather per biome (dust, rain, crystal motes), Reduced setting off | 2 | S |
 | 83 ✅ | G | Faction-specific UI frames polished (icons, fonts, sounds per faction) | 3 | M |
-| 84 | G | Higher-resolution sprites (2× atlases for retina screens) | 3 | L |
+| 84 ✅ | G | Higher-resolution sprites (2× atlases for retina screens) | 3 | L |
 | 85 ✅ | G | Smoother zoom levels with sprite mip-mapping, no shimmering | 3 | S |
 | 86 ✅ | G | Damaged-building fire and smoke effects scaling with damage | 3 | S |
 | 87 ✅ | V | Weapon sounds per unit type, distinct enough to hear what is fighting | 3 | M |

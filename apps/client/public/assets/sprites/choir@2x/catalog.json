@@ -1,0 +1,268 @@
+{
+ "faction": "choir",
+ "pages": 1,
+ "sprites": {
+  "grace": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "staccato": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "cantor": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "glissando": {
+   "kind": "vehicle",
+   "frame": 120,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "refrain": {
+   "kind": "vehicle",
+   "frame": 192,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "basso": {
+   "kind": "vehicle",
+   "frame": 136,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "falsetto": {
+   "kind": "vehicle",
+   "frame": 120,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "crescendo": {
+   "kind": "vehicle",
+   "frame": 152,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "aria": {
+   "kind": "air",
+   "frame": 136,
+   "dirs": 16,
+   "anims": {
+    "fly": 2
+   },
+   "turret": false
+  },
+  "requiem": {
+   "kind": "vehicle",
+   "frame": 176,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "overture": {
+   "kind": "vehicle",
+   "frame": 176,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "opus": {
+   "kind": "building",
+   "frame": 320,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "bell": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "coda": {
+   "kind": "building",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "loft": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "pit": {
+   "kind": "building",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "antiphon": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "chord": {
+   "kind": "building",
+   "frame": 176,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "belfry": {
+   "kind": "building",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "conservatory": {
+   "kind": "building",
+   "frame": 320,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "discord": {
+   "kind": "building",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "descant": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "fortissimo": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "fermata": {
+   "kind": "building",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "cadenza": {
+   "kind": "building",
+   "frame": 320,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  }
+ }
+}

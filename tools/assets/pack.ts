@@ -1,7 +1,8 @@
 /**
  * Pack rendered sprite frames into PixiJS spritesheets.
  *
- *   pnpm --filter @signal-fall/assets pack holdout
+ *   pnpm --filter @signal-fall/assets atlas holdout       (1x, PNG)
+ *   pnpm --filter @signal-fall/assets atlas holdout 2x    (2x for high-DPI screens, WebP, into <faction>@2x/)
  *
  * Reads tools/assets/build/raw/<faction>/manifest.json + 2x PNG passes, downsamples
  * to 1x, trims transparent borders, packs into 2048x2048 pages and writes:
@@ -17,11 +18,14 @@ import sharp from 'sharp';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const faction = process.argv[2] ?? 'holdout';
+/** 2 = keep the 2x renders as they are (high-DPI atlases, the Ultra graphics setting). */
+const SCALE = process.argv[3] === '2x' ? 2 : 1;
 const RAW = join(ROOT, 'tools/assets/build/raw', faction);
-const OUT = join(ROOT, 'apps/client/public/assets/sprites', faction);
+const OUT = join(ROOT, 'apps/client/public/assets/sprites', SCALE === 2 ? `${faction}@2x` : faction);
 const ICONS = join(ROOT, 'apps/client/public/assets/icons', faction);
 const PASSES = ['color', 'mask', 'shadow'] as const;
-const PAGE = 2048;
+// Every GPU that drives a high-DPI screen takes 4096 textures.
+const PAGE = SCALE === 2 ? 4096 : 2048;
 const ICON_PX = 192;
 /** Direction used for icons: facing the viewer (straight down the screen = sim 45 degrees). */
 const ICON_DIR = { 8: 1, 16: 2 } as Record<number, number>;
@@ -67,7 +71,8 @@ async function teamMask(file: string): Promise<Buffer> {
   return sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
 }
 
-async function load(frame: string, pass: string, size: number): Promise<Packed | null> {
+async function load(frame: string, pass: string, logical: number): Promise<Packed | null> {
+  const size = logical * SCALE;
   const file = join(RAW, `${frame.replaceAll('/', '_')}.${pass}.png`);
   let img: ReturnType<typeof sharp>;
   try {
@@ -125,9 +130,12 @@ async function load(frame: string, pass: string, size: number): Promise<Packed |
 
 async function main(): Promise<void> {
   rmSync(OUT, { recursive: true, force: true });
-  rmSync(ICONS, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
-  if (faction !== 'props') mkdirSync(ICONS, { recursive: true });
+  const icons = SCALE === 1 && faction !== 'props';
+  if (icons) {
+    rmSync(ICONS, { recursive: true, force: true });
+    mkdirSync(ICONS, { recursive: true });
+  }
 
   const items: Packed[] = [];
   for (const [id, entry] of Object.entries(manifest.sprites)) {
@@ -145,7 +153,7 @@ async function main(): Promise<void> {
   packer.addArray(items.map((p) => ({ width: p.w, height: p.h, data: p })) as never);
   let page = 0;
   for (const bin of packer.bins) {
-    const image = `atlas-${page}.png`;
+    const image = `atlas-${page}.${SCALE === 2 ? 'webp' : 'png'}`;
     const frames: Record<string, unknown> = {};
     const comps = bin.rects.map((r) => {
       const p = (r as unknown as { data: Packed }).data;
@@ -159,11 +167,11 @@ async function main(): Promise<void> {
       };
       return { input: p.png, left: r.x, top: r.y };
     });
-    await sharp({ create: { width: bin.width, height: bin.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-      .composite(comps)
-      .png({ compressionLevel: 9, adaptiveFiltering: true })
-      .toFile(join(OUT, image));
-    writeFileSync(join(OUT, `atlas-${page}.json`), JSON.stringify({ frames, meta: { image, size: { w: bin.width, h: bin.height }, scale: 1, format: 'RGBA8888' } }));
+    const sheet = sharp({ create: { width: bin.width, height: bin.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite(comps);
+    // The 2x pages are four times the pixels: lossy WebP with exact alpha keeps the download near the 1x PNGs.
+    await (SCALE === 2 ? sheet.webp({ quality: 88, alphaQuality: 100, effort: 6 }) : sheet.png({ compressionLevel: 9, adaptiveFiltering: true })).toFile(join(OUT, image));
+    // meta.scale: PixiJS gives the textures this resolution, so 2x frames keep their 1x size on screen.
+    writeFileSync(join(OUT, `atlas-${page}.json`), JSON.stringify({ frames, meta: { image, size: { w: bin.width, h: bin.height }, scale: SCALE, format: 'RGBA8888' } }));
     page++;
   }
 
@@ -177,6 +185,10 @@ async function main(): Promise<void> {
   };
   writeFileSync(join(OUT, 'catalog.json'), JSON.stringify(catalog, null, 1));
 
+  if (!icons) {
+    console.log(`packed ${items.length} frames into ${page} page(s) at ${SCALE}x`);
+    return;
+  }
   // Icons: dedicated 3/4 renders (render_icons.py) when present, else the sprite facing the viewer.
   // Color and team mask are trimmed by the same box so the UI can tint the mask over the color.
   for (const [id, e] of Object.entries(manifest.sprites)) {

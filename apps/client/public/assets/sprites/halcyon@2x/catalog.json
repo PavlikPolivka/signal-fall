@@ -1,0 +1,268 @@
+{
+ "faction": "halcyon",
+ "pages": 1,
+ "sprites": {
+  "sentry": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "lance": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "fork": {
+   "kind": "infantry",
+   "frame": 64,
+   "dirs": 8,
+   "anims": {
+    "idle": 1,
+    "walk": 6,
+    "fire": 3,
+    "death": 4
+   },
+   "turret": false
+  },
+  "ping": {
+   "kind": "vehicle",
+   "frame": 104,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "fetch": {
+   "kind": "vehicle",
+   "frame": 136,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "vector": {
+   "kind": "vehicle",
+   "frame": 136,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "firewall": {
+   "kind": "vehicle",
+   "frame": 120,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "broadcast": {
+   "kind": "vehicle",
+   "frame": 136,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "seek": {
+   "kind": "air",
+   "frame": 136,
+   "dirs": 16,
+   "anims": {
+    "fly": 2
+   },
+   "turret": false
+  },
+  "root": {
+   "kind": "vehicle",
+   "frame": 176,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": true
+  },
+  "init": {
+   "kind": "vehicle",
+   "frame": 152,
+   "dirs": 16,
+   "anims": {
+    "idle": 1
+   },
+   "turret": false
+  },
+  "kernel": {
+   "kind": "building",
+   "frame": 336,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "powerd": {
+   "kind": "building",
+   "frame": 176,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "ingest": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "spawn": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "make": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "scan": {
+   "kind": "building",
+   "frame": 224,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "relay": {
+   "kind": "building",
+   "frame": 112,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "launchd": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "sudo": {
+   "kind": "building",
+   "frame": 256,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  },
+  "guard": {
+   "kind": "building",
+   "frame": 96,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "filter": {
+   "kind": "building",
+   "frame": 160,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "sigkill": {
+   "kind": "building",
+   "frame": 192,
+   "dirs": 1,
+   "anims": {},
+   "turret": true,
+   "footprint": [
+    2,
+    2
+   ]
+  },
+  "block": {
+   "kind": "building",
+   "frame": 128,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    1,
+    1
+   ]
+  },
+  "rmrf": {
+   "kind": "building",
+   "frame": 288,
+   "dirs": 1,
+   "anims": {},
+   "turret": false,
+   "footprint": [
+    3,
+    3
+   ]
+  }
+ }
+}

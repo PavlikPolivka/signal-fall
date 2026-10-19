@@ -1610,9 +1610,9 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             </button>
           ))}
         </div>
-        <div class="seg-row" title="Lower settings run faster on older computers">
+        <div class="seg-row" title="Lower settings run faster on older computers. Ultra draws at your screen's full sharpness (Retina and other high-DPI screens) with sharper sprites from the next match; it needs a strong graphics card">
           <span>Graphics</span>
-          {(['high', 'balanced', 'performance'] as const).map((v) => (
+          {(['ultra', 'high', 'balanced', 'performance'] as const).map((v) => (
             <button
               class={state.settings.graphics === v ? 'active' : ''}
               data-testid={`setting-graphics-${v}`}
@@ -1621,7 +1621,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
                 state.applySettings();
               }}
             >
-              {v === 'high' ? 'High' : v === 'balanced' ? 'Balanced' : 'Performance'}
+              {v === 'ultra' ? 'Ultra' : v === 'high' ? 'High' : v === 'balanced' ? 'Balanced' : 'Performance'}
             </button>
           ))}
         </div>

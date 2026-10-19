@@ -593,7 +593,7 @@ export interface Settings {
   /** Reduced: fewer smoke and spark particles (slower machines, calmer screen). */
   effects: 'full' | 'reduced';
   /** Graphics quality: Balanced hides ground clutter and prop shadows, Performance also renders at lower resolution with simpler terrain. */
-  graphics: 'high' | 'balanced' | 'performance';
+  graphics: 'ultra' | 'high' | 'balanced' | 'performance';
   /** First-match tips in the corner. */
   hints: boolean;
   /** Mouse wheel zooms the other way. */

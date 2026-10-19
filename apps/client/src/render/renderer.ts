@@ -141,14 +141,15 @@ export class Renderer {
   }
 
   /**
-   * Graphics quality. Balanced drops ground clutter and prop shadows; Performance also renders at 75%
+   * Graphics quality. Ultra renders at the screen's full pixel density (sharp on high-DPI screens, with
+   * 2x sprites); Balanced drops ground clutter and prop shadows; Performance also renders at 75%
    * resolution and uses the cheap terrain shader.
    */
-  setGraphics(q: 'high' | 'balanced' | 'performance'): void {
-    this.flat.visible = q === 'high';
-    this.propShadows.visible = q === 'high';
+  setGraphics(q: GraphicsQuality): void {
+    this.flat.visible = q === 'high' || q === 'ultra';
+    this.propShadows.visible = q === 'high' || q === 'ultra';
     this.terrain.setLite(q === 'performance');
-    const res = q === 'performance' ? 0.75 : 1;
+    const res = q === 'performance' ? 0.75 : q === 'ultra' ? ultraResolution() : 1;
     if (this.app.renderer && this.app.renderer.resolution !== res) {
       this.app.renderer.resolution = res;
       this.app.resize();
@@ -1549,4 +1550,11 @@ export class Renderer {
       this.screen.circle(line.x0 + (line.x1 - line.x0) * t, line.y0 + (line.y1 - line.y0) * t, 3).fill({ color: 0x6dff8a, alpha: 0.9 });
     }
   }
+}
+
+export type GraphicsQuality = 'ultra' | 'high' | 'balanced' | 'performance';
+
+/** Ultra's render resolution: the screen's pixel density, at most 2. */
+export function ultraResolution(): number {
+  return Math.min(2, Math.max(1, window.devicePixelRatio || 1));
 }

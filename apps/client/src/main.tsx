@@ -5,7 +5,7 @@ import { Input } from './input/input';
 import { FX_EVENT, FX_STRIDE } from '@signal-fall/sim';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import type { ScheduledCommand } from '@signal-fall/sim';
-import { Renderer } from './render/renderer';
+import { Renderer, ultraResolution } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
 import { MenuScreen, Setup, loadSaved, type SkirmishSettings } from './ui/Setup';
@@ -289,6 +289,8 @@ window.addEventListener('keydown', unlockAudio);
 let input: Input | null = null;
 
 async function mountGame(host: HTMLDivElement): Promise<void> {
+  // Ultra on a high-DPI screen: 2x sprites (chosen before the first sheet loads; a change applies next match).
+  renderer.lib.hiDpi = state.settings.graphics === 'ultra' && ultraResolution() >= 1.5;
   await renderer.init(host);
   renderer.setGraphics(state.settings.graphics);
   input = new Input(state, renderer, renderer.app.canvas);
