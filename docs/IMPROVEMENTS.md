@@ -158,6 +158,161 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 4. **Clarity:** 7, 12, 14, 19, 20, 21, 43, 47, 48, 62.
 5. **Graphics:** 35–39, 80, 86, then the rest.
 
+## Next 100 (small)
+
+Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gameplay, controls, interface and feel. Same columns as above.
+
+### Gameplay
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 121 | E | Power down a building by hand (click toggle) to free power for what matters, like classic C&C | 4 | S |
+| 122 | E | Primary factory: pick which barracks or factory new units come out of | 3 | S |
+| 123 | E | Selling a building leaves a few infantry, so a dying base can still fight | 3 | S |
+| 124 | E | Cancelling a building in its first 5 seconds refunds everything (misclick forgiveness) | 3 | XS |
+| 125 | E | Gates in wall lines: your units pass, enemies don't | 3 | S |
+| 126 | E | Ambush bonus: the first shot from a unit hidden in brush hits harder | 3 | S |
+| 127 | E | Holdout harvesters below 30% health drive to a Garage on their own | 3 | S |
+| 128 | E | Recompiled Halcyon units keep one veterancy rank | 2 | S |
+| 129 | E | More crate types: a short map reveal, a speed boost, a free harvester | 2 | XS |
+| 130 | E | Attack-ground order for artillery: shell a spot, not a unit | 4 | S |
+| 131 | E | Allied credit transfer in team games | 3 | S |
+
+### Match options
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 132 | E | Starting credits option (5k / 10k / 20k) | 4 | XS |
+| 133 | E | Superweapons on or off in the map options | 4 | XS |
+| 134 | E | Tech limit option (no tier 3) for quick, unit-only matches | 3 | XS |
+| 135 | E | Unit cap option (low / normal / high) | 3 | XS |
+| 136 | E | Start with a small army instead of only the construction vehicle | 3 | XS |
+| 137 | E | Revealed map (no fog) option for practice and casting | 2 | XS |
+| 138 | E | Handicap per seat (100 / 75 / 50%) so mixed-skill friends can play | 3 | S |
+
+### AI
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 139 | A | AI steps out of a superweapon's warning circle (the warning is public, so this stays fair) | 4 | S |
+| 140 | A | AI garrisons city ruins at chokes | 3 | S |
+| 141 | A | AI contests capture points and the King-of-the-hill flag | 4 | S |
+| 142 | A | AI picks up crates near its units | 2 | XS |
+| 143 | A | AI chooses its doctrine to fit its strategy (rush, turtle, tech) | 3 | S |
+| 144 | A | AI ally answers pings: it attacks or defends where you pinged | 4 | S |
+| 145 | A | Optional AI chat lines in skirmish (taunts, "gg"), off by default | 2 | XS |
+
+### Controls
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 146 | C | Hotkey cycles your production buildings (selects and centers each) | 3 | XS |
+| 147 | C | Hotkey cycles idle army units one at a time | 3 | XS |
+| 148 | C | Hotkey selects all damaged units, ready to send to repair | 3 | XS |
+| 149 | C | Hotkey jumps between your construction yards | 2 | XS |
+| 150 | C | Remove the selection from a control group (Ctrl+Shift+number) | 2 | XS |
+| 151 | C | Right-click a portrait removes it from the selection; Shift+right-click removes that type | 3 | XS |
+| 152 | C | Shift-place: keep placing the same structure (turrets, walls) without picking it again | 4 | XS |
+| 153 | C | Drag to lay a whole wall line in one go | 4 | S |
+| 154 | C | Follow camera: lock onto the selected unit | 2 | XS |
+| 155 | C | Quick-cast setting: abilities fire at the cursor on key press, no click | 3 | S |
+| 156 | C | Superweapon hotkey (fire at the cursor) | 3 | XS |
+| 157 | C | Garrison hotkey: send selected infantry into the nearest ruin | 2 | XS |
+
+### UI
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 158 | U | Power bar tooltip lists the biggest users and what goes offline at low power | 3 | XS |
+| 159 | U | Every disabled build button says why in one line (needs radar, one per player) | 4 | XS |
+| 160 | U | A finished structure waiting to be placed pulses its tab after 10 seconds | 3 | XS |
+| 161 | U | Research progress shows in the top bar when the tech center isn't selected | 3 | XS |
+| 162 | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |
+| 163 | U | Army size against the unit cap in the top bar | 3 | XS |
+| 164 | U | Harvester load bar (how full it is) under the health bar | 3 | XS |
+| 165 | U | Echo left in a field on hover; the minimap shades fields as they run dry | 4 | S |
+| 166 | U | Minimap marks capture points, crates and the hill flag with clear icons | 3 | XS |
+| 167 | U | Minimap filters: hide terrain, show only units, show Echo | 2 | S |
+| 168 | U | Cost turns red on a build button when you can't afford it now | 3 | XS |
+| 169 | U | Exact seconds left on hover over a queued item | 2 | XS |
+| 170 | U | Rally point line shown while a factory is selected | 3 | XS |
+| 171 | U | Hover a selected unit to see a line to what it is shooting | 2 | XS |
+| 172 | U | Ability cooldowns on portraits in the selection panel | 2 | XS |
+| 173 | U | One strip of every active queue across all factories at the bottom | 3 | S |
+| 174 | U | Small kill feed for big losses (structures, tier-3 units) | 3 | S |
+| 175 | U | Optional floating damage numbers, off by default | 2 | S |
+| 176 | U | Notice when a unit is stuck, with a jump-to button | 2 | S |
+| 177 | U | Show the enemy's doctrine once you have seen their tech center | 2 | XS |
+
+### UX and onboarding
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 178 | O | Hint when credits sit above 3000 for a minute ("spend it: build another factory") | 4 | XS |
+| 179 | O | Hint when a refinery has fewer than two harvesters | 3 | XS |
+| 180 | O | Match report adds idle factory time and floated credits | 4 | S |
+| 181 | O | Post-match tips: three things to do better, based on the report | 4 | S |
+| 182 | O | "More in the Codex" link on hover cards opens the right entry | 3 | S |
+| 183 | O | Short tooltips on every map option in setup (Resources, Terrain, Victory) | 3 | XS |
+| 184 | O | Skirmish setup remembers settings per mode (1v1, FFA, Survival) | 2 | XS |
+| 185 | O | Sandbox from the main menu: free credits, no enemy army, test any unit | 3 | S |
+| 186 | O | Campaign difficulty choice (Story, Normal, Hard) | 4 | S |
+| 187 | O | Restart a campaign mission from a mid-mission save | 3 | S |
+| 188 | O | Replay timeline marks big fights and lost buildings; click to jump | 4 | S |
+| 189 | O | "Play this map" from a replay (same seed and factions) | 2 | XS |
+| 190 | O | Full keyboard navigation of every menu | 2 | S |
+| 191 | O | Confirm before the host leaves a multiplayer lobby | 2 | XS |
+| 192 | O | Faction picker shows a three-line play style and how hard it is to learn | 3 | XS |
+
+### Graphics
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 193 | G | Superweapon building glows more as it charges | 3 | XS |
+| 194 | G | Faction-specific strike visuals: shell rain, a burning purge, a crystal shatter | 4 | S |
+| 195 | G | Garrisoned ruins show muzzle flashes in the windows | 3 | S |
+| 196 | G | Capture point ring fills in the capturing team's color | 3 | XS |
+| 197 | G | "+700" credit pop when a harvester unloads | 2 | XS |
+| 198 | G | Minimap flash at a superweapon target the moment the warning starts | 3 | XS |
+| 199 | G | Coverage and growth range shown around a selected Halcyon or Choir building | 3 | XS |
+
+### Sound
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 200 | V | Better voices: replace the Piper announcer and campaign briefings with a more natural, acted TTS model (emotion, pacing, per-faction character), keep the radio / synthetic / chord treatments, and re-record every line | 5 | M |
+| 201 | V | Siren for "superweapon launch detected", distinct from every other alert | 4 | XS |
+| 202 | V | Announcer: "enemy superweapon ready" | 3 | XS |
+| 203 | V | Announcer for capture points taken and lost | 3 | XS |
+| 204 | V | Acknowledgements for entering and leaving a garrison | 2 | XS |
+| 205 | V | Crate pickup sound and voice line | 2 | XS |
+| 206 | V | Separate volume for interface clicks | 2 | XS |
+| 207 | V | A cue when one of your units in brush is spotted | 2 | XS |
+
+### Multiplayer
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 208 | M | Ready check in the lobby before the host can start | 3 | XS |
+| 209 | M | Connection quality (ping) next to each name in the lobby and in game | 3 | XS |
+| 210 | M | Pause request in multiplayer (three per player, everyone sees who paused) | 3 | S |
+| 211 | M | Surrender vote in team games | 3 | S |
+| 212 | M | Chat stays open on the end screen ("gg") | 2 | S |
+| 213 | M | Rematch with factions or start positions swapped | 2 | XS |
+| 214 | M | Spectator delay option so watchers can't scout for a player | 2 | S |
+| 215 | M | Rank badges by rating next to names | 2 | S |
+
+### Tech and accessibility
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 216 | T | Skirmish autosave every 5 minutes | 3 | XS |
+| 217 | T | Install as an app (PWA), with atlases cached for fast starts | 3 | S |
+| 218 | T | Battery saver: cap at 30 fps on laptops | 2 | XS |
+| 219 | O | Reduce flashing option (strikes, explosions, low-power blinks) | 3 | XS |
+| 220 | O | Larger cursor option | 2 | XS |
+| 221 | O | High-contrast interface text option | 2 | S |
+
 ## Wish list
 
 Not planned. Ideas to pick up some day, each bigger than one feature.
