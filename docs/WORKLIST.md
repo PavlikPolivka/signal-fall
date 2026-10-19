@@ -14,7 +14,7 @@ the status column is updated as each one lands.
 | 6 | **In-game menu**: split the crowded pause menu into side sections (Briefing, Sound, Graphics, Controls, Interface) | Too busy to find anything | done |
 | 7 | **Better voices** (Improvements #200): re-record the announcer and the campaign with Gemini text-to-speech, acted per speaker | Piper sounds flat | to do |
 | 8 | **Acts II and III pass**: Divergence, Requiem, The Silent Seed, Signal Rise get the same tuning as Act I (growing waves, events, clear goals) | Only Act I was replayed and retuned | to do |
-| 9 | **Objective markers without a radar**: mission targets show on the minimap even before a radar is built | The minimap is dark early, exactly when you look for the target | to do |
+| 9 | **Objective markers without a radar**: mission targets show on the minimap even before a radar is built | The minimap is dark early, exactly when you look for the target | done |
 | 11 | **One match setup for skirmish and multiplayer**: one screen where each seat is you, an AI or an open slot for a friend; skirmish is simply a match with only AI seats | Two near-identical setup screens to learn and maintain | to do |
 | 12 | **Daily challenge button**: find it a better place on the main menu | Its placement looks off | to do |
 | 10 | **Multiplayer test flake**: the guest sometimes misses the host's map seed in the lobby test | CI failed once on it (a rerun passed) | to do |

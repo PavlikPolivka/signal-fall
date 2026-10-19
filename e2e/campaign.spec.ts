@@ -44,6 +44,18 @@ test('campaign: objectives are marked on the map, and clicking one looks at it',
   await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.cur.markers().length >= 3, null, { timeout: 20_000 });
   const before = await page.evaluate(() => (window as unknown as Win).__signalFall.state.cur.markers().filter((m: { objective: number }) => m.objective === 1).length);
   expect(before).toBe(3);
+  // No radar yet, and still the targets blink on the minimap.
+  await expect(page.getByTestId('minimap')).toHaveAttribute('data-radar', 'off');
+  await expect
+    .poll(() =>
+      page.getByTestId('minimap').evaluate((c: HTMLCanvasElement) => {
+        const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+        let gold = 0;
+        for (let i = 0; i < d.length; i += 4) if (d[i]! > 150 && d[i + 1]! > 110 && d[i + 2]! < 90) gold++;
+        return gold;
+      }),
+    )
+    .toBeGreaterThan(10);
   await page.locator('[data-testid=mission-panel] [data-objective="1"] button').click();
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'test-results/campaign-markers.png' });

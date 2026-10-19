@@ -505,6 +505,31 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = '#05070a';
       ctx.fillRect(0, 0, SIZE, SIZE);
+      // Mission objectives: blinking gold diamonds (green for the unit to protect), area rings. Shown even
+      // without a radar: the mission tells you where to go.
+      const drawObjectives = () => {
+        const cur = state.cur;
+        if (!cur || !state.mission) return;
+        const on = Math.floor(performance.now() / 400) % 2 === 0;
+        for (const m of cur.markers()) {
+          const x = m.x / FX;
+          const y = m.y / FX;
+          ctx.fillStyle = m.kind === MARKER.protect ? '#6dff8a' : on ? '#ffd34d' : '#a07a10';
+          ctx.beginPath();
+          ctx.moveTo(x, y - 3);
+          ctx.lineTo(x + 3, y);
+          ctx.lineTo(x, y + 3);
+          ctx.lineTo(x - 3, y);
+          ctx.fill();
+          if (m.kind === MARKER.area) {
+            ctx.strokeStyle = '#ffd34d';
+            ctx.lineWidth = 1.5 / scale;
+            ctx.beginPath();
+            ctx.arc(x, y, m.r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      };
       if (!radarRef.current) {
         // No radar (or low power): static.
         for (let i = 0; i < 400; i++) {
@@ -514,7 +539,12 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
         ctx.fillStyle = '#8892a0';
         ctx.font = '12px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillText(state.lowPower ? 'LOW POWER' : 'NO RADAR', SIZE / 2, SIZE / 2);
+        const marked = !!state.mission && (state.cur?.markers().length ?? 0) > 0;
+        ctx.fillText(state.lowPower ? 'LOW POWER' : 'NO RADAR', SIZE / 2, marked ? SIZE - 12 : SIZE / 2);
+        if (marked) {
+          ctx.setTransform(scale, scale * 0.5, -scale, scale * 0.5, h * scale, SIZE * 0.25);
+          drawObjectives();
+        }
         return;
       }
       ctx.setTransform(scale, scale * 0.5, -scale, scale * 0.5, h * scale, SIZE * 0.25);
@@ -567,28 +597,7 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
           ctx.lineTo(p.x - 1.5, p.y + 0.5);
           ctx.fill();
         }
-      // Mission objectives: blinking gold diamonds (green for the unit to protect), area rings.
-      if (cur && state.mission) {
-        const on = Math.floor(performance.now() / 400) % 2 === 0;
-        for (const m of cur.markers()) {
-          const x = m.x / FX;
-          const y = m.y / FX;
-          ctx.fillStyle = m.kind === MARKER.protect ? '#6dff8a' : on ? '#ffd34d' : '#a07a10';
-          ctx.beginPath();
-          ctx.moveTo(x, y - 3);
-          ctx.lineTo(x + 3, y);
-          ctx.lineTo(x, y + 3);
-          ctx.lineTo(x - 3, y);
-          ctx.fill();
-          if (m.kind === MARKER.area) {
-            ctx.strokeStyle = '#ffd34d';
-            ctx.lineWidth = 1.5 / scale;
-            ctx.beginPath();
-            ctx.arc(x, y, m.r, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-        }
-      }
+      drawObjectives();
       // Attack pings: red rings where own units/buildings were recently hit.
       const now = performance.now();
       for (const hit of state.hits) {

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 21:06 UTC
+
+- **Campaign targets on the minimap from the start:** objective markers now blink on the minimap even before you build a radar, so you can see where to go from the first second.
+
 ## 2026-10-19 21:05 UTC
 
 - **A calmer pause menu:** Resume and the match actions on the left, the settings split into Sound, Graphics, Controls and Interface on the right. It opens on the briefing, and in a campaign mission that is now the mission's own briefing and objectives.
