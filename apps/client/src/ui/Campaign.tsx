@@ -56,13 +56,13 @@ export function nextMission(id: string): MissionSpec | null {
 }
 
 /** Play a briefing line from the generated voice files (one per paragraph), one after another. */
-function useBriefingVoice(mission: MissionSpec | null): { playing: boolean; play: () => void; stop: () => void } {
+function useBriefingVoice(mission: MissionSpec | null): { playing: boolean; current: number; play: () => void; stop: () => void } {
   const audio = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(-1);
   const stop = () => {
     audio.current?.pause();
     audio.current = null;
-    setPlaying(false);
+    setCurrent(-1);
   };
   useEffect(() => stop, [mission?.id]);
   const play = () => {
@@ -70,30 +70,39 @@ function useBriefingVoice(mission: MissionSpec | null): { playing: boolean; play
     stop();
     let i = 0;
     const next = () => {
-      if (i >= mission.briefing.length) return setPlaying(false);
+      if (i >= mission.briefing.length) return setCurrent(-1);
       const a = new Audio(`${import.meta.env.BASE_URL}assets/voice/campaign/${mission.id}/brief_${i}.mp3`);
       audio.current = a;
+      setCurrent(i);
       i++;
       a.onended = next;
       a.onerror = next;
-      void a.play().catch(() => setPlaying(false));
+      // Autoplay can be blocked until the page gets a click: then the text simply stays readable.
+      void a.play().catch(() => setCurrent(-1));
     };
-    setPlaying(true);
     next();
   };
-  return { playing, play, stop };
+  return { playing: current >= 0, current, play, stop };
 }
 
 /** The campaign: missions by act (each unlocked by winning the one before), and a briefing for the chosen one. */
-export function Campaign({ onBack, onPlay }: { onBack: () => void; onPlay: (m: MissionSpec) => void }) {
+export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay: (m: MissionSpec) => void; brief?: string | null }) {
   const done = campaignProgress();
   const firstOpen = MISSIONS.findIndex((m) => !done.has(m.id));
-  const [chosen, setChosen] = useState<MissionSpec | null>(MISSIONS[firstOpen < 0 ? 0 : firstOpen]!);
+  const briefed = brief ? (MISSIONS.find((m) => m.id === brief) ?? null) : null;
+  const [chosen, setChosen] = useState<MissionSpec | null>(briefed ?? MISSIONS[firstOpen < 0 ? 0 : firstOpen]!);
+  // Straight from the last mission: only the briefing, read aloud, until "All missions" opens the list.
+  const [focus, setFocus] = useState(!!briefed);
   const voice = useBriefingVoice(chosen);
+  useEffect(() => {
+    if (briefed) voice.play();
+  }, []);
   const [difficulty, setDifficulty] = useState(campaignDifficulty());
+  const index = chosen ? MISSIONS.indexOf(chosen) : -1;
   return (
     <MenuScreen testid="campaign">
-      <div class="campaign">
+      <div class={`campaign ${focus ? 'focus' : ''}`}>
+        {!focus && (
         <div class="campaign-list">
           <h1>Campaign</h1>
           {[1, 2, 3, 4].map((act) => (
@@ -117,11 +126,25 @@ export function Campaign({ onBack, onPlay }: { onBack: () => void; onPlay: (m: M
             Back
           </button>
         </div>
+        )}
         {chosen && (
-          <div class={`briefing-panel speaker-${chosen.speaker}`} data-testid="mission-briefing">
-            <h2>{chosen.title}</h2>
-            {chosen.briefing.map((p) => (
-              <p>{p}</p>
+          <div class={`briefing-panel speaker-${chosen.speaker} ${voice.playing ? 'reading' : ''}`} data-testid="mission-briefing">
+            <div class="briefing-art">
+              <img
+                key={chosen.id}
+                src={`${import.meta.env.BASE_URL}assets/missions/${chosen.id}.webp`}
+                alt=""
+                onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
+              />
+              <div class="briefing-title">
+                <div class="briefing-kicker">
+                  Mission {index + 1} · {ACTS[chosen.act]}
+                </div>
+                <h2>{chosen.title}</h2>
+              </div>
+            </div>
+            {chosen.briefing.map((p, i) => (
+              <p class={voice.current === i ? 'spoken' : voice.playing && i > voice.current ? 'ahead' : ''}>{p}</p>
             ))}
             <h3>Objectives</h3>
             <ul>
@@ -162,6 +185,17 @@ export function Campaign({ onBack, onPlay }: { onBack: () => void; onPlay: (m: M
               >
                 Start mission
               </button>
+              {focus && (
+                <button
+                  data-testid="all-missions"
+                  onClick={() => {
+                    voice.stop();
+                    setFocus(false);
+                  }}
+                >
+                  All missions
+                </button>
+              )}
             </div>
           </div>
         )}

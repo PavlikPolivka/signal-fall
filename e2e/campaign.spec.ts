@@ -42,3 +42,30 @@ test('campaign: objectives are marked on the map, and clicking one looks at it',
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'test-results/campaign-markers.png' });
 });
+
+test('campaign: Next mission opens its briefing, read aloud, with the mission list a click away', async ({ page }) => {
+  await page.goto('/play/?menu=campaign&brief=diesel-and-iron');
+  await expect(page.getByTestId('mission-briefing')).toContainText('Mission 2');
+  await expect(page.getByTestId('mission-briefing')).toContainText('Diesel and Iron');
+  await expect(page.locator('.campaign-list')).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/campaign-briefing.png' });
+  await page.click('[data-testid=all-missions]');
+  await expect(page.locator('.campaign-list')).toBeVisible();
+  await expect(page.locator('[data-mission=diesel-and-iron]')).toHaveClass(/active/);
+});
+
+test('fullscreen survives going from a match to the menus and into the next match', async ({ page }) => {
+  await page.goto('/play/?mission=dead-air');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur, null, { timeout: 30_000 });
+  await page.evaluate(() => document.documentElement.requestFullscreen());
+  await page.evaluate(() => (window as unknown as Win).__signalFall.state.send({ type: 'surrender' }));
+  await page.click('[data-testid=end-campaign]');
+  const frame = page.frameLocator('[data-testid=screen-frame]');
+  await expect(frame.getByTestId('mission-briefing')).toBeVisible();
+  await expect(page).toHaveURL(/menu=campaign/);
+  expect(await page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+  await frame.getByTestId('mission-start').click();
+  await expect(frame.getByTestId('mission-panel')).toBeVisible({ timeout: 30_000 });
+  await expect(page).toHaveURL(/mission=/);
+  expect(await page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+});

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { go } from '../nav';
 import type { Rules } from '@signal-fall/data';
 import type { Difficulty, StrategyName } from '@signal-fall/ai';
 import { clock, recentMatches, savedGame } from '../game/saves';
@@ -88,7 +89,7 @@ function SavedAndRecent({ onReplay }: { onReplay: (r: Replay) => void }) {
   return (
     <div class="saved" data-testid="saved">
       {save && (
-        <button class="continue" data-testid="continue" onClick={() => (location.href = `${location.pathname}?continue=1`)}>
+        <button class="continue" data-testid="continue" onClick={() => go(`${location.pathname}?continue=1`)}>
           Continue: {save.meta.label} at {clock(save.meta.tick)} <span class="muted">({when(save.meta.at)})</span>
         </button>
       )}
@@ -153,6 +154,8 @@ export function Setup({
   const [changes, setChanges] = useState(false);
   const [editor, setEditor] = useState(false);
   const [campaign, setCampaign] = useState(() => new URLSearchParams(location.search).get('menu') === 'campaign');
+  // `?menu=campaign&brief=<id>` (Next mission on the end screen): that mission's briefing, read aloud.
+  const [brief] = useState(() => new URLSearchParams(location.search).get('brief'));
   const [replayError, setReplayError] = useState<string | null>(null);
   const [codex, setCodex] = useState(false);
   // ?menu=credits (from the landing page) opens the credits.
@@ -190,7 +193,7 @@ export function Setup({
 
   if (skirmish) return <Skirmish rules={rules} onStart={onStart} onBack={() => setSkirmish(false)} />;
   if (editor) return <Editor onBack={() => setEditor(false)} />;
-  if (campaign) return <Campaign onBack={() => setCampaign(false)} onPlay={(m) => (location.href = `${location.pathname}?mission=${m.id}`)} />;
+  if (campaign) return <Campaign brief={brief} onBack={() => setCampaign(false)} onPlay={(m) => go(`${location.pathname}?mission=${m.id}`)} />;
 
   return (
     <MenuScreen testid="home">
@@ -216,7 +219,7 @@ export function Setup({
           </button>
         </div>
         <nav class="setup-links">
-          <button onClick={() => (location.href = `${location.pathname}?tutorial=1`)} data-testid="open-tutorial" title="Learn to play in eight short steps">
+          <button onClick={() => go(`${location.pathname}?tutorial=1`)} data-testid="open-tutorial" title="Learn to play in eight short steps">
             Tutorial
           </button>
           <button onClick={() => setEditor(true)} data-testid="open-editor" title="Make your own maps and share them as a code">

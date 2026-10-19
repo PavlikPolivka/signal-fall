@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { go } from '../nav';
 import { backend, dailyBoard } from '../net/backend';
 import { clock } from '../game/saves';
 import { dailyChallenge, today } from '../game/daily';
@@ -35,7 +36,7 @@ export function DailyPanel() {
   const d = dailyChallenge();
   return (
     <div class="daily" data-testid="daily">
-      <button class="mp-btn" data-testid="open-daily" onClick={() => (location.href = `${location.pathname}?daily=1`)} title="The same match for everyone today: the fastest wins top the board">
+      <button class="mp-btn" data-testid="open-daily" onClick={() => go(`${location.pathname}?daily=1`)} title="The same match for everyone today: the fastest wins top the board">
         Daily challenge
       </button>
       <p class="muted small">{d.label}</p>

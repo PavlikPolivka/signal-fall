@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-19 20:48 UTC
+
+- **Campaign: a briefing between missions.** Next mission on the victory screen now opens the next mission's briefing and reads it aloud, lighting up each paragraph as it is spoken. Start when you're ready, or open the full mission list.
+- **Fullscreen stays on.** Going from a match to the menus, the campaign or the next match no longer drops you out of fullscreen.
+- **Tidier campaign list:** one mission per row, with even spacing between the acts.
+
 ## 2026-10-19 17:12 UTC
 
 - **Campaign: you always know where to go.** Targets to destroy, places to reach or hold, and the unit you must protect are marked in gold on the map and the minimap, even under fog. Click an objective in the mission panel to look at it; click again for the next target.

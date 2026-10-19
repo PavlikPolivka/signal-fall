@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { go } from '../nav';
 import { TERRAIN } from '@signal-fall/sim';
 import { BUILD_AREA, customToGenerated, decodeMap, encodeMap, generateMap, validateMap, type Biome, type CustomMap } from '@signal-fall/mapgen';
 import { BIOME_COLORS } from '../render/renderer';
@@ -257,7 +258,7 @@ export function Editor({ onBack }: { onBack: () => void }) {
                 const errs = validateMap(customToGenerated(map));
                 setErrors(errs);
                 if (errs.length > 0) return;
-                location.href = `${location.pathname}?ai=normal&mapcode=${encodeURIComponent(encodeMap(map))}`;
+                go(`${location.pathname}?ai=normal&mapcode=${encodeURIComponent(encodeMap(map))}`);
               }}
             >
               Play vs AI

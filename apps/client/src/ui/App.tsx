@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'preact/hooks';
+import { go, toggleFullscreen } from '../nav';
 import { HILL_TICKS, KIND, MARKER, POINT } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E, H, P, P_HILL } from '../protocol';
@@ -1157,7 +1158,7 @@ function NetOverlays({ state }: { state: ClientState }) {
             <button data-testid="replace-with-ai" onClick={() => state.dropPeers()} disabled={(state.net?.waitingOn.length ?? 0) === 0}>
               Let the AI take over
             </button>
-            <button onClick={() => (location.href = location.pathname)}>Back to menu</button>
+            <button onClick={() => go(location.pathname)}>Back to menu</button>
           </div>
         </div>
       )}
@@ -1179,7 +1180,7 @@ function EndScreen({ state }: { state: ClientState }) {
           <button data-testid="keep-watching" onClick={() => setWatching(true)}>
             Keep watching
           </button>
-          <button onClick={() => (location.href = location.pathname)}>Leave match</button>
+          <button onClick={() => go(location.pathname)}>Leave match</button>
         </div>
       </div>
     );
@@ -1206,17 +1207,17 @@ function EndScreen({ state }: { state: ClientState }) {
           </div>
         )}
         {state.mission && won && nextMission(state.mission.id) && (
-          <button class="start" data-testid="end-next-mission" onClick={() => (location.href = `${location.pathname}?mission=${nextMission(state.mission!.id)!.id}`)}>
+          <button class="start" data-testid="end-next-mission" onClick={() => go(`${location.pathname}?menu=campaign&brief=${nextMission(state.mission!.id)!.id}`)}>
             Next mission: {nextMission(state.mission.id)!.title}
           </button>
         )}
         {state.mission && (
-          <button data-testid="end-campaign" onClick={() => (location.href = `${location.pathname}?menu=campaign`)}>
+          <button data-testid="end-campaign" onClick={() => go(`${location.pathname}?menu=campaign`)}>
             Campaign
           </button>
         )}
         {!state.multiplayer && !state.replay && !state.mission && (
-          <button data-testid="end-rematch" onClick={() => (location.href = `${location.pathname}?rematch=1`)}>
+          <button data-testid="end-rematch" onClick={() => go(`${location.pathname}?rematch=1`)}>
             Rematch (same map and sides)
           </button>
         )}
@@ -1239,10 +1240,10 @@ function EndScreen({ state }: { state: ClientState }) {
             Rematch
           </button>
         )}
-        <button onClick={() => (location.href = `${location.pathname}?menu=skirmish`)} data-testid="end-new-skirmish">
+        <button onClick={() => go(`${location.pathname}?menu=skirmish`)} data-testid="end-new-skirmish">
           New skirmish
         </button>
-        <button onClick={() => (location.href = location.pathname)} data-testid="end-menu">
+        <button onClick={() => go(location.pathname)} data-testid="end-menu">
           Main menu
         </button>
       </div>
@@ -1573,12 +1574,6 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
       <span>{Math.round(audio.settings[kind] * 100)}</span>
     </label>
   );
-  const fullscreen = async () => {
-    await document.documentElement.requestFullscreen();
-    // Keyboard Lock lets the game receive Ctrl+W/T/N-style chords in fullscreen (Chromium).
-    const kb = (navigator as Navigator & { keyboard?: { lock?: () => Promise<void> } }).keyboard;
-    await kb?.lock?.().catch(() => undefined);
-  };
   return (
     <div class="menu-overlay" data-testid="menu">
       <div class="menu-pair">
@@ -1594,7 +1589,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
         >
           Codex
         </button>
-        <button onClick={fullscreen}>Fullscreen</button>
+        <button onClick={() => void toggleFullscreen().catch(() => undefined)}>Fullscreen</button>
         {!state.replay && !state.multiplayer && !state.spectator && (
           <button data-testid="menu-save-game" onClick={() => state.saveGame()} title="Continue it later from the main menu">
             Save game

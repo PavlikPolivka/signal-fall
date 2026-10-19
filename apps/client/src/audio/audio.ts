@@ -136,6 +136,12 @@ export class GameAudio {
     this.buffers = await renderSfx(ctx.sampleRate);
   }
 
+  /** Silence everything for good (the page hands over to another screen). */
+  close(): void {
+    this.music?.stop();
+    void this.ctx?.close();
+  }
+
   set(kind: 'music' | 'sfx' | 'voice', value: number): void {
     this.settings[kind] = Math.max(0, Math.min(1, value));
     this.settings.muted = false;

@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { go, onLeave } from './nav';
 import { defaultRules } from '@signal-fall/data';
 import { ClientState, seatLabels, saveSettings, setColorblind } from './game/state';
 import { Input } from './input/input';
@@ -243,7 +244,7 @@ state.rematch = () => {
   } catch {
     return;
   }
-  location.href = location.pathname;
+  go(location.pathname);
 };
 state.applySettings = () => {
   saveSettings(state.settings);
@@ -289,6 +290,15 @@ const unlockAudio = () => {
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('keydown', unlockAudio);
 let input: Input | null = null;
+// In fullscreen the next screen loads in a frame over this page: stop everything here first.
+onLeave(() => {
+  worker.terminate();
+  audio.close();
+  netSession?.close();
+  rejoinHost?.close();
+  render(null, root);
+  if (mounted) renderer.app.destroy(true);
+});
 
 async function mountGame(host: HTMLDivElement): Promise<void> {
   // Ultra on a high-DPI screen: 2x sprites (chosen before the first sheet loads; a change applies next match).
@@ -580,7 +590,7 @@ function renderUi(): void {
             class="codex-btn"
             onClick={() => {
               forgetMatch();
-              location.href = location.pathname;
+              go(location.pathname);
             }}
           >
             Leave the match
