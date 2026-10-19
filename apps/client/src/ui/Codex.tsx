@@ -599,6 +599,11 @@ function BuildingRules({ rules }: { rules: Rules }) {
         enemies within 6 tiles (and by anyone who could see it, once it shoots). Lay ambushes there, and scout before you march through. <b>Roads</b> in the city let ground units move a fifth
         faster.
       </p>
+      <h3>Garrisons</h3>
+      <p>
+        In the city, select infantry and click a ruined building: they climb in, one soldier per spot. Inside they take half damage, shoot one
+        tile farther and see two tiles farther, but can't move. Give them any order and they climb back out. Vehicles can't go in.
+      </p>
       <h3>Capture points</h3>
       <p>
         With <b>Capture points</b> on in the map options, the land between the bases holds sites anyone can take: keep ground units next to

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 02:11 UTC
+
+- **Garrisons:** in the city, select infantry and click a ruined building to send them in. From inside they take half damage and shoot and see farther, but stay put until you give them another order. A small house in your color marks the occupied ruins.
+
 ## 2026-10-19 01:52 UTC
 
 - **The campaign:** fifteen missions across three acts and a finale. Fight Halcyon's drones as Captain Varga's Holdout, follow the Halcyon sub-mind WREN as it turns against its maker, wake as the Choir, and bring all three sides together against HALCYON in **Signal Rise**. Every mission has a spoken briefing, objectives that tick off as you go, lines spoken during the fight, and new units and buildings unlocked as the story goes on. **Campaign** on the main menu; each mission opens when you've won the one before.

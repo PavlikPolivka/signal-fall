@@ -187,7 +187,7 @@ export const E = {
 } as const;
 export const WAYPOINTS = 3;
 export const ENT_STRIDE = 36;
-export const ENT_FLAG = { phased: 1, overridden: 2, covered: 4, digging: 8, dugIn: 16, jammed: 32, uplink: 64 } as const;
+export const ENT_FLAG = { phased: 1, overridden: 2, covered: 4, digging: 8, dugIn: 16, jammed: 32, uplink: 64, garrisoned: 128 } as const;
 
 export const PR = { ox: 0, oy: 1, x: 2, y: 3, type: 4, ticks: 5, total: 6 } as const;
 export const PROJ_STRIDE = 7;

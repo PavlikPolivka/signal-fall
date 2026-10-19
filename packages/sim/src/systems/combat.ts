@@ -1,3 +1,4 @@
+import { GARRISON_DAMAGE_PCT } from './garrison';
 import { ARMOR, DAMAGE } from '@signal-fall/data';
 import { FX_ONE, iatan2, idiv, ilength, pct } from '../fx';
 import { KIND } from '../entities';
@@ -125,8 +126,9 @@ export function damage(world: World, victim: number, base: number, type: number,
     const resist = upgradePct(world, e.owner[victim]!, 'vehicleEnergyResistPct');
     if (resist > 0) dmg = pct(dmg, 100 - resist);
   }
-  // Dug in behind sandbags.
+  // Dug in behind sandbags, or inside ruins.
   if (isDugIn(world, victim)) dmg = pct(dmg, digInOf(world, victim)!.damageTakenPct);
+  if (e.garrison[victim]! > 0) dmg = pct(dmg, GARRISON_DAMAGE_PCT);
   if (dmg < 1) dmg = 1;
   // Shields soak damage first; energy weapons tear through shields faster.
   const shieldPct = world.rules.constants.shieldDamagePct[type]!;

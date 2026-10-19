@@ -120,6 +120,10 @@ export class Entities {
   phasedUntil!: Int32Array;
   /** Dig In: 0 = not dug in, else the tick from which the entrenchment is ready (set up while before). */
   dugInAt!: Int32Array;
+  /** Infantry inside city ruins: the tile + 1, or 0. */
+  garrison!: Int32Array;
+  /** Infantry on its way into ruins: the tile + 1, or 0. */
+  garrisonGoal!: Int32Array;
   /** Jammed by Halcyon: weapons fire slower until this tick. */
   jammedUntil!: Int32Array;
   /** Uplink: projects network coverage around itself until this tick. */
@@ -196,6 +200,8 @@ export class Entities {
     this.lastAttackerOwner = re(this.lastAttackerOwner, (n) => new Int8Array(n));
     this.phasedUntil = re(this.phasedUntil, (n) => new Int32Array(n));
     this.dugInAt = re(this.dugInAt, (n) => new Int32Array(n));
+    this.garrison = re(this.garrison, (n) => new Int32Array(n));
+    this.garrisonGoal = re(this.garrisonGoal, (n) => new Int32Array(n));
     this.jammedUntil = re(this.jammedUntil, (n) => new Int32Array(n));
     this.uplinkUntil = re(this.uplinkUntil, (n) => new Int32Array(n));
     this.chorus = re(this.chorus, (n) => new Uint8Array(n));
@@ -248,6 +254,8 @@ export class Entities {
     this.lastAttackerOwner[slot] = -1;
     this.phasedUntil[slot] = 0;
     this.dugInAt[slot] = 0;
+    this.garrison[slot] = 0;
+    this.garrisonGoal[slot] = 0;
     this.jammedUntil[slot] = 0;
     this.uplinkUntil[slot] = 0;
     this.chorus[slot] = 0;
@@ -332,6 +340,8 @@ export class Entities {
       w.push(this.lastAttackerOwner[s]!);
       w.push(this.phasedUntil[s]!);
       w.push(this.dugInAt[s]!);
+      w.push(this.garrison[s]!);
+      w.push(this.garrisonGoal[s]!);
       w.push(this.jammedUntil[s]!);
       w.push(this.uplinkUntil[s]!);
       w.push(this.chorus[s]!);

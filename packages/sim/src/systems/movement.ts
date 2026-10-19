@@ -20,6 +20,8 @@ export function movementSystem(world: World): void {
 
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit) continue;
+    // Garrisoned in ruins: stays put.
+    if (e.garrison[s]! > 0) continue;
     const rule = world.rules.units[e.type[s]!]!;
     const air = rule.isAir;
     const x = e.x[s]!;

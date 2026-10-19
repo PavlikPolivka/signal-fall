@@ -1,4 +1,4 @@
-import { FX_SHIFT, KIND, PLACEMENT_MESSAGES, TERRAIN_SPEED_PCT, placementError } from '@signal-fall/sim';
+import { FX_SHIFT, KIND, PLACEMENT_MESSAGES, TERRAIN, TERRAIN_SPEED_PCT, placementError } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E } from '../protocol';
 import type { ClientState, Mode } from '../game/state';
@@ -684,6 +684,15 @@ export class Input {
       this.renderer.ping(sx, sy, 0xff5a5a);
       return;
     }
+    // Infantry clicked onto city ruins: they climb in.
+    if (intent.kind === 'move' && this.ruinsAt(sx, sy) && units.some((h) => this.isInfantry(h))) {
+      const p = this.simPoint(sx, sy);
+      s.send({ type: 'garrison', units: units.filter((h) => this.isInfantry(h)), tx: p.x >> FX_SHIFT, ty: p.y >> FX_SHIFT });
+      const others = units.filter((h) => !this.isInfantry(h));
+      if (others.length > 0) s.send({ type: 'attackMove', units: others, x: p.x, y: p.y, queue: shift });
+      this.renderer.ping(sx, sy, 0x9fd7ff);
+      return;
+    }
     if (intent.kind === 'move') {
       // Clicking the ground is an attack-move: units fight what they meet (M + click for a pure move).
       const p = this.simPoint(sx, sy);
@@ -711,6 +720,10 @@ export class Input {
     else {
       const k = this.intentAt(sx, sy).kind;
       const rally = k !== 'select' && this.state.selectedUnits().length === 0 && this.selectedFactory() !== null;
+      if (k === 'move' && this.ruinsAt(sx, sy) && this.state.selectedUnits().some((h) => this.isInfantry(h))) {
+        if (this.canvas.style.cursor !== CURSORS.tool) this.canvas.style.cursor = CURSORS.tool;
+        return;
+      }
       cursor = k === 'attack' ? CURSORS.attack : k === 'move' || rally ? CURSORS.move : k === 'select' ? CURSORS.select : 'default';
     }
     if (this.canvas.style.cursor !== cursor) this.canvas.style.cursor = cursor;
@@ -1179,6 +1192,17 @@ export class Input {
       y += s.field(h, E.y);
     }
     this.renderer.centerOnSim(Math.round(x / list.length), Math.round(y / list.length));
+  }
+
+  /** Is the tile under this screen point city ruins (somewhere infantry can garrison)? */
+  ruinsAt(sx: number, sy: number): boolean {
+    const p = this.simPoint(sx, sy);
+    return this.state.terrain[(p.y >> FX_SHIFT) * this.state.width + (p.x >> FX_SHIFT)] === TERRAIN.ruins;
+  }
+
+  isInfantry(h: number): boolean {
+    const r = this.state.ruleOf(h);
+    return r.kind === 'unit' && r.tab === 'infantry' && !r.isAir;
   }
 
   isHarvester(h: number): boolean {

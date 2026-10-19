@@ -1,3 +1,4 @@
+import { GARRISON_RANGE, GARRISON_SIGHT } from './systems/garrison';
 import type { WeaponRule } from '@signal-fall/data';
 import { FX_ONE, FX_SHIFT, idiv, ilength } from './fx';
 import { KIND } from './entities';
@@ -38,7 +39,7 @@ export function sightOf(world: World, slot: number): number {
   const e = world.entities;
   if (e.kind[slot] === KIND.wreck) return 0;
   return e.kind[slot] === KIND.unit
-    ? world.rules.units[e.type[slot]!]!.sight
+    ? world.rules.units[e.type[slot]!]!.sight + (e.garrison[slot]! > 0 ? GARRISON_SIGHT : 0)
     : world.rules.structures[e.type[slot]!]!.sight;
 }
 
@@ -115,8 +116,10 @@ export function isDugIn(world: World, s: number): boolean {
 
 /** Weapon range, plus the Dig In bonus while entrenched. */
 export function rangeOf(world: World, s: number, weapon: WeaponRule): number {
-  if (!isDugIn(world, s)) return weapon.range;
-  return weapon.range + (digInOf(world, s)?.rangeBonus ?? 0);
+  // Ruins: a rooftop reaches a little farther.
+  const roof = world.entities.garrison[s]! > 0 ? GARRISON_RANGE : 0;
+  if (!isDugIn(world, s)) return weapon.range + roof;
+  return weapon.range + roof + (digInOf(world, s)?.rangeBonus ?? 0);
 }
 
 /** Score bonus for the unit's current target, so units don't flicker between targets. */

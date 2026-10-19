@@ -753,6 +753,12 @@ export class Renderer {
             this.decals.moveTo(bx - 3, by).lineTo(bx + 3, by).stroke({ width: 0.8, color: 0x7a6440, alpha: 0.8 });
           }
         }
+        if (visible && flags & ENT_FLAG.garrisoned) {
+          // In the ruins: a little house in the team color over the building, and a muzzle-slit glint.
+          const top = py - 40;
+          this.overlay.poly([px - 7, top, px, top - 7, px + 7, top, px + 7, top + 8, px - 7, top + 8]).fill({ color, alpha: 0.95 }).stroke({ width: 1.5, color: 0x111111 });
+          this.overlay.rect(px - 4, top + 2, 8, 2).fill(0x111111);
+        }
         if (visible && flags & ENT_FLAG.overridden) {
           // Overridden: a cyan signal ring above the unit.
           const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 120);

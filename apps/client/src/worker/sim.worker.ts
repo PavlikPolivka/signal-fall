@@ -128,7 +128,8 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
       (e.kind[s] === KIND.unit && inCoverage(world, s) ? ENT_FLAG.covered : 0) |
       (e.dugInAt[s]! > 0 ? (world.tick >= e.dugInAt[s]! ? ENT_FLAG.dugIn : ENT_FLAG.digging) : 0) |
       (e.jammedUntil[s]! > world.tick ? ENT_FLAG.jammed : 0) |
-      (e.uplinkUntil[s]! > world.tick ? ENT_FLAG.uplink : 0);
+      (e.uplinkUntil[s]! > world.tick ? ENT_FLAG.uplink : 0) |
+      (e.garrison[s]! > 0 ? ENT_FLAG.garrisoned : 0);
     for (let k = 0; k < WAYPOINTS; k++) {
       const q = orders[k + 1];
       const p = q && 'x' in q ? q : q && q.type === 'patrol' ? { x: q.bx, y: q.by } : null;

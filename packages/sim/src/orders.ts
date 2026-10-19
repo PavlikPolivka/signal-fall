@@ -1,5 +1,6 @@
+import { doorOf, freeRuins, leaveGarrison } from './systems/garrison';
 import type { Command, ScheduledCommand } from './commands';
-import { FX_ONE, FX_SHIFT, clamp, idiv, pct } from './fx';
+import { FX_HALF, FX_ONE, FX_SHIFT, clamp, idiv, pct } from './fx';
 import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from './entities';
 import { CHOIR_SEED_START_PCT, isFarSeed, placementError, footprintBlocked, worldPlacementView } from './placement';
 import { teamOf } from './query';
@@ -45,8 +46,9 @@ function stopHarvesting(world: World, s: number): void {
 function give(world: World, s: number, order: Order, queue: boolean): void {
   const e = world.entities;
   stopHarvesting(world, s);
-  // Any order packs up a dug-in unit.
+  // Any order packs up a dug-in unit, and brings a garrisoned one out.
   e.dugInAt[s] = 0;
+  if (e.garrison[s]! > 0 || e.garrisonGoal[s]! > 0) leaveGarrison(world, s);
   if (!queue || e.orders[s]!.length === 0) {
     e.orders[s] = [order];
     e.target[s] = NO_ENTITY;
@@ -92,6 +94,24 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       return;
     case 'takeover':
       return;
+    case 'garrison': {
+      // Infantry only; each takes its own ruins tile near the spot, walking to its door first.
+      const units = ownedUnits(world, c.player, cmd.units).filter((s) => {
+        const r = world.rules.units[e.type[s]!]!;
+        return r.tab === 'infantry' && !r.isAir;
+      });
+      const tiles = freeRuins(world, cmd.tx, cmd.ty, units.length);
+      units.forEach((s, i) => {
+        const t = tiles[i];
+        if (t === undefined) return;
+        const door = doorOf(world, t);
+        const x = ((door % world.map.width) << FX_SHIFT) + FX_HALF;
+        const y = (idiv(door, world.map.width) << FX_SHIFT) + FX_HALF;
+        give(world, s, { type: 'move', x, y, flow: false, cx: x, cy: y, group: 0, speed: 0 }, false);
+        e.garrisonGoal[s] = t + 1;
+      });
+      return;
+    }
     case 'surrender':
       player.surrendered = true;
       player.defeated = true;
