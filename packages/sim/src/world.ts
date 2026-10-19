@@ -1,6 +1,7 @@
 import { POINT, type CapturePoint } from './systems/points';
 import { makeCrates, type Crate } from './systems/crates';
 import { makeSurvival, type SurvivalState } from './systems/survival';
+import { makeMission, type MissionRules, type MissionState } from './systems/mission';
 import type { FactionIdx, Rules } from '@signal-fall/data';
 import { Entities } from './entities';
 import { IntWriter } from './hash';
@@ -106,10 +107,11 @@ export interface Projectile {
  * death:  a = entity kind, b = rule index, (x, y) where it died
  * ability: a = 1 blink / 2 phase / 3 override / 4 dig in / 5 uplink, b = unit rule index, (x, y) from, (tx, ty) to
  * power:   a = 1 jam / 2 awaken, b = radius (Q10), owner cast it, (x, y) where
+ * mission: a = line index (a mission 'say' action)
  * credits: a = amount, b = 1 recompile / 2 salvage / 3 crate (a < 0: crate kind -a), owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
-export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6 } as const;
+export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6, mission: 7 } as const;
 /** Why credits were gained (FX_EVENT.credits b). */
 export const CREDIT_REASON = { recompile: 1, salvage: 2, crate: 3 } as const;
 export const FX_STRIDE = 8;
@@ -163,6 +165,10 @@ export interface World {
   groups: Map<number, GroupInfo>;
   /** Capture points on the map (none on most maps). */
   points: CapturePoint[];
+  /** A campaign mission: its objectives and triggers, or null. */
+  mission: MissionState | null;
+  /** Mission unlocks: rule ids the player (slot 0) may build or train, or null for everything. */
+  allow: Set<string> | null;
   /** Survival: the horde's waves, or null. */
   survival: SurvivalState | null;
   /** King of the hill: ticks each team has held the hill (indexed by team). */
@@ -200,6 +206,10 @@ export interface WorldOptions {
   crates?: boolean;
   /** Survival: this player is the horde. */
   survivalHorde?: number;
+  /** A campaign mission's objectives and triggers (positions already in tiles). */
+  mission?: MissionRules;
+  /** Mission unlocks for the player (slot 0). */
+  allow?: string[];
   /** Survival wave size, percent of normal. */
   survivalPct?: number;
 }
@@ -250,6 +260,8 @@ export function createWorld(o: WorldOptions): World {
     points: (o.points ?? []).map((p) => ({ x: p.x, y: p.y, kind: p.kind, owner: -1, capturer: -1, progress: 0 })),
     crates: o.crates ? makeCrates(o.seed) : null,
     hillScore: o.players.map(() => 0),
+    mission: o.mission ? makeMission(o.mission) : null,
+    allow: o.allow ? new Set(o.allow) : null,
     survival: o.survivalHorde !== undefined ? makeSurvival(o.seed, o.survivalHorde, o.survivalPct) : null,
   };
 }
@@ -313,6 +325,11 @@ export function serializeWorld(world: World, w: IntWriter): void {
   w.pushArray(world.map.echo);
   for (const r of world.aiRng) w.pushArray(r.s);
   world.entities.serialize(w);
+  if (world.mission) {
+    for (const v of world.mission.status) w.push(v);
+    for (const v of world.mission.next) w.push(v);
+    for (const v of world.mission.held) w.push(v);
+  }
   if (world.survival) {
     w.push(world.survival.wave);
     w.push(world.survival.nextTick);

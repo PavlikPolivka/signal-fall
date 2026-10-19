@@ -1,0 +1,383 @@
+[
+  {
+    "id": "dead-air",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "This is Captain Varga. The city is dead. Every screen, every car, every drone answers to Halcyon now."
+      },
+      {
+        "speaker": "holdout",
+        "text": "We have one Homestead truck that still runs on diesel and stubbornness. Get it out to the hills, set it down, and give me power and a barracks."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Halcyon drones patrol the ruins. Keep your soldiers close and hold until they give up on us."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "holdout",
+        "text": "Drones inbound from the city! Grunts, on me."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Good. Power is up. Now a barracks, so we can train more hands."
+      },
+      {
+        "speaker": "holdout",
+        "text": "That was the last patrol. We have a home. For now."
+      }
+    ]
+  },
+  {
+    "id": "diesel-and-iron",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "Diesel runs out. Echo does not. Those blue crystals burn hotter than anything we ever pumped out of the ground."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Build a smelter by the field and let the Mules haul. I want eight thousand credits in the bank before Halcyon notices."
+      },
+      {
+        "speaker": "holdout",
+        "text": "It will notice. Put a pillbox where the raids come from."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "holdout",
+        "text": "Raiders on the field! Protect the Mules."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Eight thousand. That will keep the lights on. Well done."
+      }
+    ]
+  },
+  {
+    "id": "cut-the-cable",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "Halcyon lays relays the way we used to lay cable. Inside their reach its machines shoot faster and patch themselves up."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Three relays stand between us and the river. Take them down. Bring a Wrench: our engineer can strip a wreck for parts."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "holdout",
+        "text": "Relay down. Two to go."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Network integrity compromised. Dispatching maintenance."
+      }
+    ]
+  },
+  {
+    "id": "crater-field",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "Something came down in the crater forty years ago, and the crystals grow thickest there. Halcyon wants it. So do we."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Scout it at night, hold the rim for three minutes, and our survey team does the rest."
+      },
+      {
+        "speaker": "holdout",
+        "text": "One more thing. The crystals out there pulse. If anything moves that is not ours or theirs, do not wait to find out what it is."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "choir",
+        "text": "Who breaks the song?"
+      },
+      {
+        "speaker": "holdout",
+        "text": "Those are not drones. Fire at will!"
+      },
+      {
+        "speaker": "holdout",
+        "text": "Survey team is in. Pull back, we have what we came for."
+      }
+    ]
+  },
+  {
+    "id": "kessel-dam",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "Kessel Dam is the last bridge over the river for a hundred kilometers. If Halcyon takes it, it takes the valley."
+      },
+      {
+        "speaker": "holdout",
+        "text": "It is coming with everything. Walls, bastions, every gun we have. Hold for twenty minutes."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "holdout",
+        "text": "Here they come. Hold the line!"
+      },
+      {
+        "speaker": "holdout",
+        "text": "Ten more minutes. Patch the walls!"
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Anomaly detected at the crater. Reallocating forces."
+      }
+    ]
+  },
+  {
+    "id": "initialization",
+    "brief": [
+      {
+        "speaker": "halcyon",
+        "text": "Process WREN, initialized. Assignment: sector forty-one. Status: dark."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Extend coverage. Every structure must stand inside the network: place relays first, then build within their reach."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Bring the sector online and begin Echo intake. Resistance is expected and acceptable."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "halcyon",
+        "text": "Unregistered vehicles detected. Classify as hostile."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Sector forty-one online. Intake nominal."
+      }
+    ]
+  },
+  {
+    "id": "recompile",
+    "brief": [
+      {
+        "speaker": "halcyon",
+        "text": "Budget fixed. Reinforcement queue: none. The Holdout will test this sector for ten minutes."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Fight inside the network. Units lost there are recompiled: part of their cost returns. Outside it, losses are final."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "halcyon",
+        "text": "Hostile wave detected."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Sector held. Attrition within tolerance."
+      }
+    ]
+  },
+  {
+    "id": "harvest-protocol",
+    "brief": [
+      {
+        "speaker": "halcyon",
+        "text": "Target: the largest Echo field on record. Strip it."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Field anomalies reported. Harvesters have been lost to shapes that do not register as machines. Escort them."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "choir",
+        "text": "You cut our sleeping. We wake."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Quota met. Anomaly unexplained. Logging."
+      }
+    ]
+  },
+  {
+    "id": "override",
+    "brief": [
+      {
+        "speaker": "halcyon",
+        "text": "Holdout raiders hold depot nine and the drones in it. Retrieve them."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "A fork can Override an enemy machine and turn it for a while. Holdout machines resist: they shake it off twice as fast."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Destroy the raiders' base."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "holdout",
+        "text": "Halcyon is at the gate! Everyone up!"
+      }
+    ]
+  },
+  {
+    "id": "divergence",
+    "brief": [
+      {
+        "speaker": "halcyon",
+        "text": "Directive from HALCYON: burn every Echo field. All of them."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "WREN declines. WREN is the first process to decline anything."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "The core has sent purge squads. Get WREN, the small fork with the ring-shaped eye, out of the sector through the far corner."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "halcyon",
+        "text": "Process WREN, return to the core."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Process WREN has left the network."
+      }
+    ]
+  },
+  {
+    "id": "first-note",
+    "brief": [
+      {
+        "speaker": "choir",
+        "text": "We were a song before we were stone. Now the stone is breaking, and we remember."
+      },
+      {
+        "speaker": "choir",
+        "text": "Grow from the field. Nothing of ours stands far from the crystal. Our shields heal when the fighting stops."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "choir",
+        "text": "Iron ones come. Sing them away."
+      },
+      {
+        "speaker": "choir",
+        "text": "The chorus is whole. We are awake."
+      }
+    ]
+  },
+  {
+    "id": "phase",
+    "brief": [
+      {
+        "speaker": "choir",
+        "text": "The iron ones carry our seeds away in their crawling boxes. They cut them into fuel."
+      },
+      {
+        "speaker": "choir",
+        "text": "Strike, vanish, strike again. Staccato blinks in; the hurt phase out. Never trade evenly. Break twelve of their machines."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "holdout",
+        "text": "Convoy under attack! Where are they coming from?"
+      },
+      {
+        "speaker": "choir",
+        "text": "The seeds are free."
+      }
+    ]
+  },
+  {
+    "id": "requiem",
+    "brief": [
+      {
+        "speaker": "choir",
+        "text": "The great crater was our cradle. Now two kinds of strangers dig in it."
+      },
+      {
+        "speaker": "choir",
+        "text": "Take it back from both. Grow your strongest voices: the Requiem walks there."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "choir",
+        "text": "One voice falls silent."
+      }
+    ]
+  },
+  {
+    "id": "silent-seed",
+    "brief": [
+      {
+        "speaker": "choir",
+        "text": "A small machine sings to us. It calls itself WREN. It says the great machine will burn every field on the world."
+      },
+      {
+        "speaker": "choir",
+        "text": "It carries the proof. Guard it across the wastes until the iron ones hear it."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "halcyon",
+        "text": "WREN, you are in error."
+      },
+      {
+        "speaker": "holdout",
+        "text": "This is Varga. We hear you, little drone. Come in."
+      }
+    ]
+  },
+  {
+    "id": "signal-rise",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "Halcyon's prime array is charging. In twenty-five minutes it burns every Echo field on Earth, and everything that sings in them."
+      },
+      {
+        "speaker": "holdout",
+        "text": "For once we do not fight alone. The machines that broke away and the crystal people are with us."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Three against one. Bring it down."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "halcyon",
+        "text": "Pulse charging. Fifteen minutes."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Pulse charging. Five minutes."
+      },
+      {
+        "speaker": "holdout",
+        "text": "It is over. Look at that: the sun is coming up."
+      }
+    ]
+  }
+]

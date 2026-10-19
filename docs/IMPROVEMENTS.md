@@ -126,7 +126,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 101 | K | Campaign: 15 missions with briefings and videos ([CAMPAIGN.md](CAMPAIGN.md)) | 5 | XL |
+| 101 ✅ | K | Campaign: 15 missions with briefings and videos ([CAMPAIGN.md](CAMPAIGN.md)) (spoken briefings, no videos) | 5 | XL |
 | 102 ✅ | K | Map editor in the browser, share maps by code | 4 | L |
 | 103 ✅ | K | Hand-made competitive maps alongside generated ones | 4 | M |
 | 104 ✅ | K | Survival / co-op mode: hold out against waves with a friend | 4 | L |

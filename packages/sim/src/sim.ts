@@ -10,6 +10,7 @@ import { victorySystem } from './systems/victory';
 import { pointsSystem } from './systems/points';
 import { cratesSystem } from './systems/crates';
 import { survivalSystem } from './systems/survival';
+import { missionSystem } from './systems/mission';
 import { abilitySystem, chordRegrowSystem, coverageSystem, researchSystem, sustainSystem } from './systems/faction';
 import { createWorld, serializeWorld, type World, type WorldOptions } from './world';
 import { autoPlaceSystem } from './orders';
@@ -79,6 +80,7 @@ export class Sim {
       pointsSystem(w);
       cratesSystem(w);
       survivalSystem(w);
+      missionSystem(w);
       weaponSystem(w);
       projectileSystem(w);
       deathSystem(w);

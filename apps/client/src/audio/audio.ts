@@ -345,6 +345,22 @@ export class GameAudio {
     this.hum.gain.gain.setTargetAtTime(Math.min(1, power * 0.35) * 0.05, ctx.currentTime, 0.6);
   }
 
+  /** A spoken mission line (a file under assets/voice), at announcer volume. */
+  playLine(path: string): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.voiceGain) return;
+    void fetch(`${import.meta.env.BASE_URL}assets/voice/${path}`)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then((b) => ctx.decodeAudioData(b))
+      .then((buf) => {
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(this.voiceGain!);
+        src.start();
+      })
+      .catch(() => undefined);
+  }
+
   /** Play a sound; positioned and attenuated when a sim point is given. Returns whether it played. */
   play(name: string, x?: number, y?: number, gain = 1): boolean {
     const ctx = this.ctx;

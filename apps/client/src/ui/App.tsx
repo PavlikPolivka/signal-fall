@@ -19,6 +19,7 @@ import type { GameAudio } from '../audio/audio';
 import { FACTION_TIPS, GENERAL_TIPS } from './tips';
 import { DailyBoard } from './Daily';
 import { Tutorial } from './Tutorial';
+import { markMissionWon, nextMission } from './Campaign';
 import { clock } from '../game/saves';
 
 const FX = 1024;
@@ -84,7 +85,8 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
         />
       )}
       {state.tutorial && <Tutorial state={state} renderer={props.renderer} />}
-      {!state.tutorial && !state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
+      {state.mission && <MissionPanel state={state} />}
+      {!state.tutorial && !state.mission && !state.multiplayer && !state.replay && !state.spectator && state.settings.hints && <Hints state={state} />}
     </div>
   );
 }
@@ -291,9 +293,11 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   const used = cur?.player(state.localPlayer, 3) ?? 0;
   const roles = state.roles();
   const structureTab = state.sidebarTab === 'structures' || state.sidebarTab === 'defenses';
+  // Missions unlock things as the campaign goes on.
+  const allowed = (id: string) => !state.mission?.allow || state.mission.allow.includes(id);
   const items: (UnitRule | StructureRule)[] = structureTab
-    ? faction.structures.map((i) => state.rules.structures[i]!).filter((s) => s.category === state.sidebarTab)
-    : faction.units.map((i) => state.rules.units[i]!).filter((u) => u.tab === state.sidebarTab);
+    ? faction.structures.map((i) => state.rules.structures[i]!).filter((s) => s.category === state.sidebarTab && allowed(s.id))
+    : faction.units.map((i) => state.rules.units[i]!).filter((u) => u.tab === state.sidebarTab && allowed(u.id));
   const tabIndex = state.sidebarTab === 'infantry' ? 0 : state.sidebarTab === 'vehicles' ? 1 : 2;
   const bq = cur && structureTab ? cur.buildQueue(state.localPlayer, state.sidebarTab === 'structures' ? 0 : 1) : null;
   const pq = cur && !structureTab ? cur.productionQueue(state.localPlayer, tabIndex) : null;
@@ -1138,6 +1142,7 @@ function EndScreen({ state }: { state: ClientState }) {
     <div class="menu-overlay" data-testid="end-screen">
       <div class="menu">
         <h2>{won ? 'Victory' : 'Defeat'}</h2>
+        {state.mission && <MissionResult state={state} won={won} />}
         {state.daily && (
           <div class="daily-end" data-testid="daily-end">
             <p>
@@ -1153,7 +1158,17 @@ function EndScreen({ state }: { state: ClientState }) {
             <DailyBoard refresh={state.dailyResult?.best ?? 0} />
           </div>
         )}
-        {!state.multiplayer && !state.replay && (
+        {state.mission && won && nextMission(state.mission.id) && (
+          <button class="start" data-testid="end-next-mission" onClick={() => (location.href = `${location.pathname}?mission=${nextMission(state.mission!.id)!.id}`)}>
+            Next mission: {nextMission(state.mission.id)!.title}
+          </button>
+        )}
+        {state.mission && (
+          <button data-testid="end-campaign" onClick={() => (location.href = `${location.pathname}?menu=campaign`)}>
+            Campaign
+          </button>
+        )}
+        {!state.multiplayer && !state.replay && !state.mission && (
           <button data-testid="end-rematch" onClick={() => (location.href = `${location.pathname}?rematch=1`)}>
             Rematch (same map and sides)
           </button>
@@ -1288,6 +1303,32 @@ function KeyBindings({ state, onClose }: { state: ClientState; onClose: () => vo
           <button onClick={onClose}>Done</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Remembers a won mission (once) and says so. */
+function MissionResult({ state, won }: { state: ClientState; won: boolean }) {
+  useEffect(() => {
+    if (won) markMissionWon(state.mission!.id);
+  }, [won]);
+  return <p class="muted">{won ? `${state.mission!.title}: mission complete.` : 'Mission failed. Try again from the menu, or with Retry.'}</p>;
+}
+
+/** Campaign mission: the objectives, ticked off as they are done. */
+function MissionPanel({ state }: { state: ClientState }) {
+  const m = state.mission!;
+  const status = state.cur?.objectives() ?? [];
+  return (
+    <div class="tutorial mission-panel" data-testid="mission-panel">
+      <b>{m.title}</b>
+      <ul>
+        {m.objectives.map((o, i) => (
+          <li class={status[i] === 1 ? 'done' : status[i] === 2 ? 'failed' : ''} data-objective={i}>
+            {status[i] === 1 ? '✓' : status[i] === 2 ? '✗' : '○'} {o.text}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

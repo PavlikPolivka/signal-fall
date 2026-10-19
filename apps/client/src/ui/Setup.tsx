@@ -5,6 +5,7 @@ import { clock, recentMatches, savedGame } from '../game/saves';
 import { Codex } from './Codex';
 import { DailyPanel } from './Daily';
 import { Editor } from './Editor';
+import { Campaign } from './Campaign';
 import { Changes } from './Changes';
 import { Logo } from './Logo';
 import { MenuVideo } from './Video';
@@ -151,6 +152,7 @@ export function Setup({
   }, []);
   const [changes, setChanges] = useState(false);
   const [editor, setEditor] = useState(false);
+  const [campaign, setCampaign] = useState(() => new URLSearchParams(location.search).get('menu') === 'campaign');
   const [replayError, setReplayError] = useState<string | null>(null);
   const [codex, setCodex] = useState(false);
   // ?menu=credits (from the landing page) opens the credits.
@@ -188,6 +190,7 @@ export function Setup({
 
   if (skirmish) return <Skirmish rules={rules} onStart={onStart} onBack={() => setSkirmish(false)} />;
   if (editor) return <Editor onBack={() => setEditor(false)} />;
+  if (campaign) return <Campaign onBack={() => setCampaign(false)} onPlay={(m) => (location.href = `${location.pathname}?mission=${m.id}`)} />;
 
   return (
     <MenuScreen testid="home">
@@ -202,6 +205,9 @@ export function Setup({
         <SavedAndRecent onReplay={onReplay} />
         <DailyPanel />
         <div class="home-actions">
+          <button class="mp-btn" onClick={() => setCampaign(true)} data-testid="open-campaign">
+            Campaign
+          </button>
           <button class="start" onClick={() => setSkirmish(true)} data-testid="open-skirmish">
             Skirmish vs AI
           </button>

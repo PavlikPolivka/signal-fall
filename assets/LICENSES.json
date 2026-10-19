@@ -63,6 +63,13 @@
       "source": "Generated with Piper TTS (tools/assets/voices) from the voices norman and cori (LibriVox recordings, public domain) and ljspeech (LJ Speech, public domain), then processed with ffmpeg",
       "author": "Signal Fall contributors",
       "license": "MIT"
+    },
+    {
+      "files": "voice/campaign/*/*.mp3",
+      "title": "Campaign briefings and mission lines",
+      "source": "Generated with Piper TTS (tools/assets/voices/campaign.py) from the voices cori (LibriVox recordings, public domain) and ljspeech (LJ Speech, public domain), then processed with ffmpeg",
+      "author": "Signal Fall contributors",
+      "license": "MIT"
     }
   ],
   "bundled": [

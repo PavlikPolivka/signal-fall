@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { defaultRules } from '@signal-fall/data';
 import { ClientState, seatLabels, saveSettings, setColorblind } from './game/state';
 import { Input } from './input/input';
+import { FX_EVENT, FX_STRIDE } from '@signal-fall/sim';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
 import type { ScheduledCommand } from '@signal-fall/sim';
 import { Renderer } from './render/renderer';
@@ -10,7 +11,7 @@ import { App } from './ui/App';
 import { MenuScreen, Setup, loadSaved, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
-import type { Replay } from './game/scenario';
+import { missionById, type Replay } from './game/scenario';
 import { addRecent, clock, saveGame, savedGame } from './game/saves';
 import { dailyChallenge } from './game/daily';
 import { NetSession, SpectatorFeed, degrade } from './net/session';
@@ -140,6 +141,10 @@ function rematch(): ScenarioSpec | null {
 const tutorial: ScenarioSpec | null = params.has('tutorial')
   ? { kind: 'skirmish', seed: 4242, factions: [0, 2], ai: [null, null], map: { size: 'S', biome: 'wasteland', resources: 'normal', terrain: 'open' } }
   : null;
+/** ?mission=<id>: a campaign mission. */
+const missionParam = params.get('mission');
+/** Who speaks a mission line (for captions). */
+const SPEAKER_NAME = { holdout: 'Varga', halcyon: 'HALCYON', choir: 'The Cantor' } as const;
 /** ?daily: today's challenge, the same match for everyone. */
 const daily = params.has('daily') ? dailyChallenge() : null;
 /** Reloaded during a multiplayer match: get back into it. */
@@ -180,7 +185,7 @@ function hostRejoins(code: string, scenario: ScenarioSpec): void {
 /** ?continue: the saved skirmish, picked up where it was saved. */
 const resume = params.has('continue') ? (savedGame()?.replay ?? null) : null;
 if (params.has('continue')) history.replaceState(null, '', location.pathname);
-let scenario: ScenarioSpec | null = tutorial ?? (daily ? daily.scenario : null) ?? (autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch());
+let scenario: ScenarioSpec | null = (missionParam ? ({ kind: 'mission', id: missionParam, seed: 0 } as ScenarioSpec) : null) ?? tutorial ?? (daily ? daily.scenario : null) ?? (autostart ? scenarioFromUrl() : resume ? resume.scenario : rematch());
 /** Our player slot (0 unless we joined someone's multiplayer room). */
 let localSlot = 0;
 /** Multiplayer: connections to the other people by slot, until the worker is running. */
@@ -227,6 +232,7 @@ const state = new ClientState(defaultRules(), post);
 state.spectator = spectate !== null;
 state.daily = daily ? daily.label : null;
 state.tutorial = !!tutorial;
+state.mission = missionParam ? missionById(missionParam) : null;
 state.rematch = () => {
   if (!lastRoom) return;
   const me = lastRoom.slots[localSlot]?.player?.id;
@@ -407,7 +413,7 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       renderer.weather.setBiome(msg.biome);
       const lit = replay ? replay.scenario : scenario;
       const time = lit?.kind === 'skirmish' ? lit.time : null;
-      renderer.night.setTime((params.get('time') as 'day' | 'dusk' | 'night' | null) ?? time ?? 'day');
+      renderer.night.setTime((params.get('time') as 'day' | 'dusk' | 'night' | null) ?? time ?? state.mission?.time ?? 'day');
       // Load rendered art for the factions in this match (placeholders draw until it arrives).
       for (const p of msg.players) {
         const id = state.rules.factions[p.faction]!.id;
@@ -424,6 +430,17 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       if (msg.fx) {
         renderer.effects.ingest(msg.fx);
         audio.ingest(msg.fx);
+        // Mission lines: spoken, and shown as a caption.
+        if (state.mission)
+          for (let i = 0; i + FX_STRIDE <= msg.fx.length; i += FX_STRIDE)
+            if (msg.fx[i] === FX_EVENT.mission) {
+              const n = msg.fx[i + 1]!;
+              const line = state.mission.lines[n];
+              if (!line) continue;
+              state.caption = { text: `${SPEAKER_NAME[line[0]]}: ${line[1]}`, time: performance.now() + 2500 };
+              audio.playLine(`campaign/${state.mission.id}/line_${n}.mp3`);
+              state.changed();
+            }
       }
       if (first) {
         input?.useFactionCursors();

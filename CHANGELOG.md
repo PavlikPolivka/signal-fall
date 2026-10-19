@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 01:52 UTC
+
+- **The campaign:** fifteen missions across three acts and a finale. Fight Halcyon's drones as Captain Varga's Holdout, follow the Halcyon sub-mind WREN as it turns against its maker, wake as the Choir, and bring all three sides together against HALCYON in **Signal Rise**. Every mission has a spoken briefing, objectives that tick off as you go, lines spoken during the fight, and new units and buildings unlocked as the story goes on. **Campaign** on the main menu; each mission opens when you've won the one before.
+
 ## 2026-10-19 01:41 UTC
 
 - **Brush:** rough ground now hides whoever stands in it. Enemies see a unit in the brush only from within 6 tiles, until it opens fire. Set ambushes, and scout before you march through scrub.

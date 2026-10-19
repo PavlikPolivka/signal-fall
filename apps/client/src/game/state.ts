@@ -103,6 +103,8 @@ export class ClientState {
   touchBox = false;
   /** A touch screen was used (shows the touch toolbar). */
   touched = false;
+  /** A campaign mission being played. */
+  mission: import('./scenario').MissionSpec | null = null;
   /** The tutorial match. */
   tutorial = false;
   /** Playing today's daily challenge (its description), or null. */

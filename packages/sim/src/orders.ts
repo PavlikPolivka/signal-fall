@@ -171,6 +171,8 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       for (const s of ownedUnits(world, c.player, cmd.units)) deploy(world, c.player, s);
       return;
     case 'build':
+      // Missions unlock buildings one by one.
+      if (c.player === 0 && world.allow && !world.allow.has(world.rules.structures[cmd.item]?.id ?? '')) return;
       startBuild(world, c.player, cmd.category, cmd.item, cmd.tx, cmd.ty);
       return;
     case 'cancelBuild': {
@@ -189,6 +191,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       place(world, c.player, cmd.category, cmd.tx, cmd.ty);
       return;
     case 'train':
+      if (c.player === 0 && world.allow && !world.allow.has(world.rules.units[cmd.item]?.id ?? '')) return;
       train(world, c.player, cmd.item, cmd.count);
       return;
     case 'cancelTrain': {

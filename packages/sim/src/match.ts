@@ -29,6 +29,8 @@ export interface MatchSetup {
   /** Survival: this player is the horde (no construction unit, scripted waves). */
   survivalHorde?: number;
   survivalPct?: number;
+  mission?: import('./systems/mission').MissionRules;
+  allow?: string[];
 }
 
 /** A real match: each player starts with one construction unit and the starting credits. */
@@ -47,6 +49,8 @@ export function createMatch(setup: MatchSetup): Sim {
     points: map.points,
     crates: setup.crates,
     survivalHorde: setup.survivalHorde,
+    mission: setup.mission,
+    allow: setup.allow,
     survivalPct: setup.survivalPct,
   });
   setup.players.forEach((p, i) => {

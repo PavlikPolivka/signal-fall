@@ -1,5 +1,6 @@
 import { defaultRules } from '@signal-fall/data';
-import { Sim, createMatch, grantBase, sandbox, type ScheduledCommand } from '@signal-fall/sim';
+import { Sim, createMatch, grantBase, sandbox, spawnStructure, spawnUnitAtTile, type MissionRuleAction, type MissionRuleObjective, type MissionRuleTrigger, type MissionRules, type ScheduledCommand } from '@signal-fall/sim';
+import { MISSIONS, type MissionSpec, type PArea, type Pos } from './missions';
 import { customToGenerated, decodeMap, generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
 import { attachAi, HordeBrain, type Difficulty, type StrategyName } from '@signal-fall/ai';
 
@@ -44,6 +45,8 @@ export type ScenarioSpec =
       /** Lighting (cosmetic only: vision and the sim are the same at any time of day). */
       time?: 'day' | 'dusk' | 'night';
     }
+  /** A campaign mission (see missions.ts). */
+  | { kind: 'mission'; id: string; seed: number }
   | { kind: 'sandbox'; unitsPerSide: number; seed: number }
   | { kind: 'stress'; unitsPerSide: number; seed: number };
 
@@ -93,6 +96,8 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         extras: { decoration: map.decoration, surface: map.surface, landmark: map.landmark, biome: map.biome, mapSeed: map.seedUsed, starts: map.starts },
       };
     }
+    case 'mission':
+      return createMission(spec.id);
     case 'sandbox':
     case 'stress': {
       const sim = sandbox(rules, { unitsPerSide: spec.unitsPerSide, seed: spec.seed });
@@ -213,3 +218,86 @@ export function sampleStats(world: import('@signal-fall/sim').World): StatPoint[
   }
   return out;
 }
+
+/** Find a mission by id. */
+export function missionById(id: string): MissionSpec {
+  const m = MISSIONS.find((x) => x.id === id);
+  if (!m) throw new Error(`no mission ${id}`);
+  return m;
+}
+
+/** A mission's match: its map, seats, preset forces, objectives and triggers. */
+function createMission(id: string): { sim: Sim; extras: MapExtras } {
+  const rules = defaultRules();
+  const m = missionById(id);
+  const map = generateMap({ seed: m.map.seed, players: m.seats.length, size: m.map.size, biome: m.map.biome, resources: m.map.resources, terrain: m.map.terrain });
+  const n = map.width;
+  const clamp = (v: number) => Math.max(2, Math.min(n - 3, v));
+  const at = (p: Pos) => ('start' in p ? { x: clamp(map.starts[p.start]!.x + (p.dx ?? 0)), y: clamp(map.starts[p.start]!.y + (p.dy ?? 0)) } : { x: clamp(Math.trunc((n * p.pct[0]) / 100)), y: clamp(Math.trunc((n * p.pct[1]) / 100)) });
+  const area = (a: PArea) => ({ ...at(a), r: a.r });
+  const missionRules: MissionRules = {
+    objectives: m.objectives.map((o): MissionRuleObjective => {
+      switch (o.kind) {
+        case 'reach':
+          return { kind: 'reach', area: area(o.area), tag: o.tag };
+        case 'hold':
+          return { kind: 'hold', area: area(o.area), ticks: o.ticks };
+        case 'destroy':
+          return { kind: 'destroy', player: o.player, role: o.role, count: o.count };
+        case 'have':
+          return { kind: 'have', role: o.role, count: o.count };
+        case 'harvest':
+          return { kind: 'harvest', amount: o.amount };
+        case 'survive':
+          return { kind: 'survive', ticks: o.ticks };
+        case 'protect':
+          return { kind: 'protect', tag: o.tag };
+        case 'kill':
+          return { kind: 'kill', player: o.player, count: o.count };
+      }
+    }),
+    triggers: m.triggers.map((t): MissionRuleTrigger => ({
+      at: t.at,
+      objective: t.objective,
+      enter: t.enter ? area(t.enter) : undefined,
+      every: t.every,
+      until: t.until,
+      actions: t.actions.map((a): MissionRuleAction => {
+        if (a.kind === 'spawn') {
+          const p = at(a.at);
+          return { kind: 'spawn', player: a.player, unit: a.unit, count: a.count, x: p.x, y: p.y, tag: a.tag, attack: a.attack ? at(a.attack) : undefined };
+        }
+        if (a.kind === 'reveal') return { kind: 'reveal', area: area(a.area) };
+        return a;
+      }),
+    })),
+  };
+  const sim = createMatch({ rules, seed: m.map.seed, map, players: m.seats.map((s) => ({ faction: s.faction, team: s.team })), mission: missionRules, allow: m.allow });
+  const w = sim.world;
+  m.seats.forEach((seat, k) => {
+    const start = map.starts[k]!;
+    if (seat.start === 'base') {
+      grantBase(sim, k, start);
+      // A refinery comes with its harvester.
+      spawnUnitAtTile(w, rules.factions[seat.faction]!.harvester, k, clamp(start.x + 2), clamp(start.y + 6));
+    }
+    else if (seat.start === 'none') for (let s = 0; s < w.entities.high; s++) if (w.entities.alive[s] === 1 && w.entities.owner[s] === k) w.entities.free(s);
+    if (seat.credits !== undefined) w.players[k]!.credits = seat.credits;
+    for (const [unit, count] of seat.units ?? []) {
+      const ri = rules.unitIndex.get(unit);
+      if (ri === undefined) continue;
+      for (let c = 0; c < count; c++) spawnUnitAtTile(w, ri, k, clamp(start.x + 3 + (c % 4)), clamp(start.y + 3 + Math.trunc(c / 4)));
+    }
+    for (const [sid, dx, dy] of seat.structures ?? []) {
+      const ri = rules.structures.findIndex((x) => x.id === sid);
+      if (ri >= 0) spawnStructure(w, ri, k, clamp(start.x + dx), clamp(start.y + dy));
+    }
+    if (seat.ai) attachAi(sim, k, seat.ai, map.starts);
+  });
+  return {
+    sim,
+    extras: { decoration: map.decoration, surface: map.surface, landmark: map.landmark, biome: map.biome, mapSeed: map.seedUsed, starts: map.starts },
+  };
+}
+
+export * from './missions';

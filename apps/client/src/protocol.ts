@@ -112,12 +112,14 @@ export const H = {
   wave: 9,
   waves: 10,
   waveIn: 11,
+  /** Campaign mission: how many objectives (their status follows the crates). */
+  objectives: 12,
 } as const;
 /** Crates after the capture points: [x, y, kind]. */
 export const CRATE_STRIDE = 3;
 /** Capture points after the projectiles: [x, y, kind, owner, capturer team, progress ticks]. */
 export const POINT_STRIDE = 6;
-export const HEADER_LEN = 12;
+export const HEADER_LEN = 13;
 
 export const P = {
   credits: 0,
@@ -228,6 +230,11 @@ export class Snapshot {
       out.push({ x: this.a[o]!, y: this.a[o + 1]!, kind: this.a[o + 2]!, owner: this.a[o + 3]!, capturer: this.a[o + 4]!, progress: this.a[o + 5]! });
     }
     return out;
+  }
+  /** Mission objectives: 0 pending, 1 done, 2 failed. */
+  objectives(): number[] {
+    const base = this.projBase + this.projectileCount * PROJ_STRIDE + (this.a[H.pointCount] ?? 0) * POINT_STRIDE + (this.a[H.crateCount] ?? 0) * CRATE_STRIDE;
+    return Array.from(this.a.subarray(base, base + (this.a[H.objectives] ?? 0)));
   }
   /** Crates lying on the map (only with the crates setting). */
   crates(): { x: number; y: number; kind: number }[] {

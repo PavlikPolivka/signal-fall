@@ -29,6 +29,14 @@ export function victorySystem(world: World): void {
       return;
     }
   }
+  // A mission ends by its own objectives, or when the player has nothing left.
+  if (world.mission) {
+    if (world.players[0]!.defeated) {
+      world.ended = true;
+      world.winnerTeam = world.players.find((p) => p.team !== world.players[0]!.team)?.team ?? -1;
+    }
+    return;
+  }
   const teamsAtStart = new Set(world.players.map((p) => p.team));
   if (teamsAtStart.size < 2) return;
   // King of the hill: holding the hill long enough wins outright.

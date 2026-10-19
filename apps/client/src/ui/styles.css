@@ -2541,3 +2541,59 @@ label.check {
   opacity: 0.35;
   text-decoration: line-through;
 }
+.mission-panel ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.mission-panel li.done {
+  color: var(--good);
+}
+.mission-panel li.failed {
+  color: var(--bad);
+}
+.campaign {
+  display: flex;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px;
+  background: rgba(11, 13, 16, 0.88);
+  border-radius: 10px;
+}
+.campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 300px;
+}
+.campaign-list h3 {
+  margin: 10px 0 2px;
+  color: var(--accent);
+  font-size: 14px;
+}
+.campaign-list .mission {
+  text-align: left;
+}
+.campaign-list .mission.active {
+  border-color: var(--accent);
+}
+.campaign-list .mission span {
+  color: var(--muted);
+}
+.campaign-list .mission b {
+  color: var(--good);
+}
+.briefing-panel {
+  flex: 1;
+  max-width: 620px;
+}
+.briefing-panel p {
+  line-height: 1.5;
+}
+.briefing-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
