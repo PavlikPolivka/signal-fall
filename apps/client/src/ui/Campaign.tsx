@@ -4,6 +4,7 @@ import { MenuScreen } from './Setup';
 
 const PROGRESS_KEY = 'signalfall.campaign';
 const ACTS = ['', 'Act I: The Holdout', 'Act II: Halcyon', 'Act III: The Choir', 'Finale'];
+const ACT_TABS = ['', 'Act I', 'Act II', 'Act III', 'Finale'];
 
 /** Missions won in this browser (by id). */
 export function campaignProgress(): Set<string> {
@@ -93,6 +94,8 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
   const [chosen, setChosen] = useState<MissionSpec | null>(briefed ?? MISSIONS[firstOpen < 0 ? 0 : firstOpen]!);
   // Straight from the last mission: only the briefing, read aloud, until "All missions" opens the list.
   const [focus, setFocus] = useState(!!briefed);
+  // One act at a time (no scrolling): the act of the mission shown.
+  const [act, setAct] = useState(() => chosen?.act ?? 1);
   const voice = useBriefingVoice(chosen);
   useEffect(() => {
     if (briefed) voice.play();
@@ -105,23 +108,28 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
         {!focus && (
         <div class="campaign-list">
           <h1>Campaign</h1>
-          {[1, 2, 3, 4].map((act) => (
-            <section>
-              <h3>{ACTS[act]}</h3>
-              {MISSIONS.map((m, i) =>
-                m.act !== act ? null : (
-                  <button
-                    class={`mission ${chosen?.id === m.id ? 'active' : ''} ${done.has(m.id) ? 'won' : ''}`}
-                    disabled={i > 0 && !done.has(MISSIONS[i - 1]!.id) && !done.has(m.id)}
-                    data-mission={m.id}
-                    onClick={() => setChosen(m)}
-                  >
-                    <span>{i + 1}.</span> {m.title} {done.has(m.id) && <b>✓</b>}
-                  </button>
-                ),
-              )}
-            </section>
-          ))}
+          <div class="seg act-tabs" data-testid="act-tabs">
+            {[1, 2, 3, 4].map((a) => (
+              <button class={act === a ? 'active' : ''} data-act={a} title={ACTS[a]} onClick={() => setAct(a)}>
+                {ACT_TABS[a]}
+              </button>
+            ))}
+          </div>
+          <section>
+            <h3>{ACTS[act]}</h3>
+            {MISSIONS.map((m, i) =>
+              m.act !== act ? null : (
+                <button
+                  class={`mission ${chosen?.id === m.id ? 'active' : ''} ${done.has(m.id) ? 'won' : ''}`}
+                  disabled={i > 0 && !done.has(MISSIONS[i - 1]!.id) && !done.has(m.id)}
+                  data-mission={m.id}
+                  onClick={() => setChosen(m)}
+                >
+                  <span>{i + 1}.</span> {m.title} {done.has(m.id) && <b>✓</b>}
+                </button>
+              ),
+            )}
+          </section>
           <button class="codex-btn" onClick={onBack} data-testid="back">
             Back
           </button>

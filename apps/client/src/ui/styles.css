@@ -2633,6 +2633,26 @@ label.check {
 .campaign-list > .codex-btn {
   margin-top: 18px;
 }
+.act-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.act-tabs button {
+  flex: 1;
+  padding: 6px 4px;
+}
+.act-tabs button.active {
+  color: #111;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.campaign-list section {
+  min-height: 300px;
+}
+.briefing-title h2 {
+  font-size: 28px;
+}
 .campaign-list .mission.active {
   border-color: var(--accent);
 }
@@ -2732,8 +2752,13 @@ label.check {
 }
 .briefing-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   margin-top: 12px;
+}
+.briefing-actions button:not(.start) {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
 .super-btn i {

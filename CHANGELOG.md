@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 20:51 UTC
+
+- **Campaign screen fits without scrolling:** the missions sit in tabs, one act at a time, opening on the act you're playing. The mission title over the painting is bigger, and the Listen button is back to a normal size.
+
 ## 2026-10-19 20:50 UTC
 
 - **Mission art:** every campaign mission now has its own painting at the top of its briefing.

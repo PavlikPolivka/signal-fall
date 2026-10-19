@@ -9,6 +9,12 @@ test('campaign: pick the first mission, read the briefing, play it and tick off 
   await expect(page.getByTestId('mission-briefing')).toContainText('Dead Air');
   // Later missions stay locked until the one before is won.
   await expect(page.locator('[data-mission=crater-field]')).toBeDisabled();
+  // One act at a time, in tabs.
+  await expect(page.locator('[data-mission=initialization]')).toHaveCount(0);
+  await page.click('[data-testid=act-tabs] [data-act="2"]');
+  await expect(page.locator('[data-mission=initialization]')).toBeVisible();
+  await page.screenshot({ path: 'test-results/campaign-list.png' });
+  await page.click('[data-testid=act-tabs] [data-act="1"]');
   await page.click('[data-testid=mission-start]');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur, null, { timeout: 30_000 });
   await expect(page.getByTestId('mission-panel')).toContainText('Deploy the Homestead');
