@@ -12,7 +12,7 @@ import { EntityCard, ItemCard } from './InfoCard';
 import { Codex } from './Codex';
 import { isoX, isoY } from '../game/iso';
 import { Icon } from './Icon';
-import { money, roleName, roleNames } from '../game/names';
+import { describeEffect, money, roleName, roleNames } from '../game/names';
 import { Credits } from './Credits';
 import { MatchReport } from './MatchReport';
 import type { GameAudio } from '../audio/audio';
@@ -979,29 +979,6 @@ function ResearchPanel({ state }: { state: ClientState }) {
       })}
     </div>
   );
-}
-
-function describeEffect(kind: string, pct: number): string {
-  switch (kind) {
-    case 'damagePct':
-      return `+${pct}% weapon damage`;
-    case 'hpPct':
-      return `+${pct}% unit HP`;
-    case 'salvagePct':
-      return `+${pct}% credits from wrecks`;
-    case 'vehicleEnergyResistPct':
-      return `vehicles take ${pct}% less Energy damage`;
-    case 'coverageRadiusPct':
-      return `+${pct}% network coverage radius`;
-    case 'recompileRefundPct':
-      return `Recompile refunds ${pct}% instead`;
-    case 'shieldPct':
-      return `+${pct}% shield capacity`;
-    case 'growSpeedPct':
-      return `structures grow ${pct}% faster`;
-    default:
-      return kind;
-  }
 }
 
 function StructureActions({ state, h }: { state: ClientState; h: number }) {

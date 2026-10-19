@@ -3,7 +3,7 @@ import { ARMOR, DAMAGE, type FactionRule, type Rules, type StructureRule, type U
 import { CHOIR_ECHO_RANGE, CHOIR_ECHO_REACH, CHOIR_SEED_GROW_PCT, CHOIR_SEED_REACH, CHOIR_SEED_START_PCT } from '@signal-fall/sim';
 import { chordLabel, withOverrides } from '../input/keymap';
 import { loadSettings } from '../game/state';
-import { money, roleNames } from '../game/names';
+import { describeEffect, money, roleNames } from '../game/names';
 import { FACTION_LORE } from './lore';
 import { BalanceReport } from './Balance';
 import { weakTo } from './InfoCard';
@@ -24,6 +24,7 @@ const ROLE_LABEL: Record<string, string> = {
   antiAir: 'Anti-air defense',
   heavyDefense: 'Heavy defense',
   wall: 'Wall',
+  superweapon: 'Superweapon',
 };
 
 
@@ -461,8 +462,9 @@ function HowTo({ rules }: { rules: Rules }) {
       <h3>Tech tiers</h3>
       <p>
         Tier 1 needs a construction yard and power. A <b>radar</b> unlocks tier 2 (airfield, anti-air, tech center); the <b>tech center</b> unlocks tier 3
-        (heavy defense, the faction's super unit).
+        (heavy defense, the faction's super unit and its superweapon).
       </p>
+      <Research rules={rules} />
       <h3>Rock, paper, scissors</h3>
       <p>Every weapon has a damage type and every target an armor class. Damage is multiplied by this table:</p>
       <table class="matrix">
@@ -515,14 +517,33 @@ function HowTo({ rules }: { rules: Rules }) {
       <h3>Game modes</h3>
       <ul>
         <li>
-          <b>Skirmish vs AI</b> — 1 vs 1, or 2 vs 2 with an AI ally against two AIs. Pick factions, difficulty and the map.
+          <b>Tutorial</b> — eight short steps that teach the basics against a base that never fights back.
         </li>
         <li>
-          <b>Multiplayer</b> — create a room and send its four-letter code. 1 vs 1 or 2 vs 2; the host fills any seat with an AI, so two friends can
-          take on two AIs together, or three people can share a match with one AI. Everyone connects directly to everyone else.
+          <b>Campaign</b> — fifteen missions across all three factions, each with a spoken briefing. Every mission stresses one mechanic.
+        </li>
+        <li>
+          <b>Skirmish vs AI</b> — 1 vs 1, 2 vs 2 with an AI ally against two AIs, a free-for-all against two or three AIs, or Survival. Pick
+          factions, difficulty and the map. <b>Save game</b> in the menu keeps a skirmish to <b>Continue</b> later from the main menu.
+        </li>
+        <li>
+          <b>Daily challenge</b> — the same map, factions and opponent for everyone today. The fastest wins top the day's board.
+        </li>
+        <li>
+          <b>Multiplayer</b> — create a room and send its four-letter code, or list it publicly so it shows under <b>Open games</b>. 1 vs 1, 2 vs
+          2, free-for-all or co-op survival; the host fills any seat with an AI, so two friends can take on two AIs together. Everyone connects
+          directly to everyone else. <b>Ranked match</b> finds a rated 1 vs 1 opponent near your rating. <b>Watch</b> with a room's code
+          follows a match without playing.
+        </li>
+        <li>
+          <b>Maps</b> — every match can use a generated map (from its seed) or a hand-made one. The <b>Map editor</b> lets you paint your own and
+          share it as a code; saved maps show up in the map list.
         </li>
       </ul>
-      <p class="muted">Teammates share vision, cannot hurt each other, and win or lose together.</p>
+      <p class="muted">
+        Teammates share vision, cannot hurt each other, and win or lose together. In multiplayer, <kbd>Enter</kbd> opens the chat and Alt+click pings a
+        spot for your team. If a player drops, the AI can take over their side.
+      </p>
       <h3>After the match</h3>
       <p>
         <b>Match report</b> on the end screen compares both sides: Echo harvested, units built, kills and losses, and the value destroyed. Charts show
@@ -548,6 +569,49 @@ function HowTo({ rules }: { rules: Rules }) {
         shows saved accounts.
       </p>
     </article>
+  );
+}
+
+/** Upgrades at the tech center, with the doctrine choices. */
+function Research({ rules }: { rules: Rules }) {
+  const shared = rules.upgrades.filter((u) => u.faction < 0);
+  const line = (u: (typeof rules.upgrades)[number]) => (
+    <>
+      <b>{u.name}</b> ({money(u.cost)}, T{u.tier}): {describeEffect(u.effect.kind, u.effect.pct)}
+    </>
+  );
+  return (
+    <>
+      <h3>Research</h3>
+      <p>
+        Select your <b>tech center</b> to research upgrades, one at a time. They last for the whole match and count for every unit, including ones
+        built later. Every faction can research:
+      </p>
+      <ul>
+        {shared.map((u) => (
+          <li>{line(u)}{u.requiresUpgrade ? ` (after ${rules.upgrades[rules.upgradeIndex.get(u.requiresUpgrade)!]!.name})` : ''}</li>
+        ))}
+      </ul>
+      <p>
+        Each faction also has a <b>doctrine</b>: two upgrades of which you can only ever research one. Pick the one that fits the match.
+      </p>
+      <ul>
+        {rules.factions.map((f) => {
+          const pair = rules.upgrades.filter((u) => u.faction === f.index && u.excludes);
+          return (
+            <li>
+              <b>{f.name}</b>:{' '}
+              {pair.map((u, i) => (
+                <>
+                  {i > 0 && ' or '}
+                  {line(u)}
+                </>
+              ))}
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
 

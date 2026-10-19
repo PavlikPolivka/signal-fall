@@ -130,11 +130,9 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 102 ✅ | K | Map editor in the browser, share maps by code | 4 | L |
 | 103 ✅ | K | Hand-made competitive maps alongside generated ones | 4 | M |
 | 104 ✅ | K | Survival / co-op mode: hold out against waves with a friend | 4 | L |
-| 105 | K | Fourth faction (later) | 4 | XL |
 | 106 ✅ | K | Daily challenge: same seed and setup for everyone, leaderboard by time | 3 | M |
 | 107 ✅ | K | Free-for-all 3–4 players | 3 | M |
 | 108 ✅ | K | King-of-the-hill and capture modes | 3 | M |
-| 109 | G | 3D renderer (WebGPU) keeping the sim (long-term) | 4 | XL |
 | 110 ✅ | K | Mobile/tablet controls (touch UI) | 3 | L |
 
 ## Also worth doing (small)
@@ -159,3 +157,12 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 3. **Economy:** 5, 6, 13, 34, 73, then AI 26–30, so matches stop being "fixed build, all in".
 4. **Clarity:** 7, 12, 14, 19, 20, 21, 43, 47, 48, 62.
 5. **Graphics:** 35–39, 80, 86, then the rest.
+
+## Wish list
+
+Not planned. Ideas to pick up some day, each bigger than one feature.
+
+| # | Area | Improvement | Impact | Cost |
+|---|---|---|---|---|
+| 105 | K | Fourth faction: needs a design (identity, building rule, mechanics), about 25 new Meshy models, and balance across six pairings | 4 | XL |
+| 109 | G | 3D renderer (WebGPU) keeping the sim: a new renderer and art pipeline | 4 | XL |

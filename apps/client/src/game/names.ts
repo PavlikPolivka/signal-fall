@@ -40,3 +40,27 @@ export function roleLabel(role: string): string {
 export const CREDIT = '◆';
 /** An amount of credits for display, e.g. "◆1,200". */
 export const money = (n: number): string => `${CREDIT}${n.toLocaleString('en-US')}`;
+
+/** What an upgrade does, in player words. */
+export function describeEffect(kind: string, pct: number): string {
+  switch (kind) {
+    case 'damagePct':
+      return `+${pct}% weapon damage`;
+    case 'hpPct':
+      return `+${pct}% unit HP`;
+    case 'salvagePct':
+      return `+${pct}% credits from wrecks`;
+    case 'vehicleEnergyResistPct':
+      return `vehicles take ${pct}% less Energy damage`;
+    case 'coverageRadiusPct':
+      return `+${pct}% network coverage radius`;
+    case 'recompileRefundPct':
+      return `Recompile refunds ${pct}% instead`;
+    case 'shieldPct':
+      return `+${pct}% shield capacity`;
+    case 'growSpeedPct':
+      return `structures grow ${pct}% faster`;
+    default:
+      return kind;
+  }
+}

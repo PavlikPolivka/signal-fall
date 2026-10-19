@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 16:25 UTC
+
+- **Codex catches up:** the How to play page now covers research upgrades and each faction's doctrine choice, and every game mode: the tutorial, the campaign, free-for-all, the daily challenge, ranked matches, open games, watching a match, saved games and the map editor. Superweapon buildings show their role on the building cards.
+
 ## 2026-10-19 03:05 UTC
 
 - **Ultra graphics:** a new top graphics setting for Retina and other high-DPI screens. The game draws at your screen's full sharpness with sprites rendered at twice the detail. It needs a strong graphics card; High stays the default. Sharper sprites kick in from the next match.

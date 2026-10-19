@@ -57,6 +57,9 @@ test('codex explains faction differences, building rules and balance', async ({ 
   await page.click('[data-codex-tab=howto]');
   await expect(codex).toContainText('Where you can build');
   await expect(codex).toContainText('far seed');
+  await expect(codex).toContainText('Salvage Crews');
+  await expect(codex).toContainText('Daily challenge');
+  await expect(codex).toContainText('Long Tom');
   await page.click('[data-codex-tab=balance]');
   await expect(codex.getByTestId('balance-report')).toContainText('Holdout vs Halcyon');
   await expect(codex.getByTestId('balance-report')).toContainText('Bulldog');
