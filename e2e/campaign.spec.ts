@@ -98,3 +98,16 @@ test('menus have a fullscreen button in the corner', async ({ page }) => {
   await page.click('[data-testid=menu-fullscreen]');
   await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(false);
 });
+
+test('campaign: the briefing box keeps its size from mission to mission', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('signalfall.campaign', JSON.stringify(['dead-air', 'diesel-and-iron', 'cut-the-cable', 'crater-field', 'kessel-dam'])));
+  await page.goto('/play/?menu=campaign');
+  // Act I is won, so the screen opens on Act II.
+  await page.click('[data-testid=act-tabs] [data-act="1"]');
+  const heights = new Set<number>();
+  for (const id of ['dead-air', 'diesel-and-iron', 'kessel-dam', 'crater-field']) {
+    await page.click(`[data-mission=${id}]`);
+    heights.add(Math.round((await page.getByTestId('mission-briefing').boundingBox())!.height));
+  }
+  expect([...heights]).toHaveLength(1);
+});

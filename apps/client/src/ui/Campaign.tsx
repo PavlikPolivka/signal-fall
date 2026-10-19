@@ -151,15 +151,17 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
                 <h2>{chosen.title}</h2>
               </div>
             </div>
-            {chosen.briefing.map((p, i) => (
-              <p class={voice.current === i ? 'spoken' : voice.playing && i > voice.current ? 'ahead' : ''}>{p}</p>
-            ))}
-            <h3>Objectives</h3>
-            <ul>
-              {chosen.objectives.map((o) => (
-                <li>{o.text}</li>
+            <div class="briefing-text">
+              {chosen.briefing.map((p, i) => (
+                <p class={voice.current === i ? 'spoken' : voice.playing && i > voice.current ? 'ahead' : ''}>{p}</p>
               ))}
-            </ul>
+              <h3>Objectives</h3>
+              <ul>
+                {chosen.objectives.map((o) => (
+                  <li>{o.text}</li>
+                ))}
+              </ul>
+            </div>
             <div class="choice campaign-difficulty" data-testid="campaign-difficulty">
               <span class="label">Difficulty</span>
               <div class="seg">

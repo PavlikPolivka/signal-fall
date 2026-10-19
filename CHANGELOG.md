@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 21:58 UTC
+
+- **Steady campaign screen:** the briefing box keeps one size, so it no longer jumps as you click from mission to mission.
+
 ## 2026-10-19 21:54 UTC
 
 - **One Play screen for every match:** Skirmish and Multiplayer are merged. Set up the match on **Play** and decide, seat by seat, whether the AI or a player takes it. With only AI seats the match starts right away; leave a seat to a player and it opens as a room, set up exactly as you chose, for friends to join with its code. **Join a game** is where you enter a friend's code, pick an open game or play ranked.

@@ -2734,6 +2734,22 @@ label.check {
 .briefing-panel {
   flex: 1;
   max-width: 620px;
+  /* One size for every mission: switching missions must not make the box jump. */
+  display: flex;
+  flex-direction: column;
+  height: min(680px, calc(100vh - 190px));
+}
+.briefing-text {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.briefing-panel > .campaign-difficulty,
+.briefing-panel > .briefing-actions {
+  flex: none;
+}
+.briefing-art {
+  flex: none;
 }
 .briefing-panel p {
   line-height: 1.5;
