@@ -29,9 +29,16 @@ export interface GameMap {
   nav: Uint8Array;
   /** Bumped whenever nav changes; invalidates cached flow fields. */
   navVersion: number;
+  /** 1 on road tiles (vehicles drive faster). */
+  road: Uint8Array;
 }
 
-export function createMap(width: number, height: number, terrain?: Uint8Array, echo?: Uint8Array): GameMap {
+/** Ground units on a road move this much faster, percent. */
+export const ROAD_SPEED_PCT = 120;
+/** Units on rough ground (brush) are seen only by enemies this close, tiles. */
+export const BRUSH_SIGHT = 6;
+
+export function createMap(width: number, height: number, terrain?: Uint8Array, echo?: Uint8Array, road?: Uint8Array): GameMap {
   const n = width * height;
   const map: GameMap = {
     width,
@@ -42,6 +49,7 @@ export function createMap(width: number, height: number, terrain?: Uint8Array, e
     occupant: new Int32Array(n).fill(-1),
     nav: new Uint8Array(n),
     navVersion: 0,
+    road: road ? road.slice() : new Uint8Array(n),
   };
   for (let i = 0; i < n; i++) refreshNav(map, i);
   return map;

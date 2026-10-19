@@ -127,3 +127,13 @@ Each faction's two tier-3 upgrades became an either/or choice (Salvage Crews or 
 Relays or Deep Recompile, Harmonic Shields or Rapid Growth). The AI takes the pricier one on tech and turtle plans
 and the cheaper one otherwise. Hard vs Hard, 200 matches: Holdout–Choir 45.5%, Holdout–Halcyon 51.5%,
 Halcyon–Choir 52%.
+
+### 2026-10-19: brush and roads
+
+Rough ground is now brush: units in it are seen only by enemies within a few tiles, unless they shoot. Roads speed
+up ground units. Hard vs Hard (CI's baseline before: Holdout–Halcyon 54.7%, Holdout–Choir 45%, Halcyon–Choir 53.3%):
+
+- Roads at +30% for vehicles only: Halcyon–Choir 59.5% (fast hover vehicles). Roads +20% for every ground unit: 51%.
+- Brush within 3 tiles: Holdout–Halcyon 57.3% over 300 (dug-in, stationary Holdout infantry). Within 5: 56.7%.
+- Shooting from the brush reveals the shooter, and brush within 6 tiles: Holdout–Halcyon 54% (300),
+  Holdout–Choir 49.5%, Halcyon–Choir 50.5% (200 each).

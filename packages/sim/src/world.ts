@@ -191,6 +191,8 @@ export interface WorldOptions {
   terrain?: Uint8Array;
   /** Initial Echo crystals per tile (also each tile's regrowth cap). */
   echo?: Uint8Array;
+  /** 1 on road tiles. */
+  road?: Uint8Array;
   victoryRules?: boolean;
   /** Capture points (tile and POINT kind). */
   points?: { x: number; y: number; kind: number }[];
@@ -203,7 +205,7 @@ export interface WorldOptions {
 }
 
 export function createWorld(o: WorldOptions): World {
-  const map = createMap(o.width, o.height, o.terrain, o.echo);
+  const map = createMap(o.width, o.height, o.terrain, o.echo, o.road);
   return {
     rules: o.rules,
     seed: o.seed >>> 0,

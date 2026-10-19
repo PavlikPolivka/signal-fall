@@ -593,6 +593,12 @@ function BuildingRules({ rules }: { rules: Rules }) {
         and deploy it (<kbd>D</kbd>) beside the field: it becomes a new construction yard ({rules.factions.map(conyard).join(', ')}), and the
         building rules above start from there. The {choir.name} can also grow straight onto a far field with a far seed.
       </p>
+      <h3>Ground</h3>
+      <p>
+        <b>Rough ground</b> (scrub, broken earth) slows units down to 70%, but it is also <b>brush</b>: a unit standing in it is only seen by
+        enemies within 6 tiles (and by anyone who could see it, once it shoots). Lay ambushes there, and scout before you march through. <b>Roads</b> in the city let ground units move a fifth
+        faster.
+      </p>
       <h3>Capture points</h3>
       <p>
         With <b>Capture points</b> on in the map options, the land between the bases holds sites anyone can take: keep ground units next to

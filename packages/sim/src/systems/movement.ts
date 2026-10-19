@@ -1,6 +1,6 @@
 import { FX_ONE, clamp, iatan2, idiv, ilength } from '../fx';
 import { KIND, NO_ENTITY } from '../entities';
-import { TERRAIN_SPEED_PCT, tileAt, tileCenterX, tileCenterY } from '../map';
+import { ROAD_SPEED_PCT, TERRAIN_SPEED_PCT, tileAt, tileCenterX, tileCenterY } from '../map';
 import type { World } from '../world';
 
 /** Waypoint counts as reached within this distance of its tile center. */
@@ -45,7 +45,9 @@ export function movementSystem(world: World): void {
       const dy = ty - y;
       const d = ilength(dx, dy);
       if (d > 0) {
-        const terrainPct = air || cur < 0 ? 100 : TERRAIN_SPEED_PCT[m.terrain[cur]!]! || 100;
+        // Rough ground slows everyone on foot or wheels; roads speed them up.
+        const onRoad = !air && cur >= 0 && m.road[cur] === 1;
+        const terrainPct = air || cur < 0 ? 100 : onRoad ? ROAD_SPEED_PCT : TERRAIN_SPEED_PCT[m.terrain[cur]!]! || 100;
         const speed = idiv(groupSpeed(world, s, rule.speed) * terrainPct, 100);
         const step = d < speed ? d : speed;
         vx = idiv(dx * step, d);

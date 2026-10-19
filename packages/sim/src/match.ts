@@ -13,6 +13,8 @@ export interface MapData {
   echo: Uint8Array;
   /** Start tile per player slot. */
   starts: { x: number; y: number }[];
+  /** Cosmetic ground per tile (mapgen SURFACE); roads (1) also speed vehicles up. */
+  surface?: Uint8Array;
   /** Capture points (tile and POINT kind), on maps that have them. */
   points?: { x: number; y: number; kind: number }[];
 }
@@ -39,6 +41,7 @@ export function createMatch(setup: MatchSetup): Sim {
     height: map.height,
     terrain: map.terrain,
     echo: map.echo,
+    road: map.surface ? map.surface.map((v) => (v === 1 ? 1 : 0)) : undefined,
     players: setup.players,
     victoryRules: true,
     points: map.points,

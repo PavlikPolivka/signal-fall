@@ -92,7 +92,7 @@ Areas: **C** controls · **U** UX and quality of life · **E** economy and gamep
 | 69 ✅ | U | Warnings when a factory is blocked (rally point unreachable, exit blocked) | 3 | S |
 | 70 | E | Superweapon-lite per faction at tier 3 (long cooldown, visible charge timer for all) | 4 | L |
 | 71 | E | Neutral buildings on maps: garrisonable ruins, repair depots, watchtowers (depots and watchtowers done as capture points; garrisoning still open) | 3 | M |
-| 72 | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles | 4 | L |
+| 72 ✅ | E | Terrain effects: high ground range bonus, forests block vision, roads speed vehicles (brush hides units, roads speed ground units; the sim has no elevation, so no high ground) | 4 | L |
 | 73 ✅ | E | Harvester economy depth: refinery queue logic, harvester escorts matter, raids are punishing but recoverable (harvesters queue to unload, flee raids and return, comeback from a refinery) | 3 | S |
 | 74 ✅ | E | Crates (rare pickups) on skirmish maps, optional | 2 | S |
 | 75 ✅ | A | AI difficulty describes itself in the menu (what it does, how fast) | 2 | XS |

@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-19 01:41 UTC
+
+- **Brush:** rough ground now hides whoever stands in it. Enemies see a unit in the brush only from within 6 tiles, until it opens fire. Set ambushes, and scout before you march through scrub.
+- **Roads:** ground units move a fifth faster on city roads.
+
 ## 2026-10-18 23:28 UTC
 
 - **Doctrines:** each faction's two special upgrades at the tech center are now a choice: research one and the other closes for the match. Holdout picks Salvage Crews or Reinforced Plating, Halcyon Extended Relays or Deep Recompile, the Choir Harmonic Shields or Rapid Growth. They show with a dashed border, and the one you didn't pick is crossed out.

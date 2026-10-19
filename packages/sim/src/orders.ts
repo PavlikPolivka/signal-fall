@@ -61,7 +61,7 @@ function give(world: World, s: number, order: Order, queue: boolean): void {
  * the target, and the group shares the slowest member's speed so it arrives
  * together. Large groups also share a flow field toward the target.
  */
-function groupMove(world: World, units: number[], type: 'move' | 'attackMove', x: number, y: number, queue: boolean): void {
+export function groupMove(world: World, units: number[], type: 'move' | 'attackMove', x: number, y: number, queue: boolean): void {
   const e = world.entities;
   const n = units.length;
   if (n === 0) return;
