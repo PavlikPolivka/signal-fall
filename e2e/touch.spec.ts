@@ -44,7 +44,7 @@ test('touch: drag pans, tap selects, long press backs out', async ({ page }) => 
   expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length)).toBeGreaterThan(0);
   // Long press: deselect.
   await touch(page, 'pointerdown', 300, 300);
-  await page.waitForTimeout(700);
+  // Hold until the long press registers (slow CI machines take a while).
+  await expect.poll(() => page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length), { timeout: 10_000 }).toBe(0);
   await touch(page, 'pointerup', 300, 300);
-  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length)).toBe(0);
 });

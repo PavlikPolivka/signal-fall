@@ -150,6 +150,8 @@ export async function introUrl(): Promise<string | null> {
 
 /** The intro cutscene, if there is one and the player has not seen it yet. */
 export async function introToPlay(): Promise<string | null> {
+  // Automated browsers (tests, capture scripts) don't sit through the intro.
+  if (navigator.webdriver) return null;
   try {
     if (localStorage.getItem(SEEN_KEY)) return null;
   } catch {
