@@ -16,6 +16,13 @@
       "license": "MIT"
     },
     {
+      "files": "missions/*",
+      "title": "Campaign mission art",
+      "source": "Generated with Google Gemini (gemini-3-pro-image) by tools/assets/missions.ts; prompts in tools/assets/missions/images.json",
+      "author": "Signal Fall contributors",
+      "license": "MIT"
+    },
+    {
       "files": "icons/*/*",
       "title": "Sidebar icons and portraits",
       "source": "Rendered by tools/assets/blender/render_icons.py, trimmed by tools/assets/pack.ts",

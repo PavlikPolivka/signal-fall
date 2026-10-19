@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 20:50 UTC
+
+- **Mission art:** every campaign mission now has its own painting at the top of its briefing.
+
 ## 2026-10-19 20:48 UTC
 
 - **Campaign: a briefing between missions.** Next mission on the victory screen now opens the next mission's briefing and reads it aloud, lighting up each paragraph as it is spoken. Start when you're ready, or open the full mission list.

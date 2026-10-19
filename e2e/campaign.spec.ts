@@ -48,6 +48,9 @@ test('campaign: Next mission opens its briefing, read aloud, with the mission li
   await expect(page.getByTestId('mission-briefing')).toContainText('Mission 2');
   await expect(page.getByTestId('mission-briefing')).toContainText('Diesel and Iron');
   await expect(page.locator('.campaign-list')).toHaveCount(0);
+  // The mission's painting heads the briefing.
+  await expect.poll(() => page.locator('.briefing-art img').evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth)).toBeGreaterThan(0);
+  await page.waitForTimeout(1300);
   await page.screenshot({ path: 'test-results/campaign-briefing.png' });
   await page.click('[data-testid=all-missions]');
   await expect(page.locator('.campaign-list')).toBeVisible();

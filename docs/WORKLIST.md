@@ -8,7 +8,7 @@ the status column is updated as each one lands.
 | 1 | **Briefing between missions**: Next mission opens the next briefing and reads it aloud, highlighting the paragraph being spoken | The jump from one mission straight into the next lost the story | done |
 | 2 | **Keep fullscreen** when going from a match to the menus and back | Every screen change was a page load, which drops fullscreen | done |
 | 3 | **Campaign list spacing**: one mission per row, even gaps | The wrapped buttons looked ragged | done |
-| 4 | **Mission art**: one painted image per mission at the top of its briefing (Gemini image pipeline, prompts in `tools/assets/missions/images.json`) | Briefings were text only | in progress |
+| 4 | **Mission art**: one painted image per mission at the top of its briefing (Gemini image pipeline, prompts in `tools/assets/missions/images.json`) | Briefings were text only | done |
 | 5 | **Unit animations**: Hornet rotors spin (and it no longer flies tail first), tank treads crawl, the Ironclad walks, hover craft float and bob, wheeled vehicles rumble | Generated models were static: rotors and treads stood still | in progress |
 | 6 | **In-game menu**: split the crowded pause menu into side sections (Game, Sound, Graphics, Controls) | Too busy to find anything | to do |
 | 7 | **Better voices** (Improvements #200): re-record the announcer and the campaign with Gemini text-to-speech, acted per speaker | Piper sounds flat | to do |

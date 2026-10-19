@@ -12,6 +12,7 @@
     "brand": "tsx brand.ts",
     "terrain-photo": "tsx terrain-photo.ts",
     "meshy": "tsx meshy.ts",
+    "missions": "tsx missions.ts",
     "polyhaven": "tsx polyhaven.ts"
   },
   "devDependencies": {
