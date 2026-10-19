@@ -113,3 +113,11 @@ The last four missions had no scripted events. Now:
 - **Signal Rise:** the HALCYON core is revealed; counterattacks every 4 minutes from 5:00, with Roots from 12:00.
 
 Headless check (AI as the player, Normal campaign difficulty): a Normal AI loses Requiem (5.8 min) and Signal Rise (7.2 min), a Hard AI wins both (6.1, 10.3 min); the escorts fail for the AI because it does not escort WREN.
+
+## Adding a campaign
+
+Campaigns are data: `CAMPAIGNS` in `packages/scenario/src/missions.ts`. Add an entry with an `id`, a `title`, a one-line `blurb`,
+its `acts` (names; a mission's `act` is 1-based into this list) and its `missions`. Mission ids must be unique across all
+campaigns (a test checks this, and that every act exists). With more than one campaign the campaign screen shows a picker;
+progress, "Next mission" and the act tabs work per campaign. Voice lines come from `tools/assets/voices/export-campaign.ts`
+(all campaigns), mission art from `tools/assets/missions/images.json` (one prompt per mission id).

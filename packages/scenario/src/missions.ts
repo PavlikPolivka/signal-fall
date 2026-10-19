@@ -75,7 +75,8 @@ const pct = (x: number, y: number): Pos => ({ pct: [x, y] });
 
 const HOLDOUT_EARLY = ['grunt', 'tankbuster', 'holdfast', 'dynamo', 'bunkhouse', 'homestead'];
 
-export const MISSIONS: MissionSpec[] = [
+/** The first campaign: the war for the Echo, told from all three sides. */
+const SIGNAL_FALL: MissionSpec[] = [
   {
     id: 'dead-air',
     act: 1,
@@ -508,3 +509,35 @@ export const MISSIONS: MissionSpec[] = [
     ],
   },
 ];
+
+/**
+ * A campaign: missions played in order (each unlocked by winning the one before), grouped into acts.
+ * More campaigns slot in here; mission ids must stay unique across all of them.
+ */
+export interface CampaignSpec {
+  id: string;
+  title: string;
+  /** One line for the campaign picker. */
+  blurb: string;
+  /** Act names; a mission's `act` is 1-based into this list. */
+  acts: string[];
+  missions: MissionSpec[];
+}
+
+export const CAMPAIGNS: CampaignSpec[] = [
+  {
+    id: 'signal-fall',
+    title: 'Signal Fall',
+    blurb: 'The war for the Echo, from all three sides.',
+    acts: ['Act I: The Holdout', 'Act II: Halcyon', 'Act III: The Choir', 'Finale'],
+    missions: SIGNAL_FALL,
+  },
+];
+
+/** Every mission of every campaign. */
+export const MISSIONS: MissionSpec[] = CAMPAIGNS.flatMap((c) => c.missions);
+
+/** The campaign a mission belongs to. */
+export function campaignOf(missionId: string): CampaignSpec | null {
+  return CAMPAIGNS.find((c) => c.missions.some((m) => m.id === missionId)) ?? null;
+}

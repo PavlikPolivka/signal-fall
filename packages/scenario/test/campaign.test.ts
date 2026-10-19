@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { defaultRules } from '@signal-fall/data';
 import { MARKER, missionMarkers } from '@signal-fall/sim';
-import { createSim, MISSIONS } from '../src';
+import { CAMPAIGNS, createSim, MISSIONS } from '../src';
 
 describe('campaign', () => {
+  it('campaigns: unique mission ids, and every act a mission names exists', () => {
+    const ids = MISSIONS.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const c of CAMPAIGNS) for (const m of c.missions) expect(m.act >= 1 && m.act <= c.acts.length, `${c.id}/${m.id} act ${m.act}`).toBe(true);
+  });
+
   it('every unit a mission spawns exists (an unknown id would silently spawn nothing)', () => {
     const r = defaultRules();
     const unknown: string[] = [];

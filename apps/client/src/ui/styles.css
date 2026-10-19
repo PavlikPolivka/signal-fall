@@ -2702,6 +2702,15 @@ label.check {
 .campaign-list > .codex-btn {
   margin-top: 18px;
 }
+.campaign-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.campaign-pick button.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
 .act-tabs {
   display: flex;
   gap: 4px;

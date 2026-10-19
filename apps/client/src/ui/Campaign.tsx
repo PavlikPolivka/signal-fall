@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { MISSIONS, type CampaignDifficulty, type MissionSpec } from '../game/scenario';
+import { CAMPAIGNS, campaignOf, type CampaignDifficulty, type CampaignSpec, type MissionSpec } from '../game/scenario';
 import { MenuScreen } from './Setup';
 
 const PROGRESS_KEY = 'signalfall.campaign';
-const ACTS = ['', 'Act I: The Holdout', 'Act II: Halcyon', 'Act III: The Choir', 'Finale'];
-const ACT_TABS = ['', 'Act I', 'Act II', 'Act III', 'Finale'];
+/** Short act names for the tabs: "Act II: Halcyon" shows as "Act II". */
+const actTab = (name: string) => name.split(':')[0]!;
 
 /** Missions won in this browser (by id). */
 export function campaignProgress(): Set<string> {
@@ -50,10 +50,21 @@ function setCampaignDifficulty(v: CampaignDifficulty): void {
   }
 }
 
-/** The next mission after this one, if any. */
+/** The next mission after this one in its campaign, if any. */
 export function nextMission(id: string): MissionSpec | null {
-  const i = MISSIONS.findIndex((m) => m.id === id);
-  return MISSIONS[i + 1] ?? null;
+  const missions = campaignOf(id)?.missions ?? [];
+  const i = missions.findIndex((m) => m.id === id);
+  return i < 0 ? null : (missions[i + 1] ?? null);
+}
+
+const CAMPAIGN_KEY = 'signalfall.campaignId';
+/** The campaign picked last (the first one until then). */
+function lastCampaign(): CampaignSpec {
+  try {
+    return CAMPAIGNS.find((c) => c.id === localStorage.getItem(CAMPAIGN_KEY)) ?? CAMPAIGNS[0]!;
+  } catch {
+    return CAMPAIGNS[0]!;
+  }
 }
 
 /** Play a briefing line from the generated voice files (one per paragraph), one after another. */
@@ -89,9 +100,24 @@ function useBriefingVoice(mission: MissionSpec | null): { playing: boolean; curr
 /** The campaign: missions by act (each unlocked by winning the one before), and a briefing for the chosen one. */
 export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay: (m: MissionSpec) => void; brief?: string | null }) {
   const done = campaignProgress();
-  const firstOpen = MISSIONS.findIndex((m) => !done.has(m.id));
+  const briefedCampaign = brief ? campaignOf(brief) : null;
+  const [campaign, setCampaign] = useState<CampaignSpec>(briefedCampaign ?? lastCampaign());
+  const MISSIONS = campaign.missions;
+  const ACTS = ['', ...campaign.acts];
+  const firstOpenOf = (c: CampaignSpec) => c.missions[Math.max(0, c.missions.findIndex((m) => !done.has(m.id)))]!;
   const briefed = brief ? (MISSIONS.find((m) => m.id === brief) ?? null) : null;
-  const [chosen, setChosen] = useState<MissionSpec | null>(briefed ?? MISSIONS[firstOpen < 0 ? 0 : firstOpen]!);
+  const [chosen, setChosen] = useState<MissionSpec | null>(briefed ?? firstOpenOf(campaign));
+  const pickCampaign = (c: CampaignSpec) => {
+    try {
+      localStorage.setItem(CAMPAIGN_KEY, c.id);
+    } catch {
+      // Not remembered.
+    }
+    setCampaign(c);
+    const m = firstOpenOf(c);
+    setChosen(m);
+    setAct(m.act);
+  };
   // Straight from the last mission: only the briefing, read aloud, until "All missions" opens the list.
   const [focus, setFocus] = useState(!!briefed);
   // One act at a time (no scrolling): the act of the mission shown.
@@ -108,10 +134,19 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
         {!focus && (
         <div class="campaign-list">
           <h1>Campaign</h1>
+          {CAMPAIGNS.length > 1 && (
+            <div class="campaign-pick" data-testid="campaign-pick">
+              {CAMPAIGNS.map((c) => (
+                <button class={c.id === campaign.id ? 'active' : ''} data-campaign={c.id} title={c.blurb} onClick={() => pickCampaign(c)}>
+                  {c.title}
+                </button>
+              ))}
+            </div>
+          )}
           <div class="seg act-tabs" data-testid="act-tabs">
-            {[1, 2, 3, 4].map((a) => (
-              <button class={act === a ? 'active' : ''} data-act={a} title={ACTS[a]} onClick={() => setAct(a)}>
-                {ACT_TABS[a]}
+            {campaign.acts.map((name, k) => (
+              <button class={act === k + 1 ? 'active' : ''} data-act={k + 1} title={name} onClick={() => setAct(k + 1)}>
+                {actTab(name)}
               </button>
             ))}
           </div>
