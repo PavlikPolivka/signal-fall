@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-19 21:05 UTC
+
+- **A calmer pause menu:** Resume and the match actions on the left, the settings split into Sound, Graphics, Controls and Interface on the right. It opens on the briefing, and in a campaign mission that is now the mission's own briefing and objectives.
+
 ## 2026-10-19 20:54 UTC
 
 - **Fullscreen button on every menu:** top right corner, in and out with one click. Fullscreen now carries on from the menus into the match and back.

@@ -25,7 +25,9 @@ test('settings persist across reloads', async ({ page }) => {
   await page.goto('/play/?scenario=sandbox');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await page.keyboard.press('Backquote');
+  await page.getByTestId('menu-section-graphics').click();
   await page.getByTestId('setting-effects-reduced').click();
+  await page.getByTestId('menu-section-controls').click();
   await page.getByTestId('setting-scroll').fill('150');
   await page.reload();
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
@@ -39,6 +41,8 @@ test('a key can be rebound in the menu and works in game', async ({ page }) => {
   await page.goto('/play/?scenario=sandbox');
   await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
   await page.keyboard.press('Backquote');
+  await page.screenshot({ path: 'test-results/pause-menu.png' });
+  await page.getByTestId('menu-section-controls').click();
   await page.click('[data-testid=menu-keys]');
   await page.click('[data-action=stop]');
   await page.keyboard.press('KeyK');

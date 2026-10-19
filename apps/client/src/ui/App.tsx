@@ -1515,8 +1515,25 @@ function Briefing({ state }: { state: ClientState }) {
   const faction = state.rules.factions[state.players[state.localPlayer]?.faction ?? 0]!;
   return (
     <div class="menu briefing" data-testid="briefing">
-      <h3>Objective</h3>
-      <p>Destroy every enemy building. Units left alone don't count.</p>
+      {state.mission ? (
+        <>
+          <h3>{state.mission.title}</h3>
+          {state.mission.briefing.map((p) => (
+            <p>{p}</p>
+          ))}
+          <h3>Objectives</h3>
+          <ul>
+            {state.mission.objectives.map((o) => (
+              <li>{o.text}</li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <h3>Objective</h3>
+          <p>Destroy every enemy building. Units left alone don't count.</p>
+        </>
+      )}
       <h3>{faction.name}</h3>
       <ul>
         {(FACTION_TIPS[faction.id] ?? []).map((t) => (
@@ -1551,10 +1568,22 @@ function Briefing({ state }: { state: ClientState }) {
   );
 }
 
+/** Pause menu sections: the briefing first, then the settings in small groups. */
+const MENU_SECTIONS = [
+  ['briefing', 'Briefing'],
+  ['sound', 'Sound'],
+  ['graphics', 'Graphics'],
+  ['controls', 'Controls'],
+  ['interface', 'Interface'],
+] as const;
+type MenuSection = (typeof MENU_SECTIONS)[number][0];
+
 function Menu({ state, input, audio }: { state: ClientState; input: Input; audio: GameAudio }) {
   const [, force] = useReducer((n: number, _: undefined) => n + 1, 0);
   const [confirmSurrender, setConfirmSurrender] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
+  const briefing = !state.replay && !state.spectator;
+  const [section, setSection] = useState<MenuSection>(briefing ? 'briefing' : 'sound');
   if (keysOpen) return <KeyBindings state={state} onClose={() => setKeysOpen(false)} />;
   const slider = (label: string, kind: 'music' | 'sfx' | 'voice') => (
     <label class="slider">
@@ -1577,191 +1606,242 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
   return (
     <div class="menu-overlay" data-testid="menu">
       <div class="menu-pair">
-      <div class="menu">
-        <h2>{state.multiplayer ? 'Menu' : 'Paused'}</h2>
-        <button onClick={() => input.toggleMenu()}>Resume</button>
-        <button
-          data-testid="menu-codex"
-          onClick={() => {
-            state.codexOpen = true;
-            state.changed();
-          }}
-        >
-          Codex
-        </button>
-        <button onClick={() => void toggleFullscreen().catch(() => undefined)}>Fullscreen</button>
-        {!state.replay && !state.multiplayer && !state.spectator && (
-          <button data-testid="menu-save-game" onClick={() => state.saveGame()} title="Continue it later from the main menu">
-            Save game
+        <div class="menu menu-nav">
+          <h2>{state.multiplayer ? 'Menu' : 'Paused'}</h2>
+          <button class="start" onClick={() => input.toggleMenu()}>
+            Resume
           </button>
-        )}
-        {!state.replay && (
-          <button data-testid="menu-save-replay" onClick={() => state.saveReplay()}>
-            Save replay
-          </button>
-        )}
-        {slider('Music', 'music')}
-        {slider('Effects', 'sfx')}
-        {slider('Announcer', 'voice')}
-        <label class="slider">
-          Scroll
-          <input
-            type="range"
-            min={50}
-            max={200}
-            step={10}
-            value={Math.round(state.settings.scrollSpeed * 100)}
-            data-testid="setting-scroll"
-            onInput={(e) => {
-              state.settings.scrollSpeed = Number((e.currentTarget as HTMLInputElement).value) / 100;
-              state.applySettings();
-            }}
-          />
-          <span>{Math.round(state.settings.scrollSpeed * 100)}%</span>
-        </label>
-        <div class="seg-row">
-          <span>Visual effects</span>
-          {(['full', 'reduced'] as const).map((v) => (
-            <button
-              class={state.settings.effects === v ? 'active' : ''}
-              data-testid={`setting-effects-${v}`}
-              onClick={() => {
-                state.settings.effects = v;
-                state.applySettings();
-              }}
-            >
-              {v === 'full' ? 'Full' : 'Reduced'}
-            </button>
-          ))}
-        </div>
-        <div class="seg-row" title="Lower settings run faster on older computers. Ultra draws at your screen's full sharpness (Retina and other high-DPI screens) with sharper sprites from the next match; it needs a strong graphics card">
-          <span>Graphics</span>
-          {(['ultra', 'high', 'balanced', 'performance'] as const).map((v) => (
-            <button
-              class={state.settings.graphics === v ? 'active' : ''}
-              data-testid={`setting-graphics-${v}`}
-              onClick={() => {
-                state.settings.graphics = v;
-                state.applySettings();
-              }}
-            >
-              {v === 'ultra' ? 'Ultra' : v === 'high' ? 'High' : v === 'balanced' ? 'Balanced' : 'Performance'}
-            </button>
-          ))}
-        </div>
-        {!state.multiplayer && !state.replay && (
-          <div class="seg-row" title="Skirmish only (- and = in game)">
-            <span>Game speed</span>
-            {GAME_SPEEDS.map((v) => (
-              <button class={state.gameSpeed === v ? 'active' : ''} data-testid={`setting-speed-${v}`} onClick={() => state.setGameSpeed(v)}>
-                {v}×
+          <nav class="menu-sections">
+            {MENU_SECTIONS.filter(([id]) => id !== 'briefing' || briefing).map(([id, label]) => (
+              <button class={section === id ? 'active' : ''} data-testid={`menu-section-${id}`} onClick={() => setSection(id)}>
+                {label}
               </button>
+            ))}
+          </nav>
+          <div class="menu-actions">
+            {!state.replay && !state.multiplayer && !state.spectator && (
+              <button data-testid="menu-save-game" onClick={() => state.saveGame()} title="Continue it later from the main menu">
+                Save game
+              </button>
+            )}
+            {!state.replay && (
+              <button data-testid="menu-save-replay" onClick={() => state.saveReplay()}>
+                Save replay
+              </button>
+            )}
+            <button
+              data-testid="menu-codex"
+              onClick={() => {
+                state.codexOpen = true;
+                state.changed();
+              }}
+            >
+              Codex
+            </button>
+            <button
+              data-testid="menu-credits"
+              onClick={() => {
+                state.creditsOpen = true;
+                state.changed();
+              }}
+            >
+              Credits
+            </button>
+            {confirmSurrender ? (
+              <div class="confirm-row" data-testid="surrender-confirm">
+                <span>Give up this match?</span>
+                <button
+                  class="danger"
+                  data-testid="surrender-yes"
+                  onClick={() => {
+                    state.send({ type: 'surrender' });
+                    setConfirmSurrender(false);
+                    input.toggleMenu();
+                  }}
+                >
+                  Surrender
+                </button>
+                <button onClick={() => setConfirmSurrender(false)}>Keep playing</button>
+              </div>
+            ) : (
+              <button data-testid="menu-surrender" onClick={() => setConfirmSurrender(true)}>
+                Surrender
+              </button>
+            )}
+          </div>
+        </div>
+        {section === 'briefing' && briefing && <Briefing state={state} />}
+        {section === 'sound' && (
+          <div class="menu menu-panel" data-testid="menu-panel-sound">
+            <h3>Sound</h3>
+            {slider('Music', 'music')}
+            {slider('Effects', 'sfx')}
+            {slider('Announcer', 'voice')}
+            {(
+              [
+                ['unitVoices', 'Unit voices', 'Units reply when you select or order them'],
+                ['subtitles', 'Subtitles', 'Show what the announcer says'],
+              ] as const
+            ).map(([key, label, title]) => (
+              <div class="seg-row" title={title}>
+                <span>{label}</span>
+                {[true, false].map((v) => (
+                  <button
+                    class={state.settings[key] === v ? 'active' : ''}
+                    data-testid={`setting-${key}-${v ? 'on' : 'off'}`}
+                    onClick={() => {
+                      state.settings[key] = v;
+                      state.applySettings();
+                    }}
+                  >
+                    {v ? 'On' : 'Off'}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         )}
-        <div class="seg-row">
-          <span>Wheel zoom</span>
-          {[false, true].map((v) => (
-            <button
-              class={state.settings.invertWheel === v ? 'active' : ''}
-              data-testid={`setting-wheel-${v ? 'inverted' : 'normal'}`}
-              onClick={() => {
-                state.settings.invertWheel = v;
-                state.applySettings();
-              }}
-            >
-              {v ? 'Inverted' : 'Normal'}
-            </button>
-          ))}
-        </div>
-        <label class="slider">
-          Interface
-          <input
-            type="range"
-            min={80}
-            max={140}
-            step={10}
-            value={state.settings.uiScale}
-            data-testid="setting-ui-scale"
-            onInput={(e) => {
-              state.settings.uiScale = Number((e.currentTarget as HTMLInputElement).value);
-              state.applySettings();
-            }}
-          />
-          <span>{state.settings.uiScale}%</span>
-        </label>
-        {(
-          [
-            ['unitVoices', 'Unit voices', 'Units reply when you select or order them'],
-            ['subtitles', 'Subtitles', 'Show what the announcer says'],
-            ['colorblind', 'Team colors', 'Color-blind friendly team colors'],
-          ] as const
-        ).map(([key, label, title]) => (
-          <div class="seg-row" title={title}>
-            <span>{label}</span>
-            {[true, false].map((v) => (
-              <button
-                class={state.settings[key] === v ? 'active' : ''}
-                data-testid={`setting-${key}-${v ? 'on' : 'off'}`}
-                onClick={() => {
-                  state.settings[key] = v;
+        {section === 'graphics' && (
+          <div class="menu menu-panel" data-testid="menu-panel-graphics">
+            <h3>Graphics</h3>
+            <div class="seg-row" title="Lower settings run faster on older computers. Ultra draws at your screen's full sharpness (Retina and other high-DPI screens) with sharper sprites from the next match; it needs a strong graphics card">
+              <span>Graphics</span>
+              {(['ultra', 'high', 'balanced', 'performance'] as const).map((v) => (
+                <button
+                  class={state.settings.graphics === v ? 'active' : ''}
+                  data-testid={`setting-graphics-${v}`}
+                  onClick={() => {
+                    state.settings.graphics = v;
+                    state.applySettings();
+                  }}
+                >
+                  {v === 'ultra' ? 'Ultra' : v === 'high' ? 'High' : v === 'balanced' ? 'Balanced' : 'Performance'}
+                </button>
+              ))}
+            </div>
+            <div class="seg-row">
+              <span>Visual effects</span>
+              {(['full', 'reduced'] as const).map((v) => (
+                <button
+                  class={state.settings.effects === v ? 'active' : ''}
+                  data-testid={`setting-effects-${v}`}
+                  onClick={() => {
+                    state.settings.effects = v;
+                    state.applySettings();
+                  }}
+                >
+                  {v === 'full' ? 'Full' : 'Reduced'}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => void toggleFullscreen().catch(() => undefined)}>Fullscreen</button>
+          </div>
+        )}
+        {section === 'controls' && (
+          <div class="menu menu-panel" data-testid="menu-panel-controls">
+            <h3>Controls</h3>
+            <label class="slider">
+              Scroll
+              <input
+                type="range"
+                min={50}
+                max={200}
+                step={10}
+                value={Math.round(state.settings.scrollSpeed * 100)}
+                data-testid="setting-scroll"
+                onInput={(e) => {
+                  state.settings.scrollSpeed = Number((e.currentTarget as HTMLInputElement).value) / 100;
                   state.applySettings();
                 }}
-              >
-                {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : v ? 'On' : 'Off'}
-              </button>
-            ))}
-          </div>
-        ))}
-        <div class="seg-row">
-          <span>Hints</span>
-          {[true, false].map((v) => (
-            <button
-              class={state.settings.hints === v ? 'active' : ''}
-              onClick={() => {
-                state.settings.hints = v;
-                state.applySettings();
-              }}
-            >
-              {v ? 'On' : 'Off'}
+              />
+              <span>{Math.round(state.settings.scrollSpeed * 100)}%</span>
+            </label>
+            <div class="seg-row">
+              <span>Wheel zoom</span>
+              {[false, true].map((v) => (
+                <button
+                  class={state.settings.invertWheel === v ? 'active' : ''}
+                  data-testid={`setting-wheel-${v ? 'inverted' : 'normal'}`}
+                  onClick={() => {
+                    state.settings.invertWheel = v;
+                    state.applySettings();
+                  }}
+                >
+                  {v ? 'Inverted' : 'Normal'}
+                </button>
+              ))}
+            </div>
+            {!state.multiplayer && !state.replay && (
+              <div class="seg-row" title="Skirmish only (- and = in game)">
+                <span>Game speed</span>
+                {GAME_SPEEDS.map((v) => (
+                  <button class={state.gameSpeed === v ? 'active' : ''} data-testid={`setting-speed-${v}`} onClick={() => state.setGameSpeed(v)}>
+                    {v}×
+                  </button>
+                ))}
+              </div>
+            )}
+            <button data-testid="menu-keys" onClick={() => setKeysOpen(true)}>
+              Key bindings
             </button>
-          ))}
-        </div>
-        <button data-testid="menu-keys" onClick={() => setKeysOpen(true)}>
-          Keys
-        </button>
-        <button
-          data-testid="menu-credits"
-          onClick={() => {
-            state.creditsOpen = true;
-            state.changed();
-          }}
-        >
-          Credits
-        </button>
-        {confirmSurrender ? (
-          <div class="confirm-row" data-testid="surrender-confirm">
-            <span>Give up this match?</span>
-            <button
-              class="danger"
-              data-testid="surrender-yes"
-              onClick={() => {
-                state.send({ type: 'surrender' });
-                setConfirmSurrender(false);
-                input.toggleMenu();
-              }}
-            >
-              Surrender
-            </button>
-            <button onClick={() => setConfirmSurrender(false)}>Keep playing</button>
           </div>
-        ) : (
-          <button data-testid="menu-surrender" onClick={() => setConfirmSurrender(true)}>
-            Surrender
-          </button>
         )}
-      </div>
-      {!state.replay && !state.spectator && <Briefing state={state} />}
+        {section === 'interface' && (
+          <div class="menu menu-panel" data-testid="menu-panel-interface">
+            <h3>Interface</h3>
+            <label class="slider">
+              Interface
+              <input
+                type="range"
+                min={80}
+                max={140}
+                step={10}
+                value={state.settings.uiScale}
+                data-testid="setting-ui-scale"
+                onInput={(e) => {
+                  state.settings.uiScale = Number((e.currentTarget as HTMLInputElement).value);
+                  state.applySettings();
+                }}
+              />
+              <span>{state.settings.uiScale}%</span>
+            </label>
+            {(
+              [
+                ['colorblind', 'Team colors', 'Color-blind friendly team colors'],
+              ] as const
+            ).map(([key, label, title]) => (
+              <div class="seg-row" title={title}>
+                <span>{label}</span>
+                {[true, false].map((v) => (
+                  <button
+                    class={state.settings[key] === v ? 'active' : ''}
+                    data-testid={`setting-${key}-${v ? 'on' : 'off'}`}
+                    onClick={() => {
+                      state.settings[key] = v;
+                      state.applySettings();
+                    }}
+                  >
+                    {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : v ? 'On' : 'Off'}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <div class="seg-row">
+              <span>Hints</span>
+              {[true, false].map((v) => (
+                <button
+                  class={state.settings.hints === v ? 'active' : ''}
+                  onClick={() => {
+                    state.settings.hints = v;
+                    state.applySettings();
+                  }}
+                >
+                  {v ? 'On' : 'Off'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

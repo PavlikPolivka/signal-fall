@@ -2238,8 +2238,52 @@ table.md-table td {
   margin: 2px 0;
 }
 
-.menu-pair > .menu:first-child {
-  width: 380px;
+.menu-pair {
+  align-items: stretch;
+}
+.menu-pair > .menu.menu-nav {
+  width: 200px;
+  min-width: 200px;
+}
+.menu-pair > .menu.menu-panel,
+.menu-pair > .menu.briefing {
+  width: 400px;
+  min-height: 420px;
+}
+.menu-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.menu-sections button {
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+}
+.menu-sections button.active {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--accent);
+}
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+.menu-actions button {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.menu-panel h3 {
+  margin: 0 0 6px;
+  font: 20px var(--display);
+  letter-spacing: 0.06em;
+  color: var(--accent);
 }
 /* Interface size setting: the panels around the battlefield scale, the battlefield does not. */
 .topbar,
