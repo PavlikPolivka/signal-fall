@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 06:00 UTC
+
+- **See the money come in:** a "+◆700" pops over the refinery each time one of your harvesters unloads.
+
 ## 2026-10-20 05:59 UTC
 
 - **Power at a glance:** hover the power bar to see your three biggest power users and exactly what low power costs you (half-speed building and training, silent defenses, a dark radar, no repairs or support powers).

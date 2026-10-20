@@ -436,6 +436,8 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
           if (holder < 0 || holder === s) {
             e.dock[r] = e.handle(s);
             e.hstate[s] = HARVEST.unloading;
+            // The whole load, for the "+◆" pop over the refinery (cosmetic, not part of the state).
+            pushFx(world, FX_EVENT.credits, e.cargo[s]! + pct(e.cargo[s]!, p.incomeBonusPct), CREDIT_REASON.harvest, p.index, e.x[r]!, e.y[r]!, 0, 0);
           } else e.hstate[s] = HARVEST.waiting;
         } else {
           e.hstate[s] = HARVEST.toRefinery;

@@ -111,12 +111,12 @@ export interface Projectile {
  * ability: a = 1 blink / 2 phase / 3 override / 4 dig in / 5 uplink, b = unit rule index, (x, y) from, (tx, ty) to
  * power:   a = 1 jam / 2 awaken, b = radius (Q10), owner cast it, (x, y) where
  * mission: a = line index (a mission 'say' action)
- * credits: a = amount, b = 1 recompile / 2 salvage / 3 crate (a < 0: crate kind -a), owner gets them, (x, y) where
+ * credits: a = amount, b = 1 recompile / 2 salvage / 3 crate / 4 harvest unload (a < 0: crate kind -a), owner gets them, (x, y) where
  * The sim only appends; it never reads them, so they cannot affect determinism.
  */
 export const FX_EVENT = { fire: 1, impact: 2, death: 3, ability: 4, credits: 5, power: 6, mission: 7, superweapon: 8 } as const;
 /** Why credits were gained (FX_EVENT.credits b). */
-export const CREDIT_REASON = { recompile: 1, salvage: 2, crate: 3 } as const;
+export const CREDIT_REASON = { recompile: 1, salvage: 2, crate: 3, harvest: 4 } as const;
 export const FX_STRIDE = 8;
 /** Events kept when nobody drains them (headless runs). */
 const FX_CAP = FX_STRIDE * 4096;
