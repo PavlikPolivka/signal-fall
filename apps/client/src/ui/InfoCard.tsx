@@ -1,7 +1,8 @@
 import { ARMOR, DAMAGE, type Rules, type StructureRule, type UnitRule, type WeaponRule } from '@signal-fall/data';
 import { TEAM_COLORS, type ClientState } from '../game/state';
 import { Icon } from './Icon';
-import { money, roleNames } from '../game/names';
+import { describeEffect, money, roleNames } from '../game/names';
+import { P } from '../protocol';
 
 const FX = 1024;
 export const ARMOR_LABEL = ['Light', 'Medium', 'Heavy', 'Air', 'Structure'];
@@ -158,6 +159,17 @@ function UnitUpgrades({ state, rule }: { state: ClientState; rule: UnitRule }) {
 }
 
 /** Small card for an entity under the cursor in the world. */
+/** Seen an enemy tech center: which doctrine they chose (doctrines are pairs, one per match). */
+function EnemyDoctrine({ state, player }: { state: ClientState; player: number }) {
+  const done = state.cur!.player(player, P.upgrades);
+  const chosen = state.rules.upgrades.filter((u) => u.excludes && (done & (1 << u.index)) !== 0);
+  return (
+    <div class="muted" data-testid="enemy-doctrine">
+      Doctrine: {chosen.length > 0 ? chosen.map((u) => `${u.name} (${describeEffect(u.effect.kind, u.effect.pct)})`).join(', ') : 'none chosen yet'}
+    </div>
+  );
+}
+
 export function EntityCard({ state, h }: { state: ClientState; h: number }) {
   const off = state.off(h);
   if (off < 0) return null;
@@ -198,6 +210,7 @@ export function EntityCard({ state, h }: { state: ClientState; h: number }) {
         </div>
       )}
       {!own && !ally && <Matchup state={state} h={h} />}
+      {!own && rule.kind === 'structure' && (rule as { role?: string }).role === 'tech' && <EnemyDoctrine state={state} player={owner} />}
       {own && rule.kind === 'unit' && <div class="activity">{activity(cur.get(off, 14), cur.get(off, 23), cur.get(off, 24))}</div>}
       {rule.kind === 'structure' && own && state.mode === 'sell' && (
         <div class="good" data-testid="sell-refund">Sell for {money(Math.floor((rule.cost * state.rules.constants.sellRefundPct) / 100))}</div>

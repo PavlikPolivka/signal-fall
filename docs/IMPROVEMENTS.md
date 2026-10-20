@@ -242,7 +242,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 174 | U | Small kill feed for big losses (structures, tier-3 units) | 3 | S |
 | 175 | U | Optional floating damage numbers, off by default | 2 | S |
 | 176 | U | Notice when a unit is stuck, with a jump-to button | 2 | S |
-| 177 | U | Show the enemy's doctrine once you have seen their tech center | 2 | XS |
+| 177 ✅ | U | Show the enemy's doctrine once you have seen their tech center | 2 | XS |
 
 ### UX and onboarding
 

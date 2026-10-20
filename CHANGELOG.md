@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 06:07 UTC
+
+- **Scout their doctrine:** hover or select an enemy tech center you can see to learn which doctrine they researched.
+
 ## 2026-10-20 06:06 UTC
 
 - **The announcer calls capture points** taken and lost, and a picked-up crate gets its own chime and "Crate collected."
