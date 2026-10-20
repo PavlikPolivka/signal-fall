@@ -129,6 +129,9 @@ importers:
       '@signal-fall/data':
         specifier: workspace:*
         version: link:../packages/data
+      '@signal-fall/scenario':
+        specifier: workspace:*
+        version: link:../packages/scenario
       '@signal-fall/sim':
         specifier: workspace:*
         version: link:../packages/sim

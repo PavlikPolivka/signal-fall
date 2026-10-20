@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 21:40 UTC
+
+- **A proper ending:** winning the last mission of the campaign now opens an epilogue, with new art, read aloud, showing how many missions you won and on which difficulty, and a way to the credits. Once the campaign is done, the campaign screen marks it complete and the epilogue can be replayed from there.
+
 ## 2026-10-20 21:34 UTC
 
 - **The Silent Seed is a real mission now:** WREN first has to hold an old Halcyon relay to copy the proof, which brings a purge down on you. From minute 7 Halcyon besieges the Holdout base, the road to it is watched, and the burning starts at 16:00. A sharper Halcyon AI fights you all the way.

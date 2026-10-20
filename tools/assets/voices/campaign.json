@@ -423,5 +423,23 @@
         "text": "It is over. Look at that: the sun is coming up."
       }
     ]
+  },
+  {
+    "id": "epilogue-signal-fall",
+    "brief": [
+      {
+        "speaker": "holdout",
+        "text": "The array is dark. For the first time in years the screens in the city show nothing at all, and nobody misses them."
+      },
+      {
+        "speaker": "holdout",
+        "text": "The fields still sing. The Cantor says the song is quieter now, but it is theirs again. WREN sits with them most nights, listening."
+      },
+      {
+        "speaker": "holdout",
+        "text": "We lost good people getting here. Tomorrow we start rebuilding. Not the way it was. Better, and together."
+      }
+    ],
+    "lines": []
   }
 ]

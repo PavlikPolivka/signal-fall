@@ -9,6 +9,7 @@
   "dependencies": {
     "@signal-fall/agent": "workspace:*",
     "@signal-fall/data": "workspace:*",
+    "@signal-fall/scenario": "workspace:*",
     "@signal-fall/sim": "workspace:*"
   }
 }

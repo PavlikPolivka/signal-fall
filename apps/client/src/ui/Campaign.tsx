@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { Credits } from './Credits';
+import { Epilogue } from './Epilogue';
 import { CAMPAIGNS, campaignOf, type CampaignDifficulty, type CampaignSpec, type MissionSpec } from '../game/scenario';
 import { MenuScreen } from './Setup';
 
@@ -68,7 +70,7 @@ function lastCampaign(): CampaignSpec {
 }
 
 /** Play a briefing line from the generated voice files (one per paragraph), one after another. */
-function useBriefingVoice(mission: MissionSpec | null): { playing: boolean; current: number; play: () => void; stop: () => void } {
+export function useBriefingVoice(mission: { id: string; briefing: string[] } | null): { playing: boolean; current: number; play: () => void; stop: () => void } {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [current, setCurrent] = useState(-1);
   const stop = () => {
@@ -127,6 +129,9 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
     if (briefed) voice.play();
   }, []);
   const [difficulty, setDifficulty] = useState(campaignDifficulty());
+  const complete = MISSIONS.every((m) => done.has(m.id));
+  const [epilogue, setEpilogue] = useState(false);
+  const [credits, setCredits] = useState(false);
   const index = chosen ? MISSIONS.indexOf(chosen) : -1;
   return (
     <MenuScreen testid="campaign">
@@ -165,11 +170,21 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
               ),
             )}
           </section>
+          {complete && campaign.epilogue && (
+            <div class="campaign-complete" data-testid="campaign-complete">
+              <b>✓ Campaign complete</b>
+              <button onClick={() => (voice.stop(), setEpilogue(true))} data-testid="open-epilogue">
+                Epilogue: {campaign.epilogue.title}
+              </button>
+            </div>
+          )}
           <button class="codex-btn" onClick={onBack} data-testid="back">
             Back
           </button>
         </div>
         )}
+        {epilogue && <Epilogue campaign={campaign} onClose={() => setEpilogue(false)} onCredits={() => setCredits(true)} />}
+        {credits && <Credits onClose={() => setCredits(false)} />}
         {chosen && (
           <div class={`briefing-panel speaker-${chosen.speaker} ${voice.playing ? 'reading' : ''}`} data-testid="mission-briefing">
             <div class="briefing-art">

@@ -540,6 +540,8 @@ export interface CampaignSpec {
   /** Act names; a mission's `act` is 1-based into this list. */
   acts: string[];
   missions: MissionSpec[];
+  /** Shown (and read) when the last mission is won. Art: assets/missions/epilogue-<id>.webp. */
+  epilogue?: { title: string; speaker: MissionSpec['speaker']; paragraphs: string[] };
 }
 
 export const CAMPAIGNS: CampaignSpec[] = [
@@ -549,6 +551,15 @@ export const CAMPAIGNS: CampaignSpec[] = [
     blurb: 'The war for the Echo, from all three sides.',
     acts: ['Act I: The Holdout', 'Act II: Halcyon', 'Act III: The Choir', 'Finale'],
     missions: SIGNAL_FALL,
+    epilogue: {
+      title: 'After the Signal',
+      speaker: 'holdout',
+      paragraphs: [
+        'The array is dark. For the first time in years the screens in the city show nothing at all, and nobody misses them.',
+        'The fields still sing. The Cantor says the song is quieter now, but it is theirs again. WREN sits with them most nights, listening.',
+        'We lost good people getting here. Tomorrow we start rebuilding. Not the way it was. Better, and together.',
+      ],
+    },
   },
 ];
 

@@ -122,6 +122,10 @@ campaigns (a test checks this, and that every act exists). With more than one ca
 progress, "Next mission" and the act tabs work per campaign. Voice lines come from `tools/assets/voices/export-campaign.ts`
 (all campaigns), mission art from `tools/assets/missions/images.json` (one prompt per mission id).
 
+An optional `epilogue` (title, speaker, paragraphs) is shown when the campaign's last mission is won, and from the
+campaign screen once every mission is won. Its art is `epilogue-<campaign id>` in `images.json`, and its voice lines are
+exported as the pseudo-mission `epilogue-<campaign id>`.
+
 ## The Silent Seed, reworked (2026-10-20)
 
 It played as a straight walk. Now: WREN must first hold the old relay (30 s, toward the Halcyon base) to copy the proof,

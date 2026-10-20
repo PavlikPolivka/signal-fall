@@ -21,6 +21,8 @@ import { FACTION_TIPS, GENERAL_TIPS } from './tips';
 import { DailyBoard } from './Daily';
 import { Tutorial } from './Tutorial';
 import { markMissionWon, nextMission } from './Campaign';
+import { Epilogue } from './Epilogue';
+import { campaignOf } from '../game/scenario';
 import { swapSavedSides } from './Setup';
 import { clock } from '../game/saves';
 
@@ -1352,6 +1354,8 @@ function NetOverlays({ state }: { state: ClientState }) {
 function EndScreen({ state }: { state: ClientState }) {
   const cur = state.cur;
   const [watching, setWatching] = useState(false);
+  // The last mission of a campaign won: the epilogue first, then the usual end screen behind it.
+  const [epilogue, setEpilogue] = useState(true);
   // Team games: knocked out (or surrendered) while teammates still fight.
   const out = !!cur && cur.a[1] !== 1 && !state.spectator && !state.replay && cur.player(state.localPlayer, P.defeated) === 1;
   if (out && !watching)
@@ -1369,6 +1373,20 @@ function EndScreen({ state }: { state: ClientState }) {
     );
   if (!cur || cur.a[1] !== 1) return null;
   const won = cur.a[2] === state.players[state.localPlayer]?.team;
+  const finished = state.mission && won && !nextMission(state.mission.id) ? campaignOf(state.mission.id) : null;
+  if (finished?.epilogue && epilogue && !state.replay)
+    return (
+      <Epilogue
+        campaign={finished}
+        justWon={state.mission!.id}
+        closeLabel="Continue"
+        onClose={() => setEpilogue(false)}
+        onCredits={() => {
+          state.creditsOpen = true;
+          state.changed();
+        }}
+      />
+    );
   return (
     <div class="menu-overlay" data-testid="end-screen">
       <div class="menu">

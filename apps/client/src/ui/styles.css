@@ -3028,3 +3028,49 @@ html[data-large-cursor] a {
   padding-left: 18px;
   font-size: 13px;
 }
+/* Campaign complete: the epilogue, a wide panel like the focused briefing. */
+.epilogue-overlay {
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.78);
+}
+.epilogue.briefing-panel {
+  width: min(760px, calc(100vw - 32px));
+  max-width: none;
+  padding: 28px 32px;
+  background: rgba(11, 13, 16, 0.94);
+  border-radius: 10px;
+  animation: briefing-in 0.8s ease-out;
+}
+.epilogue .briefing-art:has(img:not([style*='none'])) {
+  aspect-ratio: 16 / 8;
+}
+.epilogue h2 {
+  font-size: 34px;
+}
+.epilogue .briefing-kicker {
+  color: var(--good);
+}
+.epilogue-record {
+  flex: none;
+  margin: 8px 0;
+  color: var(--muted);
+}
+.campaign-complete {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--good);
+  border-radius: 6px;
+  color: var(--good);
+}
+.campaign-complete button {
+  margin-top: 6px;
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .epilogue.briefing-panel {
+    padding: 16px;
+  }
+  .epilogue h2 {
+    font-size: 24px;
+  }
+}

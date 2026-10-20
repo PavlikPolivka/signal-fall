@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { CAMPAIGNS } from '@signal-fall/scenario';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Win = { __signalFall: any };
@@ -110,4 +111,19 @@ test('campaign: the briefing box keeps its size from mission to mission', async 
     heights.add(Math.round((await page.getByTestId('mission-briefing').boundingBox())!.height));
   }
   expect([...heights]).toHaveLength(1);
+});
+
+test('campaign: once every mission is won, the epilogue opens from the campaign screen and reads aloud', async ({ page }) => {
+  const ids = CAMPAIGNS[0]!.missions.map((m) => m.id);
+  await page.addInitScript((won) => localStorage.setItem('signalfall.campaign', JSON.stringify(won)), ids);
+  await page.goto('/play/?menu=campaign');
+  await page.getByTestId('open-epilogue').click();
+  const epilogue = page.getByTestId('epilogue');
+  await expect(epilogue).toContainText('Campaign complete');
+  await expect(epilogue).toContainText(CAMPAIGNS[0]!.epilogue!.title);
+  await expect(page.getByTestId('epilogue-record')).toContainText(`${ids.length} of ${ids.length} missions won`);
+  // Read aloud: the first paragraph lights up.
+  await expect(epilogue.locator('p.spoken')).toHaveCount(1);
+  await page.getByTestId('epilogue-credits').click();
+  await expect(page.getByTestId('credits')).toBeVisible();
 });
