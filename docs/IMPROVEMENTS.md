@@ -169,7 +169,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 121 | E | Power down a building by hand (click toggle) to free power for what matters, like classic C&C | 4 | S |
 | 122 | E | Primary factory: pick which barracks or factory new units come out of | 3 | S |
 | 123 | E | Selling a building leaves a few infantry, so a dying base can still fight | 3 | S |
-| 124 | E | Cancelling a building in its first 5 seconds refunds everything (misclick forgiveness) | 3 | XS |
+| 124 ✅ | E | Cancelling a building in its first 5 seconds refunds everything (misclick forgiveness; cancelling already refunds everything spent, at any time) | 3 | XS |
 | 125 | E | Gates in wall lines: your units pass, enemies don't | 3 | S |
 | 126 | E | Ambush bonus: the first shot from a unit hidden in brush hits harder | 3 | S |
 | 127 | E | Holdout harvesters below 30% health drive to a Garage on their own | 3 | S |
@@ -211,7 +211,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 148 ✅ | C | Hotkey selects all damaged units, ready to send to repair | 3 | XS |
 | 149 | C | Hotkey jumps between your construction yards | 2 | XS |
 | 150 | C | Remove the selection from a control group (Ctrl+Shift+number) | 2 | XS |
-| 151 | C | Right-click a portrait removes it from the selection; Shift+right-click removes that type | 3 | XS |
+| 151 ✅ | C | Right-click a portrait removes it from the selection; Shift+right-click removes that type | 3 | XS |
 | 152 ✅ | C | Shift-place: keep placing the same structure (turrets, walls) without picking it again | 4 | XS |
 | 153 | C | Drag to lay a whole wall line in one go | 4 | S |
 | 154 | C | Follow camera: lock onto the selected unit | 2 | XS |

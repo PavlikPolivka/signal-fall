@@ -783,8 +783,13 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
                 <button
                   class={`cell ${type === activeType ? 'active' : ''}`}
                   data-type={type}
-                  title={`${members.length} × ${rule.name}: click to select only these, Shift+click to drop them, Tab cycles`}
+                  title={`${members.length} × ${rule.name}: click to select only these, Shift+click to drop them, right-click to drop one (Shift: all), Tab cycles`}
                   onClick={(e) => state.select(e.shiftKey ? sel.filter((x) => !members.includes(x)) : members)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    const drop = e.shiftKey ? members : members.slice(-1);
+                    state.select(sel.filter((x) => !drop.includes(x)));
+                  }}
                 >
                   <Icon state={state} faction={factionId} id={artId(rule)} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
                   {!state.art.has(factionId) && <span>{rule.name.slice(0, 3)}</span>}

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:49 UTC
+
+- **Trim a selection:** right-click a unit card in the selection panel to drop one of that type, or Shift+right-click to drop them all.
+
 ## 2026-10-20 05:48 UTC
 
 - **More match options:** a tech limit (no tier 3, for quick unit matches), a unit cap of 100, 200 or 300, and starting with a small army beside the construction unit. They apply to everyone, the AI included.

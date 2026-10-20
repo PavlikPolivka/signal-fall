@@ -34,3 +34,17 @@ test('events land in the log, and the pause menu briefs the player', async ({ pa
   await page.click('[data-testid=menu-surrender]');
   await expect(page.getByTestId('surrender-confirm')).toBeVisible();
 });
+
+test('right-click on a selection card drops one of that type, Shift+right-click all of them', async ({ page }) => {
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.keyboard.press('Control+KeyA');
+  const count = () => page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length as number);
+  const before = await count();
+  const card = page.locator('[data-testid=selection-groups] .cell').filter({ has: page.locator('.count') }).first();
+  const inCard = Number(await card.locator('.count').textContent());
+  await card.click({ button: 'right' });
+  expect(await count()).toBe(before - 1);
+  await card.click({ button: 'right', modifiers: ['Shift'] });
+  expect(await count()).toBe(before - inCard);
+});
