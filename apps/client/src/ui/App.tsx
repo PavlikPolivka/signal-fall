@@ -1771,6 +1771,9 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
           <button class="start" onClick={() => input.toggleMenu()}>
             Resume
           </button>
+          <button data-testid="menu-fullscreen-game" onClick={() => void toggleFullscreen().catch(() => undefined)}>
+            Fullscreen
+          </button>
           <nav class="menu-sections">
             {MENU_SECTIONS.filter(([id]) => id !== 'briefing' || briefing).map(([id, label]) => (
               <button class={section === id ? 'active' : ''} data-testid={`menu-section-${id}`} onClick={() => setSection(id)}>
@@ -1910,7 +1913,6 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
                 </button>
               ))}
             </div>
-            <button onClick={() => void toggleFullscreen().catch(() => undefined)}>Fullscreen</button>
           </div>
         )}
         {section === 'controls' && (

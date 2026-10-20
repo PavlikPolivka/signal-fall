@@ -416,7 +416,7 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
       <div class="setup-panel wide">
         <h1>Play</h1>
         <p class="muted small setup-sub">Against the AI, with friends, or both: leave a seat to a player and the match opens as a room they join with a code.</p>
-        <div class="setup-cols">
+        <div class="setup-cols three">
           <section>
             <h2>Sides</h2>
             <Choice
@@ -553,17 +553,20 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
                 </button>
               ))}
             </div>
-            <MapSettings value={s} onChange={set} players={s.mode === '2v2' || s.mode === 'ffa4' ? 4 : s.mode === 'ffa3' ? 3 : 2} />
-            <Choice
-              label="Time of day"
-              value={s.time ?? 'day'}
-              options={[
-                ['day', 'Day'],
-                ['dusk', 'Dusk'],
-                ['night', 'Night'],
-              ]}
-              onChange={(v) => set({ time: v })}
-              testid="time"
+            <MapSettings value={s} onChange={set} players={s.mode === '2v2' || s.mode === 'ffa4' ? 4 : s.mode === 'ffa3' ? 3 : 2}
+              extra={
+                <Choice
+                  label="Time of day"
+                  value={s.time ?? 'day'}
+                  options={[
+                    ['day', 'Day'],
+                    ['dusk', 'Dusk'],
+                    ['night', 'Night'],
+                  ]}
+                  onChange={(v) => set({ time: v })}
+                  testid="time"
+                />
+              }
             />
           </section>
         </div>

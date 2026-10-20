@@ -96,7 +96,18 @@ function safePlayers(code: string): number {
  * Map options and a live preview. Used by the skirmish setup and the
  * multiplayer lobby (where only the host may change them).
  */
-export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice; onChange?: (patch: Partial<MapChoice>) => void; players?: number }) {
+export function MapSettings({
+  value,
+  onChange,
+  players = 2,
+  extra,
+}: {
+  value: MapChoice;
+  onChange?: (patch: Partial<MapChoice>) => void;
+  players?: number;
+  /** More choices at the end of the rules column (Play: time of day). */
+  extra?: preact.ComponentChildren;
+}) {
   const readOnly = !onChange;
   const set = (patch: Partial<MapChoice>) => onChange?.(patch);
   // Hand-made maps that fit this many players: the shipped ones and the player's own.
@@ -145,177 +156,186 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
 
   return (
     <div class="map-settings">
-      {choices.length > 0 && (
-        <label class="choice">
-          <span class="label">Map</span>
-          <select value={custom ?? ''} data-testid="map-pick" disabled={readOnly} onChange={(e) => set({ custom: (e.currentTarget as HTMLSelectElement).value || undefined })}>
-            <option value="">Generated (from the seed)</option>
-            {choices.map((m) => (
-              <option value={m.code}>{m.name}</option>
-            ))}
-          </select>
-        </label>
-      )}
-      {!custom && (
-        <>
-          <Choice label="Map size" value={value.size} options={[['S', 'Small'], ['M', 'Medium'], ['L', 'Large']]} onChange={(v) => set({ size: v })} testid="size" disabled={readOnly} />
-          <Choice
-            label="Biome"
-            value={value.biome}
-            options={(Object.keys(BIOME_NAMES) as Biome[]).map((b) => [b, BIOME_NAMES[b]])}
-            onChange={(v) => set({ biome: v })}
-            testid="biome"
-            disabled={readOnly}
-          />
-          <Choice
-            label="Resources"
-            value={value.resources}
-            options={[['low', 'Low'], ['normal', 'Normal'], ['rich', 'Rich']]}
-            onChange={(v) => set({ resources: v })}
-            testid="resources"
-            disabled={readOnly}
-          />
-          <Choice
-            label="Terrain"
-            value={value.terrain}
-            options={[
-              ['open', 'Open'],
-              ['normal', 'Normal'],
-              ['choke', 'Chokepoints'],
-            ]}
-            onChange={(v) => set({ terrain: v })}
-            testid="terrain"
-            disabled={readOnly}
-          />
-          <Choice
-            label="Capture points"
-            value={value.points ?? 'none'}
-            options={[
-              ['none', 'None'],
-              ['some', 'Derricks, towers, depots'],
-            ]}
-            onChange={(v) => set({ points: v })}
-            testid="points"
-            disabled={readOnly}
-          />
-          <Choice
-            label="Victory"
-            value={value.hill ? 'hill' : 'destroy'}
-            options={[
-              ['destroy', 'Destroy every enemy building'],
-              ['hill', 'King of the hill (or destroy)'],
-            ]}
-            onChange={(v) => set({ hill: v === 'hill' })}
-            testid="victory"
-            disabled={readOnly}
-          />
-        </>
-      )}
-      <Choice
-        label="Crates"
-        value={value.crates ? 'on' : 'off'}
-        options={[
-          ['off', 'Off'],
-          ['on', 'Now and then'],
-        ]}
-        onChange={(v) => set({ crates: v === 'on' })}
-        testid="crates"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Credits"
-        value={value.credits ?? 7500}
-        options={[
-          [5000, '◆5,000'],
-          [7500, '◆7,500'],
-          [10000, '◆10,000'],
-          [20000, '◆20,000'],
-        ]}
-        onChange={(v) => set({ credits: v === 7500 ? undefined : v })}
-        testid="credits"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Superweapons"
-        value={value.superweapons === false ? 'off' : 'on'}
-        options={[
-          ['on', 'On'],
-          ['off', 'Off'],
-        ]}
-        onChange={(v) => set({ superweapons: v === 'off' ? false : undefined })}
-        testid="superweapons"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Tech"
-        value={value.techLimit ? 'limited' : 'all'}
-        options={[
-          ['all', 'Everything'],
-          ['limited', 'No tier 3'],
-        ]}
-        onChange={(v) => set({ techLimit: v === 'limited' ? true : undefined })}
-        testid="tech-limit"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Unit cap"
-        value={value.unitCap ?? 200}
-        options={[
-          [100, '100'],
-          [200, '200'],
-          [300, '300'],
-        ]}
-        onChange={(v) => set({ unitCap: v === 200 ? undefined : v })}
-        testid="unit-cap-option"
-        disabled={readOnly}
-      />
-      <Choice
-        label="Start with"
-        value={value.startArmy ? 'army' : 'base'}
-        options={[
-          ['base', 'Construction unit'],
-          ['army', 'A small army too'],
-        ]}
-        onChange={(v) => set({ startArmy: v === 'army' ? true : undefined })}
-        testid="start-army"
-        disabled={readOnly}
-      />
-      {!custom && (
-        <div class="choice" title={HINTS.Seed}>
-          <span class="label has-hint">Seed</span>
-          <div class="seed">
-            <input
-              type="number"
-              value={value.seed}
-              readOnly={readOnly}
-              data-testid="seed"
-              // Every keystroke counts: a re-render (a lobby update) before the field loses focus would put the old seed back.
-              onInput={(e) => set({ seed: Number((e.currentTarget as HTMLInputElement).value) || 0 })}
+      <div class="map-col">
+        {choices.length > 0 && (
+          <label class="choice">
+            <span class="label">Map</span>
+            <select value={custom ?? ''} data-testid="map-pick" disabled={readOnly} onChange={(e) => set({ custom: (e.currentTarget as HTMLSelectElement).value || undefined })}>
+              <option value="">Generated (from the seed)</option>
+              {choices.map((m) => (
+                <option value={m.code}>{m.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {!custom && (
+          <>
+            <Choice label="Map size" value={value.size} options={[['S', 'Small'], ['M', 'Medium'], ['L', 'Large']]} onChange={(v) => set({ size: v })} testid="size" disabled={readOnly} />
+            <Choice
+              label="Biome"
+              value={value.biome}
+              options={(Object.keys(BIOME_NAMES) as Biome[]).map((b) => [b, BIOME_NAMES[b]])}
+              onChange={(v) => set({ biome: v })}
+              testid="biome"
+              disabled={readOnly}
             />
-            {!readOnly && (
-              <button onClick={() => set({ seed: randomSeed() })} data-testid="seed-random">
-                Random
-              </button>
+            <Choice
+              label="Resources"
+              value={value.resources}
+              options={[['low', 'Low'], ['normal', 'Normal'], ['rich', 'Rich']]}
+              onChange={(v) => set({ resources: v })}
+              testid="resources"
+              disabled={readOnly}
+            />
+            <Choice
+              label="Terrain"
+              value={value.terrain}
+              options={[
+                ['open', 'Open'],
+                ['normal', 'Normal'],
+                ['choke', 'Chokepoints'],
+              ]}
+              onChange={(v) => set({ terrain: v })}
+              testid="terrain"
+              disabled={readOnly}
+            />
+          </>
+        )}
+        {!custom && (
+          <div class="choice" title={HINTS.Seed}>
+            <span class="label has-hint">Seed</span>
+            <div class="seed">
+              <input
+                type="number"
+                value={value.seed}
+                readOnly={readOnly}
+                data-testid="seed"
+                // Every keystroke counts: a re-render (a lobby update) before the field loses focus would put the old seed back.
+                onInput={(e) => set({ seed: Number((e.currentTarget as HTMLInputElement).value) || 0 })}
+              />
+              {!readOnly && (
+                <button onClick={() => set({ seed: randomSeed() })} data-testid="seed-random">
+                  Random
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        <div class="setup-map">
+          <canvas ref={canvas} width={460} height={460} data-testid="map-preview" />
+          <div class="setup-map-info">
+            <b>
+              {map.width}×{map.height}
+            </b>
+            <span>{BIOME_NAMES[map.biome]}</span>
+            {custom ? (
+              <span class="muted">hand-made: {choices.find((m) => m.code === custom)?.name}</span>
+            ) : (
+              <>
+                <span class="muted">{map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')} symmetry</span>
+                <span class="muted">seed {map.seedUsed}</span>
+              </>
             )}
           </div>
         </div>
-      )}
-      <div class="setup-map">
-        <canvas ref={canvas} width={460} height={460} data-testid="map-preview" />
-        <div class="setup-map-info">
-          <b>
-            {map.width}×{map.height}
-          </b>
-          <span>{BIOME_NAMES[map.biome]}</span>
-          {custom ? (
-            <span class="muted">hand-made: {choices.find((m) => m.code === custom)?.name}</span>
-          ) : (
-            <>
-              <span class="muted">{map.symmetry.replace('mirror', 'mirror ').replace('rotate180', 'rotated')} symmetry</span>
-              <span class="muted">seed {map.seedUsed}</span>
-            </>
-          )}
-        </div>
+      </div>
+      <div class="rules-col">
+        {!custom && (
+          <>
+            <Choice
+              label="Capture points"
+              value={value.points ?? 'none'}
+              options={[
+                ['none', 'None'],
+                ['some', 'Derricks, towers, depots'],
+              ]}
+              onChange={(v) => set({ points: v })}
+              testid="points"
+              disabled={readOnly}
+            />
+            <Choice
+              label="Victory"
+              value={value.hill ? 'hill' : 'destroy'}
+              options={[
+                ['destroy', 'Destroy every enemy building'],
+                ['hill', 'King of the hill (or destroy)'],
+              ]}
+              onChange={(v) => set({ hill: v === 'hill' })}
+              testid="victory"
+              disabled={readOnly}
+            />
+          </>
+        )}
+        <Choice
+          label="Crates"
+          value={value.crates ? 'on' : 'off'}
+          options={[
+            ['off', 'Off'],
+            ['on', 'Now and then'],
+          ]}
+          onChange={(v) => set({ crates: v === 'on' })}
+          testid="crates"
+          disabled={readOnly}
+        />
+        <Choice
+          label="Credits"
+          value={value.credits ?? 7500}
+          options={[
+            [5000, '◆5,000'],
+            [7500, '◆7,500'],
+            [10000, '◆10,000'],
+            [20000, '◆20,000'],
+          ]}
+          onChange={(v) => set({ credits: v === 7500 ? undefined : v })}
+          testid="credits"
+          disabled={readOnly}
+        />
+        <Choice
+          label="Superweapons"
+          value={value.superweapons === false ? 'off' : 'on'}
+          options={[
+            ['on', 'On'],
+            ['off', 'Off'],
+          ]}
+          onChange={(v) => set({ superweapons: v === 'off' ? false : undefined })}
+          testid="superweapons"
+          disabled={readOnly}
+        />
+        <Choice
+          label="Tech"
+          value={value.techLimit ? 'limited' : 'all'}
+          options={[
+            ['all', 'Everything'],
+            ['limited', 'No tier 3'],
+          ]}
+          onChange={(v) => set({ techLimit: v === 'limited' ? true : undefined })}
+          testid="tech-limit"
+          disabled={readOnly}
+        />
+        <Choice
+          label="Unit cap"
+          value={value.unitCap ?? 200}
+          options={[
+            [100, '100'],
+            [200, '200'],
+            [300, '300'],
+          ]}
+          onChange={(v) => set({ unitCap: v === 200 ? undefined : v })}
+          testid="unit-cap-option"
+          disabled={readOnly}
+        />
+        <Choice
+          label="Start with"
+          value={value.startArmy ? 'army' : 'base'}
+          options={[
+            ['base', 'Construction unit'],
+            ['army', 'A small army too'],
+          ]}
+          onChange={(v) => set({ startArmy: v === 'army' ? true : undefined })}
+          testid="start-army"
+          disabled={readOnly}
+        />
+        {extra}
       </div>
     </div>
   );

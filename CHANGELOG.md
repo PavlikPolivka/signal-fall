@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-20 10:33 UTC
+
+- **Play fits on one screen:** sides, the map with its preview, and the match rules now sit in three columns, no scrolling. Rooms use the same layout.
+- **Fullscreen in the pause menu** sits right under Resume instead of inside Graphics.
+
 ## 2026-10-20 10:30 UTC
 
 - **New campaign voices:** Captain Varga, HALCYON and the Cantor are re-recorded with a far more natural, acted voice in Dead Air, Diesel and Iron, Cut the Cable, Kessel Dam, First Note, Phase, Requiem, The Silent Seed and Signal Rise. The other missions and the announcer follow.

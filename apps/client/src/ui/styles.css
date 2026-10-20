@@ -2985,3 +2985,29 @@ html[data-large-cursor] a {
       5 3,
     default;
 }
+/* Map settings: the map (with its preview) and the match rules side by side. */
+.map-settings {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+.map-settings .map-col,
+.map-settings .rules-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+/* Play: sides, map, rules in three columns, no scrolling on a laptop screen. */
+.setup .setup-panel.wide:has(.setup-cols.three) {
+  width: min(1320px, calc(100vw - 48px));
+}
+.setup-cols.three {
+  grid-template-columns: 1fr 2.1fr;
+}
+@media (max-width: 1100px) {
+  .map-settings {
+    grid-template-columns: 1fr;
+  }
+}
