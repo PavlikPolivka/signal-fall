@@ -467,6 +467,20 @@ export class ClientState {
   private lastOptions = -1;
   private lastStrikes = 0;
   private lastSuperReady = false;
+  /** Tick each build queue (structures, defenses) finished at, while it waits to be placed (-1: not waiting). */
+  private readySince = [-1, -1];
+
+  /** How long a finished building has waited to be placed (ticks), 0 when none waits. */
+  readyWaiting(category: number): number {
+    const cur = this.cur;
+    if (!cur || !cur.buildQueue(this.localPlayer, category).ready) {
+      this.readySince[category] = -1;
+      return 0;
+    }
+    if (this.readySince[category]! < 0) this.readySince[category] = cur.tick;
+    return cur.tick - this.readySince[category]!;
+  }
+
   /** Tick since when credits stayed above the idle-money hint's line (-1: they don't). */
   floatSince = -1;
   /** Last seen charge (ticks left) of each enemy superweapon, for the 30-second warning. */

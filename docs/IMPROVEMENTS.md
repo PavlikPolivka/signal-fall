@@ -225,15 +225,15 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 |---|---|---|---|---|
 | 158 | U | Power bar tooltip lists the biggest users and what goes offline at low power | 3 | XS |
 | 159 ✅ | U | Every disabled build button says why in one line (needs radar, one per player) | 4 | XS |
-| 160 | U | A finished structure waiting to be placed pulses its tab after 10 seconds | 3 | XS |
-| 161 | U | Research progress shows in the top bar when the tech center isn't selected | 3 | XS |
+| 160 ✅ | U | A finished structure waiting to be placed pulses its tab after 10 seconds | 3 | XS |
+| 161 ✅ | U | Research progress shows in the top bar when the tech center isn't selected | 3 | XS |
 | 162 ✅ | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |
-| 163 | U | Army size against the unit cap in the top bar | 3 | XS |
+| 163 ✅ | U | Army size against the unit cap in the top bar | 3 | XS |
 | 164 | U | Harvester load bar (how full it is) under the health bar | 3 | XS |
 | 165 | U | Echo left in a field on hover; the minimap shades fields as they run dry | 4 | S |
 | 166 | U | Minimap marks capture points, crates and the hill flag with clear icons | 3 | XS |
 | 167 | U | Minimap filters: hide terrain, show only units, show Echo | 2 | S |
-| 168 | U | Cost turns red on a build button when you can't afford it now | 3 | XS |
+| 168 ✅ | U | Cost turns red on a build button when you can't afford it now | 3 | XS |
 | 169 | U | Exact seconds left on hover over a queued item | 2 | XS |
 | 170 | U | Rally point line shown while a factory is selected | 3 | XS |
 | 171 | U | Hover a selected unit to see a line to what it is shooting | 2 | XS |

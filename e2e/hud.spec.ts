@@ -6,6 +6,7 @@ type Win = { __signalFall: any };
 test('idle army counter selects the idle units; tabs show queued counts', async ({ page }) => {
   await page.goto('/play/?scenario=sandbox');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await expect(page.getByTestId('unit-cap')).toHaveText(/^\d+\/200$/);
   const idle = page.getByTestId('idle-army');
   await expect(idle).toContainText('idle');
   await idle.click();

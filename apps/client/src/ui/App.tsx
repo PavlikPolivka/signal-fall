@@ -111,6 +111,8 @@ function TopBar({ state, input }: { state: ClientState; input: Input }) {
         </span>
       )}
       {!state.spectator && <ArmyCounts state={state} />}
+      {!state.spectator && <UnitCap state={state} />}
+      {!state.spectator && <ResearchPill state={state} />}
       <HillScore state={state} />
       <SuperTimers state={state} />
       <WaveCounter state={state} />
@@ -242,6 +244,40 @@ function SuperTimers({ state }: { state: ClientState }) {
   );
 }
 
+/** Units against the cap: production stops at the cap. */
+function UnitCap({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur) return null;
+  let n = 0;
+  for (let i = 0; i < cur.entityCount; i++) {
+    const h = cur.get(cur.ent(i), 0);
+    if (state.isOwn(h) && state.isUnit(h) && state.ruleOf(h).kind === 'unit') n++;
+  }
+  const cap = state.rules.constants.unitCap;
+  return (
+    <span class={`unit-cap ${n >= cap ? 'full' : n * 10 >= cap * 9 ? 'near' : ''}`} data-testid="unit-cap" title="Units against the cap: factories stop at the cap">
+      {n}/{cap}
+    </span>
+  );
+}
+
+/** Research running while the tech center is out of sight: name and progress. */
+function ResearchPill({ state }: { state: ClientState }) {
+  const cur = state.cur;
+  if (!cur) return null;
+  const active = cur.player(state.localPlayer, P.researchItem);
+  if (active < 0) return null;
+  const selectedTech = state.selection.some((h) => state.isOwn(h) && state.ruleOf(h).kind === 'structure' && (state.ruleOf(h) as { role?: string }).role === 'tech');
+  if (selectedTech) return null;
+  const u = state.rules.upgrades[active];
+  if (!u) return null;
+  return (
+    <span class="research-pill" data-testid="research-pill" title={`Researching ${u.name}`}>
+      {u.name} <b>{Math.floor(cur.player(state.localPlayer, P.researchProgress) / 10)}%</b>
+    </span>
+  );
+}
+
 /** Own army at a glance: how many of each combat unit type (click a type to select them all). */
 function ArmyCounts({ state }: { state: ClientState }) {
   const cur = state.cur;
@@ -352,9 +388,11 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
           const producer = unitTab < 0 ? 'conyard' : unitTab === 0 ? 'barracks' : unitTab === 1 ? 'factory' : 'airfield';
           const queued = !cur ? 0 : unitTab >= 0 ? cur.productionQueue(state.localPlayer, unitTab).items.length : cur.buildQueue(state.localPlayer, t.id === 'structures' ? 0 : 1).item >= 0 ? 1 : 0;
           const idle = queued === 0 && (roles.get(producer) ?? 0) > 0 && t.id !== 'defenses';
+          // A finished building left unplaced for 10 seconds: the tab pulses.
+          const waiting = unitTab < 0 && !!cur && state.readyWaiting(t.id === 'structures' ? 0 : 1) >= 10 * 20;
           return (
             <button
-              class={`${state.sidebarTab === t.id ? 'active' : ''} ${idle ? 'idle' : ''}`}
+              class={`${state.sidebarTab === t.id ? 'active' : ''} ${idle ? 'idle' : ''} ${waiting ? 'waiting' : ''}`}
               data-tab={t.id}
               title={`${t.label} (${t.key}, then the item's letter)${idle ? ': nothing in production' : queued ? `: ${queued} queued` : ''}`}
               onClick={() => ((state.sidebarTab = t.id), state.changed())}
@@ -462,7 +500,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
               <Icon state={state} faction={faction.id} id={it.id} color={teamColor} />
               {progress > 0 && !ready && <i class="progress" style={{ '--p': `${progress / 10}%` }} />}
               <span class={`name ${faction.monospaceNames ? 'mono' : ''}`}>{it.name}</span>
-              <span class="cost">{ready ? 'READY' : money(it.cost)}</span>
+              <span class={`cost ${!ready && progress === 0 && cur && cur.credits(state.localPlayer) < it.cost ? 'short' : ''}`}>{ready ? 'READY' : money(it.cost)}</span>
               {it.key && <kbd class="key">{it.key}</kbd>}
               {count > 0 && <b class="count">{count}</b>}
               {repeating && <b class="repeat" data-testid="repeat-badge" title="Repeating: right-click to stop">∞</b>}

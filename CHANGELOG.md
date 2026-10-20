@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-20 05:40 UTC
+
+- **Top bar:** your unit count against the 200-unit cap (orange when you're close), and the research in progress when the tech center isn't selected.
+- **Build buttons:** a price you can't pay right now turns red, and a tab pulses when a finished building has waited 10 seconds to be placed.
+
 ## 2026-10-20 05:39 UTC
 
 - **Smarter tips:** if credits sit above ◆3,000 for a minute, a tip nudges you to spend them, and if your refineries have fewer than two harvesters each, a tip says so.
