@@ -35,6 +35,8 @@ export interface LobbyMap {
   hill?: boolean;
   /** A hand-made map's share code. */
   custom?: string;
+  credits?: number;
+  superweapons?: boolean;
 }
 
 export interface LobbyState {

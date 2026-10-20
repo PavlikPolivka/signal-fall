@@ -96,7 +96,7 @@ function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null 
 }
 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
-  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom };
+  const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, credits: s.credits, superweapons: s.superweapons };
   const style = s.personality && s.personality !== 'random' ? s.personality : null;
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
   if (s.mode === '2v2')
@@ -239,6 +239,7 @@ state.daily = daily ? daily.label : null;
 state.tutorial = !!tutorial;
 state.mission = scenario?.kind === 'mission' ? missionById(scenario.id) : null;
 state.campaignDifficulty = scenario?.kind === 'mission' ? (scenario.difficulty ?? 'normal') : 'normal';
+state.noSuperweapons = scenario?.kind === 'skirmish' && scenario.map.superweapons === false;
 state.rematch = () => {
   if (!lastRoom) return;
   const me = lastRoom.slots[localSlot]?.player?.id;

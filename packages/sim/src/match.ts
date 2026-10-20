@@ -31,6 +31,9 @@ export interface MatchSetup {
   survivalPct?: number;
   mission?: import('./systems/mission').MissionRules;
   allow?: string[];
+  /** Match options: starting credits for everyone (default from the rules), and superweapons off. */
+  credits?: number;
+  noSuperweapons?: boolean;
 }
 
 /** A real match: each player starts with one construction unit and the starting credits. */
@@ -51,10 +54,12 @@ export function createMatch(setup: MatchSetup): Sim {
     survivalHorde: setup.survivalHorde,
     mission: setup.mission,
     allow: setup.allow,
+    noSuperweapons: setup.noSuperweapons,
     survivalPct: setup.survivalPct,
   });
   setup.players.forEach((p, i) => {
     if (i === setup.survivalHorde) return;
+    if (setup.credits !== undefined) sim.world.players[i]!.credits = setup.credits;
     const start = map.starts[i]!;
     const cu = rules.factions[p.faction]!.constructionUnit;
     spawnUnit(sim.world, cu, i, (start.x << FX_SHIFT) + FX_HALF, (start.y << FX_SHIFT) + FX_HALF);

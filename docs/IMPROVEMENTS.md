@@ -182,8 +182,8 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 132 | E | Starting credits option (5k / 10k / 20k) | 4 | XS |
-| 133 | E | Superweapons on or off in the map options | 4 | XS |
+| 132 ✅ | E | Starting credits option (5k / 10k / 20k) | 4 | XS |
+| 133 ✅ | E | Superweapons on or off in the map options | 4 | XS |
 | 134 | E | Tech limit option (no tier 3) for quick, unit-only matches | 3 | XS |
 | 135 | E | Unit cap option (low / normal / high) | 3 | XS |
 | 136 | E | Start with a small army instead of only the construction vehicle | 3 | XS |
@@ -256,7 +256,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 183 | O | Short tooltips on every map option in setup (Resources, Terrain, Victory) | 3 | XS |
 | 184 | O | Skirmish setup remembers settings per mode (1v1, FFA, Survival) | 2 | XS |
 | 185 | O | Sandbox from the main menu: free credits, no enemy army, test any unit | 3 | S |
-| 186 | O | Campaign difficulty choice (Story, Normal, Hard) | 4 | S |
+| 186 ✅ | O | Campaign difficulty choice (Story, Normal, Hard) | 4 | S |
 | 187 | O | Restart a campaign mission from a mid-mission save | 3 | S |
 | 188 | O | Replay timeline marks big fights and lost buildings; click to jump | 4 | S |
 | 189 | O | "Play this map" from a replay (same seed and factions) | 2 | XS |

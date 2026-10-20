@@ -108,6 +108,8 @@ export class ClientState {
   mission: import('./scenario').MissionSpec | null = null;
   /** Campaign difficulty of the mission being played. */
   campaignDifficulty: import('./scenario').CampaignDifficulty = 'normal';
+  /** Match option: superweapons off (their build buttons are hidden). */
+  noSuperweapons = false;
   /** The tutorial match. */
   tutorial = false;
   /** Playing today's daily challenge (its description), or null. */

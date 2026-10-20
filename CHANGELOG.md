@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:30 UTC
+
+- **New match options:** starting credits (◆5,000 to ◆20,000) and superweapons on or off, on Play and in multiplayer rooms. With superweapons off nobody can build one, the AI included.
+
 ## 2026-10-20 05:27 UTC
 
 - **Room for every tank:** a group parks with a hull's length between rows, and parked vehicles keep their distance, so tanks and trucks no longer sit on top of each other.

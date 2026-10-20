@@ -583,7 +583,7 @@ export class AiPlayer implements Brain {
     for (const role of this.profile.later) {
       // Only AIs that use powers build a superweapon (Easy and Normal would leave it idle), and only
       // once the match has gone long or money piles up: early on the credits belong in the army.
-      if (role === 'superweapon' && ((!this.d.abilities && !this.directed) || (world.tick < SUPERWEAPON_AFTER && p.credits < 2 * FLOAT_CREDITS))) continue;
+      if (role === 'superweapon' && (world.noSuperweapons || (!this.d.abilities && !this.directed) || (world.tick < SUPERWEAPON_AFTER && p.credits < 2 * FLOAT_CREDITS))) continue;
       if (this.count(own, role) === 0) return role;
     }
     // Money piling up means production is the bottleneck: another barracks or factory

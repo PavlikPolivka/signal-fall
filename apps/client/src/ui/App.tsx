@@ -318,7 +318,8 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   const roles = state.roles();
   const structureTab = state.sidebarTab === 'structures' || state.sidebarTab === 'defenses';
   // Missions unlock things as the campaign goes on.
-  const allowed = (id: string) => !state.mission?.allow || state.mission.allow.includes(id);
+  const allowed = (id: string) =>
+    (!state.mission?.allow || state.mission.allow.includes(id)) && !(state.noSuperweapons && state.rules.structures[state.rules.structureIndex.get(id) ?? -1]?.role === 'superweapon');
   const items: (UnitRule | StructureRule)[] = structureTab
     ? faction.structures.map((i) => state.rules.structures[i]!).filter((s) => s.category === state.sidebarTab && allowed(s.id))
     : faction.units.map((i) => state.rules.units[i]!).filter((u) => u.tab === state.sidebarTab && allowed(u.id));

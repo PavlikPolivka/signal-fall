@@ -19,6 +19,10 @@ export interface MapChoice {
   hill?: boolean;
   /** A hand-made map (its share code) instead of a generated one. */
   custom?: string;
+  /** Starting credits for everyone (the default when missing). */
+  credits?: number;
+  /** Superweapons allowed (default yes). */
+  superweapons?: boolean;
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -189,6 +193,30 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         ]}
         onChange={(v) => set({ crates: v === 'on' })}
         testid="crates"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Credits"
+        value={value.credits ?? 7500}
+        options={[
+          [5000, '◆5,000'],
+          [7500, '◆7,500'],
+          [10000, '◆10,000'],
+          [20000, '◆20,000'],
+        ]}
+        onChange={(v) => set({ credits: v === 7500 ? undefined : v })}
+        testid="credits"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Superweapons"
+        value={value.superweapons === false ? 'off' : 'on'}
+        options={[
+          ['on', 'On'],
+          ['off', 'Off'],
+        ]}
+        onChange={(v) => set({ superweapons: v === 'off' ? false : undefined })}
+        testid="superweapons"
         disabled={readOnly}
       />
       {!custom && (

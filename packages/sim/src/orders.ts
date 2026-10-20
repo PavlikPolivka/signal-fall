@@ -197,6 +197,8 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
     case 'build':
       // Missions unlock buildings one by one.
       if (c.player === 0 && world.allow && !world.allow.has(world.rules.structures[cmd.item]?.id ?? '')) return;
+      // Match option: no superweapons, for anyone.
+      if (world.noSuperweapons && world.rules.structures[cmd.item]?.role === 'superweapon') return;
       startBuild(world, c.player, cmd.category, cmd.item, cmd.tx, cmd.ty);
       return;
     case 'cancelBuild': {
