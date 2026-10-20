@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:52 UTC
+
+- **Play explains itself:** hover any match option for a line on what it does, and the faction you pick shows how it plays in three lines and how hard it is to learn.
+
 ## 2026-10-20 05:51 UTC
 
 - **Minimap:** crates you can see show as gold squares, and the King-of-the-hill flag has its own flag icon.

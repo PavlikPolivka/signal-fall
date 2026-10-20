@@ -109,3 +109,12 @@ test('Play: leaving a seat to a player opens the match as a room, set up the sam
   await expect(page.getByTestId('seat-3')).toContainText('AI');
   await expect(page.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('4321');
 });
+
+test('Play explains each option on hover and how the chosen faction plays', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-skirmish]');
+  await expect(page.getByTestId('faction-style')).toContainText('Holdout · learn: Easy');
+  await page.click('[data-testid=faction] [data-value="2"]');
+  await expect(page.getByTestId('faction-style')).toContainText('Choir · learn: Hard');
+  await expect(page.locator('.choice', { has: page.getByTestId('resources') })).toHaveAttribute('title', /Echo/);
+});

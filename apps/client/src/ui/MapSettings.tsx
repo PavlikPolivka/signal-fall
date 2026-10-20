@@ -35,6 +35,24 @@ export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
 
 export const BIOME_NAMES: Record<Biome, string> = { wasteland: 'Wasteland', city: 'Ruined city', crystal: 'Crystal fields' };
 
+/** What each setup option does, in a line: shown when hovering it. */
+const HINTS: Record<string, string> = {
+  'Map size': 'How big the map is: larger maps mean longer marches and later fights.',
+  Biome: 'The look of the land: open wasteland, ruined city blocks (infantry can hold out in the ruins), or crystal fields.',
+  Resources: 'How much Echo there is to harvest: low makes every field precious, rich lets everyone build big.',
+  Terrain: 'Open plains for big tank battles, or chokepoints where a few defenses hold a pass.',
+  'Capture points': 'Derricks pay credits, watchtowers show the ground around them, depots repair: stand next to one to take it.',
+  Victory: 'Destroy every enemy building, or hold the hill in the middle long enough.',
+  Crates: 'Crates drop now and then: credits, a repair or a veteran rank for the unit that picks one up.',
+  Credits: 'What everyone starts with.',
+  Superweapons: "Each faction's tier-3 superweapon: a five-minute charge, then a strike anyone can see coming.",
+  Tech: 'No tier 3 makes a quicker match: no heavy units and no superweapons.',
+  'Unit cap': 'Units each player may have at once: factories stop at the cap.',
+  'Start with': 'Only the construction unit, or a few soldiers and two light vehicles beside it for a faster start.',
+  Seed: 'The number the map is made from: the same seed and settings always give the same map.',
+  Mode: '1v1, 2v2, free-for-all, or Survival against waves.',
+};
+
 export function Choice<T extends string | number>(props: {
   label: string;
   value: T;
@@ -42,10 +60,13 @@ export function Choice<T extends string | number>(props: {
   onChange: (v: T) => void;
   testid: string;
   disabled?: boolean;
+  /** One line on what the option does (defaults by label). */
+  hint?: string;
 }) {
+  const hint = props.hint ?? HINTS[props.label];
   return (
-    <div class="choice">
-      <span class="label">{props.label}</span>
+    <div class="choice" title={hint}>
+      <span class={`label ${hint ? 'has-hint' : ''}`}>{props.label}</span>
       <div class="seg" data-testid={props.testid}>
         {props.options.map(([v, text]) => (
           <button
@@ -260,8 +281,8 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         disabled={readOnly}
       />
       {!custom && (
-        <div class="choice">
-          <span class="label">Seed</span>
+        <div class="choice" title={HINTS.Seed}>
+          <span class="label has-hint">Seed</span>
           <div class="seed">
             <input
               type="number"

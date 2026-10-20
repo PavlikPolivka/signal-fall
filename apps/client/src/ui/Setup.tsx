@@ -5,6 +5,7 @@ import type { Difficulty, StrategyName } from '@signal-fall/ai';
 import { clock, recentMatches, savedGame } from '../game/saves';
 import { Codex } from './Codex';
 import { DailyPanel } from './Daily';
+import { FACTION_STYLE } from './tips';
 import { Editor } from './Editor';
 import { Campaign } from './Campaign';
 import { Changes } from './Changes';
@@ -485,6 +486,19 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
                 </div>
               ))}
             </div>
+            {(() => {
+              const style = FACTION_STYLE[rules.factions[s.faction]?.id ?? ''];
+              return style ? (
+                <div class="faction-style" data-testid="faction-style">
+                  <b>
+                    {rules.factions[s.faction]!.name} · learn: {style.learn}
+                  </b>
+                  {style.lines.map((l) => (
+                    <span>{l}</span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
             {seatsOf(s).some((k) => k !== 'ally' && !s.people?.includes(k)) && (
               <>
                 <Choice

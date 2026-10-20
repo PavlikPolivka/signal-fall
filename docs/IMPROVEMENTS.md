@@ -253,7 +253,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 180 | O | Match report adds idle factory time and floated credits | 4 | S |
 | 181 | O | Post-match tips: three things to do better, based on the report | 4 | S |
 | 182 | O | "More in the Codex" link on hover cards opens the right entry | 3 | S |
-| 183 | O | Short tooltips on every map option in setup (Resources, Terrain, Victory) | 3 | XS |
+| 183 ✅ | O | Short tooltips on every map option in setup (Resources, Terrain, Victory) | 3 | XS |
 | 184 | O | Skirmish setup remembers settings per mode (1v1, FFA, Survival) | 2 | XS |
 | 185 | O | Sandbox from the main menu: free credits, no enemy army, test any unit | 3 | S |
 | 186 ✅ | O | Campaign difficulty choice (Story, Normal, Hard) | 4 | S |
@@ -262,7 +262,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 189 | O | "Play this map" from a replay (same seed and factions) | 2 | XS |
 | 190 | O | Full keyboard navigation of every menu | 2 | S |
 | 191 | O | Confirm before the host leaves a multiplayer lobby | 2 | XS |
-| 192 | O | Faction picker shows a three-line play style and how hard it is to learn | 3 | XS |
+| 192 ✅ | O | Faction picker shows a three-line play style and how hard it is to learn | 3 | XS |
 
 ### Graphics
 

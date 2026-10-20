@@ -33,3 +33,19 @@ export const FACTION_TIPS: Record<string, string[]> = {
     'Awaken (Q, then click an Echo field near your structures) raises two shard guardians for 20 seconds.',
   ],
 };
+
+/** The faction picker: how each side plays, in three short lines, and how hard it is to learn. */
+export const FACTION_STYLE: Record<string, { lines: [string, string, string]; learn: 'Easy' | 'Medium' | 'Hard' }> = {
+  holdout: {
+    lines: ['Tough, cheap and straightforward: tanks, guns and walls.', 'Builds next to its own structures; infantry digs in to hold ground.', 'Scraps wrecks for credits, so it gains from every fight.'],
+    learn: 'Easy',
+  },
+  halcyon: {
+    lines: ['Fast hover machines that fight best inside their own network.', 'Build relays first: coverage speeds up fire and repairs units in it.', 'Units lost in coverage pay part of their cost back.'],
+    learn: 'Medium',
+  },
+  choir: {
+    lines: ['Crystal beings that grow from the Echo fields.', 'Shields heal between fights; hurt units phase out or blink away.', 'They grow stronger together: keep them close and pick your fights.'],
+    learn: 'Hard',
+  },
+};
