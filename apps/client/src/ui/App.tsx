@@ -3,7 +3,7 @@ import { go, toggleFullscreen } from '../nav';
 import { HILL_TICKS, KIND, MARKER, POINT } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E, H, P, P_HILL } from '../protocol';
-import { TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
+import { SUPER_WARN, TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
 import { chordLabel, chordOf, withOverrides } from '../input/keymap';
@@ -230,7 +230,8 @@ function SuperTimers({ state }: { state: ClientState }) {
     <span class="super-timers" data-testid="super-timers">
       {rows.map(({ k, status, rule }) => (
         <span
-          class={`super-timer ${status === 0 ? 'ready' : status < 60 * 20 ? 'soon' : ''}`}
+          class={`super-timer ${status === 0 ? 'ready' : status <= SUPER_WARN ? 'imminent' : status < 60 * 20 ? 'soon' : ''}`}
+          data-testid={`super-timer-${k}`}
           style={{ borderColor: hex(TEAM_COLORS[k % TEAM_COLORS.length]!) }}
           title={`${state.names[k] ?? `Player ${k + 1}`}: ${rule!.name} (${rule!.superweapon!.name})${status === 0 ? ' is charged' : ` charges in ${mss(status)}`}`}
         >

@@ -17,3 +17,12 @@ test('superweapons charge in public: own button, every timer in the top bar, the
   expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.mode)).toBe('normal');
   expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.superweaponRule().id)).toBe('long_tom');
 });
+
+test('an enemy superweapon is announced 30 seconds before it is ready, and its timer flashes', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.evaluate(() => (window as unknown as Win).__signalFall.state.post({ type: 'speed', speed: 16 }));
+  await expect(page.getByTestId('alert')).toContainText('Enemy superweapon in 30 seconds', { timeout: 90_000 });
+  await expect(page.locator('[data-testid=super-timer-1]')).toHaveClass(/imminent/);
+});

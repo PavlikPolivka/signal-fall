@@ -69,6 +69,9 @@ export function setColorblind(on: boolean): void {
  * interpolation) plus purely local UI state. UI components subscribe for
  * change notifications.
  */
+/** Warn about an enemy superweapon this many ticks before it is ready (30 s). */
+export const SUPER_WARN = 30 * 20;
+
 export class ClientState {
   readonly rules: Rules;
   width = 0;
@@ -464,6 +467,8 @@ export class ClientState {
   private lastOptions = -1;
   private lastStrikes = 0;
   private lastSuperReady = false;
+  /** Last seen charge (ticks left) of each enemy superweapon, for the 30-second warning. */
+  private lastEnemySuper: number[] = [];
 
   private detectEconomyEvents(): void {
     const cur = this.cur;
@@ -485,6 +490,16 @@ export class ClientState {
       if (!(this.lastStrikes & (1 << st.player)))
         this.alert(st.player === this.localPlayer ? `${this.superweaponRule()?.superweapon?.name ?? 'Superweapon'} launched` : 'Superweapon launch detected', st.x, st.y, st.player === this.localPlayer ? 'notice' : 'alert');
     this.lastStrikes = strikes.reduce((bits, st) => bits | (1 << st.player), 0);
+    // An enemy superweapon getting close: warned at 30 seconds, and when it is ready.
+    const myTeam = this.players[this.localPlayer]?.team;
+    this.players.forEach((p, k) => {
+      if (k === this.localPlayer || p.team === myTeam) return;
+      const st = this.superStatus(k);
+      const was = this.lastEnemySuper[k] ?? -1;
+      if (st > 0 && st <= SUPER_WARN && (was < 0 || was > SUPER_WARN)) this.alert('Enemy superweapon in 30 seconds', -1, -1);
+      if (st === 0 && was !== 0 && was >= 0) this.alert('Enemy superweapon ready', -1, -1);
+      this.lastEnemySuper[k] = st;
+    });
     const ready = this.superStatus() === 0;
     if (ready && !this.lastSuperReady) this.notice(`${this.superweaponRule()?.superweapon?.name ?? 'Superweapon'} ready`);
     this.lastSuperReady = ready;

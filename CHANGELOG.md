@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:37 UTC
+
+- **Superweapon warnings:** an enemy superweapon's timer flashes in its last 30 seconds, and the announcer warns you then and again when it is ready. A launch now sounds an air-raid siren you can't mistake for any other alert.
+
 ## 2026-10-20 05:35 UTC
 
 - **Greyed-out build buttons say why:** hover one to see the reason on its card: what it requires, that you need a factory first, that another building is already in progress, or that it is one per player.

@@ -13,6 +13,9 @@ export type VoiceLine =
   | 'research_complete'
   | 'new_options'
   | 'field_depleted'
+  | 'super_launch'
+  | 'super_30'
+  | 'super_enemy_ready'
   | 'victory'
   | 'defeat';
 
@@ -31,6 +34,9 @@ export const LINE_TEXT: Record<VoiceLine, string> = {
   research_complete: 'Research complete.',
   new_options: 'New construction options.',
   field_depleted: 'Echo field depleted.',
+  super_launch: 'Warning: superweapon launch detected.',
+  super_30: 'Enemy superweapon ready in thirty seconds.',
+  super_enemy_ready: 'Enemy superweapon is ready.',
   victory: 'Victory.',
   defeat: 'Defeat.',
 };

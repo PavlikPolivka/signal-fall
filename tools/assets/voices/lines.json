@@ -13,7 +13,10 @@
     "unit_lost": "Unit lost.",
     "research_complete": "Research complete.",
     "new_options": "New construction options.",
-    "field_depleted": "Echo field depleted."
+    "field_depleted": "Echo field depleted.",
+    "super_launch": "Warning: superweapon launch detected.",
+    "super_30": "Enemy superweapon ready in thirty seconds.",
+    "super_enemy_ready": "Enemy superweapon is ready."
   },
   "holdout": {
     "victory": "Victory. The line held.",

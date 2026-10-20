@@ -227,7 +227,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 159 ✅ | U | Every disabled build button says why in one line (needs radar, one per player) | 4 | XS |
 | 160 | U | A finished structure waiting to be placed pulses its tab after 10 seconds | 3 | XS |
 | 161 | U | Research progress shows in the top bar when the tech center isn't selected | 3 | XS |
-| 162 | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |
+| 162 ✅ | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |
 | 163 | U | Army size against the unit cap in the top bar | 3 | XS |
 | 164 | U | Harvester load bar (how full it is) under the health bar | 3 | XS |
 | 165 | U | Echo left in a field on hover; the minimap shades fields as they run dry | 4 | S |
@@ -281,8 +281,8 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
 | 200 | V | Better voices: replace the Piper announcer and campaign briefings with a more natural, acted TTS model (emotion, pacing, per-faction character), keep the radio / synthetic / chord treatments, and re-record every line | 5 | M |
-| 201 | V | Siren for "superweapon launch detected", distinct from every other alert | 4 | XS |
-| 202 | V | Announcer: "enemy superweapon ready" | 3 | XS |
+| 201 ✅ | V | Siren for "superweapon launch detected", distinct from every other alert | 4 | XS |
+| 202 ✅ | V | Announcer: "enemy superweapon ready" | 3 | XS |
 | 203 | V | Announcer for capture points taken and lost | 3 | XS |
 | 204 | V | Acknowledgements for entering and leaving a garrison | 2 | XS |
 | 205 | V | Crate pickup sound and voice line | 2 | XS |

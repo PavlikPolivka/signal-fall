@@ -55,6 +55,9 @@ const VOICE_FOR: Record<string, VoiceLine> = {
   'Research complete': 'research_complete',
   'New construction options': 'new_options',
   'Echo field depleted': 'field_depleted',
+  'Superweapon launch detected': 'super_launch',
+  'Enemy superweapon in 30 seconds': 'super_30',
+  'Enemy superweapon ready': 'super_enemy_ready',
 };
 const PLACEMENT_TEXTS = new Set<string>(Object.values(PLACEMENT_MESSAGES));
 
@@ -254,6 +257,7 @@ export class GameAudio {
       else if (a.text === 'Construction complete') this.play('complete');
       else if (a.text === 'Unit ready') this.play('ready');
       else if (a.text === 'Low power') this.play('lowPower');
+      else if (a.text === 'Superweapon launch detected') this.play('siren');
       else if (a.text.endsWith('under attack')) this.play('alarm', undefined, undefined, a.text.startsWith('Base') ? 0.9 : 0.55);
       if (line) say(line);
     }

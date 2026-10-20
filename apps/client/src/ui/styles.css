@@ -2877,6 +2877,11 @@ label.check {
 .super-timer.soon {
   color: #ffb46d;
 }
+.super-timer.imminent {
+  color: #ffd34d;
+  border-color: #ffd34d !important;
+  animation: super-blink 0.5s steps(2) infinite;
+}
 .super-timer.ready {
   color: #ff6a4a;
   animation: super-blink 1s steps(2) infinite;

@@ -103,6 +103,13 @@ export const SFX: Record<string, Layer[]> = {
     { wave: 'square', f0: 660, filter: { type: 'lowpass', f0: 2600 }, gain: 0.2, decay: 0.16, at: 0.48 },
   ],
   lowPower: [{ wave: 'sawtooth', f0: 440, f1: 90, filter: { type: 'lowpass', f0: 1800, f1: 300 }, gain: 0.3, decay: 0.7 }],
+  // Superweapon launch: an air-raid siren, rising and falling, unlike every other alert.
+  siren: [
+    { wave: 'sawtooth', f0: 380, f1: 1150, filter: { type: 'lowpass', f0: 2600 }, gain: 0.22, attack: 0.25, decay: 0.8 },
+    { wave: 'sawtooth', f0: 1150, f1: 380, filter: { type: 'lowpass', f0: 2600 }, gain: 0.22, attack: 0.05, decay: 0.8, at: 0.8 },
+    { wave: 'sawtooth', f0: 380, f1: 1150, filter: { type: 'lowpass', f0: 2600 }, gain: 0.22, attack: 0.25, decay: 0.8, at: 1.6 },
+    { wave: 'sawtooth', f0: 1150, f1: 380, filter: { type: 'lowpass', f0: 2600 }, gain: 0.22, attack: 0.05, decay: 0.9, at: 2.4 },
+  ],
   cash: [
     { wave: 'sine', f0: 1568, gain: 0.25, decay: 0.12 },
     { wave: 'sine', f0: 2093, gain: 0.25, decay: 0.2, at: 0.06 },
