@@ -80,7 +80,8 @@ def speak(text, cast):
 def words(s):
     # Transcripts sometimes carry timestamps ("00:08"); names come back as sound-alikes (WREN, "Ren").
     s = re.sub(r'\b\d+:\d+(\.\d+)?\b', ' ', s)
-    return re.sub(r'[^a-z0-9 ]', ' ', s.lower().replace('-', ' ')).split()
+    out = re.sub(r'[^a-z0-9 ]', ' ', s.lower().replace('-', ' ')).split()
+    return ['wren' if w == 'ren' else w for w in out]
 
 
 def heard(wav):
@@ -122,7 +123,11 @@ def take(name, text, cast):
             break
         print(f'  retake {name}: heard "{" ".join(got)}"')
     else:
-        print(f'  KEPT A MISMATCH for {name}: check it by ear')
+        # No good take: keep whatever the game has now (the old voice) and list the line to try again.
+        print(f'  FAILED {name}: kept the current recording, listed for a retry')
+        with open(os.path.join(RAW, 'failed.txt'), 'a') as f:
+            f.write(name + '\n')
+        return None
     os.makedirs(os.path.dirname(raw), exist_ok=True)
     open(raw, 'wb').write(wav)
     return wav
@@ -157,9 +162,11 @@ for kind in kinds:
         if only and not any(name.startswith(f'{kind}/{o}') or o in name for o in only):
             continue
         try:
-            take(name, text, cast)
+            wav = take(name, text, cast)
         except DailyQuota as q:
             sys.exit(f'Daily quota used up ({q}). Run again tomorrow: finished lines are kept.')
+        if wav is None:
+            continue
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         treat(os.path.join(RAW, name + '.wav'), dest, treatment, rate, bitrate)
         print(name, os.path.getsize(dest) // 1024, 'KB')

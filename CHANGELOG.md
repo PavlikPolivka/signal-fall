@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 10:30 UTC
+
+- **New campaign voices:** Captain Varga, HALCYON and the Cantor are re-recorded with a far more natural, acted voice in Dead Air, Diesel and Iron, Cut the Cable, Kessel Dam, First Note, Phase, Requiem, The Silent Seed and Signal Rise. The other missions and the announcer follow.
+
 ## 2026-10-20 06:36 UTC
 
 - **Ready check in rooms:** every player presses Ready before the host can start, and changing the mode or map asks everyone again, so nobody starts a match they didn't agree to. Ranked matches still start by themselves.
