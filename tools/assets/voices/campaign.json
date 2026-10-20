@@ -374,6 +374,22 @@
       {
         "speaker": "holdout",
         "text": "This is Varga. We hear you, little drone. Come in."
+      },
+      {
+        "speaker": "choir",
+        "text": "The old tower still remembers. Stand by it while the small one listens."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Proof copied by an unauthorized process. Purge it."
+      },
+      {
+        "speaker": "holdout",
+        "text": "Varga here. They are on our walls. Hurry that drone!"
+      },
+      {
+        "speaker": "choir",
+        "text": "The burning comes soon. Hurry."
       }
     ]
   },

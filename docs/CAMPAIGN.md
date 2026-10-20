@@ -121,3 +121,9 @@ its `acts` (names; a mission's `act` is 1-based into this list) and its `mission
 campaigns (a test checks this, and that every act exists). With more than one campaign the campaign screen shows a picker;
 progress, "Next mission" and the act tabs work per campaign. Voice lines come from `tools/assets/voices/export-campaign.ts`
 (all campaigns), mission art from `tools/assets/missions/images.json` (one prompt per mission id).
+
+## The Silent Seed, reworked (2026-10-20)
+
+It played as a straight walk. Now: WREN must first hold the old relay (30 s, toward the Halcyon base) to copy the proof,
+which sets off a purge wave; from 7:00 Halcyon besieges the Holdout base every 2 minutes; the last stretch has an ambush;
+the burning starts at 16:00 (warning at 13:00, the mission is lost at 16:00). Halcyon's AI is Hard.

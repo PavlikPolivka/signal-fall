@@ -458,16 +458,24 @@ const SIGNAL_FALL: MissionSpec[] = [
       'A small machine sings to us. It calls itself WREN. It says the great machine will burn every field on the world.',
       'It carries the proof. Guard it across the wastes until the iron ones hear it.',
     ],
-    lines: [['halcyon', 'WREN, you are in error.'], ['holdout', 'This is Varga. We hear you, little drone. Come in.']],
+    lines: [
+      ['halcyon', 'WREN, you are in error.'],
+      ['holdout', 'This is Varga. We hear you, little drone. Come in.'],
+      ['choir', 'The old tower still remembers. Stand by it while the small one listens.'],
+      ['halcyon', 'Proof copied by an unauthorized process. Purge it.'],
+      ['holdout', 'Varga here. They are on our walls. Hurry that drone!'],
+      ['choir', 'The burning comes soon. Hurry.'],
+    ],
     map: { seed: 3404, size: 'M', biome: 'wasteland', resources: 'normal', terrain: 'normal' },
     seats: [
       { faction: 2, team: 0, start: 'base', credits: 7000, units: [['basso', 2], ['staccato', 4]] },
-      { faction: 1, team: 1, ai: 'normal', start: 'base' },
+      { faction: 1, team: 1, ai: 'hard', start: 'base' },
       { faction: 0, team: 0, start: 'base' },
     ],
     objectives: [
       { text: 'Keep WREN alive', kind: 'protect', tag: 'wren' },
-      { text: 'Bring WREN to the Holdout base', kind: 'reach', area: { ...s(2), r: 8 }, tag: 'wren' },
+      { text: 'Hold the old relay while WREN copies the proof (0:30)', kind: 'hold', area: { ...pct(58, 48), r: 5 }, ticks: 30 * 20 },
+      { text: 'Bring WREN to the Holdout base before the burning starts (16:00)', kind: 'reach', area: { ...s(2), r: 8 }, tag: 'wren' },
     ],
     triggers: [
       { at: 20, actions: [{ kind: 'spawn', player: 0, unit: 'fork', count: 1, at: s(0, 3, 3), tag: 'wren' }, { kind: 'reveal', area: { ...s(2), r: 8 } }] },
@@ -475,7 +483,17 @@ const SIGNAL_FALL: MissionSpec[] = [
       { at: MIN, every: 60 * 20, until: 12 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 2, grow: 1, max: 6, at: s(1, -5, -5), attack: pct(40, 50) }] },
       { at: 4 * MIN, every: 90 * 20, until: 12 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'seek', count: 1, grow: 1, max: 3, at: s(1), attack: pct(40, 50) }] },
       { enter: { ...pct(36, 50), r: 10 }, actions: [{ kind: 'say', line: 0 }, { kind: 'spawn', player: 1, unit: 'lance', count: 3, at: pct(52, 58), attack: pct(36, 50) }, { kind: 'spawn', player: 1, unit: 'vector', count: 2, at: pct(52, 58), attack: pct(36, 50) }] },
-      { objective: 1, actions: [{ kind: 'say', line: 1 }] },
+      { at: 30 * 20, actions: [{ kind: 'say', line: 2 }, { kind: 'reveal', area: { ...pct(58, 48), r: 6 } }] },
+      // The proof copied: Halcyon throws everything at the relay.
+      { objective: 1, actions: [{ kind: 'say', line: 3 }, { kind: 'spawn', player: 1, unit: 'vector', count: 4, at: s(1, -6, -6), attack: pct(50, 60) }, { kind: 'spawn', player: 1, unit: 'lance', count: 4, at: s(1, -6, -6), attack: pct(50, 60) }] },
+      // From minute 7 Halcyon besieges the Holdout base: no time to dawdle.
+      { at: 7 * MIN, actions: [{ kind: 'say', line: 4 }] },
+      { at: 7 * MIN, every: 2 * MIN, until: 16 * MIN, actions: [{ kind: 'spawn', player: 1, unit: 'sentry', count: 3, grow: 1, max: 7, at: s(1, -6, -2), attack: s(2) }, { kind: 'spawn', player: 1, unit: 'lance', count: 2, grow: 1, max: 4, at: s(1, -6, -2), attack: s(2) }] },
+      // The last stretch is watched too.
+      { enter: { ...pct(30, 72), r: 8 }, actions: [{ kind: 'spawn', player: 1, unit: 'lance', count: 3, at: pct(42, 82), attack: pct(30, 72) }, { kind: 'spawn', player: 1, unit: 'vector', count: 2, at: pct(42, 82), attack: pct(30, 72) }] },
+      { at: 13 * MIN, actions: [{ kind: 'say', line: 5 }] },
+      { at: 16 * MIN, actions: [{ kind: 'lose' }] },
+      { objective: 2, actions: [{ kind: 'say', line: 1 }] },
     ],
   },
   {

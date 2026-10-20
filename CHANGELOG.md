@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 21:34 UTC
+
+- **The Silent Seed is a real mission now:** WREN first has to hold an old Halcyon relay to copy the proof, which brings a purge down on you. From minute 7 Halcyon besieges the Holdout base, the road to it is watched, and the burning starts at 16:00. A sharper Halcyon AI fights you all the way.
+
 ## 2026-10-20 21:32 UTC
 
 - **Hornet rotors really spin now:** the rotor frames were rendered with the blades frozen in place. They turn in flight as they should.

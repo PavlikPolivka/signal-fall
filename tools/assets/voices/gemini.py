@@ -172,7 +172,7 @@ for kind in kinds:
             continue
         try:
             # One model per set, or per faction for the announcer (each faction is its own voice).
-            model = CFG.get('models', {}).get(kind)
+            model = os.environ.get('GEMINI_MODEL') or CFG.get('models', {}).get(kind)
             if isinstance(model, dict):
                 model = model.get(treatment)
             wav = take(name, text, cast, model)
