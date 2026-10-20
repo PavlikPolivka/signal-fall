@@ -16,6 +16,9 @@ export type VoiceLine =
   | 'super_launch'
   | 'super_30'
   | 'super_enemy_ready'
+  | 'point_taken'
+  | 'point_lost'
+  | 'crate'
   | 'victory'
   | 'defeat';
 
@@ -37,6 +40,9 @@ export const LINE_TEXT: Record<VoiceLine, string> = {
   super_launch: 'Warning: superweapon launch detected.',
   super_30: 'Enemy superweapon ready in thirty seconds.',
   super_enemy_ready: 'Enemy superweapon is ready.',
+  point_taken: 'Capture point taken.',
+  point_lost: 'Capture point lost.',
+  crate: 'Crate collected.',
   victory: 'Victory.',
   defeat: 'Defeat.',
 };

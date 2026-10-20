@@ -1,7 +1,7 @@
 import { DAMAGE, type Rules } from '@signal-fall/data';
 import { FX_EVENT, FX_STRIDE, KIND } from '@signal-fall/sim';
 import type { ClientState } from '../game/state';
-import { E } from '../protocol';
+import { E, ENT_FLAG } from '../protocol';
 import { isoX, isoY } from '../game/iso';
 import { Music } from './music';
 import { renderSfx } from './sfx';
@@ -60,6 +60,8 @@ const VOICE_FOR: Record<string, VoiceLine> = {
   'Superweapon launch detected': 'super_launch',
   'Enemy superweapon in 30 seconds': 'super_30',
   'Enemy superweapon ready': 'super_enemy_ready',
+  'Capture point taken': 'point_taken',
+  'Capture point lost': 'point_lost',
 };
 const PLACEMENT_TEXTS = new Set<string>(Object.values(PLACEMENT_MESSAGES));
 
@@ -97,6 +99,8 @@ export class GameAudio {
   private lastAmbience = 0;
   private pingsSeen = 0;
   private chatSeen = 0;
+  /** Own soldiers inside ruins at the last look (-1: not counted yet). */
+  private garrisoned = -1;
   /** Interface cues pitched per faction: Holdout low and mechanical, Halcyon bright, Choir deep. */
   private uiRate = 1;
 
@@ -205,7 +209,13 @@ export class GameAudio {
       } else if (kind === FX_EVENT.power) {
         this.play('alarm', x, y, 0.8);
       } else if (kind === FX_EVENT.credits) {
-        if (events[i + 3] === s.localPlayer && !s.spectator) this.play('coin', x, y, 0.6);
+        if (events[i + 3] === s.localPlayer && !s.spectator) {
+          // A crate (reason 3) gets its own chime and a word from the announcer.
+          if (b === 3) {
+            this.play('crate', x, y, 0.8);
+            this.announcer()?.say('crate');
+          } else this.play('coin', x, y, 0.6);
+        }
       } else if (kind === FX_EVENT.death) {
         if (a === KIND.structure) this.play('bigBoom', x, y, 1);
         else if (a === KIND.unit && this.rules.units[b]?.tab !== 'infantry') this.play('boom', x, y, 0.85);
@@ -287,6 +297,19 @@ export class GameAudio {
     if (selection !== this.lastSelection) {
       this.lastSelection = selection;
       if (s.selectedUnits().some((h) => s.ruleOf(h).kind === 'unit')) ack('select');
+    }
+    // Soldiers going into ruins or coming out reply, with a thud of the door.
+    if (cur && !s.spectator) {
+      let inside = 0;
+      for (let i = 0; i < cur.entityCount; i++) {
+        const o = cur.ent(i);
+        if (cur.get(o, E.owner) === s.localPlayer && (cur.get(o, E.flags) & ENT_FLAG.garrisoned) !== 0) inside++;
+      }
+      if (this.garrisoned >= 0 && inside !== this.garrisoned) {
+        this.play('place', undefined, undefined, 0.5);
+        if (inside > this.garrisoned) ack('move');
+      }
+      this.garrisoned = inside;
     }
     // A ping or a chat line from someone else gets a short chirp.
     const pinged = s.mapPings.length > 0 ? s.mapPings[s.mapPings.length - 1]!.time : 0;

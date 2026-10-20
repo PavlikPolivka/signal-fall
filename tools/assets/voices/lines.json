@@ -16,7 +16,10 @@
     "field_depleted": "Echo field depleted.",
     "super_launch": "Warning: superweapon launch detected.",
     "super_30": "Enemy superweapon ready in thirty seconds.",
-    "super_enemy_ready": "Enemy superweapon is ready."
+    "super_enemy_ready": "Enemy superweapon is ready.",
+    "point_taken": "Capture point taken.",
+    "point_lost": "Capture point lost.",
+    "crate": "Crate collected."
   },
   "holdout": {
     "victory": "Victory. The line held.",

@@ -473,6 +473,8 @@ export class ClientState {
   private lastOptions = -1;
   private lastStrikes = 0;
   private lastSuperReady = false;
+  /** Owner of each capture point at the last look (for taken/lost announcements). */
+  private lastPointOwners: number[] = [];
   /** Tick each build queue (structures, defenses) finished at, while it waits to be placed (-1: not waiting). */
   private readySince = [-1, -1];
 
@@ -512,6 +514,18 @@ export class ClientState {
       if (!(this.lastStrikes & (1 << st.player)))
         this.alert(st.player === this.localPlayer ? `${this.superweaponRule()?.superweapon?.name ?? 'Superweapon'} launched` : 'Superweapon launch detected', st.x, st.y, st.player === this.localPlayer ? 'notice' : 'alert');
     this.lastStrikes = strikes.reduce((bits, st) => bits | (1 << st.player), 0);
+    // Capture points changing hands (ours taken, ours lost).
+    const points = cur.points();
+    const team = (p: number) => (p >= 0 ? this.players[p]?.team : undefined);
+    const mine = this.players[this.localPlayer]?.team;
+    points.forEach((pt, i) => {
+      const was = this.lastPointOwners[i];
+      this.lastPointOwners[i] = pt.owner;
+      if (was === undefined || was === pt.owner || this.spectator) return;
+      const at = (v: number) => (v << 10) + 512;
+      if (team(pt.owner) === mine && team(was) !== mine) this.alert('Capture point taken', at(pt.x), at(pt.y), 'notice');
+      else if (team(was) === mine && team(pt.owner) !== mine) this.alert('Capture point lost', at(pt.x), at(pt.y));
+    });
     // An enemy superweapon getting close: warned at 30 seconds, and when it is ready.
     const myTeam = this.players[this.localPlayer]?.team;
     this.players.forEach((p, k) => {

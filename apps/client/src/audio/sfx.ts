@@ -103,6 +103,12 @@ export const SFX: Record<string, Layer[]> = {
     { wave: 'square', f0: 660, filter: { type: 'lowpass', f0: 2600 }, gain: 0.2, decay: 0.16, at: 0.48 },
   ],
   lowPower: [{ wave: 'sawtooth', f0: 440, f1: 90, filter: { type: 'lowpass', f0: 1800, f1: 300 }, gain: 0.3, decay: 0.7 }],
+  // A crate picked up: a quick bright arpeggio.
+  crate: [
+    { wave: 'triangle', f0: 784, gain: 0.3, attack: 0.005, decay: 0.09 },
+    { wave: 'triangle', f0: 1047, gain: 0.3, attack: 0.005, decay: 0.09, at: 0.07 },
+    { wave: 'triangle', f0: 1568, gain: 0.3, attack: 0.005, decay: 0.2, at: 0.14 },
+  ],
   // Superweapon launch: an air-raid siren, rising and falling, unlike every other alert.
   siren: [
     { wave: 'sawtooth', f0: 380, f1: 1150, filter: { type: 'lowpass', f0: 2600 }, gain: 0.22, attack: 0.25, decay: 0.8 },

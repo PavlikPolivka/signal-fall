@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-20 06:06 UTC
+
+- **The announcer calls capture points** taken and lost, and a picked-up crate gets its own chime and "Crate collected."
+- **Ruins answer back:** soldiers reply as they go into ruins, and you hear the door when they come out.
+
 ## 2026-10-20 06:04 UTC
 
 - **Rematch, sides swapped:** after a 1v1 against the AI, play the same map again as the other faction.
