@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 06:36 UTC
+
+- **Ready check in rooms:** every player presses Ready before the host can start, and changing the mode or map asks everyone again, so nobody starts a match they didn't agree to. Ranked matches still start by themselves.
+
 ## 2026-10-20 06:07 UTC
 
 - **Scout their doctrine:** hover or select an enemy tech center you can see to learn which doctrine they researched.

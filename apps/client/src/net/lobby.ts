@@ -52,6 +52,8 @@ export interface LobbyState {
   seed: number;
   /** People whose connections to every other person are open. */
   ready: string[];
+  /** People who pressed Ready (the host starts once everyone has; settings changes clear it). */
+  armed?: string[];
   /** People watching (no seat): they receive every player's orders and play no part. */
   spectators?: LobbyPlayer[];
 }
@@ -164,6 +166,7 @@ export class Lobby {
         else if (m.type === 'choose') this.update(m.from, (slot) => (slot.faction = (m.data as { faction: number }).faction));
         else if (m.type === 'move') this.move(m.from, (m.data as { slot: number }).slot);
         else if (m.type === 'links') this.markReady(m.from, (m.data as { ready: boolean }).ready);
+        else if (m.type === 'arm') this.markArmed(m.from, (m.data as { ready: boolean }).ready);
         else if (m.type === 'leave') this.drop(m.from);
       } else if (m.type === 'lobby') {
         this.state = m.data as LobbyState;
@@ -245,7 +248,34 @@ export class Lobby {
     const people = s.slots.filter((x) => x.kind === 'human');
     // Spectators must be connected too, or they would miss the first turns.
     const watchers = s.spectators ?? [];
-    return !s.slots.some((x) => x.kind === 'open') && people.length >= 2 && [...people.map((x) => x.player!), ...watchers].every((p) => s.ready.includes(p.id));
+    return (
+      !s.slots.some((x) => x.kind === 'open') &&
+      people.length >= 2 &&
+      [...people.map((x) => x.player!), ...watchers].every((p) => s.ready.includes(p.id)) &&
+      // Ready check: every other player pressed Ready.
+      people.every((x) => x.player!.id === s.host || (s.armed ?? []).includes(x.player!.id))
+    );
+  }
+
+  /** Have I pressed Ready? (The host is always ready.) */
+  get armed(): boolean {
+    return !!this.state && (this.isHost || (this.state.armed ?? []).includes(this.myId));
+  }
+
+  /** Ready (or not) to start. */
+  setArmed(ready: boolean): void {
+    if (this.isHost) return;
+    this.signaling.send('arm', { ready });
+  }
+
+  private markArmed(id: string, ready: boolean): void {
+    const s = this.state;
+    if (!s) return;
+    const armed = new Set(s.armed ?? []);
+    if (ready) armed.add(id);
+    else armed.delete(id);
+    s.armed = [...armed];
+    this.broadcast();
   }
 
   // --- anyone ---
@@ -275,6 +305,7 @@ export class Lobby {
     people.forEach((p, i) => (slots[order[i]!] = { ...slots[order[i]!]!, kind: 'human', faction: p.faction, player: p.player }));
     s.mode = mode;
     s.slots = slots;
+    s.armed = [];
     this.broadcast();
   }
 
@@ -298,6 +329,8 @@ export class Lobby {
     if (!this.isHost || !this.state) return;
     this.state.map = { ...this.state.map, ...map };
     if (seed !== undefined) this.state.seed = seed;
+    // Changed settings: everyone confirms again.
+    this.state.armed = [];
     this.broadcast();
   }
 
@@ -407,6 +440,7 @@ export class Lobby {
     if (k >= 0) s.slots[k] = { ...s.slots[k]!, kind: 'open', player: undefined };
     if (s.spectators) s.spectators = s.spectators.filter((x) => x.id !== id);
     s.ready = s.ready.filter((x) => x !== id);
+    s.armed = (s.armed ?? []).filter((x) => x !== id);
     this.broadcast();
   }
 

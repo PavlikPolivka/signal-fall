@@ -72,6 +72,11 @@ describe('lobby', () => {
     const guest = make(false, 'Bob', 2);
     await settle();
     expect(guest.mySlot()).toBe(1);
+    // Ready check: the guest has to say so before the host can start.
+    expect(host.canStart).toBe(false);
+    guest.setArmed(true);
+    await settle();
+    expect(guest.armed).toBe(true);
     expect(host.canStart).toBe(true);
     const started: { slot: number; links: number; humans?: number[] }[] = [];
     for (const l of [host, guest]) l.onStart = (sc, slot, links) => sc.kind === 'skirmish' && started.push({ slot, links: links.size, humans: sc.humans });
@@ -97,6 +102,17 @@ describe('lobby', () => {
     host.setAi(3, { faction: 1, difficulty: 'hard' });
     await settle();
     expect(links.opened).toHaveLength(3); // Ann–Bob, Ann–Cat, Bob–Cat
+    a.setArmed(true);
+    b.setArmed(true);
+    await settle();
+    expect(host.canStart).toBe(true);
+    // Changing the map asks everyone again.
+    host.setMap({ size: 'L' });
+    await settle();
+    expect(host.canStart).toBe(false);
+    a.setArmed(true);
+    b.setArmed(true);
+    await settle();
     expect(host.canStart).toBe(true);
     let scenario: unknown;
     let bLinks = 0;

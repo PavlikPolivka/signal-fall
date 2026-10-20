@@ -77,8 +77,9 @@ export function Multiplayer({
       stop = true;
     };
   }, [queued]);
-  // A ranked room starts as soon as both players are connected.
+  // A ranked room starts as soon as both players are connected (no ready check: they queued for it).
   useEffect(() => {
+    if (rankedRoom && lobby && !lobby.isHost && lobby.state && !lobby.armed) lobby.setArmed(true);
     if (rankedRoom && lobby?.isHost && lobby.canStart) lobby.start();
   });
   const [open, setOpen] = useState<PublicRoom[]>([]);
@@ -293,9 +294,15 @@ export function Multiplayer({
           ? 'Multiplayer needs at least one other person.'
           : !people.every((x) => s.ready.includes(x.player!.id))
             ? 'Connecting everyone…'
-            : lobby.isHost
-              ? 'Everyone is connected. Start when ready.'
-              : 'Connected. The host starts the match.';
+            : !people.every((x) => x.player!.id === s.host || (s.armed ?? []).includes(x.player!.id))
+              ? lobby.isHost
+                ? 'Waiting for everyone to press Ready.'
+                : lobby.armed
+                  ? 'You are ready. Waiting for the others and the host.'
+                  : 'Press Ready when you are set.'
+              : lobby.isHost
+                ? 'Everyone is ready. Start the match.'
+                : 'Ready. The host starts the match.';
   const teams = s ? [...new Set(s.slots.map((x) => x.team))] : [];
   const seat = (x: LobbySlot, k: number) => (
     <li class={`lobby-seat ${x.kind}${k === me ? ' me' : ''}`} data-testid={`seat-${k}`}>
@@ -324,7 +331,9 @@ export function Multiplayer({
           ) : (
             <span>{rules.factions[x.faction]!.name}</span>
           )}
-          <span class="muted small">{x.player!.id === s!.host ? 'host' : s!.ready.includes(x.player!.id) ? 'connected' : 'connecting…'}</span>
+          <span class={`muted small ${(s!.armed ?? []).includes(x.player!.id) ? 'good' : ''}`} data-testid={`seat-${k}-status`}>
+            {x.player!.id === s!.host ? 'host' : !s!.ready.includes(x.player!.id) ? 'connecting…' : (s!.armed ?? []).includes(x.player!.id) ? 'ready ✓' : 'not ready'}
+          </span>
         </>
       ) : x.kind === 'ai' ? (
         <>
@@ -445,6 +454,11 @@ export function Multiplayer({
           >
             {confirmLeave ? 'Close the room for everyone?' : 'Leave room'}
           </button>
+          {!lobby.isHost && me >= 0 && (
+            <button class={lobby.armed ? 'mp-btn' : 'start'} data-testid="mp-ready" onClick={() => lobby.setArmed(!lobby.armed)}>
+              {lobby.armed ? 'Not ready' : 'Ready'}
+            </button>
+          )}
           {lobby.isHost && (
             <button class="start" data-testid="mp-start" disabled={!lobby.canStart} onClick={() => lobby.start()}>
               Start match

@@ -293,7 +293,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 208 | M | Ready check in the lobby before the host can start | 3 | XS |
+| 208 ✅ | M | Ready check in the lobby before the host can start | 3 | XS |
 | 209 | M | Connection quality (ping) next to each name in the lobby and in game | 3 | XS |
 | 210 | M | Pause request in multiplayer (three per player, everyone sees who paused) | 3 | S |
 | 211 | M | Surrender vote in team games | 3 | S |

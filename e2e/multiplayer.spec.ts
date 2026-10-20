@@ -33,6 +33,14 @@ async function play(page: Page, round: number): Promise<void> {
   }, round);
 }
 
+/** Every joined player presses Ready (the host can start only then). */
+async function readyUp(...pages: import('@playwright/test').Page[]): Promise<void> {
+  for (const p of pages) {
+    await p.click('[data-testid=mp-ready]');
+    await expect(p.getByTestId('mp-ready')).toHaveText('Not ready');
+  }
+}
+
 /** Host a room the way players do: Play, leave the opponent's seat open for a player, Create room. */
 async function hostRoom(page: import('@playwright/test').Page): Promise<void> {
   await page.click('[data-testid=open-skirmish]');
@@ -66,6 +74,7 @@ test('two clients play a networked match over a lossy link without desync', asyn
   await guest.click('[data-testid=mp-join]');
   await guest.click('[data-testid=mp-faction] [data-value=choir]');
 
+  await readyUp(guest);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
   await expect(host.getByTestId('lobby')).toContainText('Choir');
   // The host picks the map; the guest sees it (read-only).
@@ -74,6 +83,9 @@ test('two clients play a networked match over a lossy link without desync', asyn
   await expect(guest.locator('[data-testid=mp-map] [data-testid=size] [data-value=S]')).toHaveClass(/active/);
   await expect(guest.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('777');
   await expect(guest.locator('[data-testid=mp-map] [data-testid=seed-random]')).toHaveCount(0);
+  // The map changed after the guest was ready: they confirm again before the host can start.
+  await expect(host.getByTestId('mp-start')).toBeDisabled();
+  await readyUp(guest);
   await host.click('[data-testid=mp-start]');
 
   for (const p of [host, guest]) await p.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall.state.cur !== null);
@@ -131,6 +143,7 @@ test('two clients play a networked match over a lossy link without desync', asyn
     await expect(host.getByTestId('room-code')).toHaveText(code, { timeout: 20_000 });
     await expect(host.getByTestId('seat-1')).toContainText('Choir', { timeout: 20_000 });
     await expect(guest.locator('[data-testid=mp-map] [data-testid=seed]')).toHaveValue('777');
+    await readyUp(guest);
     await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
   }
   if (online) {
@@ -179,6 +192,7 @@ test('2v2: three people and an AI over a full mesh stay in sync', async ({ brows
   await host.selectOption('[data-testid=seat-2-difficulty]', 'easy');
   await b.click('[data-testid=mp-faction] [data-value=halcyon]');
   await expect(a.getByTestId('seat-2')).toContainText('easy');
+  await readyUp(a, b);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
   await host.click('[data-testid=mp-start]');
 
@@ -225,6 +239,7 @@ test('a player who leaves can be replaced by the AI, and the match goes on', asy
   await guest.click('[data-testid=open-multiplayer]');
   await guest.fill('[data-testid=mp-code]', code);
   await guest.click('[data-testid=mp-join]');
+  await readyUp(guest);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
   await host.click('[data-testid=mp-start]');
   await host.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 100, null, { timeout: 60_000 });
@@ -255,6 +270,7 @@ test('a public room shows in Open games and can be joined from there', async ({ 
   await guest.click('[data-testid=open-multiplayer]');
   await expect(guest.getByTestId(`open-game-${code}`)).toBeVisible({ timeout: 20_000 });
   await guest.click(`[data-testid=open-game-${code}]`);
+  await readyUp(guest);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
   await hostCtx.close();
   await guestCtx.close();
@@ -280,6 +296,7 @@ test('a spectator joins with the code and watches the match as it is played', as
   await watcher.fill('[data-testid=mp-code]', code);
   await watcher.click('[data-testid=mp-watch]');
   await expect(host.getByTestId('mp-spectators')).toContainText('Fan', { timeout: 20_000 });
+  await readyUp(guest);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
   await host.click('[data-testid=mp-start]');
   await watcher.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 200, null, { timeout: 90_000 });
@@ -305,6 +322,7 @@ test('a player who reloads the page rejoins the running match and stays in sync'
   await guest.click('[data-testid=open-multiplayer]');
   await guest.fill('[data-testid=mp-code]', code);
   await guest.click('[data-testid=mp-join]');
+  await readyUp(guest);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 20_000 });
   await host.click('[data-testid=mp-start]');
   await guest.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 150, null, { timeout: 60_000 });
@@ -365,6 +383,7 @@ test('free-for-all: three people, three teams, in sync', async ({ browser, brows
     await p.fill('[data-testid=mp-code]', code);
     await p.click('[data-testid=mp-join]');
   }
+  await readyUp(a, b);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
   await host.click('[data-testid=mp-start]');
   for (const p of [host, a, b]) await p.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 250, null, { timeout: 120_000 });
@@ -390,6 +409,7 @@ test('co-op survival: two people on one team against the waves', async ({ browse
   await guest.click('[data-testid=open-multiplayer]');
   await guest.fill('[data-testid=mp-code]', code);
   await guest.click('[data-testid=mp-join]');
+  await readyUp(guest);
   await expect(host.getByTestId('mp-start')).toBeEnabled({ timeout: 30_000 });
   await host.click('[data-testid=mp-start]');
   for (const p of [host, guest]) await p.waitForFunction(() => ((window as unknown as W).__signalFall.state.cur?.tick ?? 0) > 100, null, { timeout: 60_000 });
