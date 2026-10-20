@@ -244,6 +244,32 @@ function SuperTimers({ state }: { state: ClientState }) {
   );
 }
 
+/** The power bar's tooltip: the balance, the biggest users, and what low power costs. */
+function powerTitle(state: ClientState, produced: number, used: number): string {
+  const cur = state.cur;
+  const users = new Map<string, { n: number; power: number }>();
+  if (cur)
+    for (let i = 0; i < cur.entityCount; i++) {
+      const h = cur.get(cur.ent(i), 0);
+      if (!state.isOwn(h) || state.isUnit(h)) continue;
+      const r = state.ruleOf(h) as { kind: string; name: string; power?: number };
+      if (r.kind !== 'structure' || !r.power || r.power >= 0) continue;
+      const u = users.get(r.name) ?? { n: 0, power: 0 };
+      u.n++;
+      u.power -= r.power;
+      users.set(r.name, u);
+    }
+  const top = [...users.entries()].sort((a, b) => b[1].power - a[1].power).slice(0, 3);
+  const slow = state.rules.constants.lowPowerSpeedPct;
+  return [
+    `Power: ${produced} produced, ${used} used`,
+    top.length > 0 ? `Biggest users: ${top.map(([name, u]) => `${name}${u.n > 1 ? ` ×${u.n}` : ''} ${u.power}`).join(', ')}` : '',
+    `Low power: building and training run at ${slow}%, powered defenses stop firing, the radar goes dark, repairs and support powers stop.`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 /** Units against the cap: production stops at the cap. */
 function UnitCap({ state }: { state: ClientState }) {
   const cur = state.cur;
@@ -374,7 +400,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       <Minimap state={state} renderer={renderer} input={input} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
       <div class="economy">
         <CreditsReadout state={state} credits={credits} />
-        <div class={`power ${used > produced ? 'low' : ''}`} title={`Power ${produced} produced / ${used} used`} data-testid="power">
+        <div class={`power ${used > produced ? 'low' : ''}`} title={powerTitle(state, produced, used)} data-testid="power">
           <div class="power-bar" style={{ width: `${Math.min(100, (used / Math.max(1, produced)) * 100)}%` }} />
           <span>
             {used}/{produced}

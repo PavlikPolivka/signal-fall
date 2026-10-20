@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:59 UTC
+
+- **Power at a glance:** hover the power bar to see your three biggest power users and exactly what low power costs you (half-speed building and training, silent defenses, a dark radar, no repairs or support powers).
+
 ## 2026-10-20 05:58 UTC
 
 - **Superweapons, easier to read:** a superweapon's base glows brighter as it charges, and the target of an incoming strike blinks on the minimap from the moment the warning starts.

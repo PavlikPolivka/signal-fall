@@ -7,6 +7,7 @@ test('idle army counter selects the idle units; tabs show queued counts', async 
   await page.goto('/play/?scenario=sandbox');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await expect(page.getByTestId('unit-cap')).toHaveText(/^\d+\/200$/);
+  await expect(page.getByTestId('power')).toHaveAttribute('title', /Biggest users: .*\nLow power: building and training run at 50%/);
   const idle = page.getByTestId('idle-army');
   await expect(idle).toContainText('idle');
   await idle.click();
