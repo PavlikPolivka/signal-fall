@@ -248,8 +248,8 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 178 | O | Hint when credits sit above 3000 for a minute ("spend it: build another factory") | 4 | XS |
-| 179 | O | Hint when a refinery has fewer than two harvesters | 3 | XS |
+| 178 ✅ | O | Hint when credits sit above 3000 for a minute ("spend it: build another factory") | 4 | XS |
+| 179 ✅ | O | Hint when a refinery has fewer than two harvesters | 3 | XS |
 | 180 | O | Match report adds idle factory time and floated credits | 4 | S |
 | 181 | O | Post-match tips: three things to do better, based on the report | 4 | S |
 | 182 | O | "More in the Codex" link on hover cards opens the right entry | 3 | S |

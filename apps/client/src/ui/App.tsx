@@ -1040,6 +1040,10 @@ function StructureActions({ state, h }: { state: ClientState; h: number }) {
   );
 }
 
+/** Credits above this for FLOAT_TICKS (a minute) are worth a nudge to spend them. */
+const FLOAT_CREDITS = 3000;
+const FLOAT_TICKS = 60 * 20;
+
 /** First-match guide: the next useful step, read from what the player has built so far. */
 function Hints({ state }: { state: ClientState }) {
   const cur = state.cur;
@@ -1047,10 +1051,26 @@ function Hints({ state }: { state: ClientState }) {
   const roles = state.roles();
   const has = (r: string) => (roles.get(r as never) ?? 0) > 0;
   let army = 0;
+  let harvesters = 0;
   for (let i = 0; i < cur.entityCount; i++) {
     const h = cur.get(cur.ent(i), 0);
-    if (state.isOwn(h) && state.isUnit(h) && state.ruleOf(h).kind === 'unit' && (state.ruleOf(h) as { weapon: unknown }).weapon) army++;
+    if (!state.isOwn(h) || !state.isUnit(h)) continue;
+    const r = state.ruleOf(h) as { kind: string; weapon?: unknown; abilities?: { kind: string }[] };
+    if (r.kind !== 'unit') continue;
+    if (r.weapon) army++;
+    if (r.abilities?.some((a) => a.kind === 'harvest')) harvesters++;
   }
+  // Situations first: money left idle, refineries short of harvesters.
+  const credits = cur.credits(state.localPlayer);
+  if (credits <= FLOAT_CREDITS) state.floatSince = -1;
+  else if (state.floatSince < 0) state.floatSince = cur.tick;
+  const floating = state.floatSince >= 0 && cur.tick - state.floatSince >= FLOAT_TICKS;
+  const refineries = roles.get('refinery') ?? 0;
+  const situation = floating
+    ? `${money(credits)} sitting idle: spend it. Another factory, more units, or a refinery at a new field all pay back.`
+    : refineries > 0 && harvesters < refineries * 2 && cur.tick > 3 * 60 * 20
+      ? `${harvesters} harvester${harvesters === 1 ? '' : 's'} for ${refineries} refiner${refineries === 1 ? 'y' : 'ies'}: each refinery runs best with two. Build more from your factory.`
+      : null;
   const steps: [boolean, string][] = [
     [has('conyard'), 'Select your construction vehicle and press D to deploy your base.'],
     [has('power'), 'To build power, press B, then P, and click where it should go. It builds and places itself.'],
@@ -1064,10 +1084,8 @@ function Hints({ state }: { state: ClientState }) {
   const [, text] = steps[next]!;
   return (
     <div class="hints" data-testid="hints">
-      <b>
-        Tip {next + 1}/{steps.length}
-      </b>
-      <span>{text}</span>
+      <b>{situation ? 'Tip' : `Tip ${next + 1}/${steps.length}`}</b>
+      <span data-testid={situation ? 'hint-situation' : undefined}>{situation ?? text}</span>
       <button
         title="Hide tips (turn them back on in the menu)"
         onClick={() => {

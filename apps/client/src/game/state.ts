@@ -467,6 +467,8 @@ export class ClientState {
   private lastOptions = -1;
   private lastStrikes = 0;
   private lastSuperReady = false;
+  /** Tick since when credits stayed above the idle-money hint's line (-1: they don't). */
+  floatSince = -1;
   /** Last seen charge (ticks left) of each enemy superweapon, for the 30-second warning. */
   private lastEnemySuper: number[] = [];
 

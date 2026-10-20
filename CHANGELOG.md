@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:39 UTC
+
+- **Smarter tips:** if credits sit above ◆3,000 for a minute, a tip nudges you to spend them, and if your refineries have fewer than two harvesters each, a tip says so.
+
 ## 2026-10-20 05:37 UTC
 
 - **Superweapon warnings:** an enemy superweapon's timer flashes in its last 30 seconds, and the announcer warns you then and again when it is ready. A launch now sounds an air-raid siren you can't mistake for any other alert.
