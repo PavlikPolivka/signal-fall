@@ -23,6 +23,12 @@ export interface MapChoice {
   credits?: number;
   /** Superweapons allowed (default yes). */
   superweapons?: boolean;
+  /** Nothing of tier 3. */
+  techLimit?: boolean;
+  /** Units per player (the rules' 200 when missing). */
+  unitCap?: number;
+  /** Everyone starts with a small army. */
+  startArmy?: boolean;
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -217,6 +223,40 @@ export function MapSettings({ value, onChange, players = 2 }: { value: MapChoice
         ]}
         onChange={(v) => set({ superweapons: v === 'off' ? false : undefined })}
         testid="superweapons"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Tech"
+        value={value.techLimit ? 'limited' : 'all'}
+        options={[
+          ['all', 'Everything'],
+          ['limited', 'No tier 3'],
+        ]}
+        onChange={(v) => set({ techLimit: v === 'limited' ? true : undefined })}
+        testid="tech-limit"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Unit cap"
+        value={value.unitCap ?? 200}
+        options={[
+          [100, '100'],
+          [200, '200'],
+          [300, '300'],
+        ]}
+        onChange={(v) => set({ unitCap: v === 200 ? undefined : v })}
+        testid="unit-cap-option"
+        disabled={readOnly}
+      />
+      <Choice
+        label="Start with"
+        value={value.startArmy ? 'army' : 'base'}
+        options={[
+          ['base', 'Construction unit'],
+          ['army', 'A small army too'],
+        ]}
+        onChange={(v) => set({ startArmy: v === 'army' ? true : undefined })}
+        testid="start-army"
         disabled={readOnly}
       />
       {!custom && (

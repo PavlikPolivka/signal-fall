@@ -197,8 +197,9 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
     case 'build':
       // Missions unlock buildings one by one.
       if (c.player === 0 && world.allow && !world.allow.has(world.rules.structures[cmd.item]?.id ?? '')) return;
-      // Match option: no superweapons, for anyone.
+      // Match options: no superweapons, or nothing of tier 3, for anyone.
       if (world.noSuperweapons && world.rules.structures[cmd.item]?.role === 'superweapon') return;
+      if (world.techLimit && (world.rules.structures[cmd.item]?.tier ?? 0) >= 3) return;
       startBuild(world, c.player, cmd.category, cmd.item, cmd.tx, cmd.ty);
       return;
     case 'cancelBuild': {
@@ -218,6 +219,7 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       return;
     case 'train':
       if (c.player === 0 && world.allow && !world.allow.has(world.rules.units[cmd.item]?.id ?? '')) return;
+      if (world.techLimit && (world.rules.units[cmd.item]?.tier ?? 0) >= 3) return;
       train(world, c.player, cmd.item, cmd.count);
       return;
     case 'cancelTrain': {

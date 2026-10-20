@@ -37,7 +37,7 @@ export type ScenarioSpec =
       teams?: number[];
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
-      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean; custom?: string; credits?: number; superweapons?: boolean };
+      map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean; custom?: string; credits?: number; superweapons?: boolean; techLimit?: boolean; unitCap?: number; startArmy?: boolean };
       /** AI personality per slot (a strategy it always plays); null or missing: drawn per match. */
       personality?: (StrategyName | null)[];
       /** Survival: the last slot is the horde, which sends waves at everyone else (they are one team). */
@@ -86,6 +86,9 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         survivalPct: spec.survival === 'easy' ? 70 : spec.survival === 'hard' ? 170 : 125,
         credits: spec.map.credits,
         noSuperweapons: spec.map.superweapons === false,
+        techLimit: spec.map.techLimit,
+        unitCap: spec.map.unitCap,
+        startArmy: spec.map.startArmy,
       });
       if (horde !== undefined) sim.addBrain(new HordeBrain(horde));
       spec.ai.forEach((difficulty, p) => {

@@ -91,7 +91,7 @@ export function roomPreset(s: SkirmishSettings): RoomPreset {
     mode: s.mode === 'survival' ? 'coop' : s.mode,
     faction: s.faction,
     slots: seatsOf(s).map((k) => ({ kind: s.people?.includes(k) ? 'open' : 'ai', faction: seatFaction(s, k), difficulty: seatSkill(s, k) })),
-    map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, credits: s.credits, superweapons: s.superweapons, seed: s.seed },
+    map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, credits: s.credits, superweapons: s.superweapons, techLimit: s.techLimit, unitCap: s.unitCap, startArmy: s.startArmy, seed: s.seed },
   };
 }
 

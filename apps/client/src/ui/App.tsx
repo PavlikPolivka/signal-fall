@@ -253,7 +253,7 @@ function UnitCap({ state }: { state: ClientState }) {
     const h = cur.get(cur.ent(i), 0);
     if (state.isOwn(h) && state.isUnit(h) && state.ruleOf(h).kind === 'unit') n++;
   }
-  const cap = state.rules.constants.unitCap;
+  const cap = state.unitCap;
   return (
     <span class={`unit-cap ${n >= cap ? 'full' : n * 10 >= cap * 9 ? 'near' : ''}`} data-testid="unit-cap" title="Units against the cap: factories stop at the cap">
       {n}/{cap}
@@ -356,7 +356,9 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
   const structureTab = state.sidebarTab === 'structures' || state.sidebarTab === 'defenses';
   // Missions unlock things as the campaign goes on.
   const allowed = (id: string) =>
-    (!state.mission?.allow || state.mission.allow.includes(id)) && !(state.noSuperweapons && state.rules.structures[state.rules.structureIndex.get(id) ?? -1]?.role === 'superweapon');
+    (!state.mission?.allow || state.mission.allow.includes(id)) &&
+    !(state.noSuperweapons && state.rules.structures[state.rules.structureIndex.get(id) ?? -1]?.role === 'superweapon') &&
+    !(state.techLimit && ((state.rules.structures[state.rules.structureIndex.get(id) ?? -1]?.tier ?? 0) >= 3 || (state.rules.units[state.rules.unitIndex.get(id) ?? -1]?.tier ?? 0) >= 3));
   const items: (UnitRule | StructureRule)[] = structureTab
     ? faction.structures.map((i) => state.rules.structures[i]!).filter((s) => s.category === state.sidebarTab && allowed(s.id))
     : faction.units.map((i) => state.rules.units[i]!).filter((u) => u.tab === state.sidebarTab && allowed(u.id));

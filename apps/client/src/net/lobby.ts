@@ -37,6 +37,9 @@ export interface LobbyMap {
   custom?: string;
   credits?: number;
   superweapons?: boolean;
+  techLimit?: boolean;
+  unitCap?: number;
+  startArmy?: boolean;
 }
 
 export interface LobbyState {

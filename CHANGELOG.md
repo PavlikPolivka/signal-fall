@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:48 UTC
+
+- **More match options:** a tech limit (no tier 3, for quick unit matches), a unit cap of 100, 200 or 300, and starting with a small army beside the construction unit. They apply to everyone, the AI included.
+
 ## 2026-10-20 05:43 UTC
 
 - **New hotkeys:** <kbd>C</kbd> jumps through your production buildings, <kbd>.</kbd> through idle army units one by one, <kbd>W</kbd> selects every damaged unit (ready to send for repair), and <kbd>L</kbd> fires your charged superweapon at the cursor. All of them can be rebound in the menu.

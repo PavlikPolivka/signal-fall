@@ -174,6 +174,10 @@ export interface World {
   allow: Set<string> | null;
   /** Match option: no superweapons for anyone (config, not state: it is not part of the hash). */
   noSuperweapons: boolean;
+  /** Match option: nothing of tier 3 (units or buildings), for quick unit matches. */
+  techLimit: boolean;
+  /** Units each player may have (the rules' cap unless the match sets another). */
+  unitCap: number;
   /** Survival: the horde's waves, or null. */
   survival: SurvivalState | null;
   /** King of the hill: ticks each team has held the hill (indexed by team). */
@@ -216,6 +220,8 @@ export interface WorldOptions {
   /** Mission unlocks for the player (slot 0). */
   allow?: string[];
   noSuperweapons?: boolean;
+  techLimit?: boolean;
+  unitCap?: number;
   /** Survival wave size, percent of normal. */
   survivalPct?: number;
 }
@@ -271,6 +277,8 @@ export function createWorld(o: WorldOptions): World {
     mission: o.mission ? makeMission(o.mission) : null,
     allow: o.allow ? new Set(o.allow) : null,
     noSuperweapons: o.noSuperweapons ?? false,
+    techLimit: o.techLimit ?? false,
+    unitCap: o.unitCap ?? o.rules.constants.unitCap,
     survival: o.survivalHorde !== undefined ? makeSurvival(o.seed, o.survivalHorde, o.survivalPct) : null,
   };
 }

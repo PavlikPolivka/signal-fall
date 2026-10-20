@@ -34,6 +34,10 @@ export interface MatchSetup {
   /** Match options: starting credits for everyone (default from the rules), and superweapons off. */
   credits?: number;
   noSuperweapons?: boolean;
+  techLimit?: boolean;
+  unitCap?: number;
+  /** Everyone starts with a small army beside the construction unit. */
+  startArmy?: boolean;
 }
 
 /** A real match: each player starts with one construction unit and the starting credits. */
@@ -55,6 +59,8 @@ export function createMatch(setup: MatchSetup): Sim {
     mission: setup.mission,
     allow: setup.allow,
     noSuperweapons: setup.noSuperweapons,
+    techLimit: setup.techLimit,
+    unitCap: setup.unitCap,
     survivalPct: setup.survivalPct,
   });
   setup.players.forEach((p, i) => {
@@ -63,6 +69,16 @@ export function createMatch(setup: MatchSetup): Sim {
     const start = map.starts[i]!;
     const cu = rules.factions[p.faction]!.constructionUnit;
     spawnUnit(sim.world, cu, i, (start.x << FX_SHIFT) + FX_HALF, (start.y << FX_SHIFT) + FX_HALF);
+    if (setup.startArmy) {
+      // Four of the faction's cheapest armed infantry and two of its cheapest armed vehicles, beside the start.
+      const cheapest = (tab: string) =>
+        rules.units.filter((u) => u.faction === p.faction && u.tab === tab && u.weapon && !u.isAir).sort((a, b) => a.cost - b.cost || a.index - b.index)[0];
+      const army: [number | undefined, number][] = [[cheapest('infantry')?.index, 4], [cheapest('vehicles')?.index, 2]];
+      let k = 0;
+      for (const [rule, n] of army)
+        for (let j = 0; j < n && rule !== undefined; j++, k++)
+          spawnUnit(sim.world, rule, i, ((start.x + 2 + (k % 3)) << FX_SHIFT) + FX_HALF, ((start.y + 2 + idiv(k, 3)) << FX_SHIFT) + FX_HALF);
+    }
   });
   return sim;
 }

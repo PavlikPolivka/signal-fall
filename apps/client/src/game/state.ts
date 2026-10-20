@@ -113,6 +113,10 @@ export class ClientState {
   campaignDifficulty: import('./scenario').CampaignDifficulty = 'normal';
   /** Match option: superweapons off (their build buttons are hidden). */
   noSuperweapons = false;
+  /** Match option: nothing of tier 3 (hidden too). */
+  techLimit = false;
+  /** Units per player in this match. */
+  unitCap = 200;
   /** The tutorial match. */
   tutorial = false;
   /** Playing today's daily challenge (its description), or null. */

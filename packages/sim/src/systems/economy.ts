@@ -131,7 +131,7 @@ export function productionSystem(world: World, facts: PlayerFacts[]): void {
       const producers = f.producers[tab]!.length > 0 ? f.producers[tab]! : emergency ? f.refineries : [];
       if (producers.length === 0) continue;
       if (!emergency && !requirementsMet(f, rule.requires)) continue;
-      if (f.units >= c.unitCap) continue;
+      if (f.units >= world.unitCap) continue;
       let bonus = 0;
       for (let i = 0; i < producers.length - 1 && i < c.extraFactoryBonusPct.length; i++) bonus += c.extraFactoryBonusPct[i]!;
       const speed = pct(speedPct(world, p), 100 + bonus);

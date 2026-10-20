@@ -583,7 +583,7 @@ export class AiPlayer implements Brain {
     for (const role of this.profile.later) {
       // Only AIs that use powers build a superweapon (Easy and Normal would leave it idle), and only
       // once the match has gone long or money piles up: early on the credits belong in the army.
-      if (role === 'superweapon' && (world.noSuperweapons || (!this.d.abilities && !this.directed) || (world.tick < SUPERWEAPON_AFTER && p.credits < 2 * FLOAT_CREDITS))) continue;
+      if (role === 'superweapon' && (world.noSuperweapons || world.techLimit || (!this.d.abilities && !this.directed) || (world.tick < SUPERWEAPON_AFTER && p.credits < 2 * FLOAT_CREDITS))) continue;
       if (this.count(own, role) === 0) return role;
     }
     // Money piling up means production is the bottleneck: another barracks or factory
@@ -739,6 +739,8 @@ export class AiPlayer implements Brain {
       .map(([id, weight]) => ({ rule: world.rules.units[world.rules.unitIndex.get(id)!]!, weight }))
       .filter((c) => c.weight > 0)
       .filter((c) => ok(c.rule))
+      // Match option: nothing of tier 3.
+      .filter((c) => !world.techLimit || c.rule.tier < 3)
       // Support units (no weapon: repair trucks, engineers) back an army, two of each is plenty.
       .filter((c) => c.rule.weapon !== null || this.countUnits(world, own, c.rule.index, p) < SUPPORT_CAP);
     if (candidates.length === 0) return;
