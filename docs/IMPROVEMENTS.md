@@ -229,13 +229,13 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 161 ✅ | U | Research progress shows in the top bar when the tech center isn't selected | 3 | XS |
 | 162 ✅ | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |
 | 163 ✅ | U | Army size against the unit cap in the top bar | 3 | XS |
-| 164 | U | Harvester load bar (how full it is) under the health bar | 3 | XS |
+| 164 ✅ | U | Harvester load bar (how full it is) under the health bar (already drawn with the health bar) | 3 | XS |
 | 165 | U | Echo left in a field on hover; the minimap shades fields as they run dry | 4 | S |
-| 166 | U | Minimap marks capture points, crates and the hill flag with clear icons | 3 | XS |
+| 166 ✅ | U | Minimap marks capture points, crates and the hill flag with clear icons | 3 | XS |
 | 167 | U | Minimap filters: hide terrain, show only units, show Echo | 2 | S |
 | 168 ✅ | U | Cost turns red on a build button when you can't afford it now | 3 | XS |
 | 169 | U | Exact seconds left on hover over a queued item | 2 | XS |
-| 170 | U | Rally point line shown while a factory is selected | 3 | XS |
+| 170 ✅ | U | Rally point line shown while a factory is selected (already drawn) | 3 | XS |
 | 171 | U | Hover a selected unit to see a line to what it is shooting | 2 | XS |
 | 172 | U | Ability cooldowns on portraits in the selection panel | 2 | XS |
 | 173 | U | One strip of every active queue across all factories at the bottom | 3 | S |
@@ -271,7 +271,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 193 | G | Superweapon building glows more as it charges | 3 | XS |
 | 194 | G | Faction-specific strike visuals: shell rain, a burning purge, a crystal shatter | 4 | S |
 | 195 | G | Garrisoned ruins show muzzle flashes in the windows | 3 | S |
-| 196 | G | Capture point ring fills in the capturing team's color | 3 | XS |
+| 196 ✅ | G | Capture point ring fills in the capturing team's color  (already drawn) | 3 | XS |
 | 197 | G | "+700" credit pop when a harvester unloads | 2 | XS |
 | 198 | G | Minimap flash at a superweapon target the moment the warning starts | 3 | XS |
 | 199 | G | Coverage and growth range shown around a selected Halcyon or Choir building | 3 | XS |

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:51 UTC
+
+- **Minimap:** crates you can see show as gold squares, and the King-of-the-hill flag has its own flag icon.
+
 ## 2026-10-20 05:49 UTC
 
 - **Trim a selection:** right-click a unit card in the selection panel to drop one of that type, or Shift+right-click to drop them all.

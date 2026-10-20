@@ -640,17 +640,31 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
           }
         }
       }
-      // Capture points: diamonds in the holder's color.
-      if (cur)
+      // Capture points: diamonds in the holder's color; the hill a flag; crates gold squares.
+      if (cur) {
         for (const p of cur.points()) {
           ctx.fillStyle = p.owner >= 0 ? hex(TEAM_COLORS[p.owner % TEAM_COLORS.length]!) : '#c8ccd2';
           ctx.beginPath();
-          ctx.moveTo(p.x + 0.5, p.y - 2);
-          ctx.lineTo(p.x + 2.5, p.y + 0.5);
-          ctx.lineTo(p.x + 0.5, p.y + 3);
-          ctx.lineTo(p.x - 1.5, p.y + 0.5);
+          if (p.kind === POINT.hill) {
+            ctx.moveTo(p.x, p.y + 3);
+            ctx.lineTo(p.x, p.y - 4);
+            ctx.lineTo(p.x + 4, p.y - 2.5);
+            ctx.lineTo(p.x, p.y - 1);
+            ctx.closePath();
+          } else {
+            ctx.moveTo(p.x + 0.5, p.y - 2);
+            ctx.lineTo(p.x + 2.5, p.y + 0.5);
+            ctx.lineTo(p.x + 0.5, p.y + 3);
+            ctx.lineTo(p.x - 1.5, p.y + 0.5);
+          }
           ctx.fill();
         }
+        ctx.fillStyle = '#ffd34d';
+        for (const c of cur.crates()) {
+          if (state.fog && !state.spectator && (state.fog[c.y * w + c.x]! & 1) === 0) continue;
+          ctx.fillRect(c.x - 0.5, c.y - 0.5, 2, 2);
+        }
+      }
       drawObjectives();
       // Attack pings: red rings where own units/buildings were recently hit.
       const now = performance.now();
