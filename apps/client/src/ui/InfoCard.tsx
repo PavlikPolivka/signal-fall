@@ -117,7 +117,9 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
       {rule.kind === 'unit' && <UnitUpgrades state={state} rule={rule} />}
       {missing.length > 0 && <p class="req bad">Requires {roleNames(rules, rule.faction, missing)}</p>}
       <p class="hint muted">
-        {rule.kind === 'unit' ? 'Click: queue 1 · Shift+click: 5 · Ctrl+click: repeat · Right-click: cancel' : 'Click: build, then click again to place · Right-click: cancel'}
+        {rule.kind === 'unit'
+          ? 'Click: queue 1 · Shift+click: 5 · Ctrl+click: repeat · Right-click: cancel'
+          : `Click: build, then click again to place${rule.category === 'defenses' ? ' · Shift+click the map: place and start the next' : ''} · Right-click: cancel`}
       </p>
     </div>
   );

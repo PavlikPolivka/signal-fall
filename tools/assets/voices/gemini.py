@@ -39,17 +39,31 @@ def api_key():
 KEY = api_key()
 
 
+class DailyQuota(Exception):
+    """The key's requests for today are used up: stop, and run again tomorrow (finished lines are kept)."""
+
+
 def call(model, body):
-    for attempt in range(6):
+    for attempt in range(12):
         req = urllib.request.Request(API + model + ':generateContent', data=json.dumps(body).encode(), headers={'x-goog-api-key': KEY, 'Content-Type': 'application/json'})
         try:
             return json.load(urllib.request.urlopen(req, timeout=180))
         except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 503) and attempt < 5:
+            text = e.read()
+            if e.code == 429:
+                err = json.loads(text).get('error', {})
+                ids = [v.get('quotaId', '') for d in err.get('details', []) for v in d.get('violations', [])]
+                if any('PerDay' in q for q in ids):
+                    raise DailyQuota(f'{model}: {ids}') from e
+                # A per-minute limit: wait as long as the API asks.
+                delay = next((d.get('retryDelay') for d in err.get('details', []) if 'retryDelay' in d), '20s')
+                time.sleep(float(str(delay).rstrip('s')) + 2)
+                continue
+            if e.code in (500, 503) and attempt < 11:
                 time.sleep(10 * (attempt + 1))
                 continue
-            raise RuntimeError(f'{e.code}: {e.read()[:300]!r}') from e
-    raise RuntimeError('unreachable')
+            raise RuntimeError(f'{e.code}: {text[:300]!r}') from e
+    raise RuntimeError('still rate limited after 12 tries')
 
 
 def speak(text, cast):
@@ -83,12 +97,26 @@ def matches(text, wav):
     return difflib.SequenceMatcher(None, a, b).ratio() >= 0.85, b
 
 
+def seconds(wav):
+    # 24 kHz, 16-bit mono PCM after a 44-byte header.
+    return max(0, len(wav) - 44) / 48000
+
+
+def plausible(text, wav):
+    # The transcript can leave out what was read by mistake (the director's notes, read aloud): a take
+    # far longer than its words need is that, whatever the transcript says.
+    return seconds(wav) <= 2.5 + 0.75 * len(words(text))
+
+
 def take(name, text, cast):
     raw = os.path.join(RAW, name + '.wav')
     if os.path.exists(raw) and not os.environ.get('FORCE') and not FORCED:
         return open(raw, 'rb').read()
     for attempt in range(3):
         wav = speak(text, cast)
+        if not plausible(text, wav):
+            print(f'  retake {name}: {seconds(wav):.1f} s is too long for the line')
+            continue
         ok, got = matches(text, wav)
         if ok:
             break
@@ -128,7 +156,10 @@ for kind in kinds:
     for name, text, cast, treatment, dest, rate, bitrate in jobs(kind):
         if only and not any(name.startswith(f'{kind}/{o}') or o in name for o in only):
             continue
-        take(name, text, cast)
+        try:
+            take(name, text, cast)
+        except DailyQuota as q:
+            sys.exit(f'Daily quota used up ({q}). Run again tomorrow: finished lines are kept.')
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         treat(os.path.join(RAW, name + '.wav'), dest, treatment, rate, bitrate)
         print(name, os.path.getsize(dest) // 1024, 'KB')

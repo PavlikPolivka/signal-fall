@@ -212,7 +212,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 149 | C | Hotkey jumps between your construction yards | 2 | XS |
 | 150 | C | Remove the selection from a control group (Ctrl+Shift+number) | 2 | XS |
 | 151 | C | Right-click a portrait removes it from the selection; Shift+right-click removes that type | 3 | XS |
-| 152 | C | Shift-place: keep placing the same structure (turrets, walls) without picking it again | 4 | XS |
+| 152 ✅ | C | Shift-place: keep placing the same structure (turrets, walls) without picking it again | 4 | XS |
 | 153 | C | Drag to lay a whole wall line in one go | 4 | S |
 | 154 | C | Follow camera: lock onto the selected unit | 2 | XS |
 | 155 | C | Quick-cast setting: abilities fire at the cursor on key press, no click | 3 | S |

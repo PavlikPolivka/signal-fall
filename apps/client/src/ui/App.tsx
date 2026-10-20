@@ -418,7 +418,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
             ? `${it.name} — one per player`
             : missing.length > 0
               ? `${it.name} — requires ${roleNames(state.rules, faction.index, missing)}`
-              : `${it.name} — ${money(it.cost)}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, Ctrl+click: repeat, right-click: cancel one, Shift+right-click: cancel all' : ready ? ' · click to place' : ' · right-click: cancel'}`;
+              : `${it.name} — ${money(it.cost)}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, Ctrl+click: repeat, right-click: cancel one, Shift+right-click: cancel all' : ready ? ` · click to place${state.rules.structures[it.index]!.category === 'defenses' ? ' (Shift+click the map: place and start the next)' : ''}` : ' · right-click: cancel'}`;
           const repeating = it.kind === 'unit' && state.repeat.has(it.index);
           return (
             <button

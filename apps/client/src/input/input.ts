@@ -1097,8 +1097,8 @@ export class Input {
       s.send({ type: 'build', category: s.placing.category, item: rule.index, tx: at.tx, ty: at.ty });
     } else {
       s.send({ type: 'place', category: s.placing.category, tx: at.tx, ty: at.ty });
-      // Shift+click keeps placing walls: plan the next one right away.
-      if (shift && rule.role === 'wall') {
+      // Shift+click keeps placing defenses (walls, turrets): plan the next one right away.
+      if (shift && rule.category === 'defenses') {
         s.placing = { category: s.placing.category, item: rule.index, planned: true };
         s.changed();
         return;

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:33 UTC
+
+- **Keep placing defenses:** Shift+click the map to place a finished turret or wall and start the next one right away, so you can lay a line of defenses without going back to the sidebar.
+
 ## 2026-10-20 05:30 UTC
 
 - **New match options:** starting credits (◆5,000 to ◆20,000) and superweapons on or off, on Play and in multiplayer rooms. With superweapons off nobody can build one, the AI included.
