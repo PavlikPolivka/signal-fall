@@ -109,6 +109,8 @@ export class Renderer {
   /** Shields per entity last frame: a drop means a hit, shown as a shimmer. */
   private lastShields = new Map<number, number>();
   /** Supplies the placement ghost under the cursor while placing a structure. */
+  /** Wall pieces planned or being dragged out: outlined on the ground. */
+  wallPlan: { tx: number; ty: number }[] = [];
   placementGhost: () => { tx: number; ty: number; rule: { footprintW: number; footprintH: number; weapon?: { range: number } | null }; error: string | null } | null = () => null;
   /** The sim point (Q10) under the cursor, for targeting previews. */
   cursorPoint: () => { x: number; y: number } | null = () => null;
@@ -1428,6 +1430,11 @@ export class Renderer {
     this.drawPowerTarget();
     this.drawStrikes();
     this.drawPlannedSites();
+    for (const t of this.wallPlan) {
+      const px = isoX(t.tx, t.ty);
+      const py = isoY(t.tx, t.ty);
+      this.overlay.poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2]).stroke({ width: 1.5, color: 0xffd34d, alpha: 0.85 });
+    }
     const ghost = this.placementGhost();
     if (!ghost) return;
     this.drawBuildRange();

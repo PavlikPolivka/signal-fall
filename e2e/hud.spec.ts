@@ -63,3 +63,29 @@ test('hovering an Echo field shows how much is left in it', async ({ page }) => 
   expect(tile).toBeGreaterThanOrEqual(0);
   await expect(page.getByTestId('echo-card')).toContainText(/crystals left · worth ◆/);
 });
+
+test('dragging with a wall picked lays a whole line, piece by piece', async ({ page }) => {
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.evaluate(() => (window as unknown as Win).__signalFall.input.run('jumpToBase'));
+  await page.keyboard.press('KeyN');
+  await page.keyboard.press('KeyW');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.placing !== null);
+  const box = (await page.locator('canvas').first().boundingBox())!;
+  const x = box.x + box.width / 2 + 120;
+  const y = box.y + box.height / 2 + 80;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 100, y + 50, { steps: 5 });
+  await page.mouse.move(x + 200, y + 100, { steps: 5 });
+  await page.mouse.up();
+  const st = await page.evaluate(() => {
+    const s = (window as unknown as Win).__signalFall.state;
+    return { planned: s.wallPlan?.tiles.length ?? 0, built: s.sent.filter((c: { type: string }) => c.type === 'build').length };
+  });
+  expect(st.built).toBe(1);
+  expect(st.planned).toBeGreaterThanOrEqual(2);
+  // Once the first piece has placed itself, the next one is ordered.
+  await page.evaluate(() => (window as unknown as Win).__signalFall.state.post({ type: 'speed', speed: 4 }));
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.sent.filter((c: { type: string }) => c.type === 'build').length >= 2, null, { timeout: 30_000 });
+});

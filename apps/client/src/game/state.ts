@@ -162,6 +162,8 @@ export class ClientState {
   /** World entity under the cursor and where (client px). */
   hoverEntity = -1;
   hoverPos = { x: 0, y: 0 };
+  /** A wall line being laid piece by piece (Input sends each when the defense queue is free). */
+  wallPlan: { item: number; category: 'structures' | 'defenses'; tiles: { tx: number; ty: number }[]; sentAt: number } | null = null;
   /** Echo tile under the cursor (-1: none), for the field card. */
   hoverEcho = -1;
 

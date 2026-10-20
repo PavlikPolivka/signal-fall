@@ -87,6 +87,8 @@ export class Input {
   /** Since when the cursor has been in a panel-side edge zone (for the dwell delay). */
   private panelEdgeSince = 0;
   private drag: { x0: number; y0: number; x1: number; y1: number; button: number } | null = null;
+  /** A wall line being dragged out (screen px). */
+  private wallDrag: { x0: number; y0: number; x1: number; y1: number } | null = null;
   private lastClick = { time: 0, handle: -1 };
   private lastGroup = { digit: -1, time: 0 };
   private idleHarvesterCursor = 0;
@@ -132,6 +134,8 @@ export class Input {
   // --- per-frame camera movement ---
 
   update(dt: number): void {
+    this.advanceWallPlan();
+    this.renderer.wallPlan = this.wallDrag ? this.renderer.wallPlan : (this.state.wallPlan?.tiles ?? []);
     const cam = this.renderer.camera;
     const step = (PAN_SPEED * this.state.settings.scrollSpeed * dt) / cam.zoom;
     let dx = 0;
@@ -388,7 +392,10 @@ export class Input {
           s.creditsOpen = false;
           s.changed();
         } else if (s.menuOpen) this.toggleMenu();
-        else if (s.placing) this.stopPlacing();
+        else if (s.wallPlan) {
+          s.wallPlan = null;
+          s.changed();
+        } else if (s.placing) this.stopPlacing();
         else if (s.mode !== 'normal') this.setMode('normal');
         else if (s.selection.length > 0) s.select([]);
         // Esc never opens the menu: browsers use it to leave fullscreen. The menu is on ` (and the button).
@@ -640,6 +647,12 @@ export class Input {
     // Clicking the battlefield closes an open production tab.
     if (UNIT_MENUS.includes(this.state.mode)) this.setMode('normal');
     if (this.state.placing) {
+      // Walls: drag out a whole line (a plain click still places one).
+      const at = this.placementAt(p.x, p.y);
+      if (at && at.rule.role === 'wall') {
+        this.wallDrag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+        return;
+      }
       this.tryPlace(p.x, p.y, e.shiftKey);
       return;
     }
@@ -659,6 +672,12 @@ export class Input {
     this.mouse.y = e.clientY;
     this.mouse.inside = true;
     const p = this.local(e);
+    if (this.wallDrag) {
+      this.wallDrag.x1 = p.x;
+      this.wallDrag.y1 = p.y;
+      this.renderer.wallPlan = this.wallLine(this.wallDrag);
+      return;
+    }
     if (!this.drag) {
       if (e.target === this.canvas) this.updateCursor(p.x, p.y);
       else if (this.state.hoverEntity >= 0) {
@@ -682,6 +701,15 @@ export class Input {
   private onPointerUp(e: PointerEvent): void {
     if (e.pointerType === 'touch') {
       this.onTouchUp(e);
+      return;
+    }
+    if (this.wallDrag) {
+      const line = this.wallLine(this.wallDrag);
+      const w = this.wallDrag;
+      this.wallDrag = null;
+      this.renderer.wallPlan = [];
+      if (line.length <= 1) this.tryPlace(w.x1, w.y1, e.shiftKey);
+      else this.startWallLine(line);
       return;
     }
     if (!this.drag) return;
@@ -837,6 +865,12 @@ export class Input {
   /** Right click backs out: cancels placement or a targeting mode, otherwise clears the selection. */
   rightClick(_sx: number, _sy: number, _shift: boolean): void {
     const s = this.state;
+    if (s.wallPlan) {
+      // Stop laying the rest of a wall line.
+      s.wallPlan = null;
+      s.changed();
+      return;
+    }
     if (s.placing) {
       this.stopPlacing();
       return;
@@ -1125,6 +1159,59 @@ export class Input {
     if (!this.mouse.inside) return null;
     const r = this.canvas.getBoundingClientRect();
     return { x: this.mouse.x - r.left, y: this.mouse.y - r.top };
+  }
+
+  /** Wall tiles from the drag's start to its end, along whichever axis it went further (straight lines only). */
+  private wallLine(d: { x0: number; y0: number; x1: number; y1: number }): { tx: number; ty: number }[] {
+    const a = this.placementAt(d.x0, d.y0);
+    const b = this.placementAt(d.x1, d.y1);
+    if (!a || !b) return [];
+    const step = Math.max(1, a.rule.footprintW);
+    const dx = b.tx - a.tx;
+    const dy = b.ty - a.ty;
+    const alongX = Math.abs(dx) >= Math.abs(dy);
+    const n = Math.min(40, Math.floor(Math.abs(alongX ? dx : dy) / step));
+    const out: { tx: number; ty: number }[] = [];
+    for (let k = 0; k <= n; k++) out.push(alongX ? { tx: a.tx + Math.sign(dx) * k * step, ty: a.ty } : { tx: a.tx, ty: a.ty + Math.sign(dy) * k * step });
+    return out;
+  }
+
+  /** Lay a wall line: the first piece now, the rest one after another as each places itself. */
+  private startWallLine(line: { tx: number; ty: number }[]): void {
+    const s = this.state;
+    if (!s.placing) return;
+    const item = s.placing.item;
+    const category = s.placing.category;
+    const [first, ...rest] = line;
+    if (s.placing.planned) s.send({ type: 'build', category, item, tx: first!.tx, ty: first!.ty });
+    else s.send({ type: 'place', category, tx: first!.tx, ty: first!.ty });
+    s.wallPlan = { item, category, tiles: rest, sentAt: performance.now() };
+    s.placing = null;
+    s.changed();
+  }
+
+  /** Each frame: when the defense queue is free, the next piece of a planned wall line. */
+  private advanceWallPlan(): void {
+    const s = this.state;
+    const plan = s.wallPlan;
+    if (!plan || !s.cur) return;
+    if (plan.tiles.length === 0) {
+      s.wallPlan = null;
+      return;
+    }
+    // Give the last order a moment to reach the sim before reading the queue.
+    if (performance.now() - plan.sentAt < 400) return;
+    if (s.cur.buildQueue(s.localPlayer, 1).item >= 0) return;
+    const faction = s.rules.factions[s.players[s.localPlayer]!.faction]!;
+    const rule = s.rules.structures[plan.item]!;
+    while (plan.tiles.length > 0) {
+      const t = plan.tiles.shift()!;
+      if (placementError(s.placementView(), s.localPlayer, faction, rule, t.tx, t.ty)) continue;
+      s.send({ type: 'build', category: plan.category, item: plan.item, tx: t.tx, ty: t.ty });
+      plan.sentAt = performance.now();
+      break;
+    }
+    s.changed();
   }
 
   private tryPlace(sx: number, sy: number, shift: boolean): void {

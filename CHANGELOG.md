@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 19:40 UTC
+
+- **Drag out a wall:** with a wall picked, drag across the ground to lay a straight line. The first piece goes down at once and the rest follow one after another, outlined in gold until built. Right-click or Esc stops the line.
+
 ## 2026-10-20 19:37 UTC
 
 - **A report that coaches:** the match report now shows how long your factories stood idle, how much money you held on average, and how long it sat above ◆3,000. Below it, "Next time" picks the three things that would have helped you most, from idle factories and unspent money to falling behind on Echo or trading badly.

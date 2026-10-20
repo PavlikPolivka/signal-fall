@@ -213,7 +213,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 150 | C | Remove the selection from a control group (Ctrl+Shift+number) | 2 | XS |
 | 151 ✅ | C | Right-click a portrait removes it from the selection; Shift+right-click removes that type | 3 | XS |
 | 152 ✅ | C | Shift-place: keep placing the same structure (turrets, walls) without picking it again | 4 | XS |
-| 153 | C | Drag to lay a whole wall line in one go | 4 | S |
+| 153 ✅ | C | Drag to lay a whole wall line in one go | 4 | S |
 | 154 | C | Follow camera: lock onto the selected unit | 2 | XS |
 | 155 | C | Quick-cast setting: abilities fire at the cursor on key press, no click | 3 | S |
 | 156 ✅ | C | Superweapon hotkey (fire at the cursor) | 3 | XS |
@@ -258,7 +258,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 185 | O | Sandbox from the main menu: free credits, no enemy army, test any unit | 3 | S |
 | 186 ✅ | O | Campaign difficulty choice (Story, Normal, Hard) | 4 | S |
 | 187 | O | Restart a campaign mission from a mid-mission save | 3 | S |
-| 188 | O | Replay timeline marks big fights and lost buildings; click to jump | 4 | S |
+| 188 | O | Replay timeline marks big fights and lost buildings; click to jump (deferred: jumping needs saved checkpoints of the match state, re-running a long replay to a point takes up to a minute; cost M) | 4 | M |
 | 189 ✅ | O | "Play this map" from a replay (same seed and factions) | 2 | XS |
 | 190 | O | Full keyboard navigation of every menu | 2 | S |
 | 191 ✅ | O | Confirm before the host leaves a multiplayer lobby | 2 | XS |
