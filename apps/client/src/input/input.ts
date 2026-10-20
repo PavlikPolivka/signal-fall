@@ -772,6 +772,21 @@ export class Input {
       this.renderer.ping(sx, sy, 0x9fd7ff);
       return;
     }
+    // Ctrl+click on the ground: artillery and other splash weapons shell that spot (force fire).
+    if (intent.kind === 'move' && ctrl) {
+      const shellers = units.filter((h) => {
+        const w = (s.ruleOf(h) as { weapon?: { splash: number; targetsGround: boolean } | null }).weapon;
+        return !!w && w.splash > 0 && w.targetsGround;
+      });
+      if (shellers.length > 0) {
+        const p = this.simPoint(sx, sy);
+        s.send({ type: 'attackGround', units: shellers, x: p.x, y: p.y, queue: shift });
+        const others = units.filter((h) => !shellers.includes(h));
+        if (others.length > 0) s.send({ type: 'attackMove', units: others, x: p.x, y: p.y, queue: shift });
+        this.renderer.ping(sx, sy, 0xff5a5a);
+        return;
+      }
+    }
     if (intent.kind === 'move') {
       // Clicking the ground is an attack-move: units fight what they meet (M + click for a pure move).
       const p = this.simPoint(sx, sy);

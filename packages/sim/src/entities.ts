@@ -33,7 +33,9 @@ export type Order =
   | { type: 'attack'; target: number; x: number; y: number }
   | { type: 'patrol'; ax: number; ay: number; bx: number; by: number; toB: boolean }
   | { type: 'guard'; target: number }
-  | { type: 'salvage'; target: number };
+  | { type: 'salvage'; target: number }
+  /** Shell the ground at (x, y) (splash weapons): walk into range, then keep firing there. */
+  | { type: 'attackGround'; x: number; y: number };
 
 export const SLOT_BITS = 16;
 export const MAX_SLOTS = 1 << SLOT_BITS;
@@ -362,7 +364,7 @@ export class Entities {
   }
 }
 
-const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5, salvage: 6 } as const;
+const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5, salvage: 6, attackGround: 7 } as const;
 
 function serializeOrder(o: Order, w: IntWriter): void {
   w.push(ORDER_CODE[o.type]);
@@ -386,6 +388,10 @@ function serializeOrder(o: Order, w: IntWriter): void {
     case 'guard':
     case 'salvage':
       w.push(o.target);
+      return;
+    case 'attackGround':
+      w.push(o.x);
+      w.push(o.y);
       return;
     case 'patrol':
       w.push(o.ax);

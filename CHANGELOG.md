@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 19:47 UTC
+
+- **Attack ground:** Ctrl+click the ground with artillery (or any splash weapon) selected to shell that spot: they move into range and keep firing until you give another order. Good for a choke you expect the enemy to come through, or a crowd under the fog.
+
 ## 2026-10-20 19:43 UTC
 
 - **Power off by hand:** select a building that draws power and click Power off to free its power for what matters, like classic C&C. While off it does nothing: guns hold fire, factories stop, the radar goes dark, a superweapon stops charging. Power on brings it back.

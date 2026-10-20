@@ -1,8 +1,8 @@
 import { GARRISON_DAMAGE_PCT } from './garrison';
-import { ARMOR, DAMAGE } from '@signal-fall/data';
+import { ARMOR, DAMAGE, type WeaponRule } from '@signal-fall/data';
 import { FX_ONE, iatan2, idiv, ilength, pct } from '../fx';
-import { KIND } from '../entities';
-import { armorOf, canTarget, costOf, digInOf, distToBody, inWeaponRange, isAir, isDugIn, teamOf, weaponOf } from '../query';
+import { KIND, NO_ENTITY } from '../entities';
+import { armorOf, canTarget, costOf, digInOf, distToBody, inWeaponRange, isAir, isDugIn, rangeOf, teamOf, weaponOf } from '../query';
 import { removeEntity } from '../spawn';
 import { spawnWreck } from './economy';
 import { chorusPct, cooldownFor, isPhased, recompileRefund, upgradePct } from './faction';
@@ -29,7 +29,10 @@ export function weaponSystem(world: World): void {
     // Switched off by its owner.
     if (e.kind[s] === KIND.structure && e.poweredDown[s] === 1) continue;
     const t = e.resolve(e.target[s]!);
-    if (t < 0) continue;
+    if (t < 0) {
+      groundShot(world, s, weapon, vetPct);
+      continue;
+    }
     // Phased units cannot shoot or be shot.
     if (isPhased(world, s) || isPhased(world, t)) continue;
     if (!canTarget(world, s, weapon, t) || !inWeaponRange(world, s, weapon, t)) continue;
@@ -68,6 +71,36 @@ export function weaponSystem(world: World): void {
     const dealt = pct(pct(weapon.damage, 100 + vetPct * e.rank[s]!), world.rules.damageMatrix[weapon.type * ARMOR_COUNT + armorOf(world, t)]!);
     world.pending.set(t, (world.pending.get(t) ?? 0) + dealt);
   }
+}
+
+/** A unit ordered to shell the ground fires at the spot (splash only) once in range and standing. */
+function groundShot(world: World, s: number, weapon: WeaponRule, vetPct: number): void {
+  const e = world.entities;
+  const o = e.kind[s] === KIND.unit ? e.orders[s]![0] : undefined;
+  if (!o || o.type !== 'attackGround' || e.hasGoal[s] === 1 || e.cooldown[s]! > 0) return;
+  const d = ilength(o.x - e.x[s]!, o.y - e.y[s]!);
+  if (d > rangeOf(world, s, weapon) || d < weapon.minRange) return;
+  e.facing[s] = iatan2(o.y - e.y[s]!, o.x - e.x[s]!);
+  e.cooldown[s] = cooldownFor(world, s, weapon.cooldown);
+  const ticks = weapon.projectileSpeed > 0 ? idiv(d + weapon.projectileSpeed - 1, weapon.projectileSpeed) : 0;
+  world.projectiles.push({
+    owner: e.owner[s]!,
+    ox: e.x[s]!,
+    oy: e.y[s]!,
+    total: ticks,
+    source: e.handle(s),
+    target: NO_ENTITY,
+    x: o.x,
+    y: o.y,
+    damage: pct(weapon.damage, 100 + vetPct * e.rank[s]! + upgradePct(world, e.owner[s]!, 'damagePct')),
+    type: weapon.type,
+    splash: weapon.splash,
+    hitsGround: weapon.targetsGround,
+    hitsAir: weapon.targetsAir,
+    ticks,
+    ...special(world, s),
+  });
+  pushFx(world, FX_EVENT.fire, e.kind[s]!, e.type[s]!, e.owner[s]!, e.x[s]!, e.y[s]!, o.x, o.y);
 }
 
 /** Advance projectiles; apply damage on impact. */

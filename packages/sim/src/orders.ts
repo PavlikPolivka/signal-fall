@@ -130,6 +130,14 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       }
       return;
     }
+    case 'attackGround':
+      // Only splash weapons that hit the ground do anything to a spot.
+      for (const s of ownedUnits(world, c.player, cmd.units)) {
+        const w = world.rules.units[e.type[s]!]!.weapon;
+        if (!w || w.splash <= 0 || !w.targetsGround) continue;
+        give(world, s, { type: 'attackGround', x: clamp(cmd.x, 0, world.map.width * FX_ONE - 1), y: clamp(cmd.y, 0, world.map.height * FX_ONE - 1) }, cmd.queue ?? false);
+      }
+      return;
     case 'guard': {
       const t = e.resolve(cmd.target);
       if (t < 0 || teamOf(world, t) !== player.team) return;

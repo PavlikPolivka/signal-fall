@@ -190,3 +190,26 @@ describe('match statistics', () => {
     expect(a!.stats.unitsLost).toBe(0);
   });
 });
+
+describe('attack ground', () => {
+  it('artillery ordered onto a spot walks into range and shells it, hurting what stands there', () => {
+    const sim = makeSim({ size: 40 });
+    const e = sim.world.entities;
+    const gun = spawnUnit(sim.world, unit('thumper'), 0, at(5), at(20));
+    const victim = spawnUnit(sim.world, unit('grunt'), 1, at(30), at(20));
+    const hp = e.hp[victim & 0xffff]!;
+    sim.schedule({ tick: 0, player: 0, cmd: { type: 'attackGround', units: [gun], x: at(30), y: at(20) } });
+    sim.run(20 * 40);
+    expect(e.alive[victim & 0xffff] !== 1 || e.hp[victim & 0xffff]! < hp).toBe(true);
+    expect(e.orders[gun & 0xffff]![0]?.type).toBe('attackGround');
+  });
+
+  it('units without a splash weapon ignore the order', () => {
+    const sim = makeSim();
+    const e = sim.world.entities;
+    const g = spawnUnit(sim.world, unit('grunt'), 0, at(5), at(5));
+    sim.schedule({ tick: 0, player: 0, cmd: { type: 'attackGround', units: [g], x: at(20), y: at(20) } });
+    sim.run(2);
+    expect(e.orders[g & 0xffff]).toHaveLength(0);
+  });
+});

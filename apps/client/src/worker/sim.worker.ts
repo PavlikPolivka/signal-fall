@@ -153,7 +153,7 @@ function encode(world: World, stalled: boolean): ArrayBuffer {
     const o = orders[0];
     a[off + E.order] = o ? ORDER_CODE[o.type] : 0;
     if (o) {
-      if (o.type === 'move' || o.type === 'attackMove' || o.type === 'attack') {
+      if (o.type === 'move' || o.type === 'attackMove' || o.type === 'attack' || o.type === 'attackGround') {
         a[off + E.orderX] = o.x;
         a[off + E.orderY] = o.y;
       } else if (o.type === 'patrol') {

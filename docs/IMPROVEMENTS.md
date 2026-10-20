@@ -175,7 +175,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 127 | E | Holdout harvesters below 30% health drive to a Garage on their own | 3 | S |
 | 128 | E | Recompiled Halcyon units keep one veterancy rank | 2 | S |
 | 129 | E | More crate types: a short map reveal, a speed boost, a free harvester | 2 | XS |
-| 130 | E | Attack-ground order for artillery: shell a spot, not a unit | 4 | S |
+| 130 ✅ | E | Attack-ground order for artillery: shell a spot, not a unit | 4 | S |
 | 131 | E | Allied credit transfer in team games | 3 | S |
 
 ### Match options

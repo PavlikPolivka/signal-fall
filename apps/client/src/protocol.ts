@@ -202,7 +202,7 @@ export const ENT_FLAG = { phased: 1, overridden: 2, covered: 4, digging: 8, dugI
 export const PR = { ox: 0, oy: 1, x: 2, y: 3, type: 4, ticks: 5, total: 6 } as const;
 export const PROJ_STRIDE = 7;
 
-export const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5, salvage: 6 } as const;
+export const ORDER_CODE = { move: 1, attackMove: 2, attack: 3, patrol: 4, guard: 5, salvage: 6, attackGround: 7 } as const;
 
 /** Read-only view of one decoded snapshot. */
 export class Snapshot {

@@ -27,6 +27,8 @@ function unitStatus(world: World, s: number): string {
       return 'attack-moving';
     case 'attack':
       return 'attacking';
+    case 'attackGround':
+      return 'shelling the ground';
     case 'patrol':
       return 'patrolling';
     case 'guard':

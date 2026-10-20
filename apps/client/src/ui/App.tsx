@@ -1742,6 +1742,7 @@ function Briefing({ state }: { state: ClientState }) {
             ['B / N', 'Build / defense, then a letter'],
             ['I / V / Y', 'Infantry / vehicles / air, then letters'],
             ['Click ground', 'Attack-move the selection'],
+            ['Ctrl+click ground', 'Artillery shells that spot'],
             ['M, P, G', 'Move, patrol, guard, then click'],
             ['F', 'Unit ability'],
             ['Q', 'Support power'],

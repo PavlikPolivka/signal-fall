@@ -405,6 +405,22 @@ function unitBehavior(world: World, s: number, weapon: WeaponRule | null): void 
       if (distToBody(world, e.x[s]!, e.y[s]!, t) > ESCORT_RANGE) setGoal(world, s, o.x, o.y);
       return;
     }
+    case 'attackGround': {
+      if (!weapon) {
+        completeOrder(world, s);
+        return;
+      }
+      const d = ilength(o.x - e.x[s]!, o.y - e.y[s]!);
+      // Too close for a gun with a minimum range: nothing to do from here.
+      if (d < weapon.minRange) {
+        completeOrder(world, s);
+        return;
+      }
+      e.target[s] = NO_ENTITY;
+      if (d > rangeOf(world, s, weapon)) setGoal(world, s, o.x, o.y);
+      else e.hasGoal[s] = 0;
+      return;
+    }
     case 'guard': {
       const g = e.resolve(o.target);
       if (g < 0) {
