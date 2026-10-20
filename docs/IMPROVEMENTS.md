@@ -268,13 +268,13 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 193 | G | Superweapon building glows more as it charges | 3 | XS |
+| 193 ✅ | G | Superweapon building glows more as it charges | 3 | XS |
 | 194 | G | Faction-specific strike visuals: shell rain, a burning purge, a crystal shatter | 4 | S |
 | 195 | G | Garrisoned ruins show muzzle flashes in the windows | 3 | S |
 | 196 ✅ | G | Capture point ring fills in the capturing team's color  (already drawn) | 3 | XS |
 | 197 | G | "+700" credit pop when a harvester unloads | 2 | XS |
-| 198 | G | Minimap flash at a superweapon target the moment the warning starts | 3 | XS |
-| 199 | G | Coverage and growth range shown around a selected Halcyon or Choir building | 3 | XS |
+| 198 ✅ | G | Minimap flash at a superweapon target the moment the warning starts | 3 | XS |
+| 199 ✅ | G | Coverage and growth range shown around a selected Halcyon or Choir building | 3 | XS |
 
 ### Sound
 

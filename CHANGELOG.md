@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-20 05:58 UTC
+
+- **Superweapons, easier to read:** a superweapon's base glows brighter as it charges, and the target of an incoming strike blinks on the minimap from the moment the warning starts.
+- **Ranges on selection:** select a Halcyon building to see its network coverage, or a Choir building to see where it lets you grow.
+
 ## 2026-10-20 05:55 UTC
 
 - **Autosave:** a match against the AI saves itself every five minutes of play, so a closed tab or a crash costs at most five minutes. Continue on the main menu picks it up.

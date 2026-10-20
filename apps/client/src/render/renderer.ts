@@ -717,6 +717,18 @@ export class Renderer {
           const by = py - 64;
           this.overlay.poly([px + 2, by - 8, px - 4, by + 1, px, by + 1, px - 2, by + 8, px + 4, by - 1, px, by - 1]).fill({ color: 0xff4d4d }).stroke({ width: 1, color: 0x2a0606 });
         }
+        // A superweapon glows brighter as it charges, and throbs once ready.
+        if (visible && srule.superweapon && !ghost) {
+          const status = s.superStatus(owner);
+          const total = srule.superweapon.charge;
+          const charged = status < 0 ? 0 : status === 0 ? 1 : 1 - status / Math.max(1, total);
+          const throb = status === 0 && !s.settings.calmFlashes ? 0.15 * Math.sin(performance.now() / 200) : 0;
+          // A halo on the ground around its base (under the building), not a disc over it.
+          const glow = owner === s.localPlayer ? 0xffb46d : 0xff6a4a;
+          const a = Math.max(0, 0.04 + 0.28 * charged + throb);
+          this.decals.ellipse(px, py, 62, 31).fill({ color: glow, alpha: a * 0.5 });
+          this.decals.ellipse(px, py, 62, 31).stroke({ width: 2, color: glow, alpha: Math.min(1, a * 1.8) });
+        }
         if (visible && cur.get(o, E.repairing) === 1) {
           const pulse = s.settings.calmFlashes ? 0.8 : 0.5 + 0.5 * Math.sin(performance.now() / 150);
           this.overlay.rect(px - 2, py - 70, 4, 12).fill({ color: 0x4ade80, alpha: pulse });
@@ -797,6 +809,12 @@ export class Renderer {
         // Weapon range: selected defenses always, any selection while Alt is held.
         const rule = kind === KIND.structure ? s.rules.structures[cur.get(o, E.type)]! : kind === KIND.unit ? s.rules.units[cur.get(o, E.type)]! : null;
         if (isSel && rule?.weapon && (s.altHeld || kind === KIND.structure)) this.rangeRing(px, py, rule.weapon.range / FX, ring);
+        // A selected Halcyon building shows its network coverage, a Choir one where it lets you grow.
+        if (isSel && kind === KIND.structure) {
+          const sr = rule as { coverageRadius?: number; growthRadius?: number } | null;
+          if (sr?.coverageRadius) this.rangeRing(px, py, sr.coverageRadius / FX, 0x3ee6ff);
+          if (sr?.growthRadius) this.rangeRing(px, py, sr.growthRadius / FX, 0xb48cff);
+        }
       }
       if (isSel) {
         // Order line (and, with Shift held, the whole queued path with markers).

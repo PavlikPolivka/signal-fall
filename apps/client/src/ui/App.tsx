@@ -666,6 +666,22 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
         }
       }
       drawObjectives();
+      // Superweapon strikes on their way: the target blinks red on the minimap from the first warning.
+      for (const st of state.strikes()) {
+        const show = state.settings.calmFlashes || Math.floor(performance.now() / 250) % 2 === 0;
+        if (!show) continue;
+        ctx.strokeStyle = '#ff4d4d';
+        ctx.lineWidth = 2 / scale;
+        ctx.beginPath();
+        ctx.arc(st.x / FX, st.y / FX, 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(st.x / FX - 7, st.y / FX);
+        ctx.lineTo(st.x / FX + 7, st.y / FX);
+        ctx.moveTo(st.x / FX, st.y / FX - 7);
+        ctx.lineTo(st.x / FX, st.y / FX + 7);
+        ctx.stroke();
+      }
       // Attack pings: red rings where own units/buildings were recently hit.
       const now = performance.now();
       for (const hit of state.hits) {
