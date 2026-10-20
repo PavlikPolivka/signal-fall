@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 21:32 UTC
+
+- **Hornet rotors really spin now:** the rotor frames were rendered with the blades frozen in place. They turn in flight as they should.
+
 ## 2026-10-20 20:49 UTC
 
 - **Ping your AI ally:** in 2v2 or Survival with an ally, Alt+click the map. Near its base it rushes home to defend; anywhere else it sends half its spare army to attack there. In multiplayer, AI seats answer pings too.

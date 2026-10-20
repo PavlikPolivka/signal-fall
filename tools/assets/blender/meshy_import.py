@@ -233,6 +233,8 @@ def _cut_rotor(obj, band, radius):
     keep(rotor, True)
     rotor.data.transform(Matrix.Translation(-hub))
     rotor.location = hub
+    # Imported glTF objects rotate by quaternion, which ignores rotation_euler: spin it by Euler angles.
+    rotor.rotation_mode = "XYZ"
     reach = max(math.hypot(v.co.x, v.co.y) for v in rotor.data.vertices)
     return rotor, hub, reach
 
