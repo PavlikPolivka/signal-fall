@@ -66,15 +66,24 @@ def call(model, body):
     raise RuntimeError('still rate limited after 12 tries')
 
 
-def speak(text, cast):
+def as_wav(data, mime):
+    # Some models send raw 16-bit PCM ("audio/L16;codec=pcm;rate=24000"): give it a WAV header.
+    if data[:4] == b'RIFF':
+        return data
+    rate = int(re.search(r'rate=(\d+)', mime or '').group(1)) if re.search(r'rate=(\d+)', mime or '') else 24000
+    import struct
+    return b'RIFF' + struct.pack('<I', 36 + len(data)) + b'WAVEfmt ' + struct.pack('<IHHIIHH', 16, 1, 1, rate, rate * 2, 2, 16) + b'data' + struct.pack('<I', len(data)) + data
+
+
+def speak(text, cast, model=None):
     body = {
         # Director's notes apart from the transcript: a bare "Say X:" cue gets read aloud on short lines, and
         # long cues make the model drawl.
         'contents': [{'parts': [{'text': f"# AUDIO PROFILE\n{cast['profile']}\n\n## DIRECTOR'S NOTES\nStyle: {cast['style']}.\nPace: {cast.get('pace', 'natural, not slow')}.\n\n## TRANSCRIPT\n{text}"}]}],
         'generationConfig': {'responseModalities': ['AUDIO'], 'speechConfig': {'voiceConfig': {'prebuiltVoiceConfig': {'voiceName': cast['voice']}}}},
     }
-    part = call(CFG['model'], body)['candidates'][0]['content']['parts'][0]['inlineData']
-    return base64.b64decode(part['data'])
+    part = call(model or CFG['model'], body)['candidates'][0]['content']['parts'][0]['inlineData']
+    return as_wav(base64.b64decode(part['data']), part.get('mimeType'))
 
 
 def words(s):
@@ -109,12 +118,12 @@ def plausible(text, wav):
     return seconds(wav) <= 2.5 + 0.75 * len(words(text))
 
 
-def take(name, text, cast):
+def take(name, text, cast, model=None):
     raw = os.path.join(RAW, name + '.wav')
     if os.path.exists(raw) and not os.environ.get('FORCE') and not FORCED:
         return open(raw, 'rb').read()
     for attempt in range(3):
-        wav = speak(text, cast)
+        wav = speak(text, cast, model)
         if not plausible(text, wav):
             print(f'  retake {name}: {seconds(wav):.1f} s is too long for the line')
             continue
@@ -162,7 +171,7 @@ for kind in kinds:
         if only and not any(name.startswith(f'{kind}/{o}') or o in name for o in only):
             continue
         try:
-            wav = take(name, text, cast)
+            wav = take(name, text, cast, CFG.get('models', {}).get(kind))
         except DailyQuota as q:
             sys.exit(f'Daily quota used up ({q}). Run again tomorrow: finished lines are kept.')
         if wav is None:

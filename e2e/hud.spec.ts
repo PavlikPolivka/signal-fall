@@ -49,3 +49,17 @@ test('right-click on a selection card drops one of that type, Shift+right-click 
   await card.click({ button: 'right', modifiers: ['Shift'] });
   expect(await count()).toBe(before - inCard);
 });
+
+test('hovering an Echo field shows how much is left in it', async ({ page }) => {
+  await page.goto('/play/?ai=none&size=S');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  const tile = await page.evaluate(() => {
+    const s = (window as unknown as Win).__signalFall.state;
+    const t = (s.echo as Uint8Array).findIndex((v: number) => v > 0);
+    s.hoverEcho = t;
+    s.changed();
+    return t;
+  });
+  expect(tile).toBeGreaterThanOrEqual(0);
+  await expect(page.getByTestId('echo-card')).toContainText(/crystals left · worth ◆/);
+});

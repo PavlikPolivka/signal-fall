@@ -230,7 +230,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 162 ✅ | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |
 | 163 ✅ | U | Army size against the unit cap in the top bar | 3 | XS |
 | 164 ✅ | U | Harvester load bar (how full it is) under the health bar (already drawn with the health bar) | 3 | XS |
-| 165 | U | Echo left in a field on hover; the minimap shades fields as they run dry | 4 | S |
+| 165 ✅ | U | Echo left in a field on hover; the minimap shades fields as they run dry | 4 | S |
 | 166 ✅ | U | Minimap marks capture points, crates and the hill flag with clear icons | 3 | XS |
 | 167 | U | Minimap filters: hide terrain, show only units, show Echo | 2 | S |
 | 168 ✅ | U | Cost turns red on a build button when you can't afford it now | 3 | XS |

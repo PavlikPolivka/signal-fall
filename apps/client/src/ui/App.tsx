@@ -631,8 +631,14 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
       ctx.setTransform(scale, scale * 0.5, -scale, scale * 0.5, h * scale, SIZE * 0.25);
       ctx.drawImage(base, 0, 0);
       // Echo crystals, so fields can be read from the minimap.
-      ctx.fillStyle = 'rgba(62,230,255,0.55)';
-      for (let i = 0; i < state.echo.length; i++) if (state.echo[i]! > 0) ctx.fillRect(i % w, Math.floor(i / w), 1, 1);
+      // Echo: brighter where tiles are full, fading as fields run dry.
+      const cap = state.rules.constants.echoCellCap;
+      for (let i = 0; i < state.echo.length; i++) {
+        const v = state.echo[i]!;
+        if (v <= 0) continue;
+        ctx.fillStyle = `rgba(62,230,255,${(0.2 + (0.6 * Math.min(v, cap)) / cap).toFixed(2)})`;
+        ctx.fillRect(i % w, Math.floor(i / w), 1, 1);
+      }
       if (state.fog) {
         for (let i = 0; i < state.fog.length; i++) {
           const f = state.fog[i]!;
@@ -1073,6 +1079,24 @@ function HoverCards({ state }: { state: ClientState }) {
     return (
       <div class="card-anchor side" style={{ top: `${Math.min(item.top, window.innerHeight - 380)}px` }}>
         <ItemCard state={state} rule={rule} blocked={item.blocked} />
+      </div>
+    );
+  }
+  if (state.hoverEcho >= 0) {
+    const { x, y } = state.hoverPos;
+    const f = state.echoField(state.hoverEcho);
+    const c = state.rules.constants;
+    return (
+      <div class="card-anchor" style={{ left: `${Math.min(x + 18, window.innerWidth - 300)}px`, top: `${Math.max(40, y - 10)}px` }}>
+        <div class="card small" data-testid="echo-card">
+          <b>Echo field</b>
+          <div>
+            {f.crystals.toLocaleString()} crystals left · worth {money(f.crystals * c.echoValuePerCrystal)}
+          </div>
+          <div class="muted">
+            {f.tiles} tiles, each regrows a crystal every {Math.round(c.echoRegrowTicks / c.tickRate)} s up to {c.echoCellCap}
+          </div>
+        </div>
       </div>
     );
   }

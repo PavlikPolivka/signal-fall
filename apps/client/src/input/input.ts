@@ -757,9 +757,14 @@ export class Input {
   private updateCursor(sx: number, sy: number): void {
     const mode = this.state.mode;
     const hovered = this.state.placing ? -1 : this.renderer.pick(sx, sy);
-    if (hovered !== this.state.hoverEntity) {
+    // The Echo tile under the cursor (when nothing else is), for the field card.
+    const p = this.simPoint(sx, sy);
+    const tile = (p.y >> FX_SHIFT) * this.state.width + (p.x >> FX_SHIFT);
+    const echoTile = hovered < 0 && !this.state.placing && p.x >= 0 && p.y >= 0 && (this.state.echo[tile] ?? 0) > 0 && (!this.state.fog || (this.state.fog[tile]! & 2) !== 0) ? tile : -1;
+    if (hovered !== this.state.hoverEntity || echoTile !== this.state.hoverEcho) {
       const r = this.canvas.getBoundingClientRect();
       this.state.hoverEntity = hovered;
+      this.state.hoverEcho = echoTile;
       this.state.hoverPos = { x: sx + r.left, y: sy + r.top };
       this.state.changed();
     }

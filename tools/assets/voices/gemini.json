@@ -1,5 +1,5 @@
 {
-  "_comment": "Gemini text-to-speech casting (tools/assets/voices/gemini.py). Each line is sent as a short audio profile, director's notes (style, pace) and the transcript, kept apart: a bare 'Say X:' cue gets read aloud on short lines. The faction treatment (radio, synthetic, chorus) from build.py goes on top.",
+  "_comment": "Gemini text-to-speech casting (tools/assets/voices/gemini.py). Each line is sent as a short audio profile, director's notes (style, pace) and the transcript, kept apart: a bare 'Say X:' cue gets read aloud on short lines. The faction treatment (radio, synthetic, chorus) from build.py goes on top. Each set (campaign, announcer) uses one model throughout, so its voices match; models have separate daily quotas.",
   "model": "gemini-3.8-flash-tts",
   "check_model": "gemini-3.5-flash",
   "campaign": {
@@ -39,5 +39,9 @@
       "style": "soft and serene",
       "pace": "natural"
     }
+  },
+  "models": {
+    "campaign": "gemini-3.8-flash-tts",
+    "announcer": "gemini-2.5-pro-preview-tts"
   }
 }

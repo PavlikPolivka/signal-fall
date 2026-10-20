@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 10:45 UTC
+
+- **Read the Echo:** hover a field to see how many crystals are left and what they're worth, and the minimap shades fields darker as they run dry.
+
 ## 2026-10-20 10:33 UTC
 
 - **Play fits on one screen:** sides, the map with its preview, and the match rules now sit in three columns, no scrolling. Rooms use the same layout.

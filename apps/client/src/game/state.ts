@@ -162,6 +162,30 @@ export class ClientState {
   /** World entity under the cursor and where (client px). */
   hoverEntity = -1;
   hoverPos = { x: 0, y: 0 };
+  /** Echo tile under the cursor (-1: none), for the field card. */
+  hoverEcho = -1;
+
+  /** The Echo field around a tile: its crystals and tiles (connected tiles with crystals, 8 ways). */
+  echoField(tile: number): { crystals: number; tiles: number } {
+    const w = this.width;
+    const seen = new Set<number>([tile]);
+    const todo = [tile];
+    let crystals = 0;
+    while (todo.length > 0 && seen.size < 4000) {
+      const t = todo.pop()!;
+      crystals += this.echo[t] ?? 0;
+      const x = t % w;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const n = t + dy * w + dx;
+          if (nx < 0 || nx >= w || n < 0 || n >= this.echo.length || seen.has(n) || (this.echo[n] ?? 0) === 0) continue;
+          seen.add(n);
+          todo.push(n);
+        }
+    }
+    return { crystals, tiles: seen.size };
+  }
   /** Structure waiting to be placed (placement mode). */
   /** Choosing a spot for a structure: a finished one, or (planned) one to build there. */
   placing: { category: 'structures' | 'defenses'; item: number; planned?: boolean } | null = null;
