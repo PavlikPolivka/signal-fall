@@ -1727,7 +1727,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
   const briefing = !state.replay && !state.spectator;
   const [section, setSection] = useState<MenuSection>(briefing ? 'briefing' : 'sound');
   if (keysOpen) return <KeyBindings state={state} onClose={() => setKeysOpen(false)} />;
-  const slider = (label: string, kind: 'music' | 'sfx' | 'voice') => (
+  const slider = (label: string, kind: 'music' | 'sfx' | 'voice' | 'ui') => (
     <label class="slider">
       {label}
       <input
@@ -1819,6 +1819,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             {slider('Music', 'music')}
             {slider('Effects', 'sfx')}
             {slider('Announcer', 'voice')}
+            {slider('Interface', 'ui')}
             {(
               [
                 ['unitVoices', 'Unit voices', 'Units reply when you select or order them'],
@@ -1873,6 +1874,21 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
                   }}
                 >
                   {v === 'full' ? 'Full' : 'Reduced'}
+                </button>
+              ))}
+            </div>
+            <div class="seg-row" title="Draw at most 30 frames a second: cooler and longer on battery">
+              <span>Battery saver</span>
+              {[false, true].map((v) => (
+                <button
+                  class={state.settings.batterySaver === v ? 'active' : ''}
+                  data-testid={`setting-battery-${v ? 'on' : 'off'}`}
+                  onClick={() => {
+                    state.settings.batterySaver = v;
+                    state.applySettings();
+                  }}
+                >
+                  {v ? '30 fps' : 'Off'}
                 </button>
               ))}
             </div>
@@ -1951,6 +1967,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
               [
                 ['colorblind', 'Team colors', 'Color-blind friendly team colors'],
                 ['calmFlashes', 'Flashing', 'Reduced: no blinking interface or markers, softer superweapon strikes'],
+                ['largeCursor', 'Cursor', 'A bigger mouse cursor'],
               ] as const
             ).map(([key, label, title]) => (
               <div class="seg-row" title={title}>
@@ -1964,7 +1981,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
                       state.applySettings();
                     }}
                   >
-                    {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : v ? 'Reduced' : 'Normal'}
+                    {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : key === 'largeCursor' ? (v ? 'Large' : 'Normal') : v ? 'Reduced' : 'Normal'}
                   </button>
                 ))}
               </div>

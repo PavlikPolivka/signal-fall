@@ -22,6 +22,8 @@ export interface AudioSettings {
   sfx: number;
   /** The announcer. */
   voice: number;
+  /** Interface clicks and cues (part of the effects). */
+  ui: number;
   /** Everything silent, volumes kept for unmuting. */
   muted: boolean;
 }
@@ -83,7 +85,7 @@ export class GameAudio {
   private sentSeen = 0;
   /** Times (ms) of recent shots near the player, for music intensity. */
   private combat: number[] = [];
-  settings: AudioSettings = { music: 0.5, sfx: 0.8, voice: 0.9, muted: false };
+  settings: AudioSettings = { music: 0.5, sfx: 0.8, voice: 0.9, ui: 1, muted: false };
   private voiceGain: GainNode | null = null;
   private voice: VoicePlayer | null = null;
   private ducked = false;
@@ -145,7 +147,7 @@ export class GameAudio {
     void this.ctx?.close();
   }
 
-  set(kind: 'music' | 'sfx' | 'voice', value: number): void {
+  set(kind: 'music' | 'sfx' | 'voice' | 'ui', value: number): void {
     this.settings[kind] = Math.max(0, Math.min(1, value));
     this.settings.muted = false;
     this.save();
@@ -394,6 +396,7 @@ export class GameAudio {
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const ui = x === undefined && UI_CUES.has(name);
+    if (ui) gain *= this.settings.ui;
     src.playbackRate.value = (0.93 + Math.random() * 0.14) * (ui ? this.uiRate : 1);
     const g = ctx.createGain();
     g.gain.value = gain;

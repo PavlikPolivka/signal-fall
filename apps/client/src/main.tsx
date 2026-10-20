@@ -260,6 +260,10 @@ state.applySettings = () => {
   renderer.setGraphics(state.settings.graphics);
   setColorblind(state.settings.colorblind);
   document.documentElement.toggleAttribute('data-calm', state.settings.calmFlashes);
+  document.documentElement.toggleAttribute('data-large-cursor', state.settings.largeCursor);
+  input?.useFactionCursors();
+  input?.setMode(state.mode);
+  if (mounted) renderer.app.ticker.maxFPS = state.settings.batterySaver ? 30 : 0;
   input?.reloadBindings();
   document.documentElement.style.setProperty('--ui-scale', String(state.settings.uiScale / 100));
   state.changed();
@@ -280,6 +284,7 @@ const renderer = new Renderer(state);
 renderer.effects.reduced = state.settings.effects === 'reduced';
 renderer.effects.calm = state.settings.calmFlashes;
 document.documentElement.toggleAttribute('data-calm', state.settings.calmFlashes);
+document.documentElement.toggleAttribute('data-large-cursor', state.settings.largeCursor);
 renderer.weather.enabled = state.settings.effects !== 'reduced';
 const audio = new GameAudio(
   state,
@@ -318,6 +323,7 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
   renderer.lib.hiDpi = state.settings.graphics === 'ultra' && ultraResolution() >= 1.5;
   await renderer.init(host);
   renderer.setGraphics(state.settings.graphics);
+  renderer.app.ticker.maxFPS = state.settings.batterySaver ? 30 : 0;
   input = new Input(state, renderer, renderer.app.canvas);
   renderer.placementGhost = () => {
     const c = input?.cursor();

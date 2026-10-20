@@ -90,3 +90,19 @@ test('reduced flashing calms the interface and stays set', async ({ page }) => {
   await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
   expect(await page.evaluate(() => document.documentElement.hasAttribute('data-calm'))).toBe(true);
 });
+
+test('large cursor, battery saver and an interface volume of its own', async ({ page }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type W = { __signalFall: any };
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
+  await page.keyboard.press('Backquote');
+  await page.getByTestId('menu-section-interface').click();
+  await page.getByTestId('setting-largeCursor-on').click();
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-large-cursor'))).toBe(true);
+  await page.getByTestId('menu-section-graphics').click();
+  await page.getByTestId('setting-battery-on').click();
+  expect(await page.evaluate(() => (window as unknown as W).__signalFall.renderer.app.ticker.maxFPS)).toBe(30);
+  await page.getByTestId('menu-section-sound').click();
+  await expect(page.getByTestId('volume-ui')).toBeVisible();
+});

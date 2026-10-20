@@ -286,7 +286,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 203 | V | Announcer for capture points taken and lost | 3 | XS |
 | 204 | V | Acknowledgements for entering and leaving a garrison | 2 | XS |
 | 205 | V | Crate pickup sound and voice line | 2 | XS |
-| 206 | V | Separate volume for interface clicks | 2 | XS |
+| 206 ✅ | V | Separate volume for interface clicks | 2 | XS |
 | 207 | V | A cue when one of your units in brush is spotted | 2 | XS |
 
 ### Multiplayer
@@ -308,9 +308,9 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 |---|---|---|---|---|
 | 216 ✅ | T | Skirmish autosave every 5 minutes | 3 | XS |
 | 217 | T | Install as an app (PWA), with atlases cached for fast starts | 3 | S |
-| 218 | T | Battery saver: cap at 30 fps on laptops | 2 | XS |
+| 218 ✅ | T | Battery saver: cap at 30 fps on laptops | 2 | XS |
 | 219 ✅ | O | Reduce flashing option (strikes, explosions, low-power blinks) | 3 | XS |
-| 220 | O | Larger cursor option | 2 | XS |
+| 220 ✅ | O | Larger cursor option | 2 | XS |
 | 221 | O | High-contrast interface text option | 2 | S |
 
 ## Wish list

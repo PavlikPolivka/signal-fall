@@ -646,6 +646,10 @@ export interface Settings {
   colorblind: boolean;
   /** Fewer flashes: no blinking interface, steady map markers, softer superweapon strikes. */
   calmFlashes: boolean;
+  /** Bigger mouse cursor (36 px instead of 24). */
+  largeCursor: boolean;
+  /** Battery saver: draw at most 30 frames a second. */
+  batterySaver: boolean;
   /** Interface size, percent. */
   uiScale: number;
   /** The player's own key bindings: action -> chords, replacing the default for that action. */
@@ -653,7 +657,7 @@ export interface Settings {
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, calmFlashes: false, uiScale: 100, keys: {} };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, calmFlashes: false, largeCursor: false, batterySaver: false, uiScale: 100, keys: {} };
 
 export function loadSettings(): Settings {
   try {

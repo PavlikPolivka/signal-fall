@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 06:01 UTC
+
+- **More settings:** a volume of its own for interface clicks (Sound), a battery saver that caps the game at 30 frames a second (Graphics), and a large mouse cursor (Interface).
+
 ## 2026-10-20 06:00 UTC
 
 - **See the money come in:** a "+◆700" pops over the refinery each time one of your harvesters unloads.

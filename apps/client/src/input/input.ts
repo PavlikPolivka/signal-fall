@@ -26,7 +26,10 @@ const svgCursor = (svg: string, x: number, y: number, fallback: string) =>
  * Context cursors (what a click will do), drawn in the faction's style: Holdout a field
  * crosshair in amber, Halcyon square brackets in cyan, the Choir a violet crystal diamond.
  */
-function factionCursors(faction: string) {
+/** A plain arrow, for the large-cursor setting (the browser's own arrow can't be scaled). */
+const ARROW = '<path d="M3 2v17l5-5 3 7 3-1-3-7h7z"/>';
+
+function factionCursors(faction: string, large = false) {
   const shape: Record<string, { color: string; move: string; attack: string }> = {
     holdout: {
       color: '#e8c35a',
@@ -45,11 +48,16 @@ function factionCursors(faction: string) {
     },
   };
   const f = shape[faction] ?? shape.holdout!;
+  // Large cursor setting: the same shapes at 36 px.
+  const px = large ? 36 : 24;
+  const hot = large ? 18 : 12;
   const svg = (body: string, color: string) =>
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><g fill="none" stroke="#000" stroke-width="4">${body}</g><g fill="none" stroke="${color}" stroke-width="2">${body}</g></svg>`;
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24"><g fill="none" stroke="#000" stroke-width="4">${body}</g><g fill="none" stroke="${color}" stroke-width="2">${body}</g></svg>`;
+  const arrow = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24"><g fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round">${ARROW}</g></svg>`;
   return {
-    move: svgCursor(svg(f.move, f.color), 12, 12, 'crosshair'),
-    attack: svgCursor(svg(f.attack, '#ff5a5a'), 12, 12, 'crosshair'),
+    normal: large ? svgCursor(arrow, Math.round((3 * px) / 24), Math.round((2 * px) / 24), 'default') : 'default',
+    move: svgCursor(svg(f.move, f.color), hot, hot, 'crosshair'),
+    attack: svgCursor(svg(f.attack, '#ff5a5a'), hot, hot, 'crosshair'),
     select: 'pointer',
     tool: 'cell',
   };
@@ -480,12 +488,12 @@ export class Input {
   /** Cursor set for the local player's faction (called once the match is known). */
   useFactionCursors(): void {
     const s = this.state;
-    CURSORS = factionCursors(s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.id ?? 'holdout');
+    CURSORS = factionCursors(s.rules.factions[s.players[s.localPlayer]?.faction ?? 0]?.id ?? 'holdout', s.settings.largeCursor);
   }
 
   setMode(mode: Mode): void {
     this.state.mode = mode;
-    this.canvas.style.cursor = mode === 'move' ? CURSORS.move : TARGET_MODES.includes(mode) ? CURSORS.attack : 'default';
+    this.canvas.style.cursor = mode === 'move' ? CURSORS.move : TARGET_MODES.includes(mode) ? CURSORS.attack : CURSORS.normal;
     this.state.changed();
   }
 
@@ -767,7 +775,7 @@ export class Input {
         if (this.canvas.style.cursor !== CURSORS.tool) this.canvas.style.cursor = CURSORS.tool;
         return;
       }
-      cursor = k === 'attack' ? CURSORS.attack : k === 'move' || rally ? CURSORS.move : k === 'select' ? CURSORS.select : 'default';
+      cursor = k === 'attack' ? CURSORS.attack : k === 'move' || rally ? CURSORS.move : k === 'select' ? CURSORS.select : CURSORS.normal;
     }
     if (this.canvas.style.cursor !== cursor) this.canvas.style.cursor = cursor;
   }
