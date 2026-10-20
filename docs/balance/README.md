@@ -162,3 +162,18 @@ once at its bottom, displaced formation slots each get their own tile, a small d
 The first try also gave vehicles hull-length formation slots and kept the vehicle gap while moving: Choir moved by about six
 points both ways (vehicle-heavy armies fought more spread out). Dropping the wider slots (variant A) put every pairing back in
 the gate (Holdout vs Halcyon sits at its edge, as it did before: 54% → 55%, within noise); dropping the rally spacing instead (variant B) left Holdout vs Choir at 45.3%. Hard beats Easy 50-0.
+
+### Parked vehicles spaced by hull length (2026-10-20)
+
+Vehicles still overlapped nose to tail in a parked group (drawn ~2.2 tiles long on a 1.2-tile body). Formation rows now sit a
+hull length apart front to back (side by side stays a diameter), and two parked vehicles with nothing to shoot keep 7/8 tile
+extra room. Hull-length spacing on both axes for plain moves (variant D) put Holdout vs Halcyon at 55.7%; front-to-back only
+(shipped) at 300 Hard matches per pairing:
+
+| Pairing | Before | Shipped |
+|---|---|---|
+| Holdout vs Halcyon | 54% | 54.3% |
+| Halcyon vs Choir | 51% (100) | 52.3% |
+| Holdout vs Choir | 48.7% | 46.7% |
+
+Hard beats Easy 50-0.

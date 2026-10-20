@@ -13,8 +13,12 @@ const REPATH_SLACK = 2;
 const NEIGHBOR_RANGE = FX_ONE;
 /** Overlaps smaller than this are left alone: nudging them only makes a parked group shimmer. */
 const SEPARATION_SLACK = FX_ONE >> 5;
-/** Extra room two parked ground vehicles keep between them (their hulls are longer than they are wide). */
-const VEHICLE_GAP = (FX_ONE * 3) >> 3;
+/**
+ * Extra room two parked ground vehicles keep between them: hulls are drawn about three radii long, so two
+ * bodies apart they still overlap nose to tail. Only for vehicles at rest with nothing to shoot, so fights
+ * pack exactly as before.
+ */
+const VEHICLE_GAP = (FX_ONE * 7) >> 3;
 
 export function movementSystem(world: World): void {
   const e = world.entities;
@@ -67,7 +71,7 @@ export function movementSystem(world: World): void {
     let py = 0;
     const r = e.radius[s]!;
     const moving = e.hasGoal[s] === 1;
-    const vehicle = !air && rule.tab === 'vehicles';
+    const parkedVehicle = !air && rule.tab === 'vehicles' && e.hasGoal[s] === 0 && e.target[s] === NO_ENTITY;
     world.spatial.query(x, y, r + NEIGHBOR_RANGE, (n) => {
       if (n === s || e.kind[n] !== KIND.unit) return;
       const nrule = world.rules.units[e.type[n]!]!;
@@ -75,7 +79,8 @@ export function movementSystem(world: World): void {
       const dx = x - e.x[n]!;
       const dy = y - e.y[n]!;
       // Parked vehicles keep extra room (their hulls are long); moving and fighting ones pack as before.
-      const minD = r + e.radius[n]! + (vehicle && !moving && e.hasGoal[n] === 0 && nrule.tab === 'vehicles' ? VEHICLE_GAP : 0);
+      const parkedPair = parkedVehicle && nrule.tab === 'vehicles' && e.hasGoal[n] === 0 && e.target[n] === NO_ENTITY;
+      const minD = r + e.radius[n]! + (parkedPair ? VEHICLE_GAP : 0);
       if (dx >= minD || dx <= -minD || dy >= minD || dy <= -minD) return;
       const dist = ilength(dx, dy);
       if (dist >= minD) return;

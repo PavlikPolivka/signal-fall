@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:27 UTC
+
+- **Room for every tank:** a group parks with a hull's length between rows, and parked vehicles keep their distance, so tanks and trucks no longer sit on top of each other.
+
 ## 2026-10-19 23:08 UTC
 
 - **Calmer groups:** units sent to a building or a crowded spot no longer dance in place. Each finds its own open ground, and parked vehicles keep more room between them.

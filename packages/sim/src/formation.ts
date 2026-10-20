@@ -59,9 +59,14 @@ export function formationSlots(world: World, units: number[], x: number, y: numb
   const rows: number[][] = [[], [], [], []];
   for (let i = 0; i < n; i++) rows[formationRow(world.rules.units[e.type[units[i]!]!]!)]!.push(i);
 
-  // Spacing per unit: a bit more than its diameter. (Wider vehicle slots moved the faction balance; parked
-  // vehicles get their extra room from separation instead, see movement.ts.)
+  // Spacing per unit: a bit more than its diameter side by side. Front to back a ground vehicle needs
+  // its hull length (drawn about three radii long), or parked rows overlap nose to tail. (Hull-length
+  // spacing side by side too moved the faction balance; see docs/balance.)
   const spacing = (i: number) => Math.max(FX_ONE, world.rules.units[e.type[units[i]!]!]!.radius * 2 + (FX_ONE >> 2));
+  const length = (i: number) => {
+    const r = world.rules.units[e.type[units[i]!]!]!;
+    return r.tab === 'vehicles' && !r.isAir ? Math.max(spacing(i), r.radius * 3 + (FX_ONE >> 2)) : spacing(i);
+  };
   // Rows wider than this wrap into sub-rows, keeping the block roughly square.
   const maxPerRow = Math.max(3, isqrt(n) + 2);
 
@@ -81,7 +86,7 @@ export function formationSlots(world: World, units: number[], x: number, y: numb
         const sp = spacing(i);
         local[i] = { f: -depth, l: lat + (sp >> 1) };
         lat += sp;
-        rowDepth = Math.max(rowDepth, sp);
+        rowDepth = Math.max(rowDepth, length(i));
       }
       depth += rowDepth;
     }
