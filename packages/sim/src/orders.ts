@@ -244,6 +244,9 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       }
       return;
     }
+    case 'ping':
+      player.ping = { x: clamp(cmd.x, 0, world.map.width * FX_ONE - 1), y: clamp(cmd.y, 0, world.map.height * FX_ONE - 1), tick: world.tick };
+      return;
     case 'powerToggle': {
       const t = e.resolve(cmd.target);
       if (t < 0 || e.owner[t] !== c.player || e.kind[t] !== KIND.structure || world.rules.structures[e.type[t]!]!.power >= 0) return;

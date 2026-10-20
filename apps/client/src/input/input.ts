@@ -638,10 +638,13 @@ export class Input {
       return;
     }
     if (e.button !== 0) return;
-    // Multiplayer: Alt+click pings the spot for your team.
-    if (e.altKey && this.state.multiplayer) {
+    // Alt+click pings the spot for your team: people see it, AI teammates answer it (attack or defend there).
+    const teammates = this.state.players.some((x, k) => k !== this.state.localPlayer && x.team === this.state.players[this.state.localPlayer]?.team);
+    if (e.altKey && (this.state.multiplayer || teammates) && !this.state.spectator) {
       const at = this.simPoint(p.x, p.y);
-      this.state.sendChat('', true, at);
+      if (this.state.multiplayer) this.state.sendChat('', true, at);
+      else this.state.addChat(this.state.localPlayer, '', true, at);
+      this.state.send({ type: 'ping', x: at.x, y: at.y });
       return;
     }
     // Clicking the battlefield closes an open production tab.

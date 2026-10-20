@@ -43,6 +43,8 @@ export type Command =
   | { type: 'rally'; target: number; x: number; y: number }
   /** Switch an own power-drawing structure off (frees its power; it does nothing) or back on. */
   | { type: 'powerToggle'; target: number }
+  /** A map ping for the team (AI teammates answer it: they attack or defend there). */
+  | { type: 'ping'; x: number; y: number }
   /** Units with splash weapons shell the ground at (x, y) until given another order. */
   | { type: 'attackGround'; units: number[]; x: number; y: number; queue?: boolean }
   | { type: 'sell'; target: number }

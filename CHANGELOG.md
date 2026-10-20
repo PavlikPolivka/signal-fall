@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-20 20:49 UTC
+
+- **Ping your AI ally:** in 2v2 or Survival with an ally, Alt+click the map. Near its base it rushes home to defend; anywhere else it sends half its spare army to attack there. In multiplayer, AI seats answer pings too.
+- **A sharper AI:** Hard and Brutal now pull their units out of a superweapon's warning circle, as a player watching the warning would.
+
 ## 2026-10-20 19:54 UTC
 
 - **Divergence can be finished:** the exit WREN has to reach sat on rocks and water nobody could get to. Every mission's goal areas and spawn points now land on ground you can actually walk to.

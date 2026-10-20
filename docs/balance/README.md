@@ -177,3 +177,9 @@ extra room. Hull-length spacing on both axes for plain moves (variant D) put Hol
 | Holdout vs Choir | 48.7% | 46.7% |
 
 Hard beats Easy 50-0.
+
+### AI steps out of superweapon strikes (2026-10-20)
+
+Hard and Brutal move units out of an announced strike circle (the warning is public). 300 Hard matches per pairing:
+Holdout vs Halcyon 54.3%, Halcyon vs Choir 52.3%, Holdout vs Choir 46.7% (unchanged: strikes are rare in AI matches);
+Hard beats Easy 50-0.

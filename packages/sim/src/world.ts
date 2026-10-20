@@ -73,6 +73,8 @@ export interface PlayerState {
   /** Superweapon: ticks charged while one stands, and the pending strike (at = -1 none). */
   superCharge: number;
   strike: { x: number; y: number; at: number };
+  /** The player's last map ping (Alt+click), for AI teammates (tick -1: none). */
+  ping: { x: number; y: number; tick: number };
 }
 
 export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
@@ -262,6 +264,7 @@ export function createWorld(o: WorldOptions): World {
       powerReady: 0,
       superCharge: 0,
       strike: { x: 0, y: 0, at: -1 },
+      ping: { x: 0, y: 0, tick: -1 },
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -325,6 +328,9 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.strike.x);
     w.push(p.strike.y);
     w.push(p.strike.at);
+    w.push(p.ping.x);
+    w.push(p.ping.y);
+    w.push(p.ping.tick);
     w.push(p.research.progress);
     w.push(p.research.spent);
     for (const b of p.build) {

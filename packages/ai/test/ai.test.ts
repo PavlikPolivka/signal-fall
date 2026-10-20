@@ -1,6 +1,6 @@
 import { defaultRules } from '@signal-fall/data';
 import { generateMap } from '@signal-fall/mapgen';
-import { createMatch, KIND, type Command, type Sim, type World } from '@signal-fall/sim';
+import { createMatch, KIND, spawnUnit, type Command, type Sim, type World } from '@signal-fall/sim';
 import { describe, expect, it } from 'vitest';
 import { attachAi, PROFILES, type Difficulty } from '../src/index';
 
@@ -81,5 +81,52 @@ describe('AI', () => {
     // Early on, nobody has scouted: memory must hold nothing from the far base.
     const memory = (ais[0] as unknown as { memory: Map<number, unknown> }).memory;
     expect(memory.size).toBe(0);
+  });
+});
+
+describe('superweapon warning', () => {
+  it('Hard moves its units out of an announced strike circle', () => {
+    const map = generateMap({ seed: 3, size: 'S', players: 2, biome: 'wasteland', resources: 'normal', terrain: 'open' });
+    const sim = createMatch({ rules, seed: 3, map, players: [{ faction: 0, team: 0 }, { faction: 0, team: 1 }] });
+    const ai = attachAi(sim, 1, 'hard', map.starts);
+    const w = sim.world;
+    // A couple of minutes in, so the APM budget has room.
+    sim.run(20 * 120);
+    // Three tanks of player 1 at the center; player 0 has a strike coming down right there.
+    const bulldog = rules.unitIndex.get('bulldog')!;
+    const cx = (map.width >> 1) << 10;
+    const cy = (map.height >> 1) << 10;
+    const tanks = [0, 1, 2].map((k) => spawnUnit(w, bulldog, 1, cx + k * 1024, cy));
+    w.players[0]!.strike = { x: cx, y: cy, at: w.tick + 200 };
+    let moves: Command[] = [];
+    for (let i = 0; i < 40 && moves.length < 3; i++) {
+      moves = [...moves, ...ai.think(w).filter((c) => c.type === 'move')];
+      w.tick++;
+    }
+    const moved = new Set(moves.flatMap((c) => (c.type === 'move' ? c.units : [])));
+    for (const t of tanks) expect(moved.has(t)).toBe(true);
+  });
+});
+
+describe('pings', () => {
+  it('an AI ally sends spare units where its teammate pinged', () => {
+    const map = generateMap({ seed: 4, size: 'S', players: 3, biome: 'wasteland', resources: 'normal', terrain: 'open' });
+    const sim = createMatch({ rules, seed: 4, map, players: [{ faction: 0, team: 0 }, { faction: 0, team: 0 }, { faction: 0, team: 1 }] });
+    const ally = attachAi(sim, 1, 'hard', map.starts);
+    const w = sim.world;
+    sim.run(20 * 120);
+    const bulldog = rules.unitIndex.get('bulldog')!;
+    const s1 = map.starts[1]!;
+    for (let k = 0; k < 4; k++) spawnUnit(w, bulldog, 1, (s1.x << 10) + k * 1024, (s1.y + 3) << 10);
+    const tx = (map.width >> 1) << 10;
+    const ty = (map.height >> 1) << 10;
+    sim.schedule({ tick: w.tick, player: 0, cmd: { type: 'ping', x: tx, y: ty } });
+    sim.run(1);
+    let sent: Command | undefined;
+    for (let i = 0; i < 40 && !sent; i++) {
+      sent = ally.think(w).find((c) => c.type === 'attackMove' && c.x === tx && c.y === ty);
+      w.tick++;
+    }
+    expect(sent).toBeDefined();
   });
 });

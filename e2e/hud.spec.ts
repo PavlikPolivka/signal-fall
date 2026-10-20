@@ -111,3 +111,15 @@ test('a power-hungry building can be switched off and on from its panel', async 
   await page.getByTestId('power-toggle').click();
   await expect(page.getByTestId('power-toggle')).toHaveText('Power off');
 });
+
+test('Alt+click pings the map for an AI ally in a 2v2', async ({ page }) => {
+  await page.goto('/play/?mode=2v2&size=S&ai=easy');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  const box = (await page.locator('canvas').first().boundingBox())!;
+  await page.keyboard.down('Alt');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.up('Alt');
+  const sent = await page.evaluate(() => (window as unknown as Win).__signalFall.state.sent.some((c: { type: string }) => c.type === 'ping'));
+  expect(sent).toBe(true);
+  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.mapPings.length)).toBeGreaterThan(0);
+});

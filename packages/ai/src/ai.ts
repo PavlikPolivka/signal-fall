@@ -15,6 +15,7 @@ import {
   costOf,
   AWAKEN_HOME_RANGE,
   idiv,
+  clamp,
   teamOf,
   ilength,
   placementError,
@@ -161,6 +162,8 @@ export class AiPlayer implements Brain {
     this.produce(world, own);
     this.research(world, own);
     this.abilities(world, own);
+    this.dodgeStrikes(world, own);
+    this.answerPings(world, own);
     this.rally(world, own);
     this.defend(world, own);
     this.scout(world, own);
@@ -905,6 +908,67 @@ export class AiPlayer implements Brain {
    * Capture points: from minute 4, the three fastest spare army units go to the nearest point on our half
    * of the map that our team does not hold, take it, then rejoin the army.
    */
+  /** Units sent out of each pending strike (per striking player), so each is ordered once per strike. */
+  private dodged = new Map<number, { at: number; units: Set<number> }>();
+
+  /**
+   * A superweapon strike is announced to everyone, with where it will land: Hard and Brutal move their
+   * units out of the circle, as a player watching the warning would.
+   */
+  private dodgeStrikes(world: World, own: Own): void {
+    if (!this.d.abilities && !this.directed) return;
+    const e = world.entities;
+    world.players.forEach((p, k) => {
+      if (k === this.player || p.strike.at < 0 || p.strike.at <= world.tick) return;
+      const f = world.rules.factions[p.faction]!;
+      const swRule = f.structures.map((i) => world.rules.structures[i]!).find((r) => r.superweapon)?.superweapon;
+      if (!swRule) return;
+      let seen = this.dodged.get(k);
+      if (!seen || seen.at !== p.strike.at) {
+        seen = { at: p.strike.at, units: new Set() };
+        this.dodged.set(k, seen);
+      }
+      const danger = swRule.radius + 2 * FX_ONE;
+      for (const s of [...own.army, ...own.harvesters]) {
+        const h = e.handle(s);
+        if (seen.units.has(h)) continue;
+        const dx = e.x[s]! - p.strike.x;
+        const dy = e.y[s]! - p.strike.y;
+        const d = ilength(dx, dy);
+        if (d > danger) continue;
+        // Straight out of the circle (any way out when standing on the mark).
+        const ux = d > 0 ? idiv(dx * FX_ONE, d) : FX_ONE;
+        const uy = d > 0 ? idiv(dy * FX_ONE, d) : 0;
+        const out = danger + 2 * FX_ONE;
+        const tx = clamp(p.strike.x + idiv(ux * out, FX_ONE), 0, world.map.width * FX_ONE - 1);
+        const ty = clamp(p.strike.y + idiv(uy * out, FX_ONE), 0, world.map.height * FX_ONE - 1);
+        if (!this.act({ type: 'move', units: [h], x: tx, y: ty })) return;
+        seen.units.add(h);
+      }
+    });
+  }
+
+  /** Last teammate ping answered (tick), per teammate. */
+  private pingSeen = new Map<number, number>();
+
+  /**
+   * A teammate pinged the map: send spare units there (attack-move). Near our own base it is a call for
+   * help, and the whole spare army comes home; elsewhere half of it goes.
+   */
+  private answerPings(world: World, own: Own): void {
+    const me = world.players[this.player]!;
+    world.players.forEach((p, k) => {
+      if (k === this.player || p.team !== me.team || p.ping.tick < 0) return;
+      if ((this.pingSeen.get(k) ?? -1) >= p.ping.tick || world.tick - p.ping.tick > 30 * world.rules.constants.tickRate) return;
+      this.pingSeen.set(k, p.ping.tick);
+      const spare = this.reserve(world, own);
+      if (spare.length === 0) return;
+      const home = ilength(p.ping.x - ((this.home.x << FX_SHIFT) + FX_HALF), p.ping.y - ((this.home.y << FX_SHIFT) + FX_HALF)) <= 14 * FX_ONE;
+      const units = home ? spare : spare.slice(0, Math.max(1, spare.length >> 1));
+      this.act({ type: 'attackMove', units, x: p.ping.x, y: p.ping.y });
+    });
+  }
+
   private capturePoints(world: World, own: Own): void {
     if (world.points.length === 0 || world.tick < 4 * MINUTE || (world.tick + this.player) % 100 !== 0) return;
     const e = world.entities;
