@@ -3011,3 +3011,20 @@ html[data-large-cursor] a {
     grid-template-columns: 1fr;
   }
 }
+/* Match report: tips for next time. */
+.report-tips {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(255, 255, 255, 0.03);
+}
+.report-tips h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--accent);
+}
+.report-tips ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}

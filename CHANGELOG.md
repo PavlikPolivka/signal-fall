@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 19:37 UTC
+
+- **A report that coaches:** the match report now shows how long your factories stood idle, how much money you held on average, and how long it sat above ◆3,000. Below it, "Next time" picks the three things that would have helped you most, from idle factories and unspent money to falling behind on Echo or trading badly.
+
 ## 2026-10-20 10:56 UTC
 
 - **New Halcyon and Choir announcers:** a calm machine voice for Halcyon and a soft, ancient one for the Choir, for every event and unit reply.

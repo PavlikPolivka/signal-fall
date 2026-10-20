@@ -183,6 +183,8 @@ export interface StatPoint {
   unitsKilled: number;
   structuresLost: number;
   structuresKilled: number;
+  /** Production tabs (infantry, vehicles, air) with a factory standing but nothing queued. */
+  idleTabs: number;
   valueLost: number;
   valueKilled: number;
 }
@@ -214,18 +216,29 @@ export function sampleStats(world: import('@signal-fall/sim').World): StatPoint[
     structuresKilled: p.stats.structuresKilled,
     valueLost: p.stats.valueLost,
     valueKilled: p.stats.valueKilled,
+    idleTabs: 0,
   }));
+  // Which production tabs each player can use (a barracks, factory or airfield standing).
+  const tabOf: Record<string, number> = { barracks: 0, factory: 1, airfield: 2 };
+  const producers = world.players.map(() => [false, false, false]);
   for (let s = 0; s < e.high; s++) {
     if (e.alive[s] !== 1) continue;
     const o = out[e.owner[s]!];
     if (!o) continue;
-    if (e.kind[s] === 2) o.structures++;
+    if (e.kind[s] === 2) {
+      o.structures++;
+      const tab = tabOf[world.rules.structures[e.type[s]!]!.role];
+      if (tab !== undefined) producers[e.owner[s]!]![tab] = true;
+    }
     else if (e.kind[s] === 1) {
       o.units++;
       const rule = world.rules.units[e.type[s]!]!;
       if (rule.weapon) o.army += rule.cost;
     }
   }
+  world.players.forEach((p, k) => {
+    for (let tab = 0; tab < 3; tab++) if (producers[k]![tab] && p.production[tab]!.items.length === 0) out[k]!.idleTabs++;
+  });
   return out;
 }
 

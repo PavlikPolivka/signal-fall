@@ -12,6 +12,10 @@ test('the end screen opens a match report with a table and charts', async ({ pag
   await page.getByTestId('open-report').click();
   const report = page.getByTestId('match-report');
   await expect(report).toContainText('Echo harvested');
+  // Habits over the match, and tips for next time (surrendering early leaves plenty to work on).
+  await expect(report.getByTestId('report-habits')).toContainText('Factory idle time');
+  await expect(report.getByTestId('report-habits')).toContainText('Credits held (average)');
+  await expect(report.getByTestId('report-tips')).toContainText('Next time');
   await expect(report.locator('.report-chart polyline')).toHaveCount(2);
   await report.locator('[data-chart=army]').click();
   await expect(report.locator('.report-chart polyline')).toHaveCount(2);
