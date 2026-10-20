@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 19:43 UTC
+
+- **Power off by hand:** select a building that draws power and click Power off to free its power for what matters, like classic C&C. While off it does nothing: guns hold fire, factories stop, the radar goes dark, a superweapon stops charging. Power on brings it back.
+
 ## 2026-10-20 19:40 UTC
 
 - **Drag out a wall:** with a wall picked, drag across the ground to lay a straight line. The first piece goes down at once and the rest follow one after another, outlined in gold until built. Right-click or Esc stops the line.

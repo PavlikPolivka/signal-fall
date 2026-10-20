@@ -51,6 +51,8 @@ export function computeFacts(world: World): PlayerFacts[] {
       continue;
     }
     if (e.kind[s] !== KIND.structure) continue;
+    // Switched off by its owner: draws no power and counts for nothing (no role, no production).
+    if (e.poweredDown[s] === 1) continue;
     const rule = world.rules.structures[e.type[s]!]!;
     f.roles.set(rule.role, (f.roles.get(rule.role) ?? 0) + 1);
     const p = world.players[owner]!;
@@ -497,7 +499,7 @@ export function repairSystem(world: World): void {
           }
         }
       }
-      if (rule.repairRadius > 0 && !world.players[e.owner[s]!]!.lowPower) healVehiclesNear(world, s, rule.repairRadius, -GARAGE_HEAL_PCT);
+      if (rule.repairRadius > 0 && !world.players[e.owner[s]!]!.lowPower && e.poweredDown[s] === 0) healVehiclesNear(world, s, rule.repairRadius, -GARAGE_HEAL_PCT);
     } else if (e.kind[s] === KIND.unit) {
       const rule = world.rules.units[e.type[s]!]!;
       for (const a of rule.abilities) if (a.kind === 'repairAura') healVehiclesNear(world, s, a.radius, a.hpPerSecond);

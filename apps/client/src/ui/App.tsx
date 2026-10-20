@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef, useState } from 'preact/hooks';
 import { go, toggleFullscreen } from '../nav';
 import { HILL_TICKS, KIND, MARKER, POINT } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
-import { E, H, P, P_HILL } from '../protocol';
+import { E, ENT_FLAG, H, P, P_HILL } from '../protocol';
 import { SUPER_WARN, TEAM_COLORS, type ClientState, type SidebarTab } from '../game/state';
 import type { Input } from '../input/input';
 import { BIOME_COLORS, type Renderer } from '../render/renderer';
@@ -1154,8 +1154,19 @@ function ResearchPanel({ state }: { state: ClientState }) {
 }
 
 function StructureActions({ state, h }: { state: ClientState; h: number }) {
+  const rule = state.ruleOf(h) as { power?: number };
+  const off = (state.field(h, E.flags) & ENT_FLAG.poweredDown) !== 0;
   return (
     <div class="actions">
+      {(rule.power ?? 0) < 0 && (
+        <button
+          data-testid="power-toggle"
+          title={off ? 'Switch it back on' : 'Switch it off: frees its power, but it does nothing until you switch it back on'}
+          onClick={() => state.send({ type: 'powerToggle', target: h })}
+        >
+          {off ? 'Power on' : 'Power off'}
+        </button>
+      )}
       <button onClick={() => state.send({ type: 'repair', target: h })}>
         Repair <kbd>Alt+R</kbd>
       </button>

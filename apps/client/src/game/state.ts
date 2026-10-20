@@ -1,6 +1,6 @@
 import type { Role, Rules, StructureRule, Tab } from '@signal-fall/data';
 import { FX_SHIFT, KIND, type Command, type PlacedStructure, type PlacementView } from '@signal-fall/sim';
-import { E, P_HARVESTED, P_POWER, P_STRIKE_LEFT, P_STRIKE_X, P_STRIKE_Y, P_SUPER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
+import { E, ENT_FLAG, P_HARVESTED, P_POWER, P_STRIKE_LEFT, P_STRIKE_X, P_STRIKE_Y, P_SUPER, Snapshot, type PlayerInfo, type ToWorker } from '../protocol';
 
 export type Mode =
   | 'normal'
@@ -433,6 +433,8 @@ export class ClientState {
     for (let i = 0; i < cur.entityCount; i++) {
       const o = cur.ent(i);
       if (cur.get(o, E.owner) !== player || cur.get(o, E.kind) !== KIND.structure) continue;
+      // Switched off by its owner: counts for nothing, as in the sim.
+      if ((cur.get(o, E.flags) & ENT_FLAG.poweredDown) !== 0) continue;
       const role = this.rules.structures[cur.get(o, E.type)]!.role;
       out.set(role, (out.get(role) ?? 0) + 1);
     }

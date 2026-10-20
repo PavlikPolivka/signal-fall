@@ -700,7 +700,7 @@ export class Renderer {
         // Low power: our buildings that draw power go dim, with a blinking red bolt.
         // Enemy buildings out of sight are last-seen ghosts: faded, grey, no health bar.
         const sview = this.spriteStructures.get(h)?.root ?? this.structures.get(h)?.root;
-        const unpowered = owner === s.localPlayer && lowPower && srule.power < 0;
+        const unpowered = owner === s.localPlayer && srule.power < 0 && (lowPower || (cur.get(o, E.flags) & ENT_FLAG.poweredDown) !== 0);
         const x0 = Math.floor(cur.get(o, E.x) / FX - srule.footprintW / 2);
         const y0 = Math.floor(cur.get(o, E.y) / FX - srule.footprintH / 2);
         this.structFootprints.set(h, { x0, y0, w: srule.footprintW, h: srule.footprintH, owner });

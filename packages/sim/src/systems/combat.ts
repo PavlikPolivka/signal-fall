@@ -26,6 +26,8 @@ export function weaponSystem(world: World): void {
     if (!weapon) continue;
     // Powered defenses go offline in low power.
     if (e.kind[s] === KIND.structure && world.players[e.owner[s]!]!.lowPower && world.rules.structures[e.type[s]!]!.power < 0) continue;
+    // Switched off by its owner.
+    if (e.kind[s] === KIND.structure && e.poweredDown[s] === 1) continue;
     const t = e.resolve(e.target[s]!);
     if (t < 0) continue;
     // Phased units cannot shoot or be shot.

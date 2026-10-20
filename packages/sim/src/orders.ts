@@ -236,6 +236,12 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       }
       return;
     }
+    case 'powerToggle': {
+      const t = e.resolve(cmd.target);
+      if (t < 0 || e.owner[t] !== c.player || e.kind[t] !== KIND.structure || world.rules.structures[e.type[t]!]!.power >= 0) return;
+      e.poweredDown[t] = e.poweredDown[t] === 1 ? 0 : 1;
+      return;
+    }
     case 'rally': {
       const t = e.resolve(cmd.target);
       if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;

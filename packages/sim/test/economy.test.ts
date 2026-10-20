@@ -404,3 +404,23 @@ describe('reinforcements', () => {
     for (const g of grunts) expect(Math.hypot(e.x[g]! - at(20), e.y[g]! - at(20))).toBeLessThan(FX_ONE * 4);
   });
 });
+
+describe('power toggle', () => {
+  it('switching a building off frees its power and takes its role away; on brings both back', () => {
+    const sim = makeSim();
+    const w = sim.world;
+    spawnStructure(w, structure('dynamo'), 0, 2, 2);
+    const mast = spawnStructure(w, structure('radio_mast'), 0, 8, 2);
+    sim.run(2);
+    const used = w.players[0]!.powerUsed;
+    expect(used).toBeGreaterThan(0);
+    sim.schedule({ tick: w.tick, player: 0, cmd: { type: 'powerToggle', target: mast } });
+    sim.run(2);
+    expect(w.players[0]!.powerUsed).toBe(0);
+    expect(computeFacts(w)[0]!.roles.get('radar') ?? 0).toBe(0);
+    sim.schedule({ tick: w.tick, player: 0, cmd: { type: 'powerToggle', target: mast } });
+    sim.run(2);
+    expect(w.players[0]!.powerUsed).toBe(used);
+    expect(computeFacts(w)[0]!.roles.get('radar')).toBe(1);
+  });
+});

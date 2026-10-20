@@ -166,7 +166,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 121 | E | Power down a building by hand (click toggle) to free power for what matters, like classic C&C | 4 | S |
+| 121 ✅ | E | Power down a building by hand (click toggle) to free power for what matters, like classic C&C | 4 | S |
 | 122 | E | Primary factory: pick which barracks or factory new units come out of | 3 | S |
 | 123 | E | Selling a building leaves a few infantry, so a dying base can still fight | 3 | S |
 | 124 ✅ | E | Cancelling a building in its first 5 seconds refunds everything (misclick forgiveness; cancelling already refunds everything spent, at any time) | 3 | XS |

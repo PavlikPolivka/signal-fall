@@ -41,6 +41,8 @@ export type Command =
   /** Remove the last queued unit of this type (refunds progress if it was being built). */
   | { type: 'cancelTrain'; item: number }
   | { type: 'rally'; target: number; x: number; y: number }
+  /** Switch an own power-drawing structure off (frees its power; it does nothing) or back on. */
+  | { type: 'powerToggle'; target: number }
   | { type: 'sell'; target: number }
   /** Toggle paid repair on a structure. */
   | { type: 'repair'; target: number }

@@ -57,7 +57,7 @@ export function superweaponSystem(world: World): void {
     const sw = ruleOf(world, p.index);
     if (!sw) continue;
     if (superweaponOf(world, p.index) < 0) p.superCharge = 0;
-    else if (!p.lowPower && p.superCharge < sw.charge) p.superCharge++;
+    else if (!p.lowPower && world.entities.poweredDown[superweaponOf(world, p.index)] === 0 && p.superCharge < sw.charge) p.superCharge++;
     if (p.strike.at >= 0 && world.tick >= p.strike.at) {
       strike(world, p.index, p.strike.x, p.strike.y);
       p.strike = { x: 0, y: 0, at: -1 };

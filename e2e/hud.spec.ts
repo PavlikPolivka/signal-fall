@@ -89,3 +89,25 @@ test('dragging with a wall picked lays a whole line, piece by piece', async ({ p
   await page.evaluate(() => (window as unknown as Win).__signalFall.state.post({ type: 'speed', speed: 4 }));
   await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.sent.filter((c: { type: string }) => c.type === 'build').length >= 2, null, { timeout: 30_000 });
 });
+
+test('a power-hungry building can be switched off and on from its panel', async ({ page }) => {
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  const h = await page.evaluate(() => {
+    const s = (window as unknown as Win).__signalFall.state;
+    for (let i = 0; i < s.cur.entityCount; i++) {
+      const h = s.cur.get(s.cur.ent(i), 0);
+      const r = s.ruleOf(h);
+      if (s.isOwn(h) && r.kind === 'structure' && r.power < 0) {
+        s.select([h]);
+        return h;
+      }
+    }
+    return -1;
+  });
+  expect(h).toBeGreaterThanOrEqual(0);
+  await page.getByTestId('power-toggle').click();
+  await expect(page.getByTestId('power-toggle')).toHaveText('Power on');
+  await page.getByTestId('power-toggle').click();
+  await expect(page.getByTestId('power-toggle')).toHaveText('Power off');
+});

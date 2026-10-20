@@ -94,6 +94,8 @@ export class Entities {
   rallyY!: Int32Array;
   /** Structures: paid repair in progress. */
   repairing!: Uint8Array;
+  /** Structures: switched off by the owner (no power drawn, does nothing until switched back on). */
+  poweredDown!: Uint8Array;
   /** Refineries: handle of the harvester using the dock, or -1. */
   dock!: Int32Array;
   /** Harvesters: credits worth of Echo carried. */
@@ -187,6 +189,7 @@ export class Entities {
     this.rallyX = re(this.rallyX, (n) => new Int32Array(n));
     this.rallyY = re(this.rallyY, (n) => new Int32Array(n));
     this.repairing = re(this.repairing, (n) => new Uint8Array(n));
+    this.poweredDown = re(this.poweredDown, (n) => new Uint8Array(n));
     this.dock = re(this.dock, (n) => new Int32Array(n));
     this.cargo = re(this.cargo, (n) => new Int32Array(n));
     this.hstate = re(this.hstate, (n) => new Uint8Array(n));
@@ -241,6 +244,7 @@ export class Entities {
     this.rallyX[slot] = -1;
     this.rallyY[slot] = -1;
     this.repairing[slot] = 0;
+    this.poweredDown[slot] = 0;
     this.dock[slot] = NO_ENTITY;
     this.cargo[slot] = 0;
     this.hstate[slot] = 0;
@@ -327,6 +331,7 @@ export class Entities {
       w.push(this.rallyX[s]!);
       w.push(this.rallyY[s]!);
       w.push(this.repairing[s]!);
+      w.push(this.poweredDown[s]!);
       w.push(this.dock[s]!);
       w.push(this.cargo[s]!);
       w.push(this.hstate[s]!);
