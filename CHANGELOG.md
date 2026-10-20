@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 10:49 UTC
+
+- **A new Holdout announcer:** a gruff radio operator calls out every event and unit reply, recorded with a natural, acted voice. Halcyon and the Choir follow.
+
 ## 2026-10-20 10:45 UTC
 
 - **Read the Echo:** hover a field to see how many crystals are left and what they're worth, and the minimap shades fields darker as they run dry.
