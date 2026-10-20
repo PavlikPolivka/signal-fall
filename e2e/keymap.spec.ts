@@ -104,6 +104,36 @@ const checks: Record<string, Check> = {
     await page.keyboard.press(toKey(chord));
     expect((await state(page)).selection).toBe(1);
   },
+  cycleProduction: async (page, chord) => {
+    await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
+    await page.keyboard.press(toKey(chord));
+    const kind = await ev(page, () => {
+      const s = (window as unknown as Win).__signalFall.state;
+      return s.selection.length === 1 ? s.ruleOf(s.selection[0]).kind : null;
+    });
+    expect(kind).toBe('structure');
+  },
+  cycleIdleArmy: async (page, chord) => {
+    await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
+    await page.keyboard.press(toKey(chord));
+    expect((await state(page)).selection).toBe(1);
+  },
+  selectDamaged: async (page, chord) => {
+    // Exactly the own units below full health (none, at the start of the sandbox).
+    const damaged = await ev(page, () => {
+      const s = (window as unknown as Win).__signalFall.state;
+      let n = 0;
+      for (let i = 0; i < s.cur.entityCount; i++) {
+        const o = s.cur.ent(i);
+        const h = s.cur.get(o, 0);
+        if (s.isOwn(h) && s.isUnit(h) && s.field(h, 6) < s.field(h, 7)) n++; // E.hp, E.maxHp
+      }
+      return n;
+    });
+    await selectOwnUnits(page, 'army');
+    await page.keyboard.press(toKey(chord));
+    expect((await state(page)).selection).toBe(damaged);
+  },
   controlGroupAssign: async (page, chord) => {
     await selectOwnUnits(page, 'army');
     await page.keyboard.press(toKey(chord, 4));
@@ -222,6 +252,12 @@ const checks: Record<string, Check> = {
     await page.keyboard.press(toKey(chord));
     expect((await state(page)).mode).toBe('repair');
     await page.keyboard.press('Escape');
+  },
+  // Not charged yet at the start: the key says when, like the button.
+  superweaponFire: async (page, chord) => {
+    await page.keyboard.press(toKey(chord));
+    await expect(page.getByTestId('alert')).toContainText('is ready in');
+    expect((await state(page)).mode).toBe('normal');
   },
   sell: async (page, chord) => {
     await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));

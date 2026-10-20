@@ -726,6 +726,9 @@ export const ACTION_LABEL: Record<string, string> = {
   jumpToBase: 'Jump to base',
   selectArmy: 'Select all army',
   selectIdleHarvesters: 'Select idle harvesters',
+  cycleProduction: 'Next production building (select and look)',
+  cycleIdleArmy: 'Next idle army unit (select and look)',
+  selectDamaged: 'Select every damaged unit',
   controlGroupAssign: 'Assign control group',
   controlGroupAdd: 'Add to control group',
   controlGroupSelect: 'Select control group (double-tap: jump)',
@@ -755,6 +758,7 @@ export const ACTION_LABEL: Record<string, string> = {
   supportPower: 'Support power (Jam, Awaken) + click the map',
   repair: 'Repair + click building',
   sell: 'Sell + click building',
+  superweaponFire: 'Fire the superweapon at the cursor (when charged)',
 };
 
 function Controls({ rules }: { rules: Rules }) {

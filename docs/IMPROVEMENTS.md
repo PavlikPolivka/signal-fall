@@ -206,9 +206,9 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 146 | C | Hotkey cycles your production buildings (selects and centers each) | 3 | XS |
-| 147 | C | Hotkey cycles idle army units one at a time | 3 | XS |
-| 148 | C | Hotkey selects all damaged units, ready to send to repair | 3 | XS |
+| 146 ✅ | C | Hotkey cycles your production buildings (selects and centers each) | 3 | XS |
+| 147 ✅ | C | Hotkey cycles idle army units one at a time | 3 | XS |
+| 148 ✅ | C | Hotkey selects all damaged units, ready to send to repair | 3 | XS |
 | 149 | C | Hotkey jumps between your construction yards | 2 | XS |
 | 150 | C | Remove the selection from a control group (Ctrl+Shift+number) | 2 | XS |
 | 151 | C | Right-click a portrait removes it from the selection; Shift+right-click removes that type | 3 | XS |
@@ -216,7 +216,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 153 | C | Drag to lay a whole wall line in one go | 4 | S |
 | 154 | C | Follow camera: lock onto the selected unit | 2 | XS |
 | 155 | C | Quick-cast setting: abilities fire at the cursor on key press, no click | 3 | S |
-| 156 | C | Superweapon hotkey (fire at the cursor) | 3 | XS |
+| 156 ✅ | C | Superweapon hotkey (fire at the cursor) | 3 | XS |
 | 157 | C | Garrison hotkey: send selected infantry into the nearest ruin | 2 | XS |
 
 ### UI

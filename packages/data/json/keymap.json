@@ -1,46 +1,137 @@
 {
   "global": {
-    "panUp": ["ArrowUp"],
-    "panDown": ["ArrowDown"],
-    "panLeft": ["ArrowLeft"],
-    "panRight": ["ArrowRight"],
-    "jumpToAlert": ["Space"],
-    "jumpToBase": ["Backspace"],
-    "selectArmy": ["Ctrl+KeyA"],
-    "selectIdleHarvesters": ["KeyE"],
-    "controlGroupAssign": ["Ctrl+Digit#", "Alt+Digit#"],
-    "controlGroupAdd": ["Shift+Digit#"],
-    "controlGroupSelect": ["Digit#"],
-    "cycleSubgroup": ["Tab"],
-    "cancel": ["Escape"],
-    "menu": ["Backquote"],
-    "mute": ["Ctrl+KeyM"],
-    "cameraSave": ["Ctrl+F#", "Shift+F#"],
-    "cameraJump": ["F#"],
-    "speedUp": ["Equal"],
-    "speedDown": ["Minus"]
+    "panUp": [
+      "ArrowUp"
+    ],
+    "panDown": [
+      "ArrowDown"
+    ],
+    "panLeft": [
+      "ArrowLeft"
+    ],
+    "panRight": [
+      "ArrowRight"
+    ],
+    "jumpToAlert": [
+      "Space"
+    ],
+    "jumpToBase": [
+      "Backspace"
+    ],
+    "selectArmy": [
+      "Ctrl+KeyA"
+    ],
+    "selectIdleHarvesters": [
+      "KeyE"
+    ],
+    "controlGroupAssign": [
+      "Ctrl+Digit#",
+      "Alt+Digit#"
+    ],
+    "controlGroupAdd": [
+      "Shift+Digit#"
+    ],
+    "controlGroupSelect": [
+      "Digit#"
+    ],
+    "cycleSubgroup": [
+      "Tab"
+    ],
+    "cancel": [
+      "Escape"
+    ],
+    "menu": [
+      "Backquote"
+    ],
+    "mute": [
+      "Ctrl+KeyM"
+    ],
+    "cameraSave": [
+      "Ctrl+F#",
+      "Shift+F#"
+    ],
+    "cameraJump": [
+      "F#"
+    ],
+    "speedUp": [
+      "Equal"
+    ],
+    "speedDown": [
+      "Minus"
+    ],
+    "cycleProduction": [
+      "KeyC"
+    ],
+    "cycleIdleArmy": [
+      "Period"
+    ],
+    "selectDamaged": [
+      "KeyW"
+    ]
   },
   "units": {
-    "move": ["KeyM"],
-    "attackMove": ["KeyA"],
-    "stop": ["KeyS"],
-    "hold": ["KeyH"],
-    "patrol": ["KeyP"],
-    "guard": ["KeyG"],
-    "scatter": ["KeyX"],
-    "deploy": ["KeyD"],
-    "ability": ["KeyF"],
-    "stance": ["KeyZ"]
+    "move": [
+      "KeyM"
+    ],
+    "attackMove": [
+      "KeyA"
+    ],
+    "stop": [
+      "KeyS"
+    ],
+    "hold": [
+      "KeyH"
+    ],
+    "patrol": [
+      "KeyP"
+    ],
+    "guard": [
+      "KeyG"
+    ],
+    "scatter": [
+      "KeyX"
+    ],
+    "deploy": [
+      "KeyD"
+    ],
+    "ability": [
+      "KeyF"
+    ],
+    "stance": [
+      "KeyZ"
+    ]
   },
   "base": {
-    "buildMenu": ["KeyB"],
-    "defenseMenu": ["KeyN"],
-    "infantryMenu": ["KeyI"],
-    "vehicleMenu": ["KeyV"],
-    "airMenu": ["KeyY"],
-    "supportPower": ["KeyQ"],
-    "repair": ["Alt+KeyR"],
-    "sell": ["Alt+KeyS"]
+    "buildMenu": [
+      "KeyB"
+    ],
+    "defenseMenu": [
+      "KeyN"
+    ],
+    "infantryMenu": [
+      "KeyI"
+    ],
+    "vehicleMenu": [
+      "KeyV"
+    ],
+    "airMenu": [
+      "KeyY"
+    ],
+    "supportPower": [
+      "KeyQ"
+    ],
+    "repair": [
+      "Alt+KeyR"
+    ],
+    "sell": [
+      "Alt+KeyS"
+    ],
+    "superweaponFire": [
+      "KeyL"
+    ]
   },
-  "modifiers": { "queue": "Shift", "queueFive": "Shift" }
+  "modifiers": {
+    "queue": "Shift",
+    "queueFive": "Shift"
+  }
 }

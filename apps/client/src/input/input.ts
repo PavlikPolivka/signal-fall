@@ -82,6 +82,8 @@ export class Input {
   private lastClick = { time: 0, handle: -1 };
   private lastGroup = { digit: -1, time: 0 };
   private idleHarvesterCursor = 0;
+  private productionCursor = 0;
+  private idleArmyCursor = 0;
   /** Space pressed again soon after: step back to an older alert. */
   private alertCycle = { index: 0, time: 0 };
 
@@ -315,6 +317,35 @@ export class Input {
         const h = idle[this.idleHarvesterCursor++ % idle.length]!;
         s.select([h]);
         this.renderer.centerOnSim(s.field(h, E.x), s.field(h, E.y));
+        return;
+      }
+      case 'cycleProduction': {
+        // Factories, barracks, airfields and the construction yard, one after another.
+        const producers = this.allOwnStructures().filter((h) => ['conyard', 'barracks', 'factory', 'airfield'].includes((s.ruleOf(h) as { role: string }).role));
+        if (producers.length === 0) return;
+        const h = producers[this.productionCursor++ % producers.length]!;
+        s.select([h]);
+        this.renderer.centerOnSim(s.field(h, E.x), s.field(h, E.y));
+        return;
+      }
+      case 'cycleIdleArmy': {
+        const idle = this.idleUnits().army;
+        if (idle.length === 0) return;
+        const h = idle[this.idleArmyCursor++ % idle.length]!;
+        s.select([h]);
+        this.renderer.centerOnSim(s.field(h, E.x), s.field(h, E.y));
+        return;
+      }
+      case 'selectDamaged':
+        s.select(this.allOwnUnits().filter((h) => s.field(h, E.hp) < s.field(h, E.maxHp)));
+        return;
+      case 'superweaponFire': {
+        // Charged: strike under the cursor straight away; otherwise say when.
+        const c = this.cursor();
+        if (s.superStatus() === 0 && c && !s.spectator) {
+          const p = this.simPoint(c.x, c.y);
+          s.send({ type: 'superweapon', x: p.x, y: p.y });
+        } else this.superweapon();
         return;
       }
       case 'controlGroupAssign':
@@ -1117,6 +1148,17 @@ export class Input {
     for (let i = 0; i < cur.entityCount; i++) {
       const o = cur.ent(i);
       if (cur.get(o, E.owner) === this.state.localPlayer && cur.get(o, E.kind) === KIND.unit) out.push(cur.get(o, E.handle));
+    }
+    return out;
+  }
+
+  private allOwnStructures(): number[] {
+    const cur = this.state.cur;
+    if (!cur) return [];
+    const out: number[] = [];
+    for (let i = 0; i < cur.entityCount; i++) {
+      const o = cur.ent(i);
+      if (cur.get(o, E.owner) === this.state.localPlayer && cur.get(o, E.kind) === KIND.structure) out.push(cur.get(o, E.handle));
     }
     return out;
   }

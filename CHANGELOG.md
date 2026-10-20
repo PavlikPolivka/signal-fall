@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:43 UTC
+
+- **New hotkeys:** <kbd>C</kbd> jumps through your production buildings, <kbd>.</kbd> through idle army units one by one, <kbd>W</kbd> selects every damaged unit (ready to send for repair), and <kbd>L</kbd> fires your charged superweapon at the cursor. All of them can be rebound in the menu.
+
 ## 2026-10-20 05:40 UTC
 
 - **Top bar:** your unit count against the 200-unit cap (orange when you're close), and the research in progress when the tech center isn't selected.
