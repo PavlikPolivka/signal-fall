@@ -1,9 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { defaultRules } from '@signal-fall/data';
 import { MARKER, missionMarkers } from '@signal-fall/sim';
-import { CAMPAIGNS, createSim, MISSIONS } from '../src';
+import { CAMPAIGNS, createSim, MISSIONS, walkableFrom } from '../src';
 
 describe('campaign', () => {
+  it('every area to reach or hold, and every trigger area, is ground the player can walk to', () => {
+    const bad: string[] = [];
+    for (const m of MISSIONS) {
+      const { sim, extras } = createSim({ kind: 'mission', id: m.id, seed: 0 });
+      const w = sim.world;
+      const reach = walkableFrom({ width: w.map.width, height: w.map.height, terrain: w.map.terrain }, extras.starts[0]!);
+      const ok = (a: { x: number; y: number }) => reach[a.y * w.map.width + a.x] === 1;
+      w.mission!.rules.objectives.forEach((o, i) => {
+        if ((o.kind === 'reach' || o.kind === 'hold') && !ok(o.area)) bad.push(`${m.id} objective ${i}`);
+      });
+      w.mission!.rules.triggers.forEach((t, i) => {
+        if (t.enter && !ok(t.enter)) bad.push(`${m.id} trigger ${i}`);
+      });
+    }
+    expect(bad).toEqual([]);
+  }, 60_000);
+
   it('campaigns: unique mission ids, and every act a mission names exists', () => {
     const ids = MISSIONS.map((m) => m.id);
     expect(new Set(ids).size).toBe(ids.length);

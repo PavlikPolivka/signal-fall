@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 19:54 UTC
+
+- **Divergence can be finished:** the exit WREN has to reach sat on rocks and water nobody could get to. Every mission's goal areas and spawn points now land on ground you can actually walk to.
+
 ## 2026-10-20 19:47 UTC
 
 - **Attack ground:** Ctrl+click the ground with artillery (or any splash weapon) selected to shell that spot: they move into range and keep firing until you give another order. Good for a choke you expect the enemy to come through, or a crowd under the fog.

@@ -1,5 +1,5 @@
 import { defaultRules } from '@signal-fall/data';
-import { Sim, createMatch, grantBase, sandbox, spawnStructure, spawnUnitAtTile, type MissionRuleAction, type MissionRuleObjective, type MissionRuleTrigger, type MissionRules, type ScheduledCommand } from '@signal-fall/sim';
+import { Sim, TERRAIN_SPEED_PCT, createMatch, grantBase, sandbox, spawnStructure, spawnUnitAtTile, type MissionRuleAction, type MissionRuleObjective, type MissionRuleTrigger, type MissionRules, type ScheduledCommand } from '@signal-fall/sim';
 import { MISSIONS, type MissionSpec, type PArea, type Pos } from './missions';
 import { customToGenerated, decodeMap, generateMap, type Biome, type MapSize, type Resources, type TerrainStyle } from '@signal-fall/mapgen';
 import { attachAi, HordeBrain, type Difficulty, type StrategyName } from '@signal-fall/ai';
@@ -249,6 +249,48 @@ export function missionById(id: string): MissionSpec {
   return m;
 }
 
+/** Tiles reachable on foot from `from` (8 ways, like units move), as a 0/1 grid. */
+export function walkableFrom(map: { width: number; height: number; terrain: Uint8Array }, from: { x: number; y: number }): Uint8Array {
+  const w = map.width;
+  const ok = (i: number) => (TERRAIN_SPEED_PCT[map.terrain[i]!] ?? 0) > 0;
+  const seen = new Uint8Array(w * map.height);
+  const start = from.y * w + from.x;
+  const todo = [start];
+  seen[start] = 1;
+  while (todo.length > 0) {
+    const t = todo.pop()!;
+    const x = t % w;
+    const y = Math.trunc(t / w);
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= map.height) continue;
+        const i = ny * w + nx;
+        if (seen[i] || !ok(i)) continue;
+        // No squeezing diagonally between two blocked tiles.
+        if (dx !== 0 && dy !== 0 && !ok(y * w + nx) && !ok(ny * w + x)) continue;
+        seen[i] = 1;
+        todo.push(i);
+      }
+  }
+  return seen;
+}
+
+/** The nearest tile to `p` in the reachable grid (ring by ring), or `p` itself when it already is. */
+export function snapTo(reach: Uint8Array, w: number, h: number, p: { x: number; y: number }): { x: number; y: number } {
+  if (reach[p.y * w + p.x]) return p;
+  for (let r = 1; r < Math.max(w, h); r++)
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const x = p.x + dx;
+        const y = p.y + dy;
+        if (x >= 0 && y >= 0 && x < w && y < h && reach[y * w + x]) return { x, y };
+      }
+  return p;
+}
+
 /** A mission's match: its map, seats, preset forces, objectives and triggers. */
 function createMission(id: string, difficulty: CampaignDifficulty): { sim: Sim; extras: MapExtras } {
   const rules = defaultRules();
@@ -262,7 +304,11 @@ function createMission(id: string, difficulty: CampaignDifficulty): { sim: Sim; 
   const map = generateMap({ seed: m.map.seed, players: m.seats.length, size: m.map.size, biome: m.map.biome, resources: m.map.resources, terrain: m.map.terrain });
   const n = map.width;
   const clamp = (v: number) => Math.max(2, Math.min(n - 3, v));
-  const at = (p: Pos) => ('start' in p ? { x: clamp(map.starts[p.start]!.x + (p.dx ?? 0)), y: clamp(map.starts[p.start]!.y + (p.dy ?? 0)) } : { x: clamp(Math.trunc((n * p.pct[0]) / 100)), y: clamp(Math.trunc((n * p.pct[1]) / 100)) });
+  const raw = (p: Pos) => ('start' in p ? { x: clamp(map.starts[p.start]!.x + (p.dx ?? 0)), y: clamp(map.starts[p.start]!.y + (p.dy ?? 0)) } : { x: clamp(Math.trunc((n * p.pct[0]) / 100)), y: clamp(Math.trunc((n * p.pct[1]) / 100)) });
+  // Every mission spot (areas to reach or hold, spawns) sits on ground the player can walk to: a spot
+  // given as a share of the map can land on rocks or water, and an area there can never be reached.
+  const reach = walkableFrom(map, map.starts[0]!);
+  const at = (p: Pos) => snapTo(reach, map.width, map.height, raw(p));
   const area = (a: PArea) => ({ ...at(a), r: a.r });
   const missionRules: MissionRules = {
     objectives: m.objectives.map((o): MissionRuleObjective => {
