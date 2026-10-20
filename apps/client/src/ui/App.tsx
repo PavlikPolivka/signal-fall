@@ -564,7 +564,7 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
       const drawObjectives = () => {
         const cur = state.cur;
         if (!cur || !state.mission) return;
-        const on = Math.floor(performance.now() / 400) % 2 === 0;
+        const on = state.settings.calmFlashes || Math.floor(performance.now() / 400) % 2 === 0;
         for (const m of cur.markers()) {
           const x = m.x / FX;
           const y = m.y / FX;
@@ -1908,6 +1908,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
             {(
               [
                 ['colorblind', 'Team colors', 'Color-blind friendly team colors'],
+                ['calmFlashes', 'Flashing', 'Reduced: no blinking interface or markers, softer superweapon strikes'],
               ] as const
             ).map(([key, label, title]) => (
               <div class="seg-row" title={title}>
@@ -1921,7 +1922,7 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
                       state.applySettings();
                     }}
                   >
-                    {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : v ? 'On' : 'Off'}
+                    {key === 'colorblind' ? (v ? 'Color-blind' : 'Standard') : v ? 'Reduced' : 'Normal'}
                   </button>
                 ))}
               </div>

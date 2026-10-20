@@ -76,3 +76,17 @@ test('money left idle for a minute gets a tip to spend it', async ({ page }) => 
   await page.evaluate(() => (window as unknown as W).__signalFall.state.post({ type: 'speed', speed: 8 }));
   await expect(page.getByTestId('hint-situation')).toContainText('sitting idle', { timeout: 30_000 });
 });
+
+test('reduced flashing calms the interface and stays set', async ({ page }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type W = { __signalFall: any };
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
+  await page.keyboard.press('Backquote');
+  await page.getByTestId('menu-section-interface').click();
+  await page.getByTestId('setting-calmFlashes-on').click();
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-calm'))).toBe(true);
+  await page.reload();
+  await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-calm'))).toBe(true);
+});

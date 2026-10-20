@@ -255,9 +255,11 @@ state.rematch = () => {
 state.applySettings = () => {
   saveSettings(state.settings);
   renderer.effects.reduced = state.settings.effects === 'reduced';
+  renderer.effects.calm = state.settings.calmFlashes;
   renderer.weather.enabled = state.settings.effects !== 'reduced';
   renderer.setGraphics(state.settings.graphics);
   setColorblind(state.settings.colorblind);
+  document.documentElement.toggleAttribute('data-calm', state.settings.calmFlashes);
   input?.reloadBindings();
   document.documentElement.style.setProperty('--ui-scale', String(state.settings.uiScale / 100));
   state.changed();
@@ -276,6 +278,8 @@ state.replaySpeed = (speed) => {
 };
 const renderer = new Renderer(state);
 renderer.effects.reduced = state.settings.effects === 'reduced';
+renderer.effects.calm = state.settings.calmFlashes;
+document.documentElement.toggleAttribute('data-calm', state.settings.calmFlashes);
 renderer.weather.enabled = state.settings.effects !== 'reduced';
 const audio = new GameAudio(
   state,

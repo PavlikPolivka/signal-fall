@@ -2970,3 +2970,9 @@ label.check {
 .faction-style b {
   color: var(--text);
 }
+/* Reduce flashing (setting): nothing in the interface blinks or pulses. */
+html[data-calm] *,
+html[data-calm] *::before,
+html[data-calm] *::after {
+  animation-iteration-count: 1 !important;
+}

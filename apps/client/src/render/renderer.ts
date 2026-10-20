@@ -713,12 +713,12 @@ export class Renderer {
           this.effects.burn(h, px, py, srule.footprintW, hpFrac, frameDt);
           burning.add(h);
         }
-        if (visible && unpowered && Math.floor(performance.now() / 500) % 2 === 0) {
+        if (visible && unpowered && (s.settings.calmFlashes || Math.floor(performance.now() / 500) % 2 === 0)) {
           const by = py - 64;
           this.overlay.poly([px + 2, by - 8, px - 4, by + 1, px, by + 1, px - 2, by + 8, px + 4, by - 1, px, by - 1]).fill({ color: 0xff4d4d }).stroke({ width: 1, color: 0x2a0606 });
         }
         if (visible && cur.get(o, E.repairing) === 1) {
-          const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
+          const pulse = s.settings.calmFlashes ? 0.8 : 0.5 + 0.5 * Math.sin(performance.now() / 150);
           this.overlay.rect(px - 2, py - 70, 4, 12).fill({ color: 0x4ade80, alpha: pulse });
           this.overlay.rect(px - 6, py - 66, 12, 4).fill({ color: 0x4ade80, alpha: pulse });
         }

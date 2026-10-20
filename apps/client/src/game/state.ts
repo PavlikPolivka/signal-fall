@@ -644,6 +644,8 @@ export interface Settings {
   subtitles: boolean;
   /** Team colors picked to stay apart for red-green color blindness. */
   colorblind: boolean;
+  /** Fewer flashes: no blinking interface, steady map markers, softer superweapon strikes. */
+  calmFlashes: boolean;
   /** Interface size, percent. */
   uiScale: number;
   /** The player's own key bindings: action -> chords, replacing the default for that action. */
@@ -651,7 +653,7 @@ export interface Settings {
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, uiScale: 100, keys: {} };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, calmFlashes: false, uiScale: 100, keys: {} };
 
 export function loadSettings(): Settings {
   try {

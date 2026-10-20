@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:54 UTC
+
+- **Reduce flashing:** a new Interface setting (Flashing: Reduced) stops blinking timers, tabs and markers, keeps low-power and repair signs steady, and drops the big white flash of a superweapon strike.
+
 ## 2026-10-20 05:52 UTC
 
 - **Play explains itself:** hover any match option for a line on what it does, and the faction you pick shows how it plays in three lines and how hard it is to learn.

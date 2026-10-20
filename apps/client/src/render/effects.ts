@@ -128,6 +128,8 @@ export class Effects {
   private last = performance.now();
   /** Fewer smoke and spark particles (settings). */
   reduced = false;
+  /** Reduce flashing (setting): no big white strike flash. */
+  calm = false;
 
   constructor(
     private readonly rules: Rules,
@@ -432,7 +434,7 @@ export class Effects {
     }
     const cx = isoX(x / FX, y / FX);
     const cy = isoY(x / FX, y / FX);
-    this.spawn(this.hot, cx, cy, 24, { life: 0.6, scale0: 1, scale1: 4, tint: energy ? 0xc8fbff : 0xfff2c0 });
+    if (!this.calm) this.spawn(this.hot, cx, cy, 24, { life: 0.6, scale0: 1, scale1: 4, tint: energy ? 0xc8fbff : 0xfff2c0 });
   }
 
   /** "+◆N" rising and fading where Recompile or salvage paid out. */
