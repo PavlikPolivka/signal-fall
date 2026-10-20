@@ -131,6 +131,27 @@ const PRESETS: { id: string; label: string; title: string; patch: Partial<Skirmi
 const STORAGE_KEY = 'signal-fall.setup';
 
 /** The last skirmish setup (also what a rematch replays). */
+/** Rematch with the sides swapped: your faction and the opponent's change places in the saved setup. */
+export function swapSavedSides(): void {
+  const s = loadSaved();
+  if (s.faction === undefined || s.enemyFaction === undefined) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...s, faction: s.enemyFaction, enemyFaction: s.faction }));
+  } catch {
+    // Not saved: the rematch keeps the sides.
+  }
+}
+
+/** Settings remembered per mode (factions and opponents differ between 1v1, 2v2, FFA and Survival). */
+const MODE_KEY = (mode: string) => `${STORAGE_KEY}.${mode}`;
+function savedForMode(mode: string): Partial<SkirmishSettings> {
+  try {
+    return JSON.parse(localStorage.getItem(MODE_KEY(mode)) ?? '{}') as Partial<SkirmishSettings>;
+  } catch {
+    return {};
+  }
+}
+
 export function loadSaved(): Partial<SkirmishSettings> {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<SkirmishSettings>;
@@ -374,6 +395,7 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
     try {
       // Seats for people are chosen fresh each time.
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...s, people: undefined }));
+      localStorage.setItem(MODE_KEY(s.mode), JSON.stringify({ ...s, people: undefined }));
     } catch {
       // Private mode etc.: settings just aren't remembered.
     }
@@ -407,7 +429,16 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
                 ['ffa4', 'FFA 4'],
                 ['survival', 'Survival'],
               ]}
-              onChange={(v) => set({ mode: v })}
+              onChange={(v) => {
+                // Each mode keeps its own sides from last time; the map stays as chosen.
+                const m = savedForMode(v);
+                set({
+                  mode: v,
+                  ...(m.mode === v
+                    ? { faction: m.faction, enemyFaction: m.enemyFaction, enemy2Faction: m.enemy2Faction, allyFaction: m.allyFaction, difficulty: m.difficulty, allyDifficulty: m.allyDifficulty, skills: m.skills, survivalAlly: m.survivalAlly, survivalLevel: m.survivalLevel, personality: m.personality }
+                    : {}),
+                });
+              }}
               testid="mode"
             />
             {s.mode === 'survival' && (

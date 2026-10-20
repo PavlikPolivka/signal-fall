@@ -585,6 +585,13 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
     });
   } else if (replay) {
     state.spectator = true;
+    const rs = replay.scenario;
+    if (rs.kind === 'skirmish' && rs.factions.length === 2 && !rs.survival) {
+      const m = rs.map;
+      const q = new URLSearchParams({ seed: String(rs.seed), size: m.size, biome: m.biome, resources: m.resources, terrain: m.terrain, faction: String(rs.factions[replay.localPlayer === 1 ? 1 : 0]), enemy: String(rs.factions[replay.localPlayer === 1 ? 0 : 1]), ai: 'normal' });
+      if (m.custom) q.set('mapcode', m.custom);
+      state.playThisMap = () => go(`${location.pathname}?${q.toString()}`);
+    }
     const live = !!watchStream;
     state.replay = { endTick: replay.endTick, verified: null, speed: 1, paused: false, live };
     post({ type: 'start', scenario: replay.scenario, localPlayer: replay.localPlayer, replay, live });

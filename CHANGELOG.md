@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-20 06:04 UTC
+
+- **Rematch, sides swapped:** after a 1v1 against the AI, play the same map again as the other faction.
+- **Play this map:** watching a 1v1 replay, start your own match on the same map with the same sides.
+- **Play remembers each mode:** 1v1, 2v2, free-for-all and Survival each keep the sides you picked last time.
+- **No accidental room closing:** as host, leaving a room with players in it asks you to confirm first.
+
 ## 2026-10-20 06:01 UTC
 
 - **More settings:** a volume of its own for interface clicks (Sound), a battery saver that caps the game at 30 frames a second (Graphics), and a large mouse cursor (Interface).

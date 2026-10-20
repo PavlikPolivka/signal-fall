@@ -26,3 +26,18 @@ test('2v2: surrendering while the ally fights on shows "you are out", then the e
   await page.getByTestId('keep-watching').click();
   await expect(page.getByTestId('out-screen')).toHaveCount(0);
 });
+
+test('rematch with the sides swapped: you play the enemy faction on the same map', async ({ page }) => {
+  await page.goto('/play/');
+  await page.click('[data-testid=open-skirmish]');
+  await page.click('[data-testid=mode] [data-value="1v1"]');
+  await page.click('[data-testid=faction] [data-value="0"]');
+  await page.selectOption('[data-testid=seat-enemy-faction]', '2');
+  await page.click('[data-testid=start]');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.evaluate(() => (window as unknown as Win).__signalFall.state.send({ type: 'surrender' }));
+  await page.click('[data-testid=end-rematch-swapped]');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur?.tick >= 0 && (window as unknown as Win).__signalFall.state.players.length === 2);
+  const factions = await page.evaluate(() => (window as unknown as Win).__signalFall.state.players.map((p: { faction: number }) => p.faction));
+  expect(factions).toEqual([2, 0]);
+});

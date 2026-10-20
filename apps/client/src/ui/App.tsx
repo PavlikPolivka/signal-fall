@@ -21,6 +21,7 @@ import { FACTION_TIPS, GENERAL_TIPS } from './tips';
 import { DailyBoard } from './Daily';
 import { Tutorial } from './Tutorial';
 import { markMissionWon, nextMission } from './Campaign';
+import { swapSavedSides } from './Setup';
 import { clock } from '../game/saves';
 
 const FX = 1024;
@@ -1225,6 +1226,11 @@ function ReplayBar({ state }: { state: ClientState }) {
           {sp}×
         </button>
       ))}
+      {state.playThisMap && !r.live && (
+        <button data-testid="replay-play-map" title="Play this map yourself: same seed, size, factions" onClick={() => state.playThisMap?.()}>
+          Play this map
+        </button>
+      )}
       {r.verified === true && (
         <span class="good" data-testid="replay-verified" title="Playback reached exactly the recorded final state">
           ✓ verified
@@ -1361,6 +1367,18 @@ function EndScreen({ state }: { state: ClientState }) {
         {!state.multiplayer && !state.replay && !state.mission && (
           <button data-testid="end-rematch" onClick={() => go(`${location.pathname}?rematch=1`)}>
             Rematch (same map and sides)
+          </button>
+        )}
+        {!state.multiplayer && !state.replay && !state.mission && state.players.length === 2 && (
+          <button
+            data-testid="end-rematch-swapped"
+            title="The same map, with your faction and the enemy's swapped"
+            onClick={() => {
+              swapSavedSides();
+              go(`${location.pathname}?rematch=1`);
+            }}
+          >
+            Rematch, sides swapped
           </button>
         )}
         <button

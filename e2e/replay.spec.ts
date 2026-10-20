@@ -29,6 +29,8 @@ test('save a replay from a match, load it, and it reproduces the final state', a
   await page.goto('/play/');
   await page.setInputFiles('[data-testid=watch-replay] input', file);
   await expect(page.getByTestId('replay-bar')).toBeVisible({ timeout: 20_000 });
+  // A 1v1 replay can be played yourself: same seed, size and sides.
+  await expect(page.getByTestId('replay-play-map')).toBeVisible();
   await page.getByTestId('replay-bar').getByText('8×').click();
   await expect(page.getByTestId('replay-verified')).toBeVisible({ timeout: 90_000 });
 });

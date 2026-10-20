@@ -117,6 +117,8 @@ export class ClientState {
   techLimit = false;
   /** Units per player in this match. */
   unitCap = 200;
+  /** Watching a 1v1 replay: start a match on the same map and sides (set by main). */
+  playThisMap: (() => void) | null = null;
   /** The tutorial match. */
   tutorial = false;
   /** Playing today's daily challenge (its description), or null. */

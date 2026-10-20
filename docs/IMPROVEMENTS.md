@@ -254,14 +254,14 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 181 | O | Post-match tips: three things to do better, based on the report | 4 | S |
 | 182 | O | "More in the Codex" link on hover cards opens the right entry | 3 | S |
 | 183 ✅ | O | Short tooltips on every map option in setup (Resources, Terrain, Victory) | 3 | XS |
-| 184 | O | Skirmish setup remembers settings per mode (1v1, FFA, Survival) | 2 | XS |
+| 184 ✅ | O | Skirmish setup remembers settings per mode (1v1, FFA, Survival) | 2 | XS |
 | 185 | O | Sandbox from the main menu: free credits, no enemy army, test any unit | 3 | S |
 | 186 ✅ | O | Campaign difficulty choice (Story, Normal, Hard) | 4 | S |
 | 187 | O | Restart a campaign mission from a mid-mission save | 3 | S |
 | 188 | O | Replay timeline marks big fights and lost buildings; click to jump | 4 | S |
-| 189 | O | "Play this map" from a replay (same seed and factions) | 2 | XS |
+| 189 ✅ | O | "Play this map" from a replay (same seed and factions) | 2 | XS |
 | 190 | O | Full keyboard navigation of every menu | 2 | S |
-| 191 | O | Confirm before the host leaves a multiplayer lobby | 2 | XS |
+| 191 ✅ | O | Confirm before the host leaves a multiplayer lobby | 2 | XS |
 | 192 ✅ | O | Faction picker shows a three-line play style and how hard it is to learn | 3 | XS |
 
 ### Graphics
@@ -298,7 +298,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 210 | M | Pause request in multiplayer (three per player, everyone sees who paused) | 3 | S |
 | 211 | M | Surrender vote in team games | 3 | S |
 | 212 | M | Chat stays open on the end screen ("gg") | 2 | S |
-| 213 | M | Rematch with factions or start positions swapped | 2 | XS |
+| 213 ✅ | M | Rematch with factions or start positions swapped | 2 | XS |
 | 214 | M | Spectator delay option so watchers can't scout for a player | 2 | S |
 | 215 | M | Rank badges by rating next to names | 2 | S |
 

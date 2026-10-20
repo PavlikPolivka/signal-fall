@@ -45,6 +45,7 @@ export function Multiplayer({
   const [error, setError] = useState<string | null>(null);
   const [, refresh] = useReducer((n: number, _: undefined) => n + 1, 0);
   const [listed, setListed] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   /** Ranked: waiting in the queue (since when), and whether this room came from it (it starts by itself). */
   const [queued, setQueued] = useState<number | null>(null);
   const [rankedRoom, setRankedRoom] = useState(false);
@@ -426,16 +427,23 @@ export function Multiplayer({
         </div>
         <div class="setup-foot">
           <button
-            class="codex-btn"
+            class={`codex-btn ${confirmLeave ? 'danger' : ''}`}
             data-testid="mp-leave"
+            title={lobby.isHost ? 'Leaving closes the room for everyone in it' : undefined}
             onClick={() => {
+              // The host leaving ends the room for everyone: ask once when others are in it.
+              if (lobby.isHost && !confirmLeave && (s?.slots.filter((x) => x.kind === 'human').length ?? 0) > 1) {
+                setConfirmLeave(true);
+                return;
+              }
               lobby.close();
               room?.close();
               setLobby(null);
               setRoom(null);
+              setConfirmLeave(false);
             }}
           >
-            Leave room
+            {confirmLeave ? 'Close the room for everyone?' : 'Leave room'}
           </button>
           {lobby.isHost && (
             <button class="start" data-testid="mp-start" disabled={!lobby.canStart} onClick={() => lobby.start()}>
