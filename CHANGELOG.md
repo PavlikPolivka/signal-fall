@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 10:56 UTC
+
+- **New Halcyon and Choir announcers:** a calm machine voice for Halcyon and a soft, ancient one for the Choir, for every event and unit reply.
+
 ## 2026-10-20 10:49 UTC
 
 - **A new Holdout announcer:** a gruff radio operator calls out every event and unit reply, recorded with a natural, acted voice. Halcyon and the Choir follow.

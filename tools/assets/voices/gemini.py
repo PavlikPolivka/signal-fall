@@ -171,7 +171,11 @@ for kind in kinds:
         if only and not any(name.startswith(f'{kind}/{o}') or o in name for o in only):
             continue
         try:
-            wav = take(name, text, cast, CFG.get('models', {}).get(kind))
+            # One model per set, or per faction for the announcer (each faction is its own voice).
+            model = CFG.get('models', {}).get(kind)
+            if isinstance(model, dict):
+                model = model.get(treatment)
+            wav = take(name, text, cast, model)
         except DailyQuota as q:
             sys.exit(f'Daily quota used up ({q}). Run again tomorrow: finished lines are kept.')
         if wav is None:
