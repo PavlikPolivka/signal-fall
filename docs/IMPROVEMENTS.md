@@ -306,7 +306,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 216 | T | Skirmish autosave every 5 minutes | 3 | XS |
+| 216 ✅ | T | Skirmish autosave every 5 minutes | 3 | XS |
 | 217 | T | Install as an app (PWA), with atlases cached for fast starts | 3 | S |
 | 218 | T | Battery saver: cap at 30 fps on laptops | 2 | XS |
 | 219 ✅ | O | Reduce flashing option (strikes, explosions, low-power blinks) | 3 | XS |

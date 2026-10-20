@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:55 UTC
+
+- **Autosave:** a match against the AI saves itself every five minutes of play, so a closed tab or a crash costs at most five minutes. Continue on the main menu picks it up.
+
 ## 2026-10-20 05:54 UTC
 
 - **Reduce flashing:** a new Interface setting (Flashing: Reduced) stops blinking timers, tabs and markers, keeps low-power and repair signs steady, and drops the big white flash of a superweapon strike.

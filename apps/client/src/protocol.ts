@@ -6,7 +6,7 @@ import type { MatchStats, Replay, ScenarioSpec } from './game/scenario';
 export type { ScenarioSpec };
 
 /** What a requested replay is for: a file download, the save slot, or the recent-matches list. */
-export type ReplayPurpose = 'download' | 'save' | 'recent';
+export type ReplayPurpose = 'download' | 'save' | 'autosave' | 'recent';
 
 export type ToWorker =
   | {

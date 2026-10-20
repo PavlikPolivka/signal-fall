@@ -34,3 +34,16 @@ test('save a skirmish and continue it from the main menu', async ({ page }) => {
   // Play goes on: the clock keeps running after the fast-forward.
   await page.waitForFunction((t) => (window as unknown as Win).__signalFall.state.cur.tick > t + 20, st.tick);
 });
+
+test('a skirmish against the AI saves itself every five minutes', async ({ page }) => {
+  test.setTimeout(120_000);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type W = { __signalFall: any };
+  await page.goto('/play/?ai=easy&size=S');
+  await page.waitForFunction(() => (window as unknown as W).__signalFall?.state?.cur);
+  expect(await page.evaluate(() => localStorage.getItem('signalfall.save'))).toBeNull();
+  await page.evaluate(() => (window as unknown as W).__signalFall.state.post({ type: 'speed', speed: 16 }));
+  await page.waitForFunction(() => localStorage.getItem('signalfall.save') !== null, null, { timeout: 90_000 });
+  const tick = await page.evaluate(() => JSON.parse(localStorage.getItem('signalfall.save')!).meta.tick as number);
+  expect(tick).toBeGreaterThanOrEqual(6000);
+});

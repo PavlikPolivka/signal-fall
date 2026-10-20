@@ -300,6 +300,9 @@ const unlockAudio = () => {
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('keydown', unlockAudio);
 let input: Input | null = null;
+/** Autosave cadence (5 minutes of game time) and the next tick due. */
+const AUTOSAVE_TICKS = 5 * 60 * 20;
+let nextAutosave = 0;
 // In fullscreen the next screen loads in a frame over this page: stop everything here first.
 onLeave(() => {
   worker.terminate();
@@ -354,6 +357,11 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       if (msg.purpose === 'save') {
         if (saveGame(msg.json, meta)) state.notice(`Game saved at ${clock(meta.tick)}`);
         else state.warn('Could not save: browser storage is full or blocked');
+        return;
+      }
+      if (msg.purpose === 'autosave') {
+        // Quietly, into the same slot Continue picks up (a full or blocked storage just skips it).
+        saveGame(msg.json, meta);
         return;
       }
       if (msg.purpose === 'recent') {
@@ -450,6 +458,12 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       state.ready = true;
     } else if (msg.type === 'snapshot') {
       const first = state.cur === null;
+      // Skirmish against the AI: saved every 5 minutes, so a closed tab can be continued.
+      const tick = state.cur?.tick ?? 0;
+      if (scenario?.kind === 'skirmish' && !state.multiplayer && !replay && !state.spectator && tick >= nextAutosave) {
+        if (nextAutosave > 0) post({ type: 'saveReplay', purpose: 'autosave' });
+        nextAutosave = tick - (tick % AUTOSAVE_TICKS) + AUTOSAVE_TICKS;
+      }
       state.onSnapshot(new Snapshot(msg.buf), msg.fog, msg.echo);
       if (msg.fx) {
         renderer.effects.ingest(msg.fx);
