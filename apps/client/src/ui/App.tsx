@@ -414,10 +414,22 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
           // One superweapon per player.
           const oneOnly = it.kind === 'structure' && state.rules.structures[it.index]!.superweapon !== null && (roles.get('superweapon') ?? 0) > 0 && !ready && progress === 0;
           const disabled = !hasProducer || missing.length > 0 || busy || oneOnly;
+          // Why it can't be used now, in one line (requirements are listed on the card already).
+          const blockedReason = oneOnly
+            ? 'One per player'
+            : !hasProducer
+              ? `Needs a ${roleNames(state.rules, faction.index, [structureTab ? 'conyard' : tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield'])}`
+              : busy
+                ? `Wait: another ${state.rules.structures[it.index]?.category === 'defenses' ? 'defense' : 'building'} is being built`
+                : undefined;
           const title = oneOnly
-            ? `${it.name} — one per player`
+            ? `${it.name} — ${blockedReason}`
             : missing.length > 0
               ? `${it.name} — requires ${roleNames(state.rules, faction.index, missing)}`
+              : !hasProducer
+                ? `${it.name} — ${blockedReason}`
+                : busy
+                  ? `${it.name} — ${blockedReason}`
               : `${it.name} — ${money(it.cost)}${it.kind === 'unit' ? ' · click: 1, Shift+click: 5, Ctrl+click: repeat, right-click: cancel one, Shift+right-click: cancel all' : ready ? ` · click to place${state.rules.structures[it.index]!.category === 'defenses' ? ' (Shift+click the map: place and start the next)' : ''}` : ' · right-click: cancel'}`;
           const repeating = it.kind === 'unit' && state.repeat.has(it.index);
           return (
@@ -427,7 +439,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
               aria-label={title}
               data-item={it.id}
               onMouseEnter={(e) => {
-                state.hoverItem = { index: it.index, kind: it.kind, top: (e.currentTarget as HTMLElement).getBoundingClientRect().top };
+                state.hoverItem = { index: it.index, kind: it.kind, top: (e.currentTarget as HTMLElement).getBoundingClientRect().top, blocked: missing.length > 0 ? undefined : blockedReason };
                 state.changed();
               }}
               onMouseLeave={() => {
@@ -957,7 +969,7 @@ function HoverCards({ state }: { state: ClientState }) {
     const rule = item.kind === 'unit' ? state.rules.units[item.index]! : state.rules.structures[item.index]!;
     return (
       <div class="card-anchor side" style={{ top: `${Math.min(item.top, window.innerHeight - 380)}px` }}>
-        <ItemCard state={state} rule={rule} />
+        <ItemCard state={state} rule={rule} blocked={item.blocked} />
       </div>
     );
   }

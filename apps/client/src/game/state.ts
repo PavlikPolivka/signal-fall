@@ -148,7 +148,8 @@ export class ClientState {
   /** Recent hits on own units/buildings, for minimap pings. */
   hits: { x: number; y: number; time: number }[] = [];
   /** Sidebar item under the cursor and the button's screen top. */
-  hoverItem: { index: number; kind: 'unit' | 'structure'; top: number } | null = null;
+  /** Build button under the cursor; `blocked` says why it can't be used now (shown on its card). */
+  hoverItem: { index: number; kind: 'unit' | 'structure'; top: number; blocked?: string } | null = null;
   /** World entity under the cursor and where (client px). */
   hoverEntity = -1;
   hoverPos = { x: 0, y: 0 };

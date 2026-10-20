@@ -224,7 +224,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
 | 158 | U | Power bar tooltip lists the biggest users and what goes offline at low power | 3 | XS |
-| 159 | U | Every disabled build button says why in one line (needs radar, one per player) | 4 | XS |
+| 159 ✅ | U | Every disabled build button says why in one line (needs radar, one per player) | 4 | XS |
 | 160 | U | A finished structure waiting to be placed pulses its tab after 10 seconds | 3 | XS |
 | 161 | U | Research progress shows in the top bar when the tech center isn't selected | 3 | XS |
 | 162 | U | Enemy superweapon timer flashes and the announcer warns at 30 seconds left | 4 | XS |

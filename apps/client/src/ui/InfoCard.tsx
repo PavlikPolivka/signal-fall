@@ -53,7 +53,7 @@ export function counters(rules: Rules, faction: number, armor: number, max = 3):
 }
 
 /** Rich hover card for a buildable structure or unit. */
-export function ItemCard({ state, rule }: { state: ClientState; rule: StructureRule | UnitRule }) {
+export function ItemCard({ state, rule, blocked }: { state: ClientState; rule: StructureRule | UnitRule; blocked?: string }) {
   const rules = state.rules;
   const rate = rules.constants.tickRate;
   const faction = rules.factions[rule.faction]!;
@@ -116,6 +116,11 @@ export function ItemCard({ state, rule }: { state: ClientState; rule: StructureR
       </dl>
       {rule.kind === 'unit' && <UnitUpgrades state={state} rule={rule} />}
       {missing.length > 0 && <p class="req bad">Requires {roleNames(rules, rule.faction, missing)}</p>}
+      {blocked && (
+        <p class="req bad" data-testid="item-blocked">
+          {blocked}
+        </p>
+      )}
       <p class="hint muted">
         {rule.kind === 'unit'
           ? 'Click: queue 1 · Shift+click: 5 · Ctrl+click: repeat · Right-click: cancel'

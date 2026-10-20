@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-20 05:35 UTC
+
+- **Greyed-out build buttons say why:** hover one to see the reason on its card: what it requires, that you need a factory first, that another building is already in progress, or that it is one per player.
+
 ## 2026-10-20 05:33 UTC
 
 - **Keep placing defenses:** Shift+click the map to place a finished turret or wall and start the next one right away, so you can lay a line of defenses without going back to the sidebar.

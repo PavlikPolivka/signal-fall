@@ -16,6 +16,10 @@ test('idle army counter selects the idle units; tabs show queued counts', async 
     s.send({ type: 'build', category: 'structures', item: s.rules.structureIndex.get('dynamo') });
   });
   await expect(page.locator('[data-tab=structures] .tab-badge')).toHaveText('1', { timeout: 15_000 });
+  // A disabled button says why.
+  await expect(page.locator('[data-item=smelter]')).toHaveAttribute('aria-label', /another building is being built/);
+  await page.hover('[data-item=smelter]');
+  await expect(page.getByTestId('item-blocked')).toHaveText('Wait: another building is being built');
 });
 
 test('events land in the log, and the pause menu briefs the player', async ({ page }) => {
