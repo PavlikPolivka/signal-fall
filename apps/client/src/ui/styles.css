@@ -3081,3 +3081,30 @@ select.handicap {
   flex: none;
   padding: 2px 4px;
 }
+/* Give credits to a teammate: a small link under the credits, opening a list of allies. */
+.give-credits {
+  position: relative;
+}
+.give-menu {
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(11, 13, 16, 0.96);
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.give-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.give-row span {
+  flex: 1;
+  margin-right: 6px;
+}

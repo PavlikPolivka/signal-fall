@@ -364,6 +364,43 @@ function CreditsReadout({ state, credits }: { state: ClientState; credits: numbe
   );
 }
 
+/** Team games: send credits to a teammate. */
+function GiveCredits({ state, credits }: { state: ClientState; credits: number }) {
+  const [open, setOpen] = useState(false);
+  const me = state.players[state.localPlayer];
+  if (!me || state.spectator || state.replay) return null;
+  const allies = state.players.map((p, k) => ({ p, k })).filter(({ p, k }) => k !== state.localPlayer && p.team === me.team && state.cur?.player(k, P.defeated) !== 1);
+  if (allies.length === 0) return null;
+  return (
+    <div class="give-credits">
+      <button class="link" data-testid="give-credits" title="Send credits to a teammate" onClick={() => setOpen(!open)}>
+        Give
+      </button>
+      {open && (
+        <div class="give-menu" data-testid="give-menu">
+          {allies.map(({ k }) => (
+            <div class="give-row">
+              <span>{state.names[k] ?? `Ally ${k + 1}`}</span>
+              {[500, 1000].map((amount) => (
+                <button
+                  disabled={credits < amount}
+                  data-testid={`give-${k}-${amount}`}
+                  onClick={() => {
+                    state.send({ type: 'giveCredits', to: k, amount });
+                    setOpen(false);
+                  }}
+                >
+                  {money(amount)}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const TABS: { id: SidebarTab; label: string; key: string }[] = [
   { id: 'structures', label: 'Build', key: 'B' },
   { id: 'defenses', label: 'Defense', key: 'N' },
@@ -403,6 +440,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       <Minimap state={state} renderer={renderer} input={input} radar={(roles.get('radar') ?? 0) > 0 && !state.lowPower} />
       <div class="economy">
         <CreditsReadout state={state} credits={credits} />
+        <GiveCredits state={state} credits={credits} />
         <div class={`power ${used > produced ? 'low' : ''}`} title={powerTitle(state, produced, used)} data-testid="power">
           <div class="power-bar" style={{ width: `${Math.min(100, (used / Math.max(1, produced)) * 100)}%` }} />
           <span>

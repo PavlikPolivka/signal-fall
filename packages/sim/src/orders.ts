@@ -244,6 +244,14 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       }
       return;
     }
+    case 'giveCredits': {
+      const to = world.players[cmd.to];
+      const amount = Math.min(player.credits, Math.max(0, cmd.amount | 0));
+      if (!to || to === player || to.team !== player.team || to.defeated || amount <= 0) return;
+      player.credits -= amount;
+      to.credits += amount;
+      return;
+    }
     case 'ping':
       player.ping = { x: clamp(cmd.x, 0, world.map.width * FX_ONE - 1), y: clamp(cmd.y, 0, world.map.height * FX_ONE - 1), tick: world.tick };
       return;

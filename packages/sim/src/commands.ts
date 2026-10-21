@@ -45,6 +45,8 @@ export type Command =
   | { type: 'powerToggle'; target: number }
   /** New units of this building's tab come out of it (its owner's other producers of the tab stop being primary). */
   | { type: 'primary'; target: number }
+  /** Send credits to a teammate (team games). */
+  | { type: 'giveCredits'; to: number; amount: number }
   /** A map ping for the team (AI teammates answer it: they attack or defend there). */
   | { type: 'ping'; x: number; y: number }
   /** Units with splash weapons shell the ground at (x, y) until given another order. */

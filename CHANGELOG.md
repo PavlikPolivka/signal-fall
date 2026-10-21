@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 20:46 UTC
+
+- **Send credits to an ally:** in team games, press **Give** next to your credits and send ◆500 or ◆1,000 to a teammate, AI or person.
+
 ## 2026-10-21 20:44 UTC
 
 - **Handicaps:** every seat on the Play screen and in a room has a 100%, 75% or 50% setting: a seat with a handicap gets only that share of what its harvesters bring in. Friends of different skill can have a close match, or you can give an AI a lighter wallet. Ranked matches have none.

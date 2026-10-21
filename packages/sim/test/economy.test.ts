@@ -3,7 +3,7 @@ import { FX_ONE, FX_SHIFT } from '../src/fx';
 import { HARVEST, KIND } from '../src/entities';
 import { createMatch, grantBase, testMap } from '../src/match';
 import { isFarSeed, placementError, worldPlacementView } from '../src/placement';
-import type { Sim } from '../src/sim';
+import { Sim as SimClass, type Sim } from '../src/sim';
 import { spawnStructure, spawnUnit } from '../src/spawn';
 import { computeFacts } from '../src/systems/economy';
 import { at, makeSim, rules, structure, unit } from './helpers';
@@ -468,5 +468,22 @@ describe('handicap', () => {
     const gainB = b!.credits - before[1]!;
     expect(gainB).toBeLessThanOrEqual(Math.ceil(got[1]! / 2));
     expect(gainB).toBeGreaterThan(Math.floor(got[1]! * 0.45));
+  });
+});
+
+describe('giving credits', () => {
+  it('a teammate can be sent credits; an enemy cannot, and nobody can give more than they have', () => {
+    const sim = new SimClass({ rules, seed: 5, width: 32, height: 32, players: [{ faction: 0, team: 0 }, { faction: 0, team: 0 }, { faction: 0, team: 1 }], victoryRules: false });
+    const [a, b, c] = sim.world.players;
+    a!.credits = 1000;
+    b!.credits = 0;
+    c!.credits = 0;
+    cmd(sim, 0, { type: 'giveCredits', to: 1, amount: 400 });
+    cmd(sim, 0, { type: 'giveCredits', to: 2, amount: 400 });
+    sim.step();
+    expect([a!.credits, b!.credits, c!.credits]).toEqual([600, 400, 0]);
+    cmd(sim, 0, { type: 'giveCredits', to: 1, amount: 5000 });
+    sim.step();
+    expect([a!.credits, b!.credits]).toEqual([0, 1000]);
   });
 });
