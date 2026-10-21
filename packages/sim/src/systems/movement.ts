@@ -3,6 +3,9 @@ import { KIND, NO_ENTITY } from '../entities';
 import { ROAD_SPEED_PCT, TERRAIN_SPEED_PCT, tileAt, tileCenterX, tileCenterY } from '../map';
 import type { World } from '../world';
 
+/** A speed crate: this much of the normal speed while it lasts. */
+export const HASTE_PCT = 150;
+
 /** Waypoint counts as reached within this distance of its tile center. */
 const WAYPOINT_REACHED = (FX_ONE * 3) >> 3;
 /** Within this distance and with a clear line, steer straight at the goal. */
@@ -58,7 +61,8 @@ export function movementSystem(world: World): void {
         // Rough ground slows everyone on foot or wheels; roads speed them up.
         const onRoad = !air && cur >= 0 && m.road[cur] === 1;
         const terrainPct = air || cur < 0 ? 100 : onRoad ? ROAD_SPEED_PCT : TERRAIN_SPEED_PCT[m.terrain[cur]!]! || 100;
-        const speed = idiv(groupSpeed(world, s, rule.speed) * terrainPct, 100);
+        const own = e.hasteUntil[s]! > world.tick ? idiv(rule.speed * HASTE_PCT, 100) : rule.speed;
+        const speed = idiv(groupSpeed(world, s, own) * terrainPct, 100);
         const step = d < speed ? d : speed;
         vx = idiv(dx * step, d);
         vy = idiv(dy * step, d);

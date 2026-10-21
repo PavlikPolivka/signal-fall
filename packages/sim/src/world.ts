@@ -75,6 +75,8 @@ export interface PlayerState {
   strike: { x: number; y: number; at: number };
   /** The player's last map ping (Alt+click), for AI teammates (tick -1: none). */
   ping: { x: number; y: number; tick: number };
+  /** A reveal crate: the whole map is visible to this player's team until this tick. */
+  revealUntil: number;
 }
 
 export const BUILD_CATEGORY_INDEX = { structures: 0, defenses: 1 } as const;
@@ -178,6 +180,8 @@ export interface World {
   noSuperweapons: boolean;
   /** Match option: nothing of tier 3 (units or buildings), for quick unit matches. */
   techLimit: boolean;
+  /** No fog (a match option): every player sees the whole map. */
+  revealed: boolean;
   /** Units each player may have (the rules' cap unless the match sets another). */
   unitCap: number;
   /** Survival: the horde's waves, or null. */
@@ -223,6 +227,7 @@ export interface WorldOptions {
   allow?: string[];
   noSuperweapons?: boolean;
   techLimit?: boolean;
+  revealed?: boolean;
   unitCap?: number;
   /** Survival wave size, percent of normal. */
   survivalPct?: number;
@@ -265,6 +270,7 @@ export function createWorld(o: WorldOptions): World {
       superCharge: 0,
       strike: { x: 0, y: 0, at: -1 },
       ping: { x: 0, y: 0, tick: -1 },
+      revealUntil: 0,
     })),
     rng: Rng.derive(o.seed, STREAM.combat),
     aiRng: o.players.map((_, i) => Rng.derive(o.seed, STREAM.ai + i)),
@@ -281,6 +287,7 @@ export function createWorld(o: WorldOptions): World {
     allow: o.allow ? new Set(o.allow) : null,
     noSuperweapons: o.noSuperweapons ?? false,
     techLimit: o.techLimit ?? false,
+    revealed: o.revealed ?? false,
     unitCap: o.unitCap ?? o.rules.constants.unitCap,
     survival: o.survivalHorde !== undefined ? makeSurvival(o.seed, o.survivalHorde, o.survivalPct) : null,
   };
@@ -331,6 +338,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.ping.x);
     w.push(p.ping.y);
     w.push(p.ping.tick);
+    w.push(p.revealUntil);
     w.push(p.research.progress);
     w.push(p.research.spent);
     for (const b of p.build) {

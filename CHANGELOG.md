@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-21 20:41 UTC
+
+- **Three new crates:** a look at the whole map for 20 seconds, a burst of speed for the units around the crate, or a free harvester.
+- **Revealed map option:** set Vision to Revealed on the Play screen and nobody has fog of war. Good for practice, or for watching a match among AIs.
+
 ## 2026-10-21 20:37 UTC
 
 - **Primary barracks and factories:** select one of your barracks, factories or airfields and press **Set primary**: new units of that kind come out there instead of at the first one you built. Handy for a forward barracks near the front.

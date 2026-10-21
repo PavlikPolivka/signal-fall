@@ -29,6 +29,8 @@ export interface MapChoice {
   unitCap?: number;
   /** Everyone starts with a small army. */
   startArmy?: boolean;
+  /** No fog: everyone sees the whole map (practice, casting). */
+  revealed?: boolean;
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 1_000_000);
@@ -43,12 +45,13 @@ const HINTS: Record<string, string> = {
   Terrain: 'Open plains for big tank battles, or chokepoints where a few defenses hold a pass.',
   'Capture points': 'Derricks pay credits, watchtowers show the ground around them, depots repair: stand next to one to take it.',
   Victory: 'Destroy every enemy building, or hold the hill in the middle long enough.',
-  Crates: 'Crates drop now and then: credits, a repair or a veteran rank for the unit that picks one up.',
+  Crates: 'Crates drop now and then: credits, a repair, a veteran rank, a look at the whole map, a burst of speed or a free harvester.',
   Credits: 'What everyone starts with.',
   Superweapons: "Each faction's tier-3 superweapon: a five-minute charge, then a strike anyone can see coming.",
   Tech: 'No tier 3 makes a quicker match: no heavy units and no superweapons.',
   'Unit cap': 'Units each player may have at once: factories stop at the cap.',
   'Start with': 'Only the construction unit, or a few soldiers and two light vehicles beside it for a faster start.',
+  Vision: 'Fog of war hides what your units cannot see; revealed shows everyone the whole map, for practice or casting.',
   Seed: 'The number the map is made from: the same seed and settings always give the same map.',
   Mode: '1v1, 2v2, free-for-all, or Survival against waves.',
 };
@@ -333,6 +336,17 @@ export function MapSettings({
           ]}
           onChange={(v) => set({ startArmy: v === 'army' ? true : undefined })}
           testid="start-army"
+          disabled={readOnly}
+        />
+        <Choice
+          label="Vision"
+          value={value.revealed ? 'revealed' : 'fog'}
+          options={[
+            ['fog', 'Fog of war'],
+            ['revealed', 'Revealed'],
+          ]}
+          onChange={(v) => set({ revealed: v === 'revealed' ? true : undefined })}
+          testid="revealed"
           disabled={readOnly}
         />
         {extra}

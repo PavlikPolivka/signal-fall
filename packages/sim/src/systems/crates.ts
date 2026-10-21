@@ -5,14 +5,20 @@ import { Rng } from '../rng';
 import { TERRAIN_SPEED_PCT } from '../map';
 import { pushFx, CREDIT_REASON, FX_EVENT, type World } from '../world';
 import { promote } from './combat';
+import { spawnUnit } from '../spawn';
 
 /**
  * Crates (an optional skirmish setting): every so often a crate drops on open ground somewhere on
  * the map. The first ground unit to reach it opens it: credits for its owner, a full repair for
- * the units around it, or a promotion for the unit itself. Their own random stream, so matches
+ * the units around it, a promotion for the unit itself, a look at the whole map, a burst of speed
+ * for the units around it, or a free harvester. Their own random stream, so matches
  * without crates play exactly as before.
  */
-export const CRATE = { credits: 1, repair: 2, veteran: 3 } as const;
+export const CRATE = { credits: 1, repair: 2, veteran: 3, reveal: 4, haste: 5, harvester: 6 } as const;
+const KINDS = 6;
+/** How long a reveal and a speed crate last (ticks). */
+export const REVEAL_TICKS = 20 * 20;
+export const HASTE_TICKS = 30 * 20;
 
 export interface Crate {
   x: number;
@@ -40,7 +46,7 @@ export function cratesSystem(world: World): void {
       const y = 4 + c.rng.int(m.height - 8);
       const t = y * m.width + x;
       if (TERRAIN_SPEED_PCT[m.terrain[t]!] === 0 || m.echo[t] !== 0 || m.occupant[t] !== -1) continue;
-      c.list.push({ x, y, kind: 1 + c.rng.int(3) });
+      c.list.push({ x, y, kind: 1 + c.rng.int(KINDS) });
       break;
     }
   }
@@ -68,7 +74,17 @@ export function cratesSystem(world: World): void {
         const dy = e.y[s]! - cy;
         if (dx * dx + dy * dy <= r * r) e.hp[s] = e.maxHp[s]!;
       }
-    } else {
+    } else if (crate.kind === CRATE.reveal) world.players[owner]!.revealUntil = world.tick + REVEAL_TICKS;
+    else if (crate.kind === CRATE.haste) {
+      const r = REPAIR_RADIUS * FX_ONE;
+      for (let s = 0; s < e.high; s++) {
+        if (e.alive[s] !== 1 || e.kind[s] !== KIND.unit || e.owner[s] !== owner) continue;
+        const dx = e.x[s]! - cx;
+        const dy = e.y[s]! - cy;
+        if (dx * dx + dy * dy <= r * r) e.hasteUntil[s] = world.tick + HASTE_TICKS;
+      }
+    } else if (crate.kind === CRATE.harvester) spawnUnit(world, world.rules.factions[world.players[owner]!.faction]!.harvester, owner, cx, cy);
+    else {
       // Enough experience for the next rank.
       const rule = world.rules.units[e.type[taker]!]!;
       const th = world.rules.constants.veterancyThresholdPct;

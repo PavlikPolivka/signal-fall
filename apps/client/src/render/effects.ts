@@ -98,6 +98,9 @@ interface Beam {
 /** Beam colors by faction index (Holdout tracers, Halcyon cyan, Choir violet). */
 const FACTION_BEAM = [0xffd27a, 0x5cecff, 0xc58cff];
 
+/** What a crate gave (by crate kind), shown where it was opened. */
+const CRATE_TEXT: Record<number, string> = { 2: 'Repaired!', 3: 'Promoted!', 4: 'Map revealed!', 5: 'Speed boost!', 6: 'Free harvester!' };
+
 /** A floating "+◆N" over where credits came from. */
 interface Popup {
   text: Text;
@@ -508,7 +511,7 @@ export class Effects {
   /** "+◆N" rising and fading where Recompile or salvage paid out. */
   private credits(amount: number, x: number, y: number): void {
     const text = new Text({
-      text: amount >= 0 ? `+◆${amount}` : amount === -2 ? 'Repaired!' : 'Promoted!',
+      text: amount >= 0 ? `+◆${amount}` : (CRATE_TEXT[-amount] ?? 'Promoted!'),
       style: { fontFamily: 'system-ui, sans-serif', fontSize: 15, fontWeight: '700', fill: 0xffd75a, stroke: { color: 0x1a1406, width: 3 } },
     });
     text.anchor.set(0.5, 1);

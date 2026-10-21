@@ -134,6 +134,8 @@ export class Entities {
   jammedUntil!: Int32Array;
   /** Uplink: projects network coverage around itself until this tick. */
   uplinkUntil!: Int32Array;
+  /** A speed crate: moves faster until this tick. */
+  hasteUntil!: Int32Array;
   /** Chorus: own units of the same faction nearby (capped), each adding damage. */
   chorus!: Uint8Array;
   /** Overridden units: owner to return to, -1 if not overridden. */
@@ -212,6 +214,7 @@ export class Entities {
     this.garrisonGoal = re(this.garrisonGoal, (n) => new Int32Array(n));
     this.jammedUntil = re(this.jammedUntil, (n) => new Int32Array(n));
     this.uplinkUntil = re(this.uplinkUntil, (n) => new Int32Array(n));
+    this.hasteUntil = re(this.hasteUntil, (n) => new Int32Array(n));
     this.chorus = re(this.chorus, (n) => new Uint8Array(n));
     this.homeOwner = re(this.homeOwner, (n) => new Int8Array(n));
     this.overrideUntil = re(this.overrideUntil, (n) => new Int32Array(n));
@@ -268,6 +271,7 @@ export class Entities {
     this.garrisonGoal[slot] = 0;
     this.jammedUntil[slot] = 0;
     this.uplinkUntil[slot] = 0;
+    this.hasteUntil[slot] = 0;
     this.chorus[slot] = 0;
     this.homeOwner[slot] = -1;
     this.overrideUntil[slot] = 0;
@@ -356,6 +360,7 @@ export class Entities {
       w.push(this.garrisonGoal[s]!);
       w.push(this.jammedUntil[s]!);
       w.push(this.uplinkUntil[s]!);
+      w.push(this.hasteUntil[s]!);
       w.push(this.chorus[s]!);
       w.push(this.homeOwner[s]!);
       w.push(this.overrideUntil[s]!);

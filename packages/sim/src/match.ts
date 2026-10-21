@@ -38,6 +38,8 @@ export interface MatchSetup {
   unitCap?: number;
   /** Everyone starts with a small army beside the construction unit. */
   startArmy?: boolean;
+  /** No fog: every player sees the whole map. */
+  revealed?: boolean;
 }
 
 /** A real match: each player starts with one construction unit and the starting credits. */
@@ -60,6 +62,7 @@ export function createMatch(setup: MatchSetup): Sim {
     allow: setup.allow,
     noSuperweapons: setup.noSuperweapons,
     techLimit: setup.techLimit,
+    revealed: setup.revealed,
     unitCap: setup.unitCap,
     survivalPct: setup.survivalPct,
   });

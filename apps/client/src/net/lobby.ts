@@ -40,6 +40,7 @@ export interface LobbyMap {
   techLimit?: boolean;
   unitCap?: number;
   startArmy?: boolean;
+  revealed?: boolean;
 }
 
 export interface LobbyState {

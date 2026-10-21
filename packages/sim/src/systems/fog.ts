@@ -68,6 +68,13 @@ export function fogSystem(world: World, force = false): void {
     if (m.terrain[t] !== TERRAIN.rough) continue;
     for (let p = 0; p < world.players.length; p++) if (hidden[p]![t] === 1) world.fog[p]![t]! |= FOG_VISIBLE;
   }
+  // A revealed map (match option): everyone sees everything.
+  if (world.revealed) for (const f of world.fog) f.fill(FOG_VISIBLE | FOG_EXPLORED);
+  // A reveal crate: the finder's team sees the whole map for a while.
+  for (const finder of world.players) {
+    if (finder.revealUntil <= world.tick) continue;
+    for (let p = 0; p < world.players.length; p++) if (teams[p] === finder.team) world.fog[p]!.fill(FOG_VISIBLE | FOG_EXPLORED);
+  }
   // Watchtowers see far for their owner's team.
   for (const pt of world.points) {
     if (pt.kind !== POINT.watchtower || pt.owner < 0) continue;
