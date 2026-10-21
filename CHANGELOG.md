@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 14:34 UTC
+
+- **New campaign: The Long Way Back.** Ten Holdout missions, apart from the main story. Commander Thule leads a dozen soldiers out of the city of Marrow on the night the signal fell, with no base at all, builds an army on the road and comes back for the city. Along the way: holding a ridge until dawn, a valley of derricks and scavengers, rescuing the mechanic Mags, a hill with a watchtower, a war with the warlord Brann, gunships, a three-way fight in the glass fields, a race against a Purge, and a final battle of four armies. Every mission has its own art and spoken briefings, with new voices for Thule, Sergeant Okafor, Mags and Brann. Pick it at the top of the Campaign screen.
+
 ## 2026-10-21 14:15 UTC
 
 - **Each superweapon strike looks its own:** the Holdout Barrage rains shells down one after another, the Halcyon Purge flashes white and leaves the zone burning for seconds, and the Choir Shatter bursts crystal shards out of the ground.

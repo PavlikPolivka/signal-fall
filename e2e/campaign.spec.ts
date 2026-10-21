@@ -127,3 +127,16 @@ test('campaign: once every mission is won, the epilogue opens from the campaign 
   await page.getByTestId('epilogue-credits').click();
   await expect(page.getByTestId('credits')).toBeVisible();
 });
+
+test('The Long Way Back: picked from the campaign screen; Lights Out is a squad with no base', async ({ page }) => {
+  await page.goto('/play/?menu=campaign');
+  await page.click('[data-campaign=long-way-back]');
+  await expect(page.getByTestId('mission-briefing')).toContainText('Lights Out');
+  await expect(page.getByTestId('act-tabs')).toContainText('Part III');
+  await page.goto('/play/?mission=lights-out');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await expect(page.getByTestId('mission-panel')).toContainText('Keep Commander Thule alive');
+  await expect(page.locator('.hint').filter({ hasText: 'your squad is all you have' })).toBeVisible();
+  await page.waitForTimeout(2000);
+  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.cur.a[1])).toBe(0);
+});

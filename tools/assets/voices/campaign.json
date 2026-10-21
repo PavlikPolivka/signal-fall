@@ -425,6 +425,388 @@
     ]
   },
   {
+    "id": "lights-out",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "This is Commander Thule. An hour ago every screen in Marrow went dark, and then every machine in the city turned on us."
+      },
+      {
+        "speaker": "thule",
+        "text": "I have eight soldiers and no base. The river bridge is the only way out. Stay together, use the ruins, and let the drones come to you."
+      },
+      {
+        "speaker": "thule",
+        "text": "One more thing. If I go down, nobody leads you out. Keep me alive."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "okafor",
+        "text": "Contact! Drones in the street. Into the buildings, now!"
+      },
+      {
+        "speaker": "thule",
+        "text": "Brush ahead. Hide in it, let them walk in, then hit them hard."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Citizens of Marrow. Return to your homes. Remain calm."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Checkpoint on the bridge. Their guns run on that generator."
+      },
+      {
+        "speaker": "thule",
+        "text": "We are across. Do not look back. Keep walking."
+      }
+    ]
+  },
+  {
+    "id": "dig-in",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "We found a Homestead truck in a ditch outside the city. Full tank, keys in it. Somebody up there likes us."
+      },
+      {
+        "speaker": "thule",
+        "text": "Set it down on the ridge. Power first, then a Bunkhouse so we can take in the stragglers. Then pillboxes, and a barricade line across the gap."
+      },
+      {
+        "speaker": "thule",
+        "text": "The machines hunt at night. We hold until dawn."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "thule",
+        "text": "Home, for tonight. Get the power on."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Movement on the road. Drones, a lot of them."
+      },
+      {
+        "speaker": "okafor",
+        "text": "They are bringing heavier stuff. Drag a barricade line across that gap!"
+      },
+      {
+        "speaker": "thule",
+        "text": "Two pillboxes up. Let them come."
+      },
+      {
+        "speaker": "thule",
+        "text": "Here it comes. Everything they have left. Hold!"
+      },
+      {
+        "speaker": "thule",
+        "text": "Sun is up. We made it through the first night."
+      }
+    ]
+  },
+  {
+    "id": "diesel-run",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "Forty people eat every day now, and the trucks drink more than we do. There is Echo in the valley, and an old pumping station halfway down it."
+      },
+      {
+        "speaker": "thule",
+        "text": "Build a Smelter, get the Mules hauling, and take the station. Derricks pay whoever stands next to them. Crates turn up on the roads, too. Grab them."
+      },
+      {
+        "speaker": "thule",
+        "text": "We are not the only ones out here who figured that out."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "brann",
+        "text": "Nice trucks. Would be a real shame if something happened to them."
+      },
+      {
+        "speaker": "thule",
+        "text": "Scavengers. People, not machines. Keep them off the Mules."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Pumping station is ours. Tell the Ironmongers to find their own."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Unregistered extraction detected. Correcting."
+      },
+      {
+        "speaker": "thule",
+        "text": "Ten thousand. We eat this winter."
+      }
+    ]
+  },
+  {
+    "id": "mags",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "Our trucks are falling apart and nobody here can fix them. There is a crew of mechanics held at a Halcyon depot across town. Their foreman is called Mags."
+      },
+      {
+        "speaker": "thule",
+        "text": "Break into the depot and get them out. Mags says there are tanks in that yard that only need a wrench and a kind word."
+      },
+      {
+        "speaker": "thule",
+        "text": "Then bring her home alive. Without her we walk."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "mags",
+        "text": "About time! Name is Mags. Give me two minutes and these Bulldogs will run."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Assets removed from the depot. Recover them."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Base is under attack! They are hitting us while we are out."
+      },
+      {
+        "speaker": "mags",
+        "text": "Home sweet home. Right, who wants a Garage?"
+      }
+    ]
+  },
+  {
+    "id": "hill-312",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "Hill 312 has the old watchtower. Whoever holds it sees the whole valley, and right now that is Halcyon."
+      },
+      {
+        "speaker": "thule",
+        "text": "Mags got the Thumpers running. They shell what the tower spots, even what you cannot see: Ctrl+click the ground and they keep firing there."
+      },
+      {
+        "speaker": "thule",
+        "text": "Take the hill and keep it, four minutes all told. They will want it back."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "okafor",
+        "text": "Tower is ours! I can see all the way to the river."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Elevated position lost. Reclaiming."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Heavy armor, coming up the slope!"
+      },
+      {
+        "speaker": "thule",
+        "text": "The valley is ours. Good work, all of you."
+      }
+    ]
+  },
+  {
+    "id": "ironmongers",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "Brann and his Ironmongers have been robbing every camp on the road. Last night they burned the Kettle family out of the mill and took their children for workers."
+      },
+      {
+        "speaker": "thule",
+        "text": "Kettle is still fighting at the east end of the ruins. Join up with him. Alt+click the map to call for help or to point him at a target, and he will answer."
+      },
+      {
+        "speaker": "thule",
+        "text": "Brann fights like we do, with the same guns and the same tricks. Burn his base to the ground."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "brann",
+        "text": "Thule! Heard about you. Join me, or get out of my valley."
+      },
+      {
+        "speaker": "thule",
+        "text": "Neither. Everyone, on Kettle. Hit them together."
+      },
+      {
+        "speaker": "brann",
+        "text": "You think you are better than me? Out here, nobody is better."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Ironmongers are breaking. Push!"
+      },
+      {
+        "speaker": "brann",
+        "text": "Fine! Fine. You win. Remember who let you live."
+      }
+    ]
+  },
+  {
+    "id": "dead-sky",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "Halcyon owns the sky. Its gunships find our convoys wherever they go. Mags dug two Hornets out of a crop-duster hangar."
+      },
+      {
+        "speaker": "thule",
+        "text": "Get an Airstrip up, and Flak Nests around the base. Power is short. If the lights flicker, switch something off until the Dynamos catch up."
+      },
+      {
+        "speaker": "thule",
+        "text": "Then fly over to their hangars and burn them."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "okafor",
+        "text": "Gunships! Get under cover!"
+      },
+      {
+        "speaker": "mags",
+        "text": "Power is in the red. Switch off the Garage or the Radio Mast, we will live without them."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Air superiority contested. Escalating."
+      },
+      {
+        "speaker": "thule",
+        "text": "The sky is clear. First time since the signal fell."
+      }
+    ]
+  },
+  {
+    "id": "glass-fields",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "East of the hills the ground turns to glass and the crystals sing at night. Halcyon is strip-mining them, and something out there is fighting back."
+      },
+      {
+        "speaker": "thule",
+        "text": "We need that Echo. Knock out Halcyon's intakes and hold the singing stone in the middle of the field for two minutes."
+      },
+      {
+        "speaker": "thule",
+        "text": "Whatever the crystal folk are, they are not our enemy unless we make them one. Try not to."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "choir",
+        "text": "Iron ones. You are loud. Be quiet, or be still."
+      },
+      {
+        "speaker": "thule",
+        "text": "We are not here for you. Leave us be, and we leave you be."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Machines and crystals going at each other. Let them."
+      },
+      {
+        "speaker": "thule",
+        "text": "Their intakes are dark. Now the stone."
+      },
+      {
+        "speaker": "choir",
+        "text": "The stone sings for you. For now."
+      }
+    ]
+  },
+  {
+    "id": "long-tom",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "Halcyon is charging a Purge array on the far side of these ruins. When it is full it burns everything inside its circle, and its circle is us."
+      },
+      {
+        "speaker": "thule",
+        "text": "Mags has plans for a Long Tom: a gun big enough to hit back from here. Build a Foundry, then the gun. Everyone can see a charging superweapon, theirs and ours."
+      },
+      {
+        "speaker": "thule",
+        "text": "When the warning comes, scatter. Then bring that array down."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "halcyon",
+        "text": "Purge array charging. Target: unregistered settlement."
+      },
+      {
+        "speaker": "mags",
+        "text": "Long Tom is up! Give her five minutes to warm up."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Strike incoming! Get out of the circle, everyone move!"
+      },
+      {
+        "speaker": "thule",
+        "text": "Their array is down. Now the rest of it."
+      }
+    ]
+  },
+  {
+    "id": "marrow",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "A year ago I walked out of Marrow with eight soldiers. Today I am going back with an army."
+      },
+      {
+        "speaker": "thule",
+        "text": "Halcyon's core sits in the old city center, and everything it has is waiting for us. The crystal host has come down from the glass fields, and it answers to nobody."
+      },
+      {
+        "speaker": "thule",
+        "text": "Brann is with us, for what that is worth. Bring everything. Destroy the core. Then we can all go home."
+      }
+    ],
+    "lines": [
+      {
+        "speaker": "brann",
+        "text": "Do not get used to this, Thule. I am here for the loot."
+      },
+      {
+        "speaker": "halcyon",
+        "text": "Marrow is a closed system. You are not permitted."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Purge charging in the city center. Spread out!"
+      },
+      {
+        "speaker": "choir",
+        "text": "The song is too loud here. We will silence all of it."
+      },
+      {
+        "speaker": "thule",
+        "text": "All units, everything you have. Now!"
+      },
+      {
+        "speaker": "thule",
+        "text": "The lights are coming back on in Marrow. Ours, this time."
+      }
+    ]
+  },
+  {
     "id": "epilogue-signal-fall",
     "brief": [
       {
@@ -438,6 +820,24 @@
       {
         "speaker": "holdout",
         "text": "We lost good people getting here. Tomorrow we start rebuilding. Not the way it was. Better, and together."
+      }
+    ],
+    "lines": []
+  },
+  {
+    "id": "epilogue-long-way-back",
+    "brief": [
+      {
+        "speaker": "thule",
+        "text": "The core is quiet. People are coming back to Marrow street by street, carrying whatever they kept."
+      },
+      {
+        "speaker": "thule",
+        "text": "Mags has the trams running again, on diesel and stubbornness. Brann took his loot and went back to his valley. The crystals sing on the edge of town, and nobody bothers them."
+      },
+      {
+        "speaker": "thule",
+        "text": "I said I would bring them home. It took a year and too many good people. But we came the long way back."
       }
     ],
     "lines": []

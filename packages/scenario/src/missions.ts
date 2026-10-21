@@ -1,8 +1,12 @@
 import type { Difficulty } from '@signal-fall/ai';
 import type { Biome, MapSize, Resources, TerrainStyle } from '@signal-fall/mapgen';
+import { LONG_WAY_BACK, LONG_WAY_BACK_EPILOGUE } from './long-way-back';
 
-/** A place on a generated map: near a seat's start (offset in tiles), or a share of the map (percent). */
-export type Pos = { start: number; dx?: number; dy?: number } | { pct: [number, number] };
+/**
+ * A place on a generated map: near a seat's start (offset in tiles), a share of the map (percent), or a share
+ * of the way from the player's start to seat 1's (percent, plus an offset): a road that holds whatever the map.
+ */
+export type Pos = { start: number; dx?: number; dy?: number } | { pct: [number, number] } | { along: number; dx?: number; dy?: number };
 export type PArea = Pos & { r: number };
 
 export type MissionObjective = { text: string } & (
@@ -34,7 +38,8 @@ export interface MissionTrigger {
   actions: MissionAction[];
 }
 
-export type Speaker = 'holdout' | 'halcyon' | 'choir';
+/** A faction's voice (Varga, HALCYON, the Cantor), or a named character of a later campaign. */
+export type Speaker = 'holdout' | 'halcyon' | 'choir' | 'thule' | 'okafor' | 'mags' | 'brann';
 
 export interface MissionSeat {
   faction: number;
@@ -59,8 +64,15 @@ export interface MissionSpec {
   briefing: string[];
   /** Lines said during the mission ('say' actions), with who says them. */
   lines: [Speaker, string][];
-  map: { seed: number; size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle };
+  /** `points`: capture points (derricks, watchtowers, depots) on the map. */
+  map: { seed: number; size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: boolean };
   time?: 'day' | 'dusk' | 'night';
+  /** Crates drop now and then. */
+  crates?: boolean;
+  /** Units per player (the rules' default when absent). */
+  unitCap?: number;
+  /** No base: the player is out only once every unit is gone. */
+  squad?: boolean;
   /** Seat 0 is the player. */
   seats: MissionSeat[];
   /** What the player may build (unit and structure ids); everything when absent. */
@@ -560,6 +572,14 @@ export const CAMPAIGNS: CampaignSpec[] = [
         'We lost good people getting here. Tomorrow we start rebuilding. Not the way it was. Better, and together.',
       ],
     },
+  },
+  {
+    id: 'long-way-back',
+    title: 'The Long Way Back',
+    blurb: 'Commander Thule leads a handful of soldiers out of a dead city, and comes back with an army.',
+    acts: ['Part I: The City', 'Part II: The Road', 'Part III: The Return'],
+    missions: LONG_WAY_BACK,
+    epilogue: LONG_WAY_BACK_EPILOGUE,
   },
 ];
 

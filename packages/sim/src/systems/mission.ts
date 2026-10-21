@@ -57,6 +57,8 @@ export interface Trigger {
 export interface MissionRules {
   objectives: Objective[];
   triggers: Trigger[];
+  /** The player fights with a squad and no base: out only once every unit is gone. */
+  squad?: boolean;
 }
 
 export interface MissionState {

@@ -99,4 +99,23 @@ describe('campaign', () => {
     expect(count('hard')[0]).toBeGreaterThan(normal[0]!);
     expect(count('story')[0]).toBeLessThanOrEqual(normal[0]!);
   });
+
+  it('a squad mission: no base, and the player is still in it; losing Thule loses it', () => {
+    const { sim } = createSim({ kind: 'mission', id: 'lights-out', seed: 0 });
+    const w = sim.world;
+    for (let i = 0; i < 100; i++) sim.step();
+    expect(w.ended).toBe(false);
+    expect(w.players[0]!.defeated).toBe(false);
+    const thule = w.entities.resolve(w.mission!.tags.get('thule')!);
+    expect(thule).toBeGreaterThanOrEqual(0);
+    w.entities.free(thule);
+    for (let i = 0; i < 20; i++) sim.step();
+    expect(w.ended).toBe(true);
+    expect(w.winnerTeam).not.toBe(w.players[0]!.team);
+  });
+
+  it('missions can turn on capture points, crates and a unit cap', () => {
+    expect(createSim({ kind: 'mission', id: 'diesel-run', seed: 0 }).sim.world.points.length).toBeGreaterThan(0);
+    expect(createSim({ kind: 'mission', id: 'marrow', seed: 0 }).sim.world.unitCap).toBe(300);
+  });
 });

@@ -147,7 +147,7 @@ const tutorial: ScenarioSpec | null = params.has('tutorial')
 /** ?mission=<id>: a campaign mission. */
 const missionParam = params.get('mission');
 /** Who speaks a mission line (for captions). */
-const SPEAKER_NAME = { holdout: 'Varga', halcyon: 'HALCYON', choir: 'The Cantor' } as const;
+const SPEAKER_NAME = { holdout: 'Varga', halcyon: 'HALCYON', choir: 'The Cantor', thule: 'Thule', okafor: 'Okafor', mags: 'Mags', brann: 'Brann' } as const;
 /** ?daily: today's challenge, the same match for everyone. */
 const daily = params.has('daily') ? dailyChallenge() : null;
 /** Reloaded during a multiplayer match: get back into it. */

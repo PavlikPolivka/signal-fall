@@ -301,10 +301,17 @@ function createMission(id: string, difficulty: CampaignDifficulty): { sim: Sim; 
   const shift = difficulty === 'story' ? -1 : difficulty === 'hard' ? 1 : 0;
   const enemyAi = (k: number, level: Difficulty) =>
     m.seats[k]!.team === m.seats[0]!.team ? level : AI_LEVELS[Math.max(0, Math.min(AI_LEVELS.length - 1, AI_LEVELS.indexOf(level) + shift))]!;
-  const map = generateMap({ seed: m.map.seed, players: m.seats.length, size: m.map.size, biome: m.map.biome, resources: m.map.resources, terrain: m.map.terrain });
+  const map = generateMap({ seed: m.map.seed, players: m.seats.length, size: m.map.size, biome: m.map.biome, resources: m.map.resources, terrain: m.map.terrain, points: m.map.points ? 'some' : undefined });
   const n = map.width;
   const clamp = (v: number) => Math.max(2, Math.min(n - 3, v));
-  const raw = (p: Pos) => ('start' in p ? { x: clamp(map.starts[p.start]!.x + (p.dx ?? 0)), y: clamp(map.starts[p.start]!.y + (p.dy ?? 0)) } : { x: clamp(Math.trunc((n * p.pct[0]) / 100)), y: clamp(Math.trunc((n * p.pct[1]) / 100)) });
+  const raw = (p: Pos) => {
+    if ('start' in p) return { x: clamp(map.starts[p.start]!.x + (p.dx ?? 0)), y: clamp(map.starts[p.start]!.y + (p.dy ?? 0)) };
+    if ('along' in p) {
+      const [a, b] = [map.starts[0]!, map.starts[1]!];
+      return { x: clamp(a.x + Math.trunc(((b.x - a.x) * p.along) / 100) + (p.dx ?? 0)), y: clamp(a.y + Math.trunc(((b.y - a.y) * p.along) / 100) + (p.dy ?? 0)) };
+    }
+    return { x: clamp(Math.trunc((n * p.pct[0]) / 100)), y: clamp(Math.trunc((n * p.pct[1]) / 100)) };
+  };
   // Every mission spot (areas to reach or hold, spawns) sits on ground the player can walk to: a spot
   // given as a share of the map can land on rocks or water, and an area there can never be reached.
   const reach = walkableFrom(map, map.starts[0]!);
@@ -357,8 +364,9 @@ function createMission(id: string, difficulty: CampaignDifficulty): { sim: Sim; 
         return a;
       }),
     })),
+    squad: m.squad,
   };
-  const sim = createMatch({ rules, seed: m.map.seed, map, players: m.seats.map((s) => ({ faction: s.faction, team: s.team })), mission: missionRules, allow: m.allow });
+  const sim = createMatch({ rules, seed: m.map.seed, map, players: m.seats.map((s) => ({ faction: s.faction, team: s.team })), mission: missionRules, allow: m.allow, crates: m.crates, unitCap: m.unitCap });
   const w = sim.world;
   m.seats.forEach((seat, k) => {
     const start = map.starts[k]!;
@@ -370,7 +378,7 @@ function createMission(id: string, difficulty: CampaignDifficulty): { sim: Sim; 
     else if (seat.start === 'none') for (let s = 0; s < w.entities.high; s++) if (w.entities.alive[s] === 1 && w.entities.owner[s] === k) w.entities.free(s);
     if (seat.credits !== undefined) w.players[k]!.credits = seat.credits;
     // Story: a cushion of credits for the player.
-    if (k === 0 && difficulty === 'story') w.players[k]!.credits += 3000;
+    if (k === 0 && difficulty === 'story' && !m.squad) w.players[k]!.credits += 3000;
     for (const [unit, count] of seat.units ?? []) {
       const ri = rules.unitIndex.get(unit);
       if (ri === undefined) continue;

@@ -160,7 +160,9 @@ def jobs(kind):
         for m in json.load(open(os.path.join(HERE, 'campaign.json'))):
             items = [(f'brief_{i}', x) for i, x in enumerate(m['brief'])] + [(f'line_{i}', x) for i, x in enumerate(m['lines'])]
             for name, item in items:
-                yield f"campaign/{m['id']}/{name}", item['text'], CFG['campaign'][item['speaker']], item['speaker'], os.path.join(OUT, 'campaign', m['id'], f'{name}.mp3'), 32000, '40k'
+                cast = CFG['campaign'][item['speaker']]
+                # Named characters take their faction's treatment (Thule and his people: the Holdout radio).
+                yield f"campaign/{m['id']}/{name}", item['text'], cast, cast.get('treatment', item['speaker']), os.path.join(OUT, 'campaign', m['id'], f'{name}.mp3'), 32000, '40k'
 
 
 kinds = [a for a in sys.argv[1:] if a in ('announcer', 'campaign')] or ['campaign', 'announcer']

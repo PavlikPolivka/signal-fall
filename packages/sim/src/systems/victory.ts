@@ -17,6 +17,8 @@ export function victorySystem(world: World): void {
       const owner = e.owner[s]!;
       if (e.kind[s] === KIND.structure) hasBase[owner] = true;
       else if (e.kind[s] === KIND.unit && e.type[s] === world.rules.factions[world.players[owner]!.faction]!.constructionUnit) hasBase[owner] = true;
+      // A squad mission: the player has no base to lose, only soldiers.
+      else if (e.kind[s] === KIND.unit && owner === 0 && world.mission?.rules.squad) hasBase[0] = true;
     }
     // The survival horde has no base to lose.
     for (const p of world.players) if (!hasBase[p.index] && p.index !== world.survival?.horde) p.defeated = true;

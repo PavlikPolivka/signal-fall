@@ -18,6 +18,32 @@
       "profile": "The Cantor, voice of an ancient crystal people who were a song before they were stone.",
       "style": "soft, ancient and sorrowful, a little otherworldly",
       "pace": "unhurried but flowing"
+    },
+    "thule": {
+      "voice": "Charon",
+      "treatment": "holdout",
+      "profile": "Commander Thule, a weary, stubborn man in his fifties who leads a ragged band of survivors out of a dead city, speaking by radio.",
+      "style": "low, dry and steady; tired but unbending, never theatrical"
+    },
+    "okafor": {
+      "voice": "Orus",
+      "treatment": "holdout",
+      "profile": "Sergeant Okafor, a veteran infantry sergeant calling out the fight to his squad over the radio.",
+      "style": "firm, clipped and urgent",
+      "pace": "quick"
+    },
+    "mags": {
+      "voice": "Sulafat",
+      "treatment": "holdout",
+      "profile": "Mags, a blunt, cheerful mechanic who keeps old trucks running with spit and wire, on the radio.",
+      "style": "warm, wry and practical",
+      "pace": "brisk"
+    },
+    "brann": {
+      "voice": "Rasalgethi",
+      "treatment": "holdout",
+      "profile": "Brann, a swaggering warlord of a scavenger gang, enjoying the sound of his own voice on the radio.",
+      "style": "smug, menacing and amused"
     }
   },
   "announcer": {

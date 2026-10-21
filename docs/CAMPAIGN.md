@@ -131,3 +131,28 @@ exported as the pseudo-mission `epilogue-<campaign id>`.
 It played as a straight walk. Now: WREN must first hold the old relay (30 s, toward the Halcyon base) to copy the proof,
 which sets off a purge wave; from 7:00 Halcyon besieges the Holdout base every 2 minutes; the last stretch has an ambush;
 the burning starts at 16:00 (warning at 13:00, the mission is lost at 16:00). Halcyon's AI is Hard.
+
+## The Long Way Back (2026-10-21)
+
+A second campaign, Holdout only and outside the main timeline (`packages/scenario/src/long-way-back.ts`). Commander
+Thule gets eight soldiers out of the city of Marrow on the night the signal fell, builds an army on the road, and
+comes back for the city. Each mission adds one thing, and the late ones use the newer systems:
+
+| # | Mission | What it teaches or shows |
+|---|---|---|
+| 1 | Lights Out | No base (`squad: true`, out only when every unit is gone); ruins, brush ambushes, night; keep Thule alive |
+| 2 | Dig In | Deploy, power, barracks, pillboxes, a barricade line; hold until dawn |
+| 3 | Diesel Run | Economy, capture points (`map.points`), crates; Brann's scavengers raid the Mules |
+| 4 | Mags | Break into a Halcyon depot, free Mags and three Bulldogs, bring her home |
+| 5 | Hill 312 | Hold the watchtower hill; Thumpers and attack-ground |
+| 6 | The Ironmongers | Holdout against Holdout (Brann), with an AI ally that answers pings |
+| 7 | Dead Sky | Airstrip, Hornets, Flak Nests, power shortage (power toggle); burn the drone hangars |
+| 8 | Glass Fields | Three-way fight with Halcyon and the Choir; hold the singing stone |
+| 9 | Long Tom | Both superweapons: dodge the Purge, build a Long Tom, destroy the array |
+| 10 | Marrow | Four armies on a large map, 300-unit cap, Halcyon on Brutal with a Purge |
+
+New mission data for it: named speakers (`thule`, `okafor`, `mags`, `brann`, cast in `tools/assets/voices/gemini.json`
+with the Holdout radio treatment), `along` positions (a share of the way from the player's start to seat 1's, so a
+route holds on any generated map), and the `crates`, `unitCap`, `squad` and `map.points` options.
+
+Voice lines: Thule is Charon, Okafor Orus, Mags Sulafat, Brann Rasalgethi.

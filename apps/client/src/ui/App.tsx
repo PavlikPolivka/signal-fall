@@ -455,7 +455,7 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       )}
       {!hasProducer && (
         <div class="hint muted">
-          {structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${roleName(state.rules, faction.index, tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield')}.`}
+          {state.mission?.squad ? 'No base on this mission: your squad is all you have.' : structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${roleName(state.rules, faction.index, tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield')}.`}
         </div>
       )}
       {hasProducer && !MENU_MODES.includes(state.mode) && !state.placing && (
