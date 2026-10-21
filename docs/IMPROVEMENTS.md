@@ -168,12 +168,12 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 |---|---|---|---|---|
 | 121 ✅ | E | Power down a building by hand (click toggle) to free power for what matters, like classic C&C | 4 | S |
 | 122 ✅ | E | Primary factory: pick which barracks or factory new units come out of | 3 | S |
-| 123 | E | Selling a building leaves a few infantry, so a dying base can still fight | 3 | S |
+| 123 ✅ | E | Selling a building leaves a few infantry, so a dying base can still fight | 3 | S |
 | 124 ✅ | E | Cancelling a building in its first 5 seconds refunds everything (misclick forgiveness; cancelling already refunds everything spent, at any time) | 3 | XS |
 | 125 | E | Gates in wall lines: your units pass, enemies don't (deferred: the map has one navigation grid for everyone, so a tile only one side may cross needs per-team pathing and flow fields, plus gate art; cost M) | 3 | M |
-| 126 | E | Ambush bonus: the first shot from a unit hidden in brush hits harder | 3 | S |
-| 127 | E | Holdout harvesters below 30% health drive to a Garage on their own | 3 | S |
-| 128 | E | Recompiled Halcyon units keep one veterancy rank | 2 | S |
+| 126 ✅ | E | Ambush bonus: the first shot from a unit hidden in brush hits harder | 3 | S |
+| 127 ✅ | E | Holdout harvesters below 30% health drive to a Garage on their own | 3 | S |
+| 128 ✅ | E | Recompiled Halcyon units keep one veterancy rank | 2 | S |
 | 129 ✅ | E | More crate types: a short map reveal, a speed boost, a free harvester | 2 | XS |
 | 130 ✅ | E | Attack-ground order for artillery: shell a spot, not a unit | 4 | S |
 | 131 ✅ | E | Allied credit transfer in team games | 3 | S |

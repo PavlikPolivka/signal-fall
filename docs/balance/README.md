@@ -183,3 +183,11 @@ Hard beats Easy 50-0.
 Hard and Brutal move units out of an announced strike circle (the warning is public). 300 Hard matches per pairing:
 Holdout vs Halcyon 54.3%, Halcyon vs Choir 52.3%, Holdout vs Choir 46.7% (unchanged: strikes are rare in AI matches);
 Hard beats Easy 50-0.
+
+### Sell crews, brush ambush, harvester repairs, recompiled veterans (2026-10-21)
+
+Four mechanics for everyone: selling a building leaves one of the faction's cheapest soldiers per ◆750 of its cost
+(at most 4); the first shot from the brush after 5 s without firing does +50% damage; harvesters below 30% health
+drive to a working repair bay (Holdout's Garage) until 90%; a Halcyon veteran lost to Recompile makes the next unit
+of its type start a rank up. 300 Hard matches per pairing: Holdout vs Halcyon 53.7%, Halcyon vs Choir 52.7%,
+Holdout vs Choir 47%; Hard beats Easy 50-0.

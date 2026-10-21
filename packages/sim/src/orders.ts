@@ -5,7 +5,7 @@ import { HARVEST, KIND, NO_ENTITY, STANCE, type Order } from './entities';
 import { CHOIR_SEED_START_PCT, isFarSeed, placementError, footprintBlocked, worldPlacementView } from './placement';
 import { teamOf } from './query';
 import { formationSlots } from './formation';
-import { removeEntity, spawnStructure } from './spawn';
+import { removeEntity, spawnStructure, spawnUnit } from './spawn';
 import { computeFacts, findEcho, MAX_QUEUE, requirementsMet, salvageValue, spawnFreeHarvester, TABS } from './systems/economy';
 import { BUILD_CATEGORY_INDEX, type World } from './world';
 import { canResearch, useAbility, usePower } from './systems/faction';
@@ -283,7 +283,12 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;
       const rule = world.rules.structures[e.type[t]!]!;
       player.credits += idiv(rule.cost * world.rules.constants.sellRefundPct, 100);
+      // The crew walks out: a few of the faction's cheapest soldiers, more for a bigger building.
+      const crew = Math.min(SELL_CREW_MAX, idiv(rule.cost, SELL_CREW_PER));
+      const soldier = cheapestSoldier(world, player.faction);
+      const [cx, cy] = [e.x[t]!, e.y[t]!];
       removeEntity(world, t);
+      for (let k = 0; k < crew && soldier >= 0; k++) spawnUnit(world, soldier, c.player, cx + ((k & 1) << (FX_SHIFT - 1)), cy + ((k >> 1) << (FX_SHIFT - 1)));
       return;
     }
     case 'repair': {
@@ -454,4 +459,19 @@ function harvest(world: World, player: number, units: number[], x: number, y: nu
 export function canSalvage(world: World, s: number): boolean {
   const rule = world.rules.units[world.entities.type[s]!]!;
   return rule.abilities.some((a) => a.kind === 'harvest' || (a.kind === 'engineer' && a.salvage));
+}
+
+/** Selling a building: one soldier walks out per this much of its cost, at most this many. */
+export const SELL_CREW_PER = 750;
+export const SELL_CREW_MAX = 4;
+
+/** The faction's cheapest armed infantry it can train (-1 if none). */
+function cheapestSoldier(world: World, faction: number): number {
+  let best = -1;
+  for (const i of world.rules.factions[faction]!.units) {
+    const u = world.rules.units[i]!;
+    if (u.tab !== 'infantry' || !u.weapon) continue;
+    if (best < 0 || u.cost < world.rules.units[best]!.cost) best = i;
+  }
+  return best;
 }

@@ -279,6 +279,8 @@ export function recompileRefund(world: World, s: number): void {
   const deep = upgradePct(world, p.index, 'recompileRefundPct');
   const refund = pct(world.rules.units[e.type[s]!]!.cost, deep > 0 ? deep : f.recompileRefundPct);
   p.credits += refund;
+  // A veteran's experience is kept: the next one of its kind comes out a rank up.
+  if (e.rank[s]! > 0) p.recompiledVeterans[e.type[s]!]!++;
   pushFx(world, FX_EVENT.credits, refund, CREDIT_REASON.recompile, p.index, e.x[s]!, e.y[s]!, 0, 0);
 }
 

@@ -1,6 +1,7 @@
 import { GARRISON_DAMAGE_PCT } from './garrison';
 import { ARMOR, DAMAGE, type WeaponRule } from '@signal-fall/data';
-import { FX_ONE, iatan2, idiv, ilength, pct } from '../fx';
+import { FX_ONE, FX_SHIFT, iatan2, idiv, ilength, pct } from '../fx';
+import { TERRAIN } from '../map';
 import { KIND, NO_ENTITY } from '../entities';
 import { armorOf, canTarget, costOf, digInOf, distToBody, inWeaponRange, isAir, isDugIn, rangeOf, teamOf, weaponOf } from '../query';
 import { removeEntity } from '../spawn';
@@ -16,6 +17,10 @@ const SWEEP_PCT = 60;
 const ARMOR_COUNT = ARMOR.length;
 
 /** Fire weapons at current targets. Damage is delivered by projectiles (instant hits resolve this tick). */
+/** Ambush: the first shot from the brush after this long without firing gets this much extra damage. */
+export const AMBUSH_QUIET_TICKS = 100;
+export const AMBUSH_BONUS_PCT = 50;
+
 export function weaponSystem(world: World): void {
   const e = world.entities;
   const vetPct = world.rules.constants.veterancyDamagePct;
@@ -48,6 +53,10 @@ export function weaponSystem(world: World): void {
       continue;
     }
     e.cooldown[s] = cooldownFor(world, s, weapon.cooldown);
+    // Ambush: a unit in the brush that has held its fire for a while hits harder with its first shot.
+    const tile = (e.y[s]! >> FX_SHIFT) * world.map.width + (e.x[s]! >> FX_SHIFT);
+    const ambush = e.kind[s] === KIND.unit && world.map.terrain[tile] === TERRAIN.rough && (e.lastFired[s]! < 0 || world.tick - e.lastFired[s]! >= AMBUSH_QUIET_TICKS) ? AMBUSH_BONUS_PCT : 0;
+    e.lastFired[s] = world.tick;
     const dist = distToBody(world, e.x[s]!, e.y[s]!, t);
     const ticks = weapon.projectileSpeed > 0 ? idiv(dist + weapon.projectileSpeed - 1, weapon.projectileSpeed) : 0;
     world.projectiles.push({
@@ -59,7 +68,7 @@ export function weaponSystem(world: World): void {
       target: e.handle(t),
       x: e.x[t]!,
       y: e.y[t]!,
-      damage: pct(weapon.damage, 100 + vetPct * e.rank[s]! + upgradePct(world, e.owner[s]!, 'damagePct') + chorusPct(world, s)),
+      damage: pct(weapon.damage, 100 + vetPct * e.rank[s]! + upgradePct(world, e.owner[s]!, 'damagePct') + chorusPct(world, s) + ambush),
       type: weapon.type,
       splash: weapon.splash,
       hitsGround: weapon.targetsGround,

@@ -487,3 +487,22 @@ describe('giving credits', () => {
     expect([a!.credits, b!.credits]).toEqual([0, 1000]);
   });
 });
+
+describe('harvesters and the garage', () => {
+  it('a badly hurt Holdout harvester drives to the Garage, gets patched up, and goes back to work', () => {
+    const { sim } = newMatch();
+    const e = sim.world.entities;
+    cmd(sim, 0, { type: 'deploy', units: [e.handle(own(sim, 0, () => true)[0]!)] });
+    sim.step();
+    sim.world.players[0]!.credits = 20000;
+    for (const id of ['dynamo', 'dynamo', 'smelter', 'motor_pool', 'garage']) expect(buildAndPlace(sim, 0, id)).toBe(true);
+    const mule = own(sim, 0, (s) => e.kind[s] === KIND.unit && e.type[s] === unit('mule'))[0]!;
+    sim.run(20 * 20);
+    e.hp[mule] = Math.trunc(e.maxHp[mule]! / 5);
+    sim.run(10);
+    expect(e.hstate[mule]).toBe(HARVEST.repair);
+    sim.run(20 * 120);
+    expect(e.hp[mule]! * 100).toBeGreaterThanOrEqual(e.maxHp[mule]! * 90);
+    expect(e.hstate[mule]).not.toBe(HARVEST.repair);
+  });
+});

@@ -231,6 +231,8 @@ function activity(order: number, hstate: number, cargo: number): string {
   if (hstate === 3) return `Returning to refinery (${cargo})`;
   if (hstate === 4) return 'Waiting at refinery';
   if (hstate === 5) return 'Unloading';
+  if (hstate === 6) return 'Lying low at the refinery';
+  if (hstate === 7) return 'Going for repairs';
   return ['Idle', 'Moving', 'Attack-moving', 'Attacking', 'Patrolling', 'Guarding', 'Salvaging'][order] ?? 'Idle';
 }
 

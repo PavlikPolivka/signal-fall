@@ -1,5 +1,12 @@
 # What's new
 
+## 2026-10-21 21:13 UTC
+
+- **Selling a building leaves its crew:** a few soldiers walk out of a sold building (more for a bigger one), so a base on its last legs can still fight.
+- **Ambush from the brush:** a unit hiding in brush that has held its fire for a few seconds hits half again as hard with its first shot.
+- **Harvesters go for repairs:** a Holdout harvester that is badly hurt drives to a Garage on its own, and goes back to work once patched up.
+- **Recompiled veterans:** when Halcyon recompiles a veteran, the next unit of that kind comes out of the factory a rank up.
+
 ## 2026-10-21 20:57 UTC
 
 - **AI chat (optional):** turn on *AI chat* under Sound and the AI opponents in a skirmish say a few words: good luck at the start, a taunt when you lose a building, a grumble when they lose one, and gg at the end. Each faction has its own manner. Off by default.

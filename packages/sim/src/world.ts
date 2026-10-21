@@ -60,6 +60,8 @@ export interface PlayerState {
   incomeBonusPct: number;
   /** Handicap: the share of harvest income this player gets (100 = full). */
   handicapPct: number;
+  /** Halcyon: veterans recompiled, per unit rule: the next one of that type trained starts a rank up. */
+  recompiledVeterans: number[];
   /** Stats. */
   harvested: number;
   /** Units and structures lost / destroyed: counts and their cost (value). */
@@ -265,6 +267,7 @@ export function createWorld(o: WorldOptions): World {
       production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
       incomeBonusPct: 0,
       handicapPct: p.handicap ?? 100,
+      recompiledVeterans: o.rules.units.map(() => 0),
       directives: null,
       harvested: 0,
       stats: { unitsLost: 0, unitsKilled: 0, structuresLost: 0, structuresKilled: 0, valueLost: 0, valueKilled: 0 },
@@ -325,6 +328,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.lowPower ? 1 : 0);
     w.push(p.incomeBonusPct);
     w.push(p.handicapPct);
+    w.pushArray(p.recompiledVeterans);
     w.push(p.harvested);
     const st = p.stats;
     w.push(st.unitsLost);

@@ -4,7 +4,7 @@ import type { IntWriter } from './hash';
 export const KIND = { none: 0, unit: 1, structure: 2, wreck: 3 } as const;
 
 /** Harvester states. */
-export const HARVEST = { off: 0, toField: 1, harvesting: 2, toRefinery: 3, waiting: 4, unloading: 5, hiding: 6 } as const;
+export const HARVEST = { off: 0, toField: 1, harvesting: 2, toRefinery: 3, waiting: 4, unloading: 5, hiding: 6, repair: 7 } as const;
 
 /** Which Echo tiles a harvester prefers. */
 export const HARVEST_MODE = { richest: 0, nearest: 1 } as const;
@@ -71,6 +71,8 @@ export class Entities {
   target!: Int32Array;
   lastAttacker!: Int32Array;
   lastHitTick!: Int32Array;
+  /** Tick of its last shot (-1 never): a first shot from the brush after a quiet spell is an ambush. */
+  lastFired!: Int32Array;
   xp!: Int32Array;
   rank!: Uint8Array;
   stance!: Uint8Array;
@@ -177,6 +179,7 @@ export class Entities {
     this.target = re(this.target, (n) => new Int32Array(n));
     this.lastAttacker = re(this.lastAttacker, (n) => new Int32Array(n));
     this.lastHitTick = re(this.lastHitTick, (n) => new Int32Array(n));
+    this.lastFired = re(this.lastFired, (n) => new Int32Array(n));
     this.xp = re(this.xp, (n) => new Int32Array(n));
     this.rank = re(this.rank, (n) => new Uint8Array(n));
     this.stance = re(this.stance, (n) => new Uint8Array(n));
@@ -234,6 +237,7 @@ export class Entities {
     this.target[slot] = NO_ENTITY;
     this.lastAttacker[slot] = NO_ENTITY;
     this.lastHitTick[slot] = -1;
+    this.lastFired[slot] = -1;
     this.cooldown[slot] = 0;
     this.xp[slot] = 0;
     this.rank[slot] = 0;
@@ -326,6 +330,7 @@ export class Entities {
       w.push(this.target[s]!);
       w.push(this.lastAttacker[s]!);
       w.push(this.lastHitTick[s]!);
+      w.push(this.lastFired[s]!);
       w.push(this.xp[s]!);
       w.push(this.rank[s]!);
       w.push(this.stance[s]!);

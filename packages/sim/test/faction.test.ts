@@ -358,3 +358,41 @@ describe('research', () => {
     expect(n).toBe(4);
   });
 });
+
+describe('new mechanics', () => {
+  it('Recompile keeps a veteran: the next one of its kind trained starts a rank up', () => {
+    const s = sim(HALCYON, HOLDOUT);
+    spawnStructure(s.world, structure('relay'), 0, 10, 10);
+    const u = slot(spawnUnit(s.world, unit('vector'), 0, at(11), at(11)));
+    s.world.entities.rank[u] = 1;
+    s.run(1);
+    s.world.entities.hp[u] = 0;
+    s.run(1);
+    expect(s.world.players[0]!.recompiledVeterans[unit('vector')]).toBe(1);
+  });
+
+  it('selling a building leaves some of its crew behind', () => {
+    const s = sim(HOLDOUT, HALCYON);
+    const yard = spawnStructure(s.world, structure('holdfast'), 0, 10, 10);
+    cmd(s, 0, { type: 'sell', target: yard });
+    s.run(1);
+    const e = s.world.entities;
+    let grunts = 0;
+    for (let k = 0; k < e.high; k++) if (e.alive[k] === 1 && e.kind[k] === KIND.unit && e.type[k] === unit('grunt')) grunts++;
+    expect(grunts).toBe(4);
+  });
+
+  it('ambush: the first shot from the brush hits half again as hard', () => {
+    const shot = (brush: boolean) => {
+      const terrain = new Uint8Array(40 * 40);
+      if (brush) terrain[10 * 40 + 10] = 1;
+      const s = new Sim({ rules, seed: 3, width: 40, height: 40, terrain, players: [{ faction: HOLDOUT, team: 0 }, { faction: HALCYON, team: 1 }], victoryRules: false });
+      s.run(200);
+      spawnUnit(s.world, unit('tankbuster'), 0, at(10), at(10));
+      spawnUnit(s.world, unit('vector'), 1, at(13), at(10));
+      for (let i = 0; i < 40 && s.world.projectiles.length === 0; i++) s.step();
+      return s.world.projectiles[0]!.damage;
+    };
+    expect(shot(true)).toBe((shot(false) * 3) / 2);
+  });
+});

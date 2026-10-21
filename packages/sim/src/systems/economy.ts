@@ -5,6 +5,7 @@ import { removeEntity, spawnUnit } from '../spawn';
 import { distToBody } from '../query';
 import { tileAt } from '../map';
 import { upgradePct } from './faction';
+import { promote } from './combat';
 import { CHOIR_SEED_GROW_PCT } from '../placement';
 import { CREDIT_REASON, FX_EVENT, pushFx, type PlayerState, type World } from '../world';
 
@@ -170,6 +171,14 @@ function emitUnit(world: World, owner: number, factory: number, rule: UnitRule):
   }
   const h = spawnUnit(world, rule.index, owner, x, y);
   const s = h & 0xffff;
+  // Halcyon: a recompiled veteran comes back a rank up.
+  const p = world.players[owner]!;
+  if (p.recompiledVeterans[rule.index]! > 0) {
+    p.recompiledVeterans[rule.index]!--;
+    const th = world.rules.constants.veterancyThresholdPct;
+    e.xp[s] = Math.max(e.xp[s]!, idiv(rule.cost * th[0]! + 99, 100));
+    promote(world, s);
+  }
   if (rule.abilities.some((a) => a.kind === 'harvest')) {
     e.hstate[s] = HARVEST.toField;
     return h;
@@ -366,7 +375,22 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
       if (e.hstate[s] === HARVEST.toField || e.hstate[s] === HARVEST.harvesting) e.hstate[s] = e.cargo[s]! > 0 ? HARVEST.toRefinery : HARVEST.hiding;
     }
 
+    // Badly hurt: off to a repair bay (Holdout's Garage) when there is one, back to work once patched up.
+    if (e.hstate[s] !== HARVEST.repair && e.hstate[s] !== HARVEST.unloading && e.hp[s]! * 100 < e.maxHp[s]! * HARVEST_REPAIR_BELOW_PCT && repairBay(world, s) >= 0)
+      e.hstate[s] = HARVEST.repair;
+
     switch (e.hstate[s]) {
+      case HARVEST.repair: {
+        const bay = repairBay(world, s);
+        if (bay < 0 || e.hp[s]! * 100 >= e.maxHp[s]! * HARVEST_REPAIRED_PCT) {
+          e.hstate[s] = e.cargo[s]! > 0 ? HARVEST.toRefinery : HARVEST.toField;
+          break;
+        }
+        const radius = world.rules.structures[e.type[bay]!]!.repairRadius;
+        if (distToBody(world, e.x[s]!, e.y[s]!, bay) > radius - (FX_ONE >> 1) && e.hasGoal[s] === 0) goal(world, s, e.x[bay]!, e.y[bay]!);
+        else if (distToBody(world, e.x[s]!, e.y[s]!, bay) <= radius - (FX_ONE >> 1)) e.hasGoal[s] = 0;
+        break;
+      }
       case HARVEST.hiding: {
         if (world.tick >= e.fleeUntil[s]!) {
           e.hstate[s] = HARVEST.toField;
@@ -510,6 +534,29 @@ export function repairSystem(world: World): void {
 }
 
 /** Heal own ground vehicles near `src`. amount > 0 = flat HP, amount < 0 = percent of max HP. */
+/** A harvester below this share of its health goes for repairs; it goes back to work at the second. */
+export const HARVEST_REPAIR_BELOW_PCT = 30;
+const HARVEST_REPAIRED_PCT = 90;
+
+/** The owner's nearest working repair bay (a structure that repairs vehicles), or -1. */
+function repairBay(world: World, s: number): number {
+  const e = world.entities;
+  const owner = e.owner[s]!;
+  if (world.players[owner]!.lowPower) return -1;
+  let best = -1;
+  let bestD = 0;
+  for (let b = 0; b < e.high; b++) {
+    if (e.alive[b] !== 1 || e.kind[b] !== KIND.structure || e.owner[b] !== owner || e.poweredDown[b] === 1) continue;
+    if (world.rules.structures[e.type[b]!]!.repairRadius <= 0) continue;
+    const d = ilength(e.x[b]! - e.x[s]!, e.y[b]! - e.y[s]!);
+    if (best < 0 || d < bestD) {
+      best = b;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
 function healVehiclesNear(world: World, src: number, radius: number, amount: number): void {
   const e = world.entities;
   world.spatial.query(e.x[src]!, e.y[src]!, radius + 2 * FX_ONE, (t) => {
