@@ -433,7 +433,7 @@
       },
       {
         "speaker": "thule",
-        "text": "I have eight soldiers and no base. The river bridge is the only way out. Stay together, use the ruins, and let the drones come to you."
+        "text": "I have a dozen soldiers and no base. The river bridge is the only way out. Stay together, use the ruins, and let the drones come to you."
       },
       {
         "speaker": "thule",
@@ -503,6 +503,10 @@
       {
         "speaker": "thule",
         "text": "Sun is up. We made it through the first night."
+      },
+      {
+        "speaker": "okafor",
+        "text": "Stragglers from the city, with a truck full of supplies. We can train more hands."
       }
     ]
   },
@@ -554,7 +558,7 @@
       },
       {
         "speaker": "thule",
-        "text": "Break into the depot and get them out. Mags says there are tanks in that yard that only need a wrench and a kind word."
+        "text": "Silence the guns around the depot and the crew can walk out. Mags says there are tanks in that yard that only need a wrench and a kind word."
       },
       {
         "speaker": "thule",
