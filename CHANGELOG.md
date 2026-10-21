@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 14:54 UTC
+
+- **Lights Out has a city to fight through:** the road to the bridge now runs between two ruined city blocks, with ruins to hide in at every ambush, instead of across empty ground.
+
 ## 2026-10-21 14:34 UTC
 
 - **New campaign: The Long Way Back.** Ten Holdout missions, apart from the main story. Commander Thule leads a dozen soldiers out of the city of Marrow on the night the signal fell, with no base at all, builds an army on the road and comes back for the city. Along the way: holding a ridge until dawn, a valley of derricks and scavengers, rescuing the mechanic Mags, a hill with a watchtower, a war with the warlord Brann, gunships, a three-way fight in the glass fields, a race against a Purge, and a final battle of four armies. Every mission has its own art and spoken briefings, with new voices for Thule, Sergeant Okafor, Mags and Brann. Pick it at the top of the Campaign screen.

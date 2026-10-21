@@ -34,7 +34,7 @@ export const LONG_WAY_BACK: MissionSpec[] = [
       ['okafor', 'Checkpoint on the bridge. Their guns run on that generator.'],
       ['thule', 'We are across. Do not look back. Keep walking.'],
     ],
-    map: { seed: 5101, size: 'S', biome: 'city', resources: 'normal', terrain: 'normal' },
+    map: { seed: 5792, size: 'S', biome: 'city', resources: 'normal', terrain: 'normal' },
     time: 'night',
     squad: true,
     seats: [
