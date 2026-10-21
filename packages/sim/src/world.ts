@@ -13,6 +13,8 @@ import { SpatialGrid } from './spatial';
 export interface PlayerSetup {
   faction: FactionIdx;
   team: number;
+  /** Handicap: this share of harvest income (100 = full), so mixed-skill friends can play. */
+  handicap?: number;
 }
 
 /** Construction yard queue for one category (structures or defenses): one item at a time. */
@@ -56,6 +58,8 @@ export interface PlayerState {
   production: ProductionQueue[];
   /** Brutal AI income bonus (percent), 0 for everyone else. */
   incomeBonusPct: number;
+  /** Handicap: the share of harvest income this player gets (100 = full). */
+  handicapPct: number;
   /** Stats. */
   harvested: number;
   /** Units and structures lost / destroyed: counts and their cost (value). */
@@ -260,6 +264,7 @@ export function createWorld(o: WorldOptions): World {
       build: [0, 1].map(() => ({ item: -1, progress: 0, spent: 0, ready: false, atX: -1, atY: -1, atTries: 0 })),
       production: [0, 1, 2].map(() => ({ items: [], progress: 0, spent: 0 })),
       incomeBonusPct: 0,
+      handicapPct: p.handicap ?? 100,
       directives: null,
       harvested: 0,
       stats: { unitsLost: 0, unitsKilled: 0, structuresLost: 0, structuresKilled: 0, valueLost: 0, valueKilled: 0 },
@@ -319,6 +324,7 @@ export function serializeWorld(world: World, w: IntWriter): void {
     w.push(p.powerUsed);
     w.push(p.lowPower ? 1 : 0);
     w.push(p.incomeBonusPct);
+    w.push(p.handicapPct);
     w.push(p.harvested);
     const st = p.stats;
     w.push(st.unitsLost);

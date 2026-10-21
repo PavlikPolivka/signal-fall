@@ -440,7 +440,7 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
             e.dock[r] = e.handle(s);
             e.hstate[s] = HARVEST.unloading;
             // The whole load, for the "+◆" pop over the refinery (cosmetic, not part of the state).
-            pushFx(world, FX_EVENT.credits, e.cargo[s]! + pct(e.cargo[s]!, p.incomeBonusPct), CREDIT_REASON.harvest, p.index, e.x[r]!, e.y[r]!, 0, 0);
+            pushFx(world, FX_EVENT.credits, pct(e.cargo[s]! + pct(e.cargo[s]!, p.incomeBonusPct), p.handicapPct), CREDIT_REASON.harvest, p.index, e.x[r]!, e.y[r]!, 0, 0);
           } else e.hstate[s] = HARVEST.waiting;
         } else {
           e.hstate[s] = HARVEST.toRefinery;
@@ -451,7 +451,8 @@ export function harvestSystem(world: World, facts: PlayerFacts[]): void {
       case HARVEST.unloading: {
         const amount = Math.min(e.cargo[s]!, UNLOAD_PER_TICK);
         e.cargo[s]! -= amount;
-        p.credits += amount + pct(amount, p.incomeBonusPct);
+        const gain = amount + pct(amount, p.incomeBonusPct);
+        p.credits += p.handicapPct === 100 ? gain : pct(gain, p.handicapPct);
         p.harvested += amount;
         if (e.cargo[s] === 0) {
           const r = e.resolve(e.target[s]!);

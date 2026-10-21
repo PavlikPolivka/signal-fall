@@ -35,6 +35,8 @@ export type ScenarioSpec =
       humans?: number[];
       /** Team per slot (2v2: [0, 0, 1, 1]); default: everyone on their own team. */
       teams?: number[];
+      /** Handicap per slot: the share of harvest income (100, 75 or 50; default full). */
+      handicaps?: number[];
       /** Seats played by AI agents (null elsewhere); they send commands like people do. */
       agents?: (AgentSeat | null)[];
       map: { size: MapSize; biome: Biome; resources: Resources; terrain: TerrainStyle; points?: 'none' | 'some'; crates?: boolean; hill?: boolean; custom?: string; credits?: number; superweapons?: boolean; techLimit?: boolean; unitCap?: number; startArmy?: boolean; revealed?: boolean };
@@ -80,7 +82,7 @@ export function createSim(spec: ScenarioSpec): { sim: Sim; extras: MapExtras } {
         rules,
         seed: spec.seed,
         map,
-        players: spec.factions.map((faction, k) => ({ faction, team: spec.teams?.[k] ?? k })),
+        players: spec.factions.map((faction, k) => ({ faction, team: spec.teams?.[k] ?? k, handicap: spec.handicaps?.[k] })),
         crates: spec.map.crates,
         survivalHorde: horde,
         survivalPct: spec.survival === 'easy' ? 70 : spec.survival === 'hard' ? 170 : 125,

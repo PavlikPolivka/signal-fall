@@ -9,7 +9,7 @@ import type { ScheduledCommand } from '@signal-fall/sim';
 import { Renderer, ultraResolution } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
-import { MenuScreen, Setup, loadSaved, seatSkill, type SkirmishSettings } from './ui/Setup';
+import { MenuScreen, Setup, loadSaved, seatSkill, type SeatKey, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { campaignDifficulty } from './ui/Campaign';
 import { Cutscene, introToPlay, introUrl, markIntroSeen } from './ui/Video';
@@ -98,6 +98,8 @@ function replayCamera(r: Replay): { x: number; y: number; zoom: number } | null 
 function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
   const map = { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, credits: s.credits, superweapons: s.superweapons, techLimit: s.techLimit, unitCap: s.unitCap, startArmy: s.startArmy, revealed: s.revealed };
   const style = s.personality && s.personality !== 'random' ? s.personality : null;
+  // Handicap per slot, in the slot order of each mode (none unless a seat has one).
+  const handicaps = (keys: (SeatKey | 'you' | null)[]) => (keys.some((k) => k && s.handicaps?.[k]) ? keys.map((k) => (k && s.handicaps?.[k]) || 100) : undefined);
   // 2v2: you and your ally hold neighbouring corners (slots 0, 1) against slots 2, 3.
   if (s.mode === '2v2')
     return {
@@ -106,6 +108,7 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       factions: [s.faction, s.allyFaction, s.enemyFaction, s.enemy2Faction],
       ai: [null, seatSkill(s, 'ally'), seatSkill(s, 'enemy'), seatSkill(s, 'enemy2')],
       teams: [0, 0, 1, 1],
+      handicaps: handicaps(['you', 'ally', 'enemy', 'enemy2']),
       map,
       time: s.time,
       personality: [null, null, style, style],
@@ -119,6 +122,7 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
       factions,
       ai: s.survivalAlly ? [null, seatSkill(s, 'ally'), null] : [null, null],
       teams: s.survivalAlly ? [0, 0, 1] : [0, 1],
+      handicaps: handicaps(s.survivalAlly ? ['you', 'ally', null] : ['you', null]),
       survival: s.survivalLevel ?? 'normal',
       map,
       time: s.time,
@@ -128,9 +132,9 @@ function scenarioFromSetup(s: SkirmishSettings): ScenarioSpec {
   if (s.mode === 'ffa3' || s.mode === 'ffa4') {
     const factions = [s.faction, s.enemyFaction, s.enemy2Faction, s.allyFaction].slice(0, s.mode === 'ffa3' ? 3 : 4);
     const enemies = ['enemy', 'enemy2', 'enemy3'] as const;
-    return { kind: 'skirmish', seed: s.seed, factions, ai: factions.map((_, k) => (k === 0 ? null : seatSkill(s, enemies[k - 1]!))), map, time: s.time, personality: factions.map((_, k) => (k === 0 ? null : style)) };
+    return { kind: 'skirmish', seed: s.seed, factions, ai: factions.map((_, k) => (k === 0 ? null : seatSkill(s, enemies[k - 1]!))), handicaps: handicaps(factions.map((_, k) => (k === 0 ? 'you' : enemies[k - 1]!))), map, time: s.time, personality: factions.map((_, k) => (k === 0 ? null : style)) };
   }
-  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, seatSkill(s, 'enemy')], map, time: s.time, personality: [null, style] };
+  return { kind: 'skirmish', seed: s.seed, factions: [s.faction, s.enemyFaction], ai: [null, seatSkill(s, 'enemy')], handicaps: handicaps(['you', 'enemy']), map, time: s.time, personality: [null, style] };
 }
 
 /** ?rematch: the last skirmish setup again (same map, sides and AI), straight into the match. */

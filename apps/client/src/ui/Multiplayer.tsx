@@ -6,7 +6,7 @@ import { openRoom, signalingKind, type RoomConnection } from '../net/connect';
 import { account, backend, findMatch, joinQueue, leaveQueue, publicRooms, rename, signIn, type PublicRoom } from '../net/backend';
 import type { LinkLike, LobbySlot, LobbyState } from '../net/lobby';
 import type { Difficulty } from '@signal-fall/ai';
-import { MenuScreen, type RoomPreset } from './Setup';
+import { HANDICAP_HINT, HANDICAPS, MenuScreen, type RoomPreset } from './Setup';
 import { Choice, MapSettings } from './MapSettings';
 import { TEAM_COLORS } from '../game/state';
 
@@ -163,7 +163,9 @@ export function Multiplayer({
         preset.slots.forEach((x, i) => {
           l.setSeat(i + 1, x.kind);
           if (x.kind === 'ai') l.setAi(i + 1, { faction: x.faction, difficulty: x.difficulty });
+          if (x.handicap) l.setHandicap(i + 1, x.handicap);
         });
+        if (preset.handicap) l.setHandicap(0, preset.handicap);
         l.setMap(preset.map);
       }
       l.onStart = (scenario, slot, links, room, watchers) => {
@@ -304,6 +306,19 @@ export function Multiplayer({
                 ? 'Everyone is ready. Start the match.'
                 : 'Ready. The host starts the match.';
   const teams = s ? [...new Set(s.slots.map((x) => x.team))] : [];
+  // Handicap (share of harvest income): the host sets it per seat, outside ranked matches.
+  const handicap = (x: LobbySlot, k: number) =>
+    x.kind === 'open' ? null : lobby.isHost && !rankedRoom ? (
+      <select class="handicap" value={x.handicap ?? 100} title={HANDICAP_HINT} data-testid={`seat-${k}-handicap`} onChange={(e) => lobby.setHandicap(k, Number((e.currentTarget as HTMLSelectElement).value))}>
+        {HANDICAPS.map((v) => (
+          <option value={v}>{v}%</option>
+        ))}
+      </select>
+    ) : x.handicap ? (
+      <span class="muted small" title={HANDICAP_HINT}>
+        {x.handicap}% income
+      </span>
+    ) : null;
   const seat = (x: LobbySlot, k: number) => (
     <li class={`lobby-seat ${x.kind}${k === me ? ' me' : ''}`} data-testid={`seat-${k}`}>
       <i class="swatch" style={{ background: `#${TEAM_COLORS[k]!.toString(16).padStart(6, '0')}` }} title="Colour in the match" />
@@ -375,6 +390,7 @@ export function Multiplayer({
           )}
         </>
       )}
+      {handicap(x, k)}
     </li>
   );
   return (

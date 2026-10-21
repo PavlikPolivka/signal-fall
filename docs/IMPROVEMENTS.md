@@ -188,7 +188,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 135 ✅ | E | Unit cap option (low / normal / high) | 3 | XS |
 | 136 ✅ | E | Start with a small army instead of only the construction vehicle | 3 | XS |
 | 137 ✅ | E | Revealed map (no fog) option for practice and casting | 2 | XS |
-| 138 | E | Handicap per seat (100 / 75 / 50%) so mixed-skill friends can play | 3 | S |
+| 138 ✅ | E | Handicap per seat (100 / 75 / 50%) so mixed-skill friends can play | 3 | S |
 
 ### AI
 

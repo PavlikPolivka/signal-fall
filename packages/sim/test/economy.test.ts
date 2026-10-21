@@ -445,3 +445,28 @@ describe('primary producer', () => {
     expect(e.primary[e.resolve(second)]).toBe(1);
   });
 });
+
+describe('handicap', () => {
+  it('a 50% handicap halves what the harvesters bring in', () => {
+    const map = testMap(96, 3);
+    const sim = createMatch({ rules, seed: 5, map, players: [{ faction: 0, team: 0 }, { faction: 0, team: 1, handicap: 50 }] });
+    const e = sim.world.entities;
+    for (const p of [0, 1]) {
+      cmd(sim, p, { type: 'deploy', units: [e.handle(own(sim, p, () => true)[0]!)] });
+      sim.step();
+      expect(buildAndPlace(sim, p, 'dynamo')).toBe(true);
+      expect(buildAndPlace(sim, p, 'smelter')).toBe(true);
+    }
+    const [a, b] = sim.world.players;
+    const before = [a!.credits, b!.credits];
+    const harvested = [a!.harvested, b!.harvested];
+    sim.run(20 * 90);
+    const got = [a!.harvested - harvested[0]!, b!.harvested - harvested[1]!];
+    expect(got[0]).toBeGreaterThan(1000);
+    expect(got[1]).toBeGreaterThan(1000);
+    expect(a!.credits - before[0]!).toBe(got[0]);
+    const gainB = b!.credits - before[1]!;
+    expect(gainB).toBeLessThanOrEqual(Math.ceil(got[1]! / 2));
+    expect(gainB).toBeGreaterThan(Math.floor(got[1]! * 0.45));
+  });
+});

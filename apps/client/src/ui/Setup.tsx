@@ -41,7 +41,13 @@ export interface SkirmishSettings extends MapChoice {
   people?: SeatKey[];
   /** AI skill per seat (falls back to `difficulty` for enemies, `allyDifficulty` for the ally). */
   skills?: Partial<Record<SeatKey, Difficulty>>;
+  /** Handicap per seat: the share of harvest income (100 when missing). */
+  handicaps?: Partial<Record<SeatKey | 'you', number>>;
 }
+
+/** Handicap choices: the share of harvest income a seat gets. */
+export const HANDICAPS = [100, 75, 50];
+export const HANDICAP_HINT = 'Handicap: the share of harvest income this seat gets, so players of different skill can have a close match';
 
 /** The seats beside yours, by role. */
 export type SeatKey = 'ally' | 'enemy' | 'enemy2' | 'enemy3';
@@ -50,8 +56,10 @@ export type SeatKey = 'ally' | 'enemy' | 'enemy2' | 'enemy3';
 export interface RoomPreset {
   mode: LobbyMode;
   faction: number;
+  /** Your handicap (share of harvest income), when not full. */
+  handicap?: number;
   /** Seats 1, 2, ... (yours is 0). */
-  slots: { kind: 'ai' | 'open'; faction: number; difficulty: Difficulty }[];
+  slots: { kind: 'ai' | 'open'; faction: number; difficulty: Difficulty; handicap?: number }[];
   map: Partial<LobbyMap> & { seed: number };
 }
 
@@ -91,7 +99,8 @@ export function roomPreset(s: SkirmishSettings): RoomPreset {
   return {
     mode: s.mode === 'survival' ? 'coop' : s.mode,
     faction: s.faction,
-    slots: seatsOf(s).map((k) => ({ kind: s.people?.includes(k) ? 'open' : 'ai', faction: seatFaction(s, k), difficulty: seatSkill(s, k) })),
+    handicap: s.handicaps?.you,
+    slots: seatsOf(s).map((k) => ({ kind: s.people?.includes(k) ? 'open' : 'ai', faction: seatFaction(s, k), difficulty: seatSkill(s, k), handicap: s.handicaps?.[k] })),
     map: { size: s.size, biome: s.biome, resources: s.resources, terrain: s.terrain, points: s.points, crates: s.crates, hill: s.hill, custom: s.custom, credits: s.credits, superweapons: s.superweapons, techLimit: s.techLimit, unitCap: s.unitCap, startArmy: s.startArmy, revealed: s.revealed, seed: s.seed },
   };
 }
@@ -404,6 +413,13 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
     else onStart(s);
   };
   const hosting = peopleSeats(s).length > 0;
+  const handicapPick = (k: SeatKey | 'you') => (
+    <select class="handicap" value={s.handicaps?.[k] ?? 100} title={HANDICAP_HINT} data-testid={`seat-${k}-handicap`} onChange={(e) => set({ handicaps: { ...s.handicaps, [k]: Number((e.currentTarget as HTMLSelectElement).value) } })}>
+      {HANDICAPS.map((v) => (
+        <option value={v}>{v}%</option>
+      ))}
+    </select>
+  );
   const setSeatFaction = (k: SeatKey, v: number) => set(k === 'ally' || k === 'enemy3' ? { allyFaction: v } : k === 'enemy' ? { enemyFaction: v } : { enemy2Faction: v });
   const setSeatBy = (k: SeatKey, v: Difficulty | 'player') => {
     const people = (s.people ?? []).filter((x) => x !== k);
@@ -470,6 +486,7 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
                               </button>
                             ))}
                           </div>
+                          {handicapPick('you')}
                         </li>
                       ) : k === 'waves' ? (
                         <li class="lobby-seat ai" data-testid="seat-waves">
@@ -510,6 +527,7 @@ function Skirmish({ rules, onStart, onHost, onBack }: { rules: Rules; onStart: (
                             ))}
                             <option value="player">Open for a player</option>
                           </select>
+                          {handicapPick(k)}
                         </li>
                       ),
                     )}

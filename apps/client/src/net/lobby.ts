@@ -22,6 +22,8 @@ export interface LobbySlot {
   faction: number;
   /** For AI seats. */
   difficulty: Difficulty;
+  /** Handicap: the share of harvest income (100 when missing). */
+  handicap?: number;
   player?: LobbyPlayer;
 }
 
@@ -95,6 +97,7 @@ export function scenarioOf(s: LobbyState): ScenarioSpec {
       ai: [...s.slots.map((x) => (x.kind === 'ai' ? x.difficulty : null)), null],
       humans: s.slots.flatMap((x, k) => (x.kind === 'human' ? [k] : [])),
       teams: [...s.slots.map(() => 0), 1],
+      handicaps: [...s.slots.map((x) => x.handicap ?? 100), 100],
       survival: 'normal',
       map: s.map,
     };
@@ -105,6 +108,7 @@ export function scenarioOf(s: LobbyState): ScenarioSpec {
     ai: s.slots.map((x) => (x.kind === 'ai' ? x.difficulty : null)),
     humans: s.slots.flatMap((x, k) => (x.kind === 'human' ? [k] : [])),
     teams: s.slots.map((x) => x.team),
+    handicaps: s.slots.map((x) => x.handicap ?? 100),
     map: s.map,
   };
 }
@@ -322,6 +326,16 @@ export class Lobby {
     const x = this.state?.slots[slot];
     if (!this.isHost || !x || x.kind !== 'ai') return;
     Object.assign(x, patch);
+    this.broadcast();
+  }
+
+  /** Host: a seat's handicap (share of harvest income: 100, 75 or 50). */
+  setHandicap(slot: number, handicap: number): void {
+    const x = this.state?.slots[slot];
+    if (!this.isHost || !x) return;
+    x.handicap = handicap === 100 ? undefined : handicap;
+    // Changed settings: everyone confirms again.
+    this.state!.armed = [];
     this.broadcast();
   }
 
