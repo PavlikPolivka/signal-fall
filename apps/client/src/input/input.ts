@@ -94,6 +94,9 @@ export class Input {
   private idleHarvesterCursor = 0;
   private productionCursor = 0;
   private idleArmyCursor = 0;
+  private yardCursor = 0;
+  /** A unit the camera follows (T), or null. */
+  following: number | null = null;
   /** Space pressed again soon after: step back to an older alert. */
   private alertCycle = { index: 0, time: 0 };
 
@@ -155,6 +158,12 @@ export class Input {
       cam.x += dx;
       cam.y += dy;
       this.renderer.clampCamera();
+      // Panning by hand lets go of a followed unit.
+      this.following = null;
+    } else if (this.following !== null) {
+      const s = this.state;
+      if (s.off(this.following) < 0) this.following = null;
+      else this.renderer.centerOnSim(s.field(this.following, E.x), s.field(this.following, E.y));
     }
   }
 
@@ -368,6 +377,25 @@ export class Input {
         s.controlGroups[digit] = [...new Set([...s.controlGroups[digit]!, ...s.selection])];
         s.changed();
         return;
+      case 'controlGroupRemove':
+        s.controlGroups[digit] = s.controlGroups[digit]!.filter((h) => !s.selection.includes(h));
+        s.notice(`Removed from group ${digit}`);
+        s.changed();
+        return;
+      case 'cycleYards': {
+        const yards = this.allOwnStructures().filter((h) => (s.ruleOf(h) as { role: string }).role === 'conyard');
+        if (yards.length === 0) return;
+        const h = yards[this.yardCursor++ % yards.length]!;
+        s.select([h]);
+        this.renderer.centerOnSim(s.field(h, E.x), s.field(h, E.y));
+        return;
+      }
+      case 'followCamera': {
+        const h = s.selection[0];
+        this.following = this.following !== null || h === undefined ? null : h;
+        s.notice(this.following !== null ? 'Camera follows the unit (pan or T to stop)' : 'Camera free');
+        return;
+      }
       case 'controlGroupSelect': {
         const group = s.controlGroups[digit]!;
         const now = performance.now();
@@ -413,6 +441,16 @@ export class Input {
       case 'guard':
         if (units.length > 0) this.setMode(action);
         return;
+      case 'garrisonNearest': {
+        const infantry = units.filter((h) => this.isInfantry(h));
+        const ruin = infantry.length > 0 ? this.nearestRuins(infantry) : null;
+        if (!ruin) {
+          if (infantry.length > 0) s.warn('No ruins nearby to garrison');
+          return;
+        }
+        s.send({ type: 'garrison', units: infantry, tx: ruin.x, ty: ruin.y });
+        return;
+      }
       case 'stop':
       case 'hold':
       case 'scatter':
@@ -1367,6 +1405,28 @@ export class Input {
       y += s.field(h, E.y);
     }
     this.renderer.centerOnSim(Math.round(x / list.length), Math.round(y / list.length));
+  }
+
+  /** The ruins tile nearest to these units' middle (within 15 tiles), or null. */
+  private nearestRuins(units: number[]): { x: number; y: number } | null {
+    const s = this.state;
+    let sx = 0;
+    let sy = 0;
+    for (const h of units) {
+      sx += s.field(h, E.x);
+      sy += s.field(h, E.y);
+    }
+    const cx = Math.round(sx / units.length) >> FX_SHIFT;
+    const cy = Math.round(sy / units.length) >> FX_SHIFT;
+    for (let r = 0; r <= 15; r++)
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x >= 0 && y >= 0 && x < s.width && y < s.height && s.terrain[y * s.width + x] === TERRAIN.ruins) return { x, y };
+        }
+    return null;
   }
 
   /** Is the tile under this screen point city ruins (somewhere infantry can garrison)? */

@@ -67,6 +67,15 @@
     ],
     "selectDamaged": [
       "KeyW"
+    ],
+    "controlGroupRemove": [
+      "Ctrl+Shift+Digit#"
+    ],
+    "cycleYards": [
+      "Home"
+    ],
+    "followCamera": [
+      "KeyT"
     ]
   },
   "units": {
@@ -99,6 +108,9 @@
     ],
     "stance": [
       "KeyZ"
+    ],
+    "garrisonNearest": [
+      "KeyO"
     ]
   },
   "base": {

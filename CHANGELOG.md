@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 22:51 UTC
+
+- **New keys:** <kbd>Home</kbd> jumps through your construction yards, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+number takes the selection out of a control group, <kbd>T</kbd> makes the camera follow the selected unit (press again or pan to stop), and <kbd>O</kbd> sends the selected infantry into the nearest ruins. All of them can be rebound under Keys.
+
 ## 2026-10-21 22:34 UTC
 
 - **Smarter AI on city maps:** from Normal up, the AI puts a few soldiers into the ruins in front of its base, so attacking up a city street costs more.

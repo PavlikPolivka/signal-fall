@@ -291,3 +291,24 @@ test.describe('every keymap entry works', () => {
     });
   }
 });
+
+test('control keys: Ctrl+Shift+number takes the selection out of a group; T follows a unit', async ({ page }) => {
+  await page.goto('/play/?seed=8&size=S&ai=easy');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  const units = await page.evaluate(() => {
+    const s = (window as unknown as Win).__signalFall.state;
+    const out: number[] = [];
+    for (let i = 0; i < s.cur.entityCount; i++) {
+      const h = s.cur.get(s.cur.ent(i), 0);
+      if (s.isOwn(h)) out.push(h);
+    }
+    s.controlGroups[1] = out;
+    s.select([out[0]]);
+    return out.length;
+  });
+  await page.locator('[data-testid=game]').click({ position: { x: 5, y: 5 }, trial: true });
+  await page.keyboard.press('Control+Shift+Digit1');
+  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.controlGroups[1].length)).toBe(units - 1);
+  await page.keyboard.press('KeyT');
+  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.input.following)).not.toBeNull();
+});
