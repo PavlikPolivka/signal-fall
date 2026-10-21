@@ -424,3 +424,24 @@ describe('power toggle', () => {
     expect(computeFacts(w)[0]!.roles.get('radar')).toBe(1);
   });
 });
+
+describe('primary producer', () => {
+  it('new units come out of the primary barracks, not the first one built', () => {
+    const sim = makeSim();
+    const w = sim.world;
+    spawnStructure(w, structure('dynamo'), 0, 2, 2);
+    spawnStructure(w, structure('dynamo'), 0, 2, 6);
+    spawnStructure(w, structure('bunkhouse'), 0, 8, 2);
+    const second = spawnStructure(w, structure('bunkhouse'), 0, 20, 20);
+    w.players[0]!.credits = 5000;
+    sim.schedule({ tick: w.tick, player: 0, cmd: { type: 'primary', target: second } });
+    sim.schedule({ tick: w.tick, player: 0, cmd: { type: 'train', item: unit('grunt'), count: 2 } });
+    sim.run(20 * 30);
+    const e = w.entities;
+    let near = 0;
+    for (let s = 0; s < e.high; s++)
+      if (e.alive[s] === 1 && e.kind[s] === KIND.unit && e.type[s] === unit('grunt') && Math.abs((e.x[s]! >> FX_SHIFT) - 21) < 6 && Math.abs((e.y[s]! >> FX_SHIFT) - 21) < 6) near++;
+    expect(near).toBe(2);
+    expect(e.primary[e.resolve(second)]).toBe(1);
+  });
+});

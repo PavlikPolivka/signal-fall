@@ -1156,10 +1156,21 @@ function ResearchPanel({ state }: { state: ClientState }) {
 }
 
 function StructureActions({ state, h }: { state: ClientState; h: number }) {
-  const rule = state.ruleOf(h) as { power?: number };
+  const rule = state.ruleOf(h) as { power?: number; produces?: string };
   const off = (state.field(h, E.flags) & ENT_FLAG.poweredDown) !== 0;
+  const primary = (state.field(h, E.flags) & ENT_FLAG.primary) !== 0;
   return (
     <div class="actions">
+      {rule.produces && (
+        <button
+          data-testid="primary"
+          class={primary ? 'active' : ''}
+          title={primary ? 'New units of this kind come out here' : 'Make this the primary: new units of this kind come out here, not at your other buildings that make them'}
+          onClick={() => state.send({ type: 'primary', target: h })}
+        >
+          {primary ? 'Primary ✓' : 'Set primary'}
+        </button>
+      )}
       {(rule.power ?? 0) < 0 && (
         <button
           data-testid="power-toggle"

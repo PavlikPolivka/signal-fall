@@ -141,7 +141,8 @@ export function productionSystem(world: World, facts: PlayerFacts[]): void {
       q.items.shift();
       q.progress = 0;
       q.spent = 0;
-      emitUnit(world, p.index, producers[0]!, rule);
+      // Out of the primary producer when the player picked one, else the first.
+      emitUnit(world, p.index, producers.find((s) => world.entities.primary[s] === 1) ?? producers[0]!, rule);
       p.trained[rule.index]!++;
       f.units++;
     }

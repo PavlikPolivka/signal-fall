@@ -253,6 +253,16 @@ export function applyCommand(world: World, c: ScheduledCommand): void {
       e.poweredDown[t] = e.poweredDown[t] === 1 ? 0 : 1;
       return;
     }
+    case 'primary': {
+      const t = e.resolve(cmd.target);
+      if (t < 0 || e.owner[t] !== c.player || e.kind[t] !== KIND.structure) return;
+      const tab = world.rules.structures[e.type[t]!]!.produces;
+      if (!tab) return;
+      for (let s = 0; s < e.high; s++)
+        if (e.alive[s] === 1 && e.owner[s] === c.player && e.kind[s] === KIND.structure && world.rules.structures[e.type[s]!]!.produces === tab) e.primary[s] = 0;
+      e.primary[t] = 1;
+      return;
+    }
     case 'rally': {
       const t = e.resolve(cmd.target);
       if (t < 0 || e.kind[t] !== KIND.structure || e.owner[t] !== c.player) return;

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 20:37 UTC
+
+- **Primary barracks and factories:** select one of your barracks, factories or airfields and press **Set primary**: new units of that kind come out there instead of at the first one you built. Handy for a forward barracks near the front.
+
 ## 2026-10-21 14:54 UTC
 
 - **Lights Out has a city to fight through:** the road to the bridge now runs between two ruined city blocks, with ruins to hide in at every ambush, instead of across empty ground.
