@@ -118,7 +118,9 @@ export class Renderer {
   private pings: { x: number; y: number; color: number; at: number }[] = [];
 
   constructor(private readonly state: ClientState) {
-    this.effects = new Effects(state.rules, this.particles, this.scorchLayer, (x, y) => this.worthDrawing(x, y), (owner) => !state.spectator && owner === state.localPlayer);
+    this.effects = new Effects(state.rules, this.particles, this.scorchLayer, (x, y) => this.worthDrawing(x, y), (owner) => !state.spectator && owner === state.localPlayer,
+      (owner) => state.rules.factions[state.players[owner]?.faction ?? -1]?.id,
+    );
   }
 
   /** A sim point (Q10) on or near the screen and visible to the local player. */

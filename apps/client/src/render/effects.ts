@@ -141,6 +141,8 @@ export class Effects {
     private readonly visible: (x: number, y: number) => boolean,
     /** Is this player the one watching (credit popups are only for them). */
     private readonly isLocal: (owner: number) => boolean = () => false,
+    /** The faction id of a player (each faction's superweapon strike looks its own). */
+    private readonly factionOf: (owner: number) => string | undefined = () => undefined,
   ) {
     this.beamGfx.blendMode = 'add';
     this.layer.addChild(this.beamGfx);
@@ -165,7 +167,7 @@ export class Effects {
       else if (kind === FX_EVENT.ability) this.ability(a, x, y, events[i + 6]!, events[i + 7]!);
       else if (kind === FX_EVENT.credits && this.isLocal(events[i + 3]!)) this.credits(a, x, y);
       else if (kind === FX_EVENT.power) this.power(a, b, x, y);
-      else if (kind === FX_EVENT.superweapon && a === 1) this.superStrike(b, x, y, events[i + 6]!);
+      else if (kind === FX_EVENT.superweapon && a === 1) this.superStrike(b, x, y, events[i + 6]!, events[i + 3]!);
     }
   }
 
@@ -417,23 +419,89 @@ export class Effects {
     }
   }
 
-  /** A superweapon landing: fireballs across the zone (shells), or a flash of energy for energy strikes. */
-  private superStrike(radius: number, x: number, y: number, type: number): void {
+  /**
+   * A superweapon landing, each faction its own: Holdout's barrage is shells raining in one after another, Halcyon's
+   * purge a white flash that leaves the zone burning, the Choir's shatter crystal shards bursting outward.
+   */
+  private superStrike(radius: number, x: number, y: number, type: number, owner: number): void {
     const r = radius / FX;
-    const energy = type === 2;
-    const n = this.reduced ? 6 : 14;
-    for (let k = 0; k < n; k++) {
+    const faction = this.factionOf(owner);
+    const at = (d: number): [number, number] => {
       const a = Math.random() * Math.PI * 2;
-      const d = Math.sqrt(Math.random()) * r;
-      const tx = x / FX + Math.cos(a) * d;
-      const ty = y / FX + Math.sin(a) * d;
-      const px = isoX(tx, ty);
-      const py = isoY(tx, ty);
+      const k = Math.sqrt(Math.random()) * d;
+      return [isoX(x / FX + Math.cos(a) * k, y / FX + Math.sin(a) * k), isoY(x / FX + Math.cos(a) * k, y / FX + Math.sin(a) * k)];
+    };
+    const cx = isoX(x / FX, y / FX);
+    const cy = isoY(x / FX, y / FX);
+    const n = this.reduced ? 6 : 14;
+    if (faction === 'holdout') {
+      // Shell rain: a streak dropping out of the sky, then the blast, staggered over a second and a half.
+      for (let k = 0; k < n + 4; k++) {
+        const [px, py] = at(r);
+        const delay = k * 0.09 + rand(0, 0.05);
+        const shell = this.spawn(this.streak, px, py, 220, { life: 0.18, scale0: 0.5, scale1: 0.4, tint: 0xffe2a0, vz: -1100, delay });
+        if (shell) shell.sprite.rotation = Math.PI / 2;
+        this.explosion(px, py, 1.4, 1.6, delay + 0.18);
+        if (k % 3 === 0) this.scorch(px, py, 1.2);
+      }
+      return;
+    }
+    if (faction === 'halcyon') {
+      // Purge: a white-cyan flash over the zone, then it burns for a few seconds.
+      if (!this.calm) this.spawn(this.hot, cx, cy, 24, { life: 0.7, scale0: 1.5, scale1: 6, tint: 0xe8fdff });
+      for (let k = 0; k < 24; k++) {
+        const a = (k / 24) * Math.PI * 2;
+        this.spawn(this.hot, cx + Math.cos(a) * r * 32 * Math.SQRT2, cy + Math.sin(a) * r * 16 * Math.SQRT2, 4, { life: 0.8, scale0: 0.9, scale1: 0.3, tint: 0x9ff6ff, delay: 0.05 });
+      }
+      for (let k = 0; k < n * 3; k++) {
+        const [px, py] = at(r);
+        const delay = 0.15 + rand(0, 2.6);
+        this.spawn(this.hot, px, py, 6, { life: rand(0.9, 1.5), scale0: 0.9, scale1: 1.8, tint: k % 2 ? 0xff5a1f : 0xffa040, vz: rand(20, 45), delay });
+        if (k % 2 === 0) this.spawn(this.smoke, px, py, 12, { life: rand(2, 3), scale0: 0.5, scale1: 1.8, tint: 0x302c2a, alpha: 0.55, vz: rand(12, 24), add: false, delay: delay + 0.3 });
+        if (k % 4 === 0) this.scorch(px, py, 1.3);
+      }
+      return;
+    }
+    if (faction === 'choir') {
+      // Shatter: a violet bloom, crystals bursting out of the ground across the zone, shards flying and falling back.
+      if (!this.calm) this.spawn(this.hot, cx, cy, 20, { life: 0.7, scale0: 1.2, scale1: 5, tint: 0xd8b8ff });
+      for (let k = 0; k < n; k++) {
+        const [px, py] = at(r);
+        const delay = k * 0.06 + rand(0, 0.1);
+        this.spawn(this.hot, px, py, 8, { life: 0.8, scale0: 0.4, scale1: 1.6, tint: k % 3 ? 0xc58cff : 0x7ff0ff, delay });
+        for (let j = 0; j < (this.reduced ? 2 : 4); j++) {
+          const a = Math.random() * Math.PI * 2;
+          const speed = rand(80, 200);
+          const p = this.spawn(this.streak, px, py, 10, {
+            life: rand(0.6, 1),
+            scale0: 1.4,
+            scale1: 0.6,
+            tint: j % 2 ? 0xe2c8ff : 0x9ff6ff,
+            vx: Math.cos(a) * speed,
+            vy: Math.sin(a) * speed * 0.5,
+            vz: rand(80, 180),
+            gravity: 340,
+            delay,
+          });
+          if (p) p.sprite.rotation = Math.atan2(p.vy - p.vz, p.vx);
+        }
+      }
+      for (let k = 0; k < 3; k++) {
+        const ring = 0.45 + k * 0.3;
+        for (let j = 0; j < 20; j++) {
+          const a = (j / 20) * Math.PI * 2;
+          this.spawn(this.hot, cx + Math.cos(a) * r * 32 * ring, cy + Math.sin(a) * r * 16 * ring, 3, { life: 0.9, scale0: 0.8, scale1: 0.2, tint: 0xc58cff, delay: k * 0.15 });
+        }
+      }
+      return;
+    }
+    // Any other faction: fireballs for shells, a flash of energy for energy strikes.
+    const energy = type === 2;
+    for (let k = 0; k < n; k++) {
+      const [px, py] = at(r);
       if (energy) this.spawn(this.hot, px, py, 10, { life: 0.5, scale0: 0.6, scale1: 2.4, tint: 0x9ff6ff, delay: k * 0.03 });
       else this.explosion(px, py, 1.6, 1.5, k * 0.12);
     }
-    const cx = isoX(x / FX, y / FX);
-    const cy = isoY(x / FX, y / FX);
     if (!this.calm) this.spawn(this.hot, cx, cy, 24, { life: 0.6, scale0: 1, scale1: 4, tint: energy ? 0xc8fbff : 0xfff2c0 });
   }
 

@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 14:15 UTC
+
+- **Each superweapon strike looks its own:** the Holdout Barrage rains shells down one after another, the Halcyon Purge flashes white and leaves the zone burning for seconds, and the Choir Shatter bursts crystal shards out of the ground.
+
 ## 2026-10-21 14:11 UTC
 
 - **Every campaign briefing is now fully voiced in the new voices:** the last six missions (Crater Field, Initialization, Recompile, Harvest Protocol, Override and Divergence) no longer mix in old robotic lines, and The Silent Seed and the epilogue were re-recorded properly.
