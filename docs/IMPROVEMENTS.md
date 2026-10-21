@@ -195,10 +195,10 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
 | 139 ✅ | A | AI steps out of a superweapon's warning circle (the warning is public, so this stays fair) | 4 | S |
-| 140 | A | AI garrisons city ruins at chokes | 3 | S |
+| 140 ✅ | A | AI garrisons city ruins at chokes | 3 | S |
 | 141 ✅ | A | AI contests capture points and the King-of-the-hill flag (already in: squads take points on its side and hold the hill) | 4 | S |
 | 142 ✅ | A | AI picks up crates near its units (already in) | 2 | XS |
-| 143 | A | AI chooses its doctrine to fit its strategy (rush, turtle, tech) | 3 | S |
+| 143 ✅ | A | AI chooses its doctrine to fit its strategy (rush, turtle, tech) | 3 | S |
 | 144 ✅ | A | AI ally answers pings: it attacks or defends where you pinged | 4 | S |
 | 145 ✅ | A | Optional AI chat lines in skirmish (taunts, "gg"), off by default | 2 | XS |
 

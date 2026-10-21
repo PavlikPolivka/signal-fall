@@ -1,6 +1,7 @@
 import { ARMOR, type AiProfile, type Role, type StructureRule, type UnitRule } from '@signal-fall/data';
 import {
   FOG_VISIBLE,
+  freeRuins,
   FX_HALF,
   FX_ONE,
   FX_SHIFT,
@@ -86,6 +87,19 @@ interface Own {
  * and the static map/start positions every player gets in the lobby) and acts
  * only through commands, limited by an APM budget.
  */
+/** Infantry the AI keeps in the ruins in front of its base. */
+const GARRISON_WANT = 4;
+
+/** Which plans each doctrine effect suits: fighting ones for aggression, economy and defense for the long game. */
+const DOCTRINE_FIT: Record<string, StrategyName[]> = {
+  salvagePct: ['rush', 'raider', 'balanced'],
+  recompileRefundPct: ['rush', 'raider', 'balanced'],
+  shieldPct: ['rush', 'raider', 'balanced'],
+  vehicleEnergyResistPct: ['tech', 'turtle'],
+  coverageRadiusPct: ['tech', 'turtle'],
+  growSpeedPct: ['tech', 'turtle'],
+};
+
 export class AiPlayer implements Brain {
   readonly player: number;
   readonly difficulty: Difficulty;
@@ -114,6 +128,8 @@ export class AiPlayer implements Brain {
   private raiders = new Set<number>();
   /** A small squad that takes and holds capture points (maps that have them). */
   private holders = new Set<number>();
+  /** Infantry sitting in the ruins in front of the base. */
+  private garrisoners = new Set<number>();
   private holdTarget = -1;
   private ralliedFactories = new Set<number>();
   private lastRally = { x: -1, y: -1 };
@@ -166,6 +182,7 @@ export class AiPlayer implements Brain {
     this.answerPings(world, own);
     this.rally(world, own);
     this.defend(world, own);
+    this.garrisonChokes(world, own);
     this.scout(world, own);
     this.harass(world, own);
     this.capturePoints(world, own);
@@ -466,11 +483,14 @@ export class AiPlayer implements Brain {
     const order = this.directed
       ? (this.plan.research ?? []).map((id) => ups.find((u) => u.id === id)!).filter((u) => u)
       : [...ups.filter((u) => u.faction === p.faction), ...ups.filter((u) => u.faction < 0)].sort((a, b) => a.tier - b.tier);
-    // Doctrines (either/or): tech and turtle plans take the pricier, longer-term one, the rest the cheaper.
+    // Doctrines (either/or): the one that suits the plan (fighting doctrines for rush, raids and
+    // balanced play; economy and defense for tech and turtle), else the pricier one for a long game.
     const longGame = this.strategy.name === 'tech' || this.strategy.name === 'turtle';
+    const fits = (u: (typeof ups)[number]) => (DOCTRINE_FIT[u.effect.kind] ?? []).includes(this.strategy.name);
     const skip = (u: (typeof ups)[number]) => {
       if (!u.excludes || this.directed) return false;
       const other = ups.find((x) => x.id === u.excludes)!;
+      if (fits(u) !== fits(other)) return !fits(u);
       return longGame ? u.cost < other.cost : u.cost > other.cost;
     };
     for (const u of order) {
@@ -833,7 +853,7 @@ export class AiPlayer implements Brain {
   /** Units not busy with a wave, scouting or raiding. */
   private reserve(world: World, own: Own): number[] {
     const e = world.entities;
-    return own.army.map((s) => e.handle(s)).filter((h) => !this.waveUnits.has(h) && !this.raiders.has(h) && !this.holders.has(h) && h !== this.scoutHandle);
+    return own.army.map((s) => e.handle(s)).filter((h) => !this.waveUnits.has(h) && !this.raiders.has(h) && !this.holders.has(h) && !this.garrisoners.has(h) && h !== this.scoutHandle);
   }
 
   private defend(world: World, own: Own): void {
@@ -862,6 +882,27 @@ export class AiPlayer implements Brain {
     if (defenders.length === 0) return;
     if ((world.tick + this.player) % 40 !== 0) return;
     this.act({ type: 'attackMove', units: defenders, x: threatX, y: threatY });
+  }
+
+  /** Infantry hold the ruins in front of the base (city maps): cover on the way in. */
+  private garrisonChokes(world: World, own: Own): void {
+    if (this.directed || this.difficulty === 'easy' || (world.tick + this.player) % (20 * 20) !== 0) return;
+    const e = world.entities;
+    for (const h of this.garrisoners) if (e.resolve(h) < 0) this.garrisoners.delete(h);
+    if (this.garrisoners.size >= GARRISON_WANT) return;
+    const stage = this.stagingPoint(world, own);
+    const tx = stage.x >> FX_SHIFT;
+    const ty = stage.y >> FX_SHIFT;
+    const free = freeRuins(world, tx, ty, GARRISON_WANT - this.garrisoners.size);
+    if (free.length === 0) return;
+    const soldiers = this.reserve(world, own)
+      .filter((h) => {
+        const s = e.resolve(h);
+        const rule = world.rules.units[e.type[s]!]!;
+        return rule.tab === 'infantry' && !!rule.weapon && e.garrison[s] === 0;
+      })
+      .slice(0, free.length);
+    if (soldiers.length > 0 && this.act({ type: 'garrison', units: soldiers, tx, ty })) for (const h of soldiers) this.garrisoners.add(h);
   }
 
   private scout(world: World, own: Own): void {

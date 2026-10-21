@@ -20,5 +20,5 @@ export { POINT, HILL_TICKS, CAPTURE_RADIUS, CAPTURE_TICKS, DERRICK_CREDITS, DEPO
 export { CRATE, CRATE_CREDITS, type Crate } from './systems/crates';
 export { SURVIVAL_WAVES, WAVE_GAP, FIRST_WAVE_TICK, waveBudget, type SurvivalState } from './systems/survival';
 export { type MissionRules, type Objective as MissionRuleObjective, type Trigger as MissionRuleTrigger, type Action as MissionRuleAction, type Area, type Marker as MissionMarker, MARKER, missionMarkers } from './systems/mission';
-export { GARRISON_DAMAGE_PCT } from './systems/garrison';
+export { GARRISON_DAMAGE_PCT, freeRuins } from './systems/garrison';
 export { fireSuperweapon, superweaponOf, superweaponStatus } from './systems/superweapon';

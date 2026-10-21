@@ -191,3 +191,10 @@ Four mechanics for everyone: selling a building leaves one of the faction's chea
 drive to a working repair bay (Holdout's Garage) until 90%; a Halcyon veteran lost to Recompile makes the next unit
 of its type start a rank up. 300 Hard matches per pairing: Holdout vs Halcyon 53.7%, Halcyon vs Choir 52.7%,
 Holdout vs Choir 47%; Hard beats Easy 50-0.
+
+### AI: ruins garrisons and doctrines that fit the plan (2026-10-22)
+
+Normal and up keep up to four infantry in the ruins in front of the base (city maps); doctrines now follow the plan
+(fighting doctrines for rush, raider and balanced; economy and defense for tech and turtle), which flips Halcyon's and
+Choir's picks for most plans. 300 Hard matches per pairing: Holdout vs Halcyon 53.7%, Halcyon vs Choir 54.3%,
+Holdout vs Choir 46%; Hard beats Easy 50-0.

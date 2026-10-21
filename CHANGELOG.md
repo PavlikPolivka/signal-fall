@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-21 22:34 UTC
+
+- **Smarter AI on city maps:** from Normal up, the AI puts a few soldiers into the ruins in front of its base, so attacking up a city street costs more.
+- **AI doctrines fit its plan:** a rushing or raiding AI picks the fighting doctrine, a turtling or teching AI the economy or defense one.
+
 ## 2026-10-21 21:13 UTC
 
 - **Selling a building leaves its crew:** a few soldiers walk out of a sold building (more for a bigger one), so a base on its last legs can still fight.
