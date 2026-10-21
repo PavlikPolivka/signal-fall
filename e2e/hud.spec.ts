@@ -123,3 +123,12 @@ test('Alt+click pings the map for an AI ally in a 2v2', async ({ page }) => {
   expect(sent).toBe(true);
   expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.mapPings.length)).toBeGreaterThan(0);
 });
+
+test('AI chat (a setting, off by default): the AI says good luck in a skirmish', async ({ page }) => {
+  await page.goto('/play/?seed=8&size=S&ai=easy&speed=4');
+  await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur);
+  await page.evaluate(() => {
+    (window as unknown as { __signalFall: { state: { settings: { aiChat: boolean } } } }).__signalFall.state.settings.aiChat = true;
+  });
+  await expect(page.getByTestId('chat')).toContainText('AI', { timeout: 20_000 });
+});

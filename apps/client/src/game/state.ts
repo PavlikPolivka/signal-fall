@@ -684,6 +684,8 @@ export interface Settings {
   invertWheel: boolean;
   /** Units reply when selected or ordered. */
   unitVoices: boolean;
+  /** AI opponents say a few words in the chat (skirmish). */
+  aiChat: boolean;
   /** Announcer lines also shown as captions. */
   subtitles: boolean;
   /** Team colors picked to stay apart for red-green color blindness. */
@@ -701,7 +703,7 @@ export interface Settings {
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, subtitles: false, colorblind: false, calmFlashes: false, largeCursor: false, batterySaver: false, uiScale: 100, keys: {} };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, aiChat: false, subtitles: false, colorblind: false, calmFlashes: false, largeCursor: false, batterySaver: false, uiScale: 100, keys: {} };
 
 export function loadSettings(): Settings {
   try {

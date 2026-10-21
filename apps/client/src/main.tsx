@@ -9,6 +9,7 @@ import type { ScheduledCommand } from '@signal-fall/sim';
 import { Renderer, ultraResolution } from './render/renderer';
 import { GameAudio, cameraListener } from './audio/audio';
 import { App } from './ui/App';
+import { AiChat } from './game/aichat';
 import { MenuScreen, Setup, loadSaved, seatSkill, type SeatKey, type SkirmishSettings } from './ui/Setup';
 import { Multiplayer } from './ui/Multiplayer';
 import { campaignDifficulty } from './ui/Campaign';
@@ -246,6 +247,11 @@ state.campaignDifficulty = scenario?.kind === 'mission' ? (scenario.difficulty ?
 state.noSuperweapons = scenario?.kind === 'skirmish' && scenario.map.superweapons === false;
 state.techLimit = scenario?.kind === 'skirmish' && !!scenario.map.techLimit;
 if (scenario?.kind === 'skirmish' && scenario.map.unitCap) state.unitCap = scenario.map.unitCap;
+function aiSeats(s: Extract<ScenarioSpec, { kind: 'skirmish' }>): number[] {
+  return s.ai.flatMap((d, k) => (d && !s.humans?.includes(k) ? [k] : []));
+}
+/** Optional AI chatter in a skirmish against the AI (not online, not replays). */
+const aiChat = scenario?.kind === 'skirmish' && !peerLinks && !replay ? new AiChat(state, aiSeats(scenario)) : null;
 state.rematch = () => {
   if (!lastRoom) return;
   const me = lastRoom.slots[localSlot]?.player?.id;
@@ -475,6 +481,7 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
         nextAutosave = tick - (tick % AUTOSAVE_TICKS) + AUTOSAVE_TICKS;
       }
       state.onSnapshot(new Snapshot(msg.buf), msg.fog, msg.echo);
+      aiChat?.update();
       if (msg.fx) {
         renderer.effects.ingest(msg.fx);
         audio.ingest(msg.fx);

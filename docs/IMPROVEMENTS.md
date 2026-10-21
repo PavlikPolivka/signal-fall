@@ -170,7 +170,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 122 ✅ | E | Primary factory: pick which barracks or factory new units come out of | 3 | S |
 | 123 | E | Selling a building leaves a few infantry, so a dying base can still fight | 3 | S |
 | 124 ✅ | E | Cancelling a building in its first 5 seconds refunds everything (misclick forgiveness; cancelling already refunds everything spent, at any time) | 3 | XS |
-| 125 | E | Gates in wall lines: your units pass, enemies don't | 3 | S |
+| 125 | E | Gates in wall lines: your units pass, enemies don't (deferred: the map has one navigation grid for everyone, so a tile only one side may cross needs per-team pathing and flow fields, plus gate art; cost M) | 3 | M |
 | 126 | E | Ambush bonus: the first shot from a unit hidden in brush hits harder | 3 | S |
 | 127 | E | Holdout harvesters below 30% health drive to a Garage on their own | 3 | S |
 | 128 | E | Recompiled Halcyon units keep one veterancy rank | 2 | S |
@@ -200,7 +200,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 142 ✅ | A | AI picks up crates near its units (already in) | 2 | XS |
 | 143 | A | AI chooses its doctrine to fit its strategy (rush, turtle, tech) | 3 | S |
 | 144 ✅ | A | AI ally answers pings: it attacks or defends where you pinged | 4 | S |
-| 145 | A | Optional AI chat lines in skirmish (taunts, "gg"), off by default | 2 | XS |
+| 145 ✅ | A | Optional AI chat lines in skirmish (taunts, "gg"), off by default | 2 | XS |
 
 ### Controls
 

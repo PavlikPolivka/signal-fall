@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-21 20:57 UTC
+
+- **AI chat (optional):** turn on *AI chat* under Sound and the AI opponents in a skirmish say a few words: good luck at the start, a taunt when you lose a building, a grumble when they lose one, and gg at the end. Each faction has its own manner. Off by default.
+
 ## 2026-10-21 20:46 UTC
 
 - **Send credits to an ally:** in team games, press **Give** next to your credits and send ◆500 or ◆1,000 to a teammate, AI or person.
