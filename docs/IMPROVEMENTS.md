@@ -280,7 +280,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
-| 200 | V | Better voices: replace the Piper announcer and campaign briefings with a more natural, acted TTS model (emotion, pacing, per-faction character), keep the radio / synthetic / chord treatments, and re-record every line | 5 | M |
+| 200 | V | ✅ Better voices: replace the Piper announcer and campaign briefings with a more natural, acted TTS model (emotion, pacing, per-faction character), keep the radio / synthetic / chord treatments, and re-record every line | 5 | M |
 | 201 ✅ | V | Siren for "superweapon launch detected", distinct from every other alert | 4 | XS |
 | 202 ✅ | V | Announcer: "enemy superweapon ready" | 3 | XS |
 | 203 ✅ | V | Announcer for capture points taken and lost | 3 | XS |
