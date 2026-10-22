@@ -9,6 +9,10 @@ export const CLIFF_H = 38;
 const RES = 4;
 /** Screen px of lift per tile of real height: converts px heights into slopes for the lighting. */
 const PX_PER_TILE = 40;
+/** Hills: ground mesh vertices every this many height-field samples (RES per tile). */
+const HILL_STEP = 2;
+/** Hills: how much taller the rolling ground is than the shading-only relief. */
+const HILL_GAIN = 2.2;
 /** Toward the sun, in tile space (x = +u, y = +v, z = up): from the left and a little above, like the unit renders. */
 const SUN_DIR = (() => {
   const e = (40 * Math.PI) / 180;
@@ -293,7 +297,11 @@ export class TerrainLayer {
   private echoSet = false;
   /** Cliff lift in screen px on the RES grid, for placing props. */
   private lift: Float32Array = new Float32Array(0);
+  /** Cliff part of the lift alone (which cells need the fine cliff mesh). */
+  private cliffLift: Float32Array = new Float32Array(0);
   private lite = false;
+  /** Hills (prototype, ?hills=1): the ground itself rises and falls with the height field, not just its shading. */
+  hills = false;
 
   /** Ground-level decals (craters) drawn over the terrain. */
   readonly groundDecor = new Container();
@@ -305,7 +313,7 @@ export class TerrainLayer {
     return t === TERRAIN.cliff;
   }
 
-  /** Screen px the ground is raised at tile coordinates (u, v): the cliff tops. */
+  /** Screen px the ground is raised at tile coordinates (u, v): the cliff tops, and the hills when they are on. */
   heightAt(u: number, v: number): number {
     const [w, h] = this.size;
     if (!this.lift.length) return 0;
@@ -396,6 +404,8 @@ export class TerrainLayer {
     const waterF = tileField((tt) => tt === TERRAIN.water);
     blur(waterF, gw, gh, 3);
     const lift = new Float32Array(gw * gh);
+    const ground = new Float32Array(gw * gh);
+    const hill = new Float32Array(gw * gh);
     const hgt = new Float32Array(gw * gh);
     for (let gy = 0; gy < gh; gy++)
       for (let gx = 0; gx < gw; gx++) {
@@ -408,14 +418,23 @@ export class TerrainLayer {
         lift[i] = c * c * (3 - 2 * c) * top;
         // Ridged noise: dry gullies and wind-cut ridges, so open ground has relief between the hills.
         const ridge = 1 - Math.abs(fbm(u / 2.2, v / 2.2, 37) * 2 - 1);
-        hgt[i] =
-          lift[i]! -
-          smooth(0.15, 0.9, waterF[i]!) * 16 +
-          (fbm(u / 6, v / 6, 23) - 0.5) * 40 +
-          smooth(0.55, 0.95, ridge) * 9 * (1 - c) +
-          (noise(u * 1.1, v * 1.1, 29) - 0.5) * 4;
+        // Rolling ground: broad hills and ridges (shading only unless the hills are on, then taller).
+        // With the hills on, the broad swells grow (wider and taller); the small ridges stay as they were.
+        const broad = this.hills ? (fbm(u / 10, v / 10, 23) - 0.5) * 40 * HILL_GAIN + (fbm(u / 4, v / 4, 31) - 0.5) * 34 : (fbm(u / 6, v / 6, 23) - 0.5) * 40;
+        hill[i] = broad + smooth(0.55, 0.95, ridge) * 9 * (1 - c);
+        hgt[i] = lift[i]! + (noise(u * 1.1, v * 1.1, 29) - 0.5) * 4;
       }
-    this.lift = lift;
+    // Lakes lie level: under water the hills give way to the area's average height, then the bed dips.
+    const level = new Float32Array(hill);
+    blur(level, gw, gh, 8);
+    for (let i = 0; i < gw * gh; i++) {
+      const wet = smooth(0.05, 0.6, waterF[i]!);
+      const rolling = hill[i]! + (level[i]! - hill[i]!) * wet - smooth(0.15, 0.9, waterF[i]!) * 16;
+      hgt[i] = hgt[i]! + rolling;
+      if (this.hills) ground[i] = rolling;
+    }
+    this.cliffLift = lift;
+    this.lift = this.hills ? lift.map((l, i) => l + ground[i]!) : lift;
     // Shell craters: a bowl with a raised lip, its floor scorched.
     const scorch = new Float32Array(gw * gh).fill(1);
     if (craters)
@@ -506,13 +525,13 @@ export class TerrainLayer {
       [width, height],
       [0, height],
     ];
-    const ground = new MeshGeometry({
+    const flat = new MeshGeometry({
       positions: new Float32Array(corners.flatMap(([u, v]) => [isoX(u!, v!), isoY(u!, v!)])),
       uvs: new Float32Array(corners.flat()),
       indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
     });
     layer.removeChildren();
-    layer.addChild(new Mesh({ geometry: ground, shader: this.shader }));
+    layer.addChild(new Mesh({ geometry: this.hills ? this.hillMesh(gw, gh) : flat, shader: this.shader }));
     const cliffs = this.cliffMesh(gw, gh);
     if (cliffs) layer.addChild(new Mesh({ geometry: cliffs, shader: this.shader }));
     layer.addChild(this.groundDecor, this.topDecor);
@@ -542,7 +561,8 @@ export class TerrainLayer {
     for (let d = 0; d <= gw + gh - 4; d++)
       for (let y = Math.max(0, d - (gw - 2)); y <= Math.min(gh - 2, d); y++) {
         const x = d - y;
-        const raised = lift[y * gw + x]! + lift[y * gw + x + 1]! + lift[(y + 1) * gw + x]! + lift[(y + 1) * gw + x + 1]!;
+        const cl = this.cliffLift;
+        const raised = cl[y * gw + x]! + cl[y * gw + x + 1]! + cl[(y + 1) * gw + x]! + cl[(y + 1) * gw + x + 1]!;
         if (raised < 0.2) continue;
         const a = v(x, y);
         const b = v(x + 1, y);
@@ -552,6 +572,38 @@ export class TerrainLayer {
       }
     if (!idx.length) return null;
     return new MeshGeometry({ positions: new Float32Array(pos), uvs: new Float32Array(uv), indices: new Uint32Array(idx) });
+  }
+
+  /**
+   * Hills: the whole ground as a mesh lifted by the height field, two cells per tile, back to front so
+   * nearer slopes draw over what lies behind them. (The cliffs keep their finer mesh on top.)
+   */
+  private hillMesh(gw: number, gh: number): MeshGeometry {
+    const step = HILL_STEP;
+    const nx = Math.floor((gw - 1) / step) + 1;
+    const ny = Math.floor((gh - 1) / step) + 1;
+    const pos = new Float32Array(nx * ny * 2);
+    const uv = new Float32Array(nx * ny * 2);
+    for (let j = 0; j < ny; j++)
+      for (let i = 0; i < nx; i++) {
+        const gx = Math.min(gw - 1, i * step);
+        const gy = Math.min(gh - 1, j * step);
+        const u = gx / RES;
+        const v = gy / RES;
+        const k = j * nx + i;
+        pos[k * 2] = isoX(u, v);
+        pos[k * 2 + 1] = isoY(u, v) - this.lift[gy * gw + gx]!;
+        uv[k * 2] = u;
+        uv[k * 2 + 1] = v;
+      }
+    const idx: number[] = [];
+    for (let d = 0; d <= nx + ny - 4; d++)
+      for (let j = Math.max(0, d - (nx - 2)); j <= Math.min(ny - 2, d); j++) {
+        const i = d - j;
+        const a = j * nx + i;
+        idx.push(a, a + 1, a + nx, a + 1, a + nx + 1, a + nx);
+      }
+    return new MeshGeometry({ positions: pos, uvs: uv, indices: new Uint32Array(idx) });
   }
 
   /** Stain the ground under the Echo fields (once, from the opening layout, so it marks where fields regrow). */

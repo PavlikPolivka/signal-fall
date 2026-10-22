@@ -174,7 +174,16 @@ export class Renderer {
   screenToTile(sx: number, sy: number): { u: number; v: number } {
     const wx = (sx - this.width / 2) / this.camera.zoom + this.camera.x;
     const wy = (sy - this.height / 2) / this.camera.zoom + this.camera.y;
-    return { u: tileU(wx, wy), v: tileV(wx, wy) };
+    let u = tileU(wx, wy);
+    let v = tileV(wx, wy);
+    // On the hills the ground under the cursor is lifted: find the point whose raised position is here.
+    if (this.terrain.hills)
+      for (let k = 0; k < 4; k++) {
+        const h = this.terrain.heightAt(u, v);
+        u = tileU(wx, wy + h);
+        v = tileV(wx, wy + h);
+      }
+    return { u, v };
   }
 
   /** World px -> screen px. */
@@ -346,6 +355,8 @@ export class Renderer {
     this.terrainLayer.removeChildren();
     // Textured terrain (shader); the flat-colour tiles below stay as the instant fallback until it loads.
     this.drawFlatTerrain();
+    // Hills (prototype): the ground rises and falls, and everything stands on it.
+    this.terrain.hills = new URLSearchParams(location.search).has('hills');
     void this.terrain
       .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain, s.surface, (i) => s.decoration[i] === 5)
       .then(() => this.drawProps())
@@ -380,6 +391,8 @@ export class Renderer {
     const place = (id: string, layer: Container, px: number, py: number, scale: number, flip: number, shadow: boolean) => {
       const tex = this.lib.texture(id, 'body', 'idle', 0, 0, 'color');
       if (!tex) return;
+      // On the hills: stand on the ground (mesa tops are lifted by the caller already).
+      if (this.terrain.hills && layer !== this.terrain.topDecor) py -= this.terrain.heightAt(tileU(px, py), tileV(px, py));
       const sh = shadow ? this.lib.texture(id, 'body', 'idle', 0, 0, 'shadow') : null;
       if (sh) {
         const sp = new Sprite(sh);
@@ -672,7 +685,7 @@ export class Renderer {
         y = prev.get(po, E.y) + (y - prev.get(po, E.y)) * alpha;
       }
       const px = isoX(x / FX, y / FX);
-      const py = isoY(x / FX, y / FX);
+      const py = isoY(x / FX, y / FX) - (this.terrain.hills ? this.terrain.heightAt(x / FX, y / FX) : 0);
       const visible = this.visibleEntity(h);
       const color = TEAM_COLORS[owner % TEAM_COLORS.length]!;
 

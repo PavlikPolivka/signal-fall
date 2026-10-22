@@ -55,6 +55,7 @@ function scenarioFromUrl(): ScenarioSpec {
     points: (params.get('points') ?? 'none') as 'none' | 'some',
     crates: params.get('crates') === '1',
     hill: params.get('hill') === '1',
+    revealed: params.get('revealed') === '1',
   };
   // ?mapcode=SF1...: a hand-made map; one AI per other start, everyone on their own team.
   const code = params.get('mapcode');
