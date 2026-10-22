@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-22 12:09 UTC
+
+- **The Long Way Back is fully voiced:** Glass Fields, Long Tom, Marrow and the epilogue now have their spoken briefings and lines too, and a few lines that changed during tuning were re-recorded.
+
 ## 2026-10-21 22:51 UTC
 
 - **New keys:** <kbd>Home</kbd> jumps through your construction yards, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+number takes the selection out of a control group, <kbd>T</kbd> makes the camera follow the selected unit (press again or pan to stop), and <kbd>O</kbd> sends the selected infantry into the nearest ruins. All of them can be rebound under Keys.

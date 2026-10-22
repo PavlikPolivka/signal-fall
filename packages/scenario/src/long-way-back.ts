@@ -70,7 +70,7 @@ export const LONG_WAY_BACK: MissionSpec[] = [
       ['thule', 'Home, for tonight. Get the power on.'],
       ['okafor', 'Movement on the road. Drones, a lot of them.'],
       ['okafor', 'They are bringing heavier stuff. Drag a barricade line across that gap!'],
-      ['thule', 'Two pillboxes up. Let them come.'],
+      ['thule', 'Two pillboxes up. Now we wait for them.'],
       ['thule', 'Here it comes. Everything they have left. Hold!'],
       ['thule', 'Sun is up. We made it through the first night.'],
       ['okafor', 'Stragglers from the city, with a truck full of supplies. We can train more hands.'],
