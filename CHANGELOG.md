@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-23 12:04 UTC
+
+- **Maps have real hills:** the ground now rises and falls into hills, hollows and ridges instead of being a flat painted sheet; lakes lie level in the low ground, and units, buildings, effects and the fog of war all follow the slopes. If an older computer struggles, set *Terrain* to *Flat* under Graphics (from the next match); without a graphics card the maps start flat on their own.
+- **Wall lines keep going:** when a spot in a dragged wall line gets blocked, the finished piece now goes on the next free tile instead of waiting for you.
+
 ## 2026-10-22 12:09 UTC
 
 - **The Long Way Back is fully voiced:** Glass Fields, Long Tom, Marrow and the epilogue now have their spoken briefings and lines too, and a few lines that changed during tuning were re-recorded.

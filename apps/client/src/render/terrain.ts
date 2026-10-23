@@ -9,8 +9,8 @@ export const CLIFF_H = 38;
 const RES = 4;
 /** Screen px of lift per tile of real height: converts px heights into slopes for the lighting. */
 const PX_PER_TILE = 40;
-/** Hills: ground mesh vertices every this many height-field samples (RES per tile). */
-const HILL_STEP = 2;
+/** Hills: ground mesh vertices every this many height-field samples (RES per tile): one per tile, the swells are broad and the lighting carries the fine relief. */
+const HILL_STEP = 4;
 /** Hills: how much taller the rolling ground is than the shading-only relief. */
 const HILL_GAIN = 2.2;
 /** Toward the sun, in tile space (x = +u, y = +v, z = up): from the left and a little above, like the unit renders. */
@@ -303,6 +303,11 @@ export class TerrainLayer {
   /** Hills (prototype, ?hills=1): the ground itself rises and falls with the height field, not just its shading. */
   hills = false;
 
+  /** The height field is built (heightAt and groundGrid are valid). */
+  get ready(): boolean {
+    return this.lift.length > 0;
+  }
+
   /** Ground-level decals (craters) drawn over the terrain. */
   readonly groundDecor = new Container();
   /** Props standing on mesa tops. */
@@ -579,7 +584,15 @@ export class TerrainLayer {
    * nearer slopes draw over what lies behind them. (The cliffs keep their finer mesh on top.)
    */
   private hillMesh(gw: number, gh: number): MeshGeometry {
-    const step = HILL_STEP;
+    const g = this.groundGrid(gw, gh, false);
+    return new MeshGeometry({ positions: g.positions, uvs: g.uvs, indices: g.indices });
+  }
+
+  /**
+   * The lifted ground as a vertex grid (back to front): uvs in tiles, or 0-1 over the map (for an overlay
+   * texture with one texel per tile, like the fog).
+   */
+  groundGrid(gw = this.size[0] * RES + 1, gh = this.size[1] * RES + 1, normalized = true, step = HILL_STEP): { positions: Float32Array; uvs: Float32Array; indices: Uint32Array } {
     const nx = Math.floor((gw - 1) / step) + 1;
     const ny = Math.floor((gh - 1) / step) + 1;
     const pos = new Float32Array(nx * ny * 2);
@@ -593,8 +606,8 @@ export class TerrainLayer {
         const k = j * nx + i;
         pos[k * 2] = isoX(u, v);
         pos[k * 2 + 1] = isoY(u, v) - this.lift[gy * gw + gx]!;
-        uv[k * 2] = u;
-        uv[k * 2 + 1] = v;
+        uv[k * 2] = normalized ? u / this.size[0] : u;
+        uv[k * 2 + 1] = normalized ? v / this.size[1] : v;
       }
     const idx: number[] = [];
     for (let d = 0; d <= nx + ny - 4; d++)
@@ -603,7 +616,7 @@ export class TerrainLayer {
         const a = j * nx + i;
         idx.push(a, a + 1, a + nx, a + 1, a + nx + 1, a + nx);
       }
-    return new MeshGeometry({ positions: pos, uvs: uv, indices: new Uint32Array(idx) });
+    return { positions: pos, uvs: uv, indices: new Uint32Array(idx) };
   }
 
   /** Stain the ground under the Echo fields (once, from the opening layout, so it marks where fields regrow). */

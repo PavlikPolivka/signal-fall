@@ -147,6 +147,49 @@ const checks: Record<string, Check> = {
     await page.keyboard.press(toKey(chord, 5));
     expect((await state(page)).groups[5]).toBeGreaterThan(before);
   },
+  controlGroupRemove: async (page, chord) => {
+    await selectOwnUnits(page, 'army');
+    await page.keyboard.press('Control+Digit7');
+    const before = (await state(page)).groups[7]!;
+    await ev(page, () => {
+      const s = (window as unknown as Win).__signalFall.state;
+      s.select(s.selection.slice(0, 1));
+    });
+    await page.keyboard.press(toKey(chord, 7));
+    expect((await state(page)).groups[7]).toBe(before - 1);
+  },
+  cycleYards: async (page, chord) => {
+    await ev(page, () => (window as unknown as Win).__signalFall.state.select([]));
+    await page.keyboard.press(toKey(chord));
+    const role = await ev(page, () => {
+      const s = (window as unknown as Win).__signalFall.state;
+      return s.selection.length === 1 ? s.ruleOf(s.selection[0]).role : null;
+    });
+    expect(role).toBe('conyard');
+  },
+  followCamera: async (page, chord) => {
+    await selectOwnUnits(page, 'army');
+    await page.keyboard.press(toKey(chord));
+    expect(await ev(page, () => (window as unknown as Win).__signalFall.input.following)).not.toBeNull();
+    await page.keyboard.press(toKey(chord));
+    expect(await ev(page, () => (window as unknown as Win).__signalFall.input.following)).toBeNull();
+  },
+  garrisonNearest: async (page, chord) => {
+    // Infantry go for the nearest ruins; on a map without any nearby the player is told so.
+    await ev(page, () => {
+      const s = (window as unknown as Win).__signalFall.state;
+      const out: number[] = [];
+      for (let i = 0; i < s.cur.entityCount; i++) {
+        const h = s.cur.get(s.cur.ent(i), 0);
+        if (s.isOwn(h) && s.isUnit(h) && s.ruleOf(h).tab === 'infantry') out.push(h);
+      }
+      s.select(out.slice(0, 4));
+    });
+    const ruins = await ev(page, () => (window as unknown as Win).__signalFall.state.terrain.includes(5));
+    await page.keyboard.press(toKey(chord));
+    if (!ruins) await expect(page.getByTestId('alert')).toContainText('No ruins nearby');
+    else await expect.poll(() => ev(page, () => (window as unknown as Win).__signalFall.state.selection.some((h: number) => (window as unknown as Win).__signalFall.state.field(h, 19) > 0))).toBe(true);
+  },
   controlGroupSelect: async (page, chord) => {
     await selectOwnUnits(page, 'army');
     await page.keyboard.press('Control+Digit6');
@@ -292,23 +335,3 @@ test.describe('every keymap entry works', () => {
   }
 });
 
-test('control keys: Ctrl+Shift+number takes the selection out of a group; T follows a unit', async ({ page }) => {
-  await page.goto('/play/?seed=8&size=S&ai=easy');
-  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
-  const units = await page.evaluate(() => {
-    const s = (window as unknown as Win).__signalFall.state;
-    const out: number[] = [];
-    for (let i = 0; i < s.cur.entityCount; i++) {
-      const h = s.cur.get(s.cur.ent(i), 0);
-      if (s.isOwn(h)) out.push(h);
-    }
-    s.controlGroups[1] = out;
-    s.select([out[0]]);
-    return out.length;
-  });
-  await page.locator('[data-testid=game]').click({ position: { x: 5, y: 5 }, trial: true });
-  await page.keyboard.press('Control+Shift+Digit1');
-  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.controlGroups[1].length)).toBe(units - 1);
-  await page.keyboard.press('KeyT');
-  expect(await page.evaluate(() => (window as unknown as Win).__signalFall.input.following)).not.toBeNull();
-});

@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Matrix, Sprite, Texture } from 'pixi.js';
+import { Application, Container, Graphics, Matrix, MeshSimple, Sprite, Texture } from 'pixi.js';
 import { CAPTURE_RADIUS, CAPTURE_TICKS, KIND, MARKER, POINT, TERRAIN } from '@signal-fall/sim';
 import { E, ENT_FLAG, PR, WAYPOINTS } from '../protocol';
 import { TEAM_COLORS, type ClientState } from '../game/state';
@@ -49,6 +49,8 @@ const PICK_RADIUS: Record<Shape, number> = { light: 9, medium: 14, heavy: 18, ai
 
 export class Renderer {
   readonly app = new Application();
+  /** Build the maps with hills (a graphics setting; set before the map is built). */
+  hills = true;
   readonly world = new Container();
   private readonly terrainLayer = new Container();
   private readonly echoLayer = new Graphics();
@@ -130,7 +132,7 @@ export class Renderer {
     const ty = y >> 10;
     if (s.fog && (s.fog[ty * s.width + tx]! & 1) === 0) return false;
     const px = (isoX(x / FX, y / FX) - this.camera.x) * this.camera.zoom;
-    const py = (isoY(x / FX, y / FX) - this.camera.y) * this.camera.zoom;
+    const py = (this.gy(x / FX, y / FX) - this.camera.y) * this.camera.zoom;
     return Math.abs(px) < this.width * 0.7 && Math.abs(py) < this.height * 0.7;
   }
 
@@ -169,6 +171,11 @@ export class Renderer {
   }
 
   // --- coordinate conversion ---
+
+  /** Screen y of a ground point (float tiles): lifted onto the hills when they are on. */
+  gy(u: number, v: number): number {
+    return isoY(u, v) - (this.terrain.hills ? this.terrain.heightAt(u, v) : 0);
+  }
 
   /** Screen px -> float tile coordinates. */
   screenToTile(sx: number, sy: number): { u: number; v: number } {
@@ -355,11 +362,17 @@ export class Renderer {
     this.terrainLayer.removeChildren();
     // Textured terrain (shader); the flat-colour tiles below stay as the instant fallback until it loads.
     this.drawFlatTerrain();
-    // Hills (prototype): the ground rises and falls, and everything stands on it.
-    this.terrain.hills = new URLSearchParams(location.search).has('hills');
+    // Hills: the ground rises and falls, and everything stands on it.
+    this.terrain.hills = this.hills;
     void this.terrain
       .build(this.terrainLayer, s.biome, s.width, s.height, s.terrain, s.surface, (i) => s.decoration[i] === 5)
-      .then(() => this.drawProps())
+      .then(() => {
+        this.drawProps();
+        if (this.terrain.hills) {
+          this.effects.groundHeight = (u, v) => this.terrain.heightAt(u, v);
+          this.buildFog();
+        }
+      })
       .catch((err) => console.warn('terrain shader unavailable, using flat tiles', err));
     this.buildFog();
   }
@@ -603,8 +616,18 @@ export class Renderer {
     this.fogCanvas.height = s.height;
     this.fogTexture = Texture.from(this.fogCanvas);
     this.fogTexture.source.scaleMode = 'linear';
-    const sprite = new Sprite(this.fogTexture);
+    // A fresh canvas: draw the current fog into it on the next frame.
+    this.fogVersion = -1;
     this.fogLayer.removeChildren();
+    if (this.terrain.hills && this.terrain.ready) {
+      // On the hills the fog lies on the lifted ground: the same grid, the fog texture stretched over the map.
+      // Two tiles per cell: the fog's edges are soft, and it is drawn over the whole map every frame.
+      const g = this.terrain.groundGrid(undefined, undefined, true, 8);
+      this.fogLayer.setFromMatrix(new Matrix());
+      this.fogLayer.addChild(new MeshSimple({ texture: this.fogTexture, vertices: g.positions, uvs: g.uvs, indices: g.indices }));
+      return;
+    }
+    const sprite = new Sprite(this.fogTexture);
     this.fogLayer.setFromMatrix(new Matrix(TILE_W / 2, TILE_H / 2, -TILE_W / 2, TILE_H / 2, 0, 0));
     this.fogLayer.addChild(sprite);
   }
@@ -685,7 +708,7 @@ export class Renderer {
         y = prev.get(po, E.y) + (y - prev.get(po, E.y)) * alpha;
       }
       const px = isoX(x / FX, y / FX);
-      const py = isoY(x / FX, y / FX) - (this.terrain.hills ? this.terrain.heightAt(x / FX, y / FX) : 0);
+      const py = this.gy(x / FX, y / FX);
       const visible = this.visibleEntity(h);
       const color = TEAM_COLORS[owner % TEAM_COLORS.length]!;
 
@@ -812,7 +835,7 @@ export class Renderer {
         const rx2 = cur.get(o, E.rallyX) / FX;
         const ry2 = cur.get(o, E.rallyY) / FX;
         const fx = isoX(rx2, ry2);
-        const fy = isoY(rx2, ry2);
+        const fy = this.gy(rx2, ry2);
         this.overlay.moveTo(px, py).lineTo(fx, fy).stroke({ width: 1, color: 0xe8c35a, alpha: 0.7 });
         this.overlay.rect(fx - 1, fy - 16, 2, 16).fill(0xe8c35a).poly([fx + 1, fy - 16, fx + 10, fy - 13, fx + 1, fy - 10]).fill(0xe8c35a);
       }
@@ -841,7 +864,7 @@ export class Renderer {
           const oy = cur.get(o, E.orderY);
           const lineColor = order === 1 ? 0x6dff8a : order === 4 ? 0x6db8ff : 0xff9a6d;
           let lx = isoX(ox / FX, oy / FX);
-          let ly = isoY(ox / FX, oy / FX);
+          let ly = this.gy(ox / FX, oy / FX);
           this.overlay.moveTo(px, py - lift).lineTo(lx, ly).stroke({ width: 1, color: lineColor, alpha: 0.5 });
           if (s.shiftHeld) {
             this.overlay.circle(lx, ly, 3).fill({ color: lineColor, alpha: 0.8 });
@@ -850,7 +873,7 @@ export class Renderer {
               if (wx < 0) break;
               const wy = cur.get(o, E.wp + 2 * k + 1);
               const nx = isoX(wx / FX, wy / FX);
-              const ny = isoY(wx / FX, wy / FX);
+              const ny = this.gy(wx / FX, wy / FX);
               this.overlay.moveTo(lx, ly).lineTo(nx, ny).stroke({ width: 1, color: 0xe8c35a, alpha: 0.7 });
               this.overlay.circle(nx, ny, 3).fill({ color: 0xe8c35a, alpha: 0.9 });
               lx = nx;
@@ -864,7 +887,7 @@ export class Renderer {
         if (to !== undefined && owner === s.localPlayer) {
           const tx = cur.get(to, E.x) / FX;
           const ty = cur.get(to, E.y) / FX;
-          this.overlay.moveTo(px, py - lift).lineTo(isoX(tx, ty), isoY(tx, ty)).stroke({ width: 1, color: 0xff4d4d, alpha: 0.55 });
+          this.overlay.moveTo(px, py - lift).lineTo(isoX(tx, ty), this.gy(tx, ty)).stroke({ width: 1, color: 0xff4d4d, alpha: 0.55 });
         }
       }
       const hp = cur.get(o, E.hp);
@@ -955,7 +978,7 @@ export class Renderer {
       // Shells arc; everything else flies straight at about chest height.
       const dist = Math.hypot(isoX((tx - ox) / FX, (ty - oy) / FX), isoY((tx - ox) / FX, (ty - oy) / FX));
       const lift = type === PROJ_SIEGE ? Math.sin(Math.PI * t) * dist * 0.35 : 0;
-      const py = isoY(x / FX, y / FX) - 8 - lift;
+      const py = this.gy(x / FX, y / FX) - 8 - lift;
       // Direction on screen, for streaks.
       const ex = isoX((tx - ox) / FX, (ty - oy) / FX);
       const ey = isoY((tx - ox) / FX, (ty - oy) / FX) - (type === PROJ_SIEGE ? Math.cos(Math.PI * t) * dist * 0.35 * Math.PI * 0.5 : 0);
@@ -989,7 +1012,7 @@ export class Renderer {
       const age = (now - p.time) / 1000;
       if (age > 5) continue;
       const px = isoX(p.x / FX, p.y / FX);
-      const py = isoY(p.x / FX, p.y / FX);
+      const py = this.gy(p.x / FX, p.y / FX);
       const color = TEAM_COLORS[p.player % TEAM_COLORS.length]!;
       for (let k = 0; k < 2; k++) {
         const t = ((age + k * 0.5) % 1);
@@ -1034,7 +1057,7 @@ export class Renderer {
       const x = i % s.width;
       const y = Math.floor(i / s.width);
       const px = isoX(x + 0.5, y + 0.5);
-      const py = isoY(x + 0.5, y + 0.5);
+      const py = this.gy(x + 0.5, y + 0.5);
       g.poly([px, py - 15, px + 30, py, px, py + 15, px - 30, py]).fill({ color: 0x1a8a99, alpha: 0.55 });
       // Crystal clusters; more crystals = more and taller spikes.
       const spikes = 2 + Math.min(4, Math.floor(n / 3));
@@ -1101,7 +1124,7 @@ export class Renderer {
         const jx = ((r >>> 4) % 100) / 100 - 0.5;
         const jy = ((r >>> 11) % 100) / 100 - 0.5;
         const px = isoX(x + 0.5 + jx * 0.45, y + 0.5 + jy * 0.45);
-        const py = isoY(x + 0.5 + jx * 0.45, y + 0.5 + jy * 0.45);
+        const py = this.gy(x + 0.5 + jx * 0.45, y + 0.5 + jy * 0.45);
         sp.position.set(px, py);
         sp.zIndex = py - 2;
         const k = 0.78 + ((r >>> 18) % 100) / 230;
@@ -1136,9 +1159,9 @@ export class Renderer {
         if (q.owner !== p.owner || Math.hypot(q.x - p.x, q.y - p.y) > p.r) continue;
         links++;
         const ax = isoX(p.x / FX, p.y / FX);
-        const ay = isoY(p.x / FX, p.y / FX) - 8;
+        const ay = this.gy(p.x / FX, p.y / FX) - 8;
         const bx = isoX(q.x / FX, q.y / FX);
-        const by = isoY(q.x / FX, q.y / FX) - 8;
+        const by = this.gy(q.x / FX, q.y / FX) - 8;
         this.fx.moveTo(ax, ay).lineTo(bx, by).stroke({ width: 1, color: 0xc58cff, alpha: 0.18 + 0.12 * Math.sin(t + a) });
       }
     }
@@ -1197,10 +1220,10 @@ export class Renderer {
     for (let y = 0; y < h; y++)
       for (let x = 0; x < w; x++) {
         if (!at(x, y)) continue;
-        const t = [isoX(x, y), isoY(x, y)] as const;
-        const r = [isoX(x + 1, y), isoY(x + 1, y)] as const;
-        const b = [isoX(x + 1, y + 1), isoY(x + 1, y + 1)] as const;
-        const l = [isoX(x, y + 1), isoY(x, y + 1)] as const;
+        const t = [isoX(x, y), this.gy(x, y)] as const;
+        const r = [isoX(x + 1, y), this.gy(x + 1, y)] as const;
+        const b = [isoX(x + 1, y + 1), this.gy(x + 1, y + 1)] as const;
+        const l = [isoX(x, y + 1), this.gy(x, y + 1)] as const;
         g.poly([...t, ...r, ...b, ...l]).fill({ color, alpha: 0.035 }).stroke({ width: 1, color, alpha: 0.07 });
         // The network's edge, brighter.
         const edge = (ax: readonly number[], bx: readonly number[]) => g.moveTo(ax[0]!, ax[1]!).lineTo(bx[0]!, bx[1]!).stroke({ width: 1.5, color, alpha: 0.4 });
@@ -1231,7 +1254,7 @@ export class Renderer {
       const y = cur.get(o, E.y) / FX;
       // A circle of r tiles is an ellipse on the iso grid.
       const rx = r * (TILE_W / 2) * Math.SQRT2;
-      this.decals.ellipse(isoX(x, y), isoY(x, y), rx, rx / 2).fill({ color, alpha: 0.06 }).stroke({ width: 1.5, color, alpha: 0.45 });
+      this.decals.ellipse(isoX(x, y), this.gy(x, y), rx, rx / 2).fill({ color, alpha: 0.06 }).stroke({ width: 1.5, color, alpha: 0.45 });
     }
   }
 
@@ -1248,7 +1271,7 @@ export class Renderer {
       for (let y = q.at.ty; y < q.at.ty + rule.footprintH; y++) {
         for (let x = q.at.tx; x < q.at.tx + rule.footprintW; x++) {
           const px = isoX(x, y);
-          const py = isoY(x, y);
+          const py = this.gy(x, y);
           this.overlay
             .poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2])
             .fill({ color: 0x9fd7ff, alpha: 0.08 + 0.22 * done })
@@ -1270,7 +1293,7 @@ export class Renderer {
     for (const p of cur.points()) {
       if (fog && !s.spectator && (fog[p.y * s.width + p.x]! & 2) === 0) continue;
       const px = isoX(p.x + 0.5, p.y + 0.5);
-      const py = isoY(p.x + 0.5, p.y + 0.5);
+      const py = this.gy(p.x + 0.5, p.y + 0.5);
       const color = p.owner >= 0 ? TEAM_COLORS[p.owner % TEAM_COLORS.length]! : 0x9aa0a6;
       const rx = CAPTURE_RADIUS * (TILE_W / 2) * Math.SQRT2;
       this.decals.ellipse(px, py, rx, rx / 2).stroke({ width: 1.5, color, alpha: 0.45 });
@@ -1344,7 +1367,7 @@ export class Renderer {
       if (drawn.has(key)) continue;
       drawn.add(key);
       const px = isoX(m.x / FX, m.y / FX);
-      const py = isoY(m.x / FX, m.y / FX);
+      const py = this.gy(m.x / FX, m.y / FX);
       if (m.kind === MARKER.area) {
         const rx = m.r * (TILE_W / 2) * Math.SQRT2;
         this.decals.ellipse(px, py, rx, rx / 2).fill({ color: 0xffd34d, alpha: 0.05 + 0.05 * pulse }).stroke({ width: 2.5, color: 0xffd34d, alpha: 0.9 });
@@ -1370,7 +1393,7 @@ export class Renderer {
       if (s.fog && !s.spectator && (s.fog[key]! & 1) === 0) continue;
       seen.add(key);
       const px = isoX(c.x + 0.5, c.y + 0.5);
-      const py = isoY(c.x + 0.5, c.y + 0.5);
+      const py = this.gy(c.x + 0.5, c.y + 0.5);
       let sp = this.crateSprites.get(key);
       if (!sp) {
         const tex = this.lib.texture('pt_crate', 'body', 'idle', 0, 0, 'color');
@@ -1408,7 +1431,7 @@ export class Renderer {
     const r = power.kind === 'jam' ? power.radius / FX : power.reach / FX;
     const rx = r * (TILE_W / 2) * Math.SQRT2;
     const px = isoX(p.x / FX, p.y / FX);
-    const py = isoY(p.x / FX, p.y / FX);
+    const py = this.gy(p.x / FX, p.y / FX);
     const color = power.kind === 'jam' ? 0x3ee6ff : 0xc58cff;
     const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 160);
     this.overlay.ellipse(px, py, rx, rx / 2).fill({ color, alpha: 0.08 + 0.06 * pulse }).stroke({ width: 2, color, alpha: 0.85 });
@@ -1425,7 +1448,7 @@ export class Renderer {
     const zone = (x: number, y: number, r: number, closing: number) => {
       const rx = r * (TILE_W / 2) * Math.SQRT2;
       const px = isoX(x / FX, y / FX);
-      const py = isoY(x / FX, y / FX);
+      const py = this.gy(x / FX, y / FX);
       this.overlay.ellipse(px, py, rx, rx / 2).fill({ color: 0xff3a2a, alpha: 0.1 + 0.08 * pulse }).stroke({ width: 2, color: 0xff5a3a, alpha: 0.9 });
       if (closing >= 0) this.overlay.ellipse(px, py, rx * closing, (rx * closing) / 2).stroke({ width: 3, color: 0xffd0a0, alpha: 0.8 });
       this.overlay.moveTo(px - 10, py).lineTo(px + 10, py).moveTo(px, py - 6).lineTo(px, py + 6).stroke({ width: 2, color: 0xffd0a0, alpha: 0.9 });
@@ -1447,7 +1470,7 @@ export class Renderer {
     this.drawPlannedSites();
     for (const t of this.wallPlan) {
       const px = isoX(t.tx, t.ty);
-      const py = isoY(t.tx, t.ty);
+      const py = this.gy(t.tx, t.ty);
       this.overlay.poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2]).stroke({ width: 1.5, color: 0xffd34d, alpha: 0.85 });
     }
     const ghost = this.placementGhost();
@@ -1458,12 +1481,12 @@ export class Renderer {
     if (ghost.rule.weapon) {
       const cx = ghost.tx + ghost.rule.footprintW / 2;
       const cy = ghost.ty + ghost.rule.footprintH / 2;
-      this.rangeRing(isoX(cx, cy), isoY(cx, cy), ghost.rule.weapon.range / FX, 0xffb46d);
+      this.rangeRing(isoX(cx, cy), this.gy(cx, cy), ghost.rule.weapon.range / FX, 0xffb46d);
     }
     for (let y = ghost.ty; y < ghost.ty + ghost.rule.footprintH; y++) {
       for (let x = ghost.tx; x < ghost.tx + ghost.rule.footprintW; x++) {
         const px = isoX(x, y);
-        const py = isoY(x, y);
+        const py = this.gy(x, y);
         this.overlay
           .poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2])
           .fill({ color, alpha: 0.35 })
@@ -1565,7 +1588,7 @@ export class Renderer {
       const d = rule.footprintH;
       const height = rule.role === 'wall' ? 10 : rule.weapon ? 18 : 14 + 6 * Math.min(w, d);
       // Footprint corners relative to the center, in world px.
-      const c = (u: number, v2: number) => [isoX(u, v2), isoY(u, v2)] as const;
+      const c = (u: number, v2: number) => [isoX(u, v2), this.gy(u, v2)] as const;
       const [nX, nY] = c(-w / 2, -d / 2);
       const [eX, eY] = c(w / 2, -d / 2);
       const [sX, sY] = c(w / 2, d / 2);

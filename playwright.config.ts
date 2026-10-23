@@ -21,7 +21,8 @@ export default defineConfig({
     env: { VITE_SUPABASE_URL: process.env.SUPABASE_URL ?? '', VITE_SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? '' },
   },
   projects: [
-    { name: 'chromium', testIgnore: /perf\.spec/, use: { ...devices['Desktop Chrome'], viewport } },
+    // Muted: test matches play the announcer and unit voices, which nobody running the suite wants to hear.
+    { name: 'chromium', testIgnore: /perf\.spec/, use: { ...devices['Desktop Chrome'], viewport, launchOptions: { args: ['--mute-audio'] } } },
     ...(firefox ? [{ name: 'firefox', testIgnore: /perf\.spec/, use: { ...devices['Desktop Firefox'], viewport } }] : []),
     { name: 'webkit', testIgnore: /perf\.spec/, use: { ...devices['Desktop Safari'], viewport } },
     // FPS needs the real GPU: Metal on macOS (CI falls back to SwiftShader and checks frame cost only).
@@ -31,7 +32,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport,
-        launchOptions: { args: process.platform === 'darwin' ? ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] : [] },
+        launchOptions: { args: ['--mute-audio', ...(process.platform === 'darwin' ? ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] : [])] },
       },
     },
   ],

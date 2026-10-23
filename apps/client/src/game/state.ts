@@ -678,6 +678,8 @@ export interface Settings {
   effects: 'full' | 'reduced';
   /** Graphics quality: Balanced hides ground clutter and prop shadows, Performance also renders at lower resolution with simpler terrain. */
   graphics: 'ultra' | 'high' | 'balanced' | 'performance';
+  /** Rolling hills on the maps (the ground rises and falls); flat is lighter on old machines. From the next match. */
+  hills: boolean;
   /** First-match tips in the corner. */
   hints: boolean;
   /** Mouse wheel zooms the other way. */
@@ -703,7 +705,7 @@ export interface Settings {
 }
 
 const SETTINGS_KEY = 'signalfall.settings';
-const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hints: true, invertWheel: false, unitVoices: true, aiChat: false, subtitles: false, colorblind: false, calmFlashes: false, largeCursor: false, batterySaver: false, uiScale: 100, keys: {} };
+const DEFAULT_SETTINGS: Settings = { scrollSpeed: 1, effects: 'full', graphics: 'high', hills: true, hints: true, invertWheel: false, unitVoices: true, aiChat: false, subtitles: false, colorblind: false, calmFlashes: false, largeCursor: false, batterySaver: false, uiScale: 100, keys: {} };
 
 export function loadSettings(): Settings {
   try {

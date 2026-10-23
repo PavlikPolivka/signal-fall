@@ -1987,6 +1987,21 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
                 </button>
               ))}
             </div>
+            <div class="seg-row" title="Rolling hills: the ground rises and falls under your units. Flat maps are a little lighter on old computers. Applies from the next match">
+              <span>Terrain</span>
+              {([true, false] as const).map((v) => (
+                <button
+                  class={(state.settings.hills !== false) === v ? 'active' : ''}
+                  data-testid={`setting-hills-${v ? 'on' : 'off'}`}
+                  onClick={() => {
+                    state.settings.hills = v;
+                    state.applySettings();
+                  }}
+                >
+                  {v ? 'Hills' : 'Flat'}
+                </button>
+              ))}
+            </div>
             <div class="seg-row">
               <span>Visual effects</span>
               {(['full', 'reduced'] as const).map((v) => (

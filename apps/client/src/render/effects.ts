@@ -133,6 +133,13 @@ export class Effects {
   reduced = false;
   /** Reduce flashing (setting): no big white strike flash. */
   calm = false;
+  /** Ground height under a point (float tiles), in screen px: the hills. */
+  groundHeight: (u: number, v: number) => number = () => 0;
+
+  /** Screen y of a ground point (float tiles), on the hills. */
+  private gy(u: number, v: number): number {
+    return isoY(u, v) - this.groundHeight(u, v);
+  }
 
   constructor(
     private readonly rules: Rules,
@@ -187,9 +194,9 @@ export class Effects {
     const infantry = unit?.tab === 'infantry';
     // Muzzle a little toward the target and up off the ground.
     const px = isoX(x / FX, y / FX);
-    const py = isoY(x / FX, y / FX);
+    const py = this.gy(x / FX, y / FX);
     const dx = isoX(tx / FX, ty / FX) - px;
-    const dy = isoY(tx / FX, ty / FX) - py;
+    const dy = this.gy(tx / FX, ty / FX) - py;
     const d = Math.hypot(dx, dy) || 1;
     const reach = infantry ? 7 : kind === KIND.structure ? 14 : 16;
     const mx = px + (dx / d) * reach;
@@ -204,7 +211,7 @@ export class Effects {
       const faction = unit ? unit.faction : kind === KIND.structure ? (this.rules.structures[type]?.faction ?? 0) : 0;
       const tz = 8;
       const ex = isoX(tx / FX, ty / FX);
-      const ey = isoY(tx / FX, ty / FX) - tz;
+      const ey = this.gy(tx / FX, ty / FX) - tz;
       const sweep = unit?.abilities.some((a) => a.kind === 'sweep') ?? false;
       if (weapon.type === ENERGY)
         this.beam(mx, my - z, ex, ey, FACTION_BEAM[faction] ?? 0x5cecff, sweep ? 7 : infantry ? 1.6 : 2.6, sweep ? 0.45 : 0.12);
@@ -222,10 +229,10 @@ export class Effects {
 
   private impact(type: number, splash: number, x: number, y: number, fx = 0, fy = 0): void {
     const px = isoX(x / FX, y / FX);
-    const py = isoY(x / FX, y / FX);
+    const py = this.gy(x / FX, y / FX);
     if (type === ENERGY && (fx !== 0 || fy !== 0)) {
       // Chain hit: an arc jumps from the previous victim.
-      this.beam(isoX(fx / FX, fy / FX), isoY(fx / FX, fy / FX) - 8, px, py - 8, 0x7ff0ff, 2, 0.25, true);
+      this.beam(isoX(fx / FX, fy / FX), this.gy(fx / FX, fy / FX) - 8, px, py - 8, 0x7ff0ff, 2, 0.25, true);
     }
     if (type === FLAK) {
       // Dark flak bursts up in the air.
@@ -253,7 +260,7 @@ export class Effects {
 
   private death(kind: number, type: number, x: number, y: number): void {
     const px = isoX(x / FX, y / FX);
-    const py = isoY(x / FX, y / FX);
+    const py = this.gy(x / FX, y / FX);
     if (kind === KIND.structure) {
       this.fallen.push({ px, py, t: performance.now() });
       if (this.fallen.length > 16) this.fallen.shift();
@@ -343,10 +350,10 @@ export class Effects {
   /** Blink: flashes at both ends; phase: a shimmer; Override: a signal beam to the victim. */
   private ability(kind: number, x: number, y: number, tx: number, ty: number): void {
     const px = isoX(x / FX, y / FX);
-    const py = isoY(x / FX, y / FX);
+    const py = this.gy(x / FX, y / FX);
     if (kind === 1) {
       const qx = isoX(tx / FX, ty / FX);
-      const qy = isoY(tx / FX, ty / FX);
+      const qy = this.gy(tx / FX, ty / FX);
       for (const [ex, ey] of [
         [px, py],
         [qx, qy],
@@ -366,7 +373,7 @@ export class Effects {
         this.spawn(this.smoke, px + rand(-12, 12), py + rand(-5, 5), 2, { life: rand(0.6, 1), scale0: 0.15, scale1: 0.45, tint: 0xb59a6a, alpha: 0.5, vz: 10, add: false });
     } else if (kind === 3) {
       const qx = isoX(tx / FX, ty / FX);
-      const qy = isoY(tx / FX, ty / FX);
+      const qy = this.gy(tx / FX, ty / FX);
       for (let k = 0; k <= 10; k++)
         this.spawn(this.hot, px + ((qx - px) * k) / 10, py + ((qy - py) * k) / 10, 14, { life: 0.4 + k * 0.03, scale0: 0.2, scale1: 0.08, tint: 0x3ee6ff });
       this.spawn(this.glow, qx, qy, 12, { life: 0.9, scale0: 0.5, scale1: 1.2, tint: 0x3ee6ff });
@@ -408,7 +415,7 @@ export class Effects {
   /** A support power going off: Jam is an expanding cyan ring of static, Awaken a violet bloom. */
   private power(kind: number, radius: number, x: number, y: number): void {
     const px = isoX(x / FX, y / FX);
-    const py = isoY(x / FX, y / FX);
+    const py = this.gy(x / FX, y / FX);
     const tint = kind === 1 ? 0x3ee6ff : 0xc58cff;
     const r = (radius / FX) * 32 * Math.SQRT2;
     this.spawn(this.hot, px, py, 6, { life: 0.35, scale0: 0.8, scale1: 2.2, tint });
@@ -432,10 +439,10 @@ export class Effects {
     const at = (d: number): [number, number] => {
       const a = Math.random() * Math.PI * 2;
       const k = Math.sqrt(Math.random()) * d;
-      return [isoX(x / FX + Math.cos(a) * k, y / FX + Math.sin(a) * k), isoY(x / FX + Math.cos(a) * k, y / FX + Math.sin(a) * k)];
+      return [isoX(x / FX + Math.cos(a) * k, y / FX + Math.sin(a) * k), this.gy(x / FX + Math.cos(a) * k, y / FX + Math.sin(a) * k)];
     };
     const cx = isoX(x / FX, y / FX);
-    const cy = isoY(x / FX, y / FX);
+    const cy = this.gy(x / FX, y / FX);
     const n = this.reduced ? 6 : 14;
     if (faction === 'holdout') {
       // Shell rain: a streak dropping out of the sky, then the blast, staggered over a second and a half.
@@ -515,7 +522,7 @@ export class Effects {
       style: { fontFamily: 'system-ui, sans-serif', fontSize: 15, fontWeight: '700', fill: 0xffd75a, stroke: { color: 0x1a1406, width: 3 } },
     });
     text.anchor.set(0.5, 1);
-    text.position.set(isoX(x / FX, y / FX), isoY(x / FX, y / FX) - 18);
+    text.position.set(isoX(x / FX, y / FX), this.gy(x / FX, y / FX) - 18);
     this.layer.addChild(text);
     this.popups.push({ text, age: 0 });
     this.spawn(this.glow, text.x, text.y + 18, 6, { life: 0.5, scale0: 0.3, scale1: 0.8, tint: 0xffd75a, alpha: 0.6 });

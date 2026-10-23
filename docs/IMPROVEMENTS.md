@@ -320,4 +320,4 @@ Not planned. Ideas to pick up some day, each bigger than one feature.
 | # | Area | Improvement | Impact | Cost |
 |---|---|---|---|---|
 | 105 | K | Fourth faction: needs a design (identity, building rule, mechanics), about 25 new Meshy models, and balance across six pairings | 4 | XL |
-| 109 | G | 3D renderer (WebGPU) keeping the sim: a new renderer and art pipeline | 4 | XL |
+| 109 | G | 3D renderer (WebGPU) keeping the sim: a new renderer and art pipeline (first step done 2026-10-23: the maps have real rolling hills in the current renderer, with units, props, effects and fog on the lifted ground; the units stay sprites) | 4 | XL |

@@ -329,9 +329,24 @@ onLeave(() => {
   if (mounted) renderer.app.destroy(true);
 });
 
+/** Is WebGL drawn on the CPU (no usable graphics card)? */
+function softwareRendering(): boolean {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    const name = gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+    return /swiftshader|llvmpipe|software/i.test(name);
+  } catch {
+    return false;
+  }
+}
+
 async function mountGame(host: HTMLDivElement): Promise<void> {
   // Ultra on a high-DPI screen: 2x sprites (chosen before the first sheet loads; a change applies next match).
   renderer.lib.hiDpi = state.settings.graphics === 'ultra' && ultraResolution() >= 1.5;
+  // Hills (setting, from the next match); ?hills=0 or ?hills=1 overrides it.
+  // Without a graphics card (software rendering) the maps stay flat: the hills would halve the frame rate.
+  renderer.hills = params.has('hills') ? params.get('hills') !== '0' : state.settings.hills !== false && !softwareRendering();
   await renderer.init(host);
   renderer.setGraphics(state.settings.graphics);
   renderer.app.ticker.maxFPS = state.settings.batterySaver ? 30 : 0;

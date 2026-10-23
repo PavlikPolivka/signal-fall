@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-type Win = { __signalFall: { state: any; renderer: any } }; // eslint-disable-line @typescript-eslint/no-explicit-any
+type Win = { __signalFall: { state: any; renderer: any; input: any } }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 async function canvasCenter(page: Page): Promise<{ x: number; y: number }> {
   const box = (await page.locator('[data-testid=game] canvas').boundingBox())!;
@@ -86,4 +86,28 @@ test.describe('mouse', () => {
     await page.mouse.click(c.x, c.y);
     expect(await page.evaluate(() => (window as unknown as Win).__signalFall.state.sent.at(-1)?.type)).toBe('attackMove');
   });
+});
+
+test('on the hills a click lands on the ground under the cursor, not on the flat map behind it', async ({ page }) => {
+  await page.goto('/play/?seed=8&size=S&ai=easy&biome=crystal&hills=1');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall.renderer.terrain.ready, null, { timeout: 30_000 });
+  const r = await page.evaluate(() => {
+    const { state, renderer, input } = (window as unknown as Win).__signalFall;
+    let worst = 0;
+    let lifted = 0;
+    for (let i = 0; i < state.cur.entityCount; i++) {
+      const h = state.cur.get(state.cur.ent(i), 0);
+      const p = renderer.screenOf(h);
+      if (!p || !state.isUnit(h)) continue;
+      const x = state.field(h, 4) / 1024;
+      const y = state.field(h, 5) / 1024;
+      lifted = Math.max(lifted, Math.abs(renderer.terrain.heightAt(x, y)));
+      const at = input.simPoint(p.x, p.y);
+      worst = Math.max(worst, Math.hypot(at.x / 1024 - x, at.y / 1024 - y));
+    }
+    return { worst, lifted };
+  });
+  expect(r.lifted).toBeGreaterThan(1);
+  expect(r.worst).toBeLessThan(0.5);
 });

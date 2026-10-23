@@ -1257,13 +1257,16 @@ export class Input {
     }
     // Give the last order a moment to reach the sim before reading the queue.
     if (performance.now() - plan.sentAt < 400) return;
-    if (s.cur.buildQueue(s.localPlayer, 1).item >= 0) return;
+    const q = s.cur.buildQueue(s.localPlayer, 1);
+    // A piece finished with nowhere to go (its spot got blocked): it goes on the next free tile of the line.
+    const stuck = q.item === plan.item && q.ready && !q.at;
+    if (q.item >= 0 && !stuck) return;
     const faction = s.rules.factions[s.players[s.localPlayer]!.faction]!;
     const rule = s.rules.structures[plan.item]!;
     while (plan.tiles.length > 0) {
       const t = plan.tiles.shift()!;
       if (placementError(s.placementView(), s.localPlayer, faction, rule, t.tx, t.ty)) continue;
-      s.send({ type: 'build', category: plan.category, item: plan.item, tx: t.tx, ty: t.ty });
+      s.send(stuck ? { type: 'place', category: plan.category, tx: t.tx, ty: t.ty } : { type: 'build', category: plan.category, item: plan.item, tx: t.tx, ty: t.ty });
       plan.sentAt = performance.now();
       break;
     }
