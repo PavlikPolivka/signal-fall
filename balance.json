@@ -1,0 +1,266 @@
+{
+  "commit": "d2d07cb4f9803b90498874553f6482143a0c677c",
+  "date": "2026-10-23T21:27:31.726Z",
+  "matchesPerPairing": 300,
+  "gate": {
+    "min": 45,
+    "max": 55,
+    "easyMin": 90
+  },
+  "ok": true,
+  "pairings": [
+    {
+      "a": {
+        "faction": "holdout",
+        "harvested": 100810,
+        "topUnits": [
+          "grunt",
+          "tankbuster",
+          "hornet"
+        ],
+        "strategies": {
+          "turtle": {
+            "wins": 33,
+            "matches": 60
+          },
+          "rush": {
+            "wins": 26,
+            "matches": 53
+          },
+          "balanced": {
+            "wins": 38,
+            "matches": 60
+          },
+          "raider": {
+            "wins": 30,
+            "matches": 68
+          },
+          "tech": {
+            "wins": 34,
+            "matches": 59
+          }
+        }
+      },
+      "b": {
+        "faction": "halcyon",
+        "harvested": 96127,
+        "topUnits": [
+          "sentry",
+          "lance",
+          "seek"
+        ],
+        "strategies": {
+          "balanced": {
+            "wins": 30,
+            "matches": 66
+          },
+          "tech": {
+            "wins": 30,
+            "matches": 68
+          },
+          "rush": {
+            "wins": 30,
+            "matches": 59
+          },
+          "turtle": {
+            "wins": 22,
+            "matches": 56
+          },
+          "raider": {
+            "wins": 25,
+            "matches": 51
+          }
+        }
+      },
+      "winsA": 161,
+      "winsB": 137,
+      "draws": 2,
+      "winPctA": 53.7,
+      "avgMinutes": 12.5
+    },
+    {
+      "a": {
+        "faction": "holdout",
+        "harvested": 102337,
+        "topUnits": [
+          "grunt",
+          "tankbuster",
+          "bulldog"
+        ],
+        "strategies": {
+          "turtle": {
+            "wins": 14,
+            "matches": 60
+          },
+          "rush": {
+            "wins": 30,
+            "matches": 53
+          },
+          "balanced": {
+            "wins": 37,
+            "matches": 60
+          },
+          "raider": {
+            "wins": 41,
+            "matches": 68
+          },
+          "tech": {
+            "wins": 16,
+            "matches": 59
+          }
+        }
+      },
+      "b": {
+        "faction": "choir",
+        "harvested": 115260,
+        "topUnits": [
+          "grace",
+          "staccato",
+          "basso"
+        ],
+        "strategies": {
+          "balanced": {
+            "wins": 45,
+            "matches": 66
+          },
+          "tech": {
+            "wins": 24,
+            "matches": 68
+          },
+          "rush": {
+            "wins": 28,
+            "matches": 59
+          },
+          "turtle": {
+            "wins": 32,
+            "matches": 56
+          },
+          "raider": {
+            "wins": 31,
+            "matches": 51
+          }
+        }
+      },
+      "winsA": 138,
+      "winsB": 160,
+      "draws": 2,
+      "winPctA": 46,
+      "avgMinutes": 12.5
+    },
+    {
+      "a": {
+        "faction": "halcyon",
+        "harvested": 82435,
+        "topUnits": [
+          "sentry",
+          "lance",
+          "vector"
+        ],
+        "strategies": {
+          "turtle": {
+            "wins": 27,
+            "matches": 60
+          },
+          "rush": {
+            "wins": 35,
+            "matches": 53
+          },
+          "balanced": {
+            "wins": 40,
+            "matches": 60
+          },
+          "raider": {
+            "wins": 36,
+            "matches": 68
+          },
+          "tech": {
+            "wins": 25,
+            "matches": 59
+          }
+        }
+      },
+      "b": {
+        "faction": "choir",
+        "harvested": 93410,
+        "topUnits": [
+          "grace",
+          "staccato",
+          "basso"
+        ],
+        "strategies": {
+          "balanced": {
+            "wins": 26,
+            "matches": 66
+          },
+          "tech": {
+            "wins": 27,
+            "matches": 68
+          },
+          "rush": {
+            "wins": 24,
+            "matches": 59
+          },
+          "turtle": {
+            "wins": 33,
+            "matches": 56
+          },
+          "raider": {
+            "wins": 27,
+            "matches": 51
+          }
+        }
+      },
+      "winsA": 163,
+      "winsB": 137,
+      "draws": 0,
+      "winPctA": 54.3,
+      "avgMinutes": 10.9
+    }
+  ],
+  "normal": [
+    {
+      "a": "holdout",
+      "b": "halcyon",
+      "winsA": 50,
+      "winsB": 36,
+      "draws": 14,
+      "winPctA": 50,
+      "avgMinutes": 15.2
+    },
+    {
+      "a": "holdout",
+      "b": "choir",
+      "winsA": 44,
+      "winsB": 47,
+      "draws": 9,
+      "winPctA": 44,
+      "avgMinutes": 13
+    },
+    {
+      "a": "halcyon",
+      "b": "choir",
+      "winsA": 61,
+      "winsB": 36,
+      "draws": 3,
+      "winPctA": 61,
+      "avgMinutes": 11
+    }
+  ],
+  "easy": [
+    {
+      "faction": "holdout",
+      "winPct": 100,
+      "matches": 200
+    },
+    {
+      "faction": "halcyon",
+      "winPct": 100,
+      "matches": 200
+    },
+    {
+      "faction": "choir",
+      "winPct": 99.5,
+      "matches": 200
+    }
+  ]
+}
