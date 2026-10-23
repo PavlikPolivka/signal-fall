@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-23 21:11 UTC
+
+- **Voice fixes in The Long Way Back:** four recordings (in Dig In, Dead Sky and Long Tom) read the actor's character notes aloud before the line. They are re-recorded.
+
 ## 2026-10-23 12:04 UTC
 
 - **Maps have real hills:** the ground now rises and falls into hills, hollows and ridges instead of being a flat painted sheet; lakes lie level in the low ground, and units, buildings, effects and the fog of war all follow the slopes. If an older computer struggles, set *Terrain* to *Flat* under Graphics (from the next match); without a graphics card the maps start flat on their own.

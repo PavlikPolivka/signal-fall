@@ -101,6 +101,20 @@ def heard(wav):
     return call(CFG['check_model'], body)['candidates'][0]['content']['parts'][0]['text']
 
 
+def leaked(wav):
+    # A plain transcript leaves out what doesn't sound like dialogue, so a take that read the audio profile
+    # or the director's notes aloud passes it: ask about that directly.
+    body = {'contents': [{'parts': [
+        {'inlineData': {'mimeType': 'audio/wav', 'data': base64.b64encode(wav).decode()}},
+        {'text': 'This is a line of dialogue from a war game, spoken by one character over the radio. Does the speaker, at any point, '
+                 'say words that describe a character or how to speak (for example "a weary, stubborn man", "a veteran sergeant", '
+                 '"style", "pace", "on the radio", "audio profile", "transcript") instead of in-world dialogue? '
+                 'Answer YES or NO, then quote those words if YES.'},
+    ]}]}
+    answer = call(CFG['check_model'], body)['candidates'][0]['content']['parts'][0]['text'].strip()
+    return answer.lstrip('*').upper().startswith('YES'), answer
+
+
 def matches(text, wav):
     a, b = words(text), words(heard(wav))
     # Close enough: a dropped or invented phrase fails, a misheard name does not.
@@ -128,9 +142,13 @@ def take(name, text, cast, model=None):
             print(f'  retake {name}: {seconds(wav):.1f} s is too long for the line')
             continue
         ok, got = matches(text, wav)
-        if ok:
+        if not ok:
+            print(f'  retake {name}: heard "{" ".join(got)}"')
+            continue
+        bad, said = leaked(wav)
+        if not bad:
             break
-        print(f'  retake {name}: heard "{" ".join(got)}"')
+        print(f'  retake {name}: read its directions aloud ({said[:120]})')
     else:
         # No good take: keep whatever the game has now (the old voice) and list the line to try again.
         print(f'  FAILED {name}: kept the current recording, listed for a retry')
