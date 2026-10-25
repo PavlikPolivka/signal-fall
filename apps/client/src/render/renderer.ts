@@ -138,6 +138,7 @@ export class Renderer {
 
   async init(host: HTMLElement): Promise<void> {
     await this.app.init({ resizeTo: host, background: 0x0b0d10, antialias: true, autoDensity: true, preference: 'webgl' });
+    this.lib.renderer = this.app.renderer;
     host.appendChild(this.app.canvas);
     this.ground.sortableChildren = true;
     this.air.sortableChildren = true;

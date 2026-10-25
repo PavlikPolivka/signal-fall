@@ -78,6 +78,32 @@ export function ItemCard({ state, rule, blocked }: { state: ClientState; rule: S
         <dd class={credits < rule.cost ? 'bad' : ''}>{money(rule.cost)}</dd>
         <dt>Build time</dt>
         <dd>{secs(rule.buildTicks, rate)}</dd>
+        {(() => {
+          // Being built right now: the seconds left (production runs at half speed in low power).
+          const cur = state.cur;
+          if (!cur) return null;
+          let progress = -1;
+          let queued = 0;
+          if (rule.kind === 'unit') {
+            const q = cur.productionQueue(state.localPlayer, ['infantry', 'vehicles', 'air'].indexOf(rule.tab));
+            queued = q.items.filter((i) => i === rule.index).length;
+            if (q.items[0] === rule.index) progress = q.progress;
+          } else {
+            const q = cur.buildQueue(state.localPlayer, rule.category === 'defenses' ? 1 : 0);
+            if (q.item === rule.index && !q.ready) progress = q.progress;
+          }
+          if (progress < 0) return null;
+          const left = Math.ceil(((rule.buildTicks * (1000 - progress)) / 1000 / rate) * (state.lowPower ? 2 : 1));
+          return (
+            <>
+              <dt>Ready in</dt>
+              <dd data-testid="item-ready-in" class={state.lowPower ? 'bad' : 'good'}>
+                {left} s{state.lowPower ? ' (low power)' : ''}
+                {queued > 1 ? ` · ${queued - 1} more queued` : ''}
+              </dd>
+            </>
+          );
+        })()}
         {rule.kind === 'structure' && (
           <>
             <dt>Power</dt>

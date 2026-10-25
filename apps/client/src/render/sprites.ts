@@ -1,4 +1,4 @@
-import { Assets, Texture } from 'pixi.js';
+import { Assets, Container, RenderTexture, Sprite, Texture, type Renderer, type TextureSource } from 'pixi.js';
 
 /** Sprite metadata written by tools/assets/pack.ts. */
 export interface SpriteInfo {
@@ -31,6 +31,20 @@ export class SpriteLibrary {
 
   /** Load the 2x atlases (Ultra graphics on a high-DPI screen); set before anything loads. */
   hiDpi = false;
+
+  /**
+   * Bakes team colors into the art (set by the renderer). Drawn live, the team color is a tinted mask
+   * multiplied over each sprite, and switching blend modes sprite by sprite costs a draw call per unit
+   * (hundreds a frame in a battle, ruinous on Firefox). Baked, a unit is one plain sprite and a whole
+   * army draws in a few batches.
+   */
+  renderer: Renderer | null = null;
+  /** Mask frames per atlas page (to bake that page). */
+  private pageMasks = new Map<TextureSource, string[]>();
+  /** Baked pages, by page and team color. */
+  private baked = new Map<TextureSource, Map<number, TextureSource>>();
+  /** Baked frame textures, by `color:name`. */
+  private coloredTextures = new Map<string, Texture>();
 
   /** Base URL for assets (Vite serves /public at the root). */
   constructor(private readonly base = import.meta.env.BASE_URL) {}
@@ -67,7 +81,14 @@ export class SpriteLibrary {
         source.style.update();
         source.updateMipmaps();
       }
-      for (const [name, tex] of Object.entries(sheet.textures)) this.textures.set(name, tex);
+      for (const [name, tex] of Object.entries(sheet.textures)) {
+        this.textures.set(name, tex);
+        if (name.endsWith('.mask')) {
+          const list = this.pageMasks.get(tex.source) ?? [];
+          list.push(name);
+          this.pageMasks.set(tex.source, list);
+        }
+      }
     }
     for (const [id, info] of Object.entries(catalog.sprites)) this.sprites.set(id, info);
     this.loaded.add(faction);
@@ -84,6 +105,56 @@ export class SpriteLibrary {
 
   texture(id: string, part: string, anim: string, dir: number, frame: number, pass: Pass): Texture | null {
     return this.textures.get(`${id}/${part}/${anim}/${String(dir).padStart(2, '0')}/${frame}.${pass}`) ?? null;
+  }
+
+  /**
+   * The color pass with the team color already in it (null without art, or when the renderer can't bake):
+   * one sprite instead of a body and a multiplied team layer.
+   */
+  colored(id: string, part: string, anim: string, dir: number, frame: number, color: number): Texture | null {
+    const name = `${id}/${part}/${anim}/${String(dir).padStart(2, '0')}/${frame}`;
+    const key = `${color}:${name}`;
+    const hit = this.coloredTextures.get(key);
+    if (hit) return hit;
+    const tex = this.textures.get(`${name}.color`);
+    if (!tex || !this.renderer) return null;
+    const page = this.bake(tex.source, color);
+    if (!page) return null;
+    const out = new Texture({ source: page, frame: tex.frame.clone(), orig: tex.orig.clone(), trim: tex.trim?.clone(), defaultAnchor: tex.defaultAnchor });
+    this.coloredTextures.set(key, out);
+    return out;
+  }
+
+  /** A copy of an atlas page with every mask, tinted `color`, multiplied onto its color frame (once per page and color). */
+  private bake(source: TextureSource, color: number): TextureSource | null {
+    let byColor = this.baked.get(source);
+    if (!byColor) this.baked.set(source, (byColor = new Map()));
+    const done = byColor.get(color);
+    if (done) return done;
+    const renderer = this.renderer!;
+    const scene = new Container();
+    scene.addChild(new Sprite(new Texture({ source })));
+    for (const maskName of this.pageMasks.get(source) ?? []) {
+      const mask = this.textures.get(maskName)!;
+      const col = this.textures.get(maskName.slice(0, -5) + '.color');
+      if (!col || col.source !== source) continue;
+      // Place the mask over its color frame: both are trimmed out of the same cell, by different boxes.
+      const sp = new Sprite(new Texture({ source, frame: mask.frame.clone() }));
+      sp.position.set(col.frame.x + (mask.trim?.x ?? 0) - (col.trim?.x ?? 0), col.frame.y + (mask.trim?.y ?? 0) - (col.trim?.y ?? 0));
+      sp.tint = color;
+      sp.blendMode = 'multiply';
+      scene.addChild(sp);
+    }
+    const target = RenderTexture.create({ width: source.width, height: source.height, resolution: source.resolution });
+    renderer.render({ container: scene, target, clear: true, clearColor: [0, 0, 0, 0] });
+    scene.destroy({ children: true });
+    const page = target.source;
+    page.autoGenerateMipmaps = true;
+    page.style.mipmapFilter = 'linear';
+    page.style.update();
+    page.updateMipmaps();
+    byColor.set(color, page);
+    return page;
   }
 
   /** Sprite direction index for a sim binary angle (4096 per turn, 0 = +x). */

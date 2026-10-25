@@ -234,7 +234,7 @@ Proposed 2026-10-19 after the first 120 shipped: small and medium steps on gamep
 | 166 ✅ | U | Minimap marks capture points, crates and the hill flag with clear icons | 3 | XS |
 | 167 | U | Minimap filters: hide terrain, show only units, show Echo | 2 | S |
 | 168 ✅ | U | Cost turns red on a build button when you can't afford it now | 3 | XS |
-| 169 | U | Exact seconds left on hover over a queued item | 2 | XS |
+| 169 ✅ | U | Exact seconds left on hover over a queued item | 2 | XS |
 | 170 ✅ | U | Rally point line shown while a factory is selected (already drawn) | 3 | XS |
 | 171 | U | Hover a selected unit to see a line to what it is shooting | 2 | XS |
 | 172 | U | Ability cooldowns on portraits in the selection panel | 2 | XS |

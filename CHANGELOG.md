@@ -1,5 +1,10 @@
 # What's new
 
+## 2026-10-25 08:21 UTC
+
+- **Much faster in Firefox-based browsers:** a big battle went from about 13 frames a second to a steady 60 in Firefox and Zen. Team colors are now built into the unit art once per match instead of being blended live for every unit, and the build list's team-colored icons no longer force the browser to redraw the sidebar every frame.
+- **Seconds left on a build card:** the card of something being built or trained shows how long until it is ready (and how many more are queued).
+
 ## 2026-10-25 07:57 UTC
 
 - **Tablet, part 3:** menus, settings, command buttons and the main menu's links are fingertip-sized on a touch screen; the touch bar no longer covers the pause menu; settings rows with four choices line up in a neat grid.

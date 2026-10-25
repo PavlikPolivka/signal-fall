@@ -160,9 +160,11 @@ export class UnitSpriteView {
     this.root.zIndex = Math.round(o.py) + this.tie;
     const lift = this.lift(moving !== null, o.wreck);
     for (const sp of [this.body, this.team, this.turret, this.turretTeam]) sp?.position.set(lift.x, -lift.y);
-    this.body.texture = tex('color') ?? this.body.texture;
+    // Team color baked into the art when possible (one sprite, batched); else the multiplied mask layer.
+    const baked = o.wreck ? null : this.lib.colored(this.id, part, anim, dir, frame, o.color);
+    this.body.texture = baked ?? tex('color') ?? this.body.texture;
     this.body.tint = o.wreck ? WRECK_TINT : 0xffffff;
-    const mask = o.wreck ? null : tex('mask');
+    const mask = o.wreck || baked ? null : tex('mask');
     this.team.visible = mask !== null;
     if (mask) {
       this.team.texture = mask;
@@ -179,8 +181,9 @@ export class UnitSpriteView {
       const idle = !o.firing && !o.wreck && Math.abs(o.vx) + Math.abs(o.vy) < 0.01;
       const look = idle ? Math.round(Math.sin(performance.now() / 4000 + this.tie * 40) * 1.4) * (4096 / info.dirs) : 0;
       const tdir = SpriteLibrary.dirFor(o.facing + look, info.dirs);
-      const tc = this.lib.texture(this.id, 'turret', 'idle', tdir, 0, 'color');
-      const tm = this.lib.texture(this.id, 'turret', 'idle', tdir, 0, 'mask');
+      const tb = o.wreck ? null : this.lib.colored(this.id, 'turret', 'idle', tdir, 0, o.color);
+      const tc = tb ?? this.lib.texture(this.id, 'turret', 'idle', tdir, 0, 'color');
+      const tm = tb ? null : this.lib.texture(this.id, 'turret', 'idle', tdir, 0, 'mask');
       this.turret.visible = tc !== null;
       if (tc) this.turret.texture = tc;
       this.turret.tint = o.wreck ? WRECK_TINT : 0xffffff;
@@ -237,8 +240,9 @@ export class StructureSpriteView {
     this.root.visible = o.visible;
     this.root.position.set(o.px, o.py);
     this.root.zIndex = o.depth;
-    this.body.texture = tex('color') ?? this.body.texture;
-    const mask = tex('mask');
+    const baked = this.lib.colored(this.id, 'body', state, 0, 0, o.color);
+    this.body.texture = baked ?? tex('color') ?? this.body.texture;
+    const mask = baked ? null : tex('mask');
     this.team.visible = mask !== null;
     if (mask) {
       this.team.texture = mask;
@@ -251,8 +255,9 @@ export class StructureSpriteView {
     if (this.turret && this.turretTeam) {
       const showTurret = state !== 'construction';
       const d = SpriteLibrary.dirFor(o.facing, 16);
-      const tc = this.lib.texture(this.id, 'turret', 'idle', d, 0, 'color');
-      const tm = this.lib.texture(this.id, 'turret', 'idle', d, 0, 'mask');
+      const tb = this.lib.colored(this.id, 'turret', 'idle', d, 0, o.color);
+      const tc = tb ?? this.lib.texture(this.id, 'turret', 'idle', d, 0, 'color');
+      const tm = tb ? null : this.lib.texture(this.id, 'turret', 'idle', d, 0, 'mask');
       this.turret.visible = showTurret && tc !== null;
       if (tc) this.turret.texture = tc;
       this.turretTeam.visible = showTurret && tm !== null;
