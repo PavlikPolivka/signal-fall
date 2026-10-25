@@ -28,6 +28,8 @@ export class SpriteLibrary {
   private textures = new Map<string, Texture>();
   private loading = new Map<string, Promise<void>>();
   private loaded = new Set<string>();
+  /** Atlas pages per faction (to bake them all up front). */
+  private pages = new Map<string, TextureSource[]>();
 
   /** Load the 2x atlases (Ultra graphics on a high-DPI screen); set before anything loads. */
   hiDpi = false;
@@ -81,6 +83,7 @@ export class SpriteLibrary {
         source.style.update();
         source.updateMipmaps();
       }
+      if (source) this.pages.set(faction, [...(this.pages.get(faction) ?? []), source]);
       for (const [name, tex] of Object.entries(sheet.textures)) {
         this.textures.set(name, tex);
         if (name.endsWith('.mask')) {
@@ -123,6 +126,12 @@ export class SpriteLibrary {
     const out = new Texture({ source: page, frame: tex.frame.clone(), orig: tex.orig.clone(), trim: tex.trim?.clone(), defaultAnchor: tex.defaultAnchor });
     this.coloredTextures.set(key, out);
     return out;
+  }
+
+  /** Bake a faction's pages in a team color ahead of time (match start), so no page is baked mid-game. */
+  prebake(faction: string, color: number): void {
+    if (!this.renderer) return;
+    for (const page of this.pages.get(faction) ?? []) this.bake(page, color);
   }
 
   /** A copy of an atlas page with every mask, tinted `color`, multiplied onto its color frame (once per page and color). */

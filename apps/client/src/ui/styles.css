@@ -858,7 +858,8 @@ table.md-table td {
   display: block;
   pointer-events: none;
 }
-.icon img {
+.icon img,
+.icon canvas {
   display: block;
   width: 100%;
   height: 100%;

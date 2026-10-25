@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { go, onLeave } from './nav';
 import { defaultRules } from '@signal-fall/data';
-import { ClientState, seatLabels, saveSettings, setColorblind } from './game/state';
+import { ClientState, seatLabels, saveSettings, setColorblind, TEAM_COLORS } from './game/state';
 import { Input } from './input/input';
 import { FX_EVENT, FX_STRIDE } from '@signal-fall/sim';
 import { Snapshot, type FromWorker, type ScenarioSpec, type ToWorker } from './protocol';
@@ -497,14 +497,16 @@ async function mountGame(host: HTMLDivElement): Promise<void> {
       const time = lit?.kind === 'skirmish' ? lit.time : null;
       renderer.night.setTime((params.get('time') as 'day' | 'dusk' | 'night' | null) ?? time ?? state.mission?.time ?? 'day');
       // Load rendered art for the factions in this match (placeholders draw until it arrives).
-      for (const p of msg.players) {
+      msg.players.forEach((p, k) => {
         const id = state.rules.factions[p.faction]!.id;
         void renderer.lib.loadFaction(id).then(() => {
           if (!renderer.lib.has(id)) return;
+          // Team colors baked into this player's art now, while the match starts, not mid-battle.
+          renderer.lib.prebake(id, TEAM_COLORS[k % TEAM_COLORS.length]!);
           state.art.add(id);
           state.changed();
         });
-      }
+      });
       state.ready = true;
     } else if (msg.type === 'snapshot') {
       const first = state.cur === null;
