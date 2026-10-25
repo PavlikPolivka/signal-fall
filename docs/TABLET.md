@@ -15,7 +15,7 @@ Playing on an iPad (2026-10-25) turned up a set of problems, and a review in the
 | T8 | A tap near the screen edge can start edge-scrolling | Edge scrolling only for a mouse | done |
 | T9 | Long press selects text or opens Safari's callout; the page rubber-bands when dragged | No text selection, callouts or overscroll in the game | done |
 | T10 | Controls under the iPad's home bar and rounded corners | Keep clear of the safe areas | done: the page stays inside the safe area (no viewport-fit=cover; the home-screen app keeps a black status bar) |
-| T11 | Small touch targets (sidebar tabs, control-group buttons, menu buttons) | Bigger targets on touch screens | partly: sidebar tabs and control groups |
+| T11 | Small touch targets (sidebar tabs, control-group buttons, menu buttons) | Bigger targets on touch screens | done: menus, settings, commands, links and the sidebar at fingertip size; the touch bar hides under the menu |
 | T12 | Portrait iPad: the sidebar and command bar crowd the map | Check the layout in portrait and fix what crowds | done: in portrait the command panel moves under the build list and the map runs the full height |
 | T13 | Minimap: dragging on it should pan the view | Drag on the minimap pans | done: drag pans (Safari no longer takes the drag); holding still orders the selection there |
 | T14 | Double-tap a unit to select every one of its kind on screen (the double-click of a mouse) | Double-tap selects the type | done (taps already went through the double-click logic) |

@@ -77,7 +77,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <EndScreen state={state} />
       {state.multiplayer && <NetOverlays state={state} />}
       {(state.multiplayer || state.chat.length > 0) && <Chat state={state} />}
-      {state.touched && <TouchBar state={state} input={props.input} />}
+      {state.touched && !state.menuOpen && <TouchBar state={state} input={props.input} />}
       {state.replay && <ReplayBar state={state} />}
       {state.reportOpen && (
         <MatchReport

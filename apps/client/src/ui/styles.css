@@ -3185,3 +3185,35 @@ button {
     flex-wrap: wrap;
   }
 }
+/* Touch screens: every control at least a fingertip tall (Apple's 44 pt guideline, a little under in dense rows). */
+[data-touch] .menu button,
+[data-touch] .menu-panel .seg-row button,
+[data-touch] .seg button,
+[data-touch] .commands button,
+[data-touch] .actions button,
+[data-touch] .setup button,
+[data-touch] .setup select,
+[data-touch] .campaign button {
+  min-height: 40px;
+}
+[data-touch] .menu-panel input[type='range'] {
+  height: 32px;
+}
+/* A settings row with more than two choices wraps into a tidy grid beside its label. */
+.menu .seg-row > button:nth-of-type(odd) {
+  grid-column: 2;
+}
+.menu .seg-row > button:nth-of-type(even) {
+  grid-column: 3;
+}
+/* The replay link is a file picker (a label): line it up with the other links. */
+.setup-links .file-btn {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+}
+[data-touch] .setup-links button,
+[data-touch] .setup-links .file-btn {
+  min-height: 40px;
+  padding: 0 10px;
+}
