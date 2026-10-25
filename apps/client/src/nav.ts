@@ -42,11 +42,37 @@ export function go(url: string): void {
   frame.addEventListener('load', () => frame.contentWindow?.focus());
 }
 
+type WebkitDocument = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => void; webkitFullscreenEnabled?: boolean };
+type WebkitElement = HTMLElement & { webkitRequestFullscreen?: () => void };
+
+/**
+ * How this device can play fullscreen: the browser's fullscreen, or (iPad and iPhone, where Safari only
+ * fullscreens videos) by running the game from the home screen; 'app' when it already runs that way.
+ */
+export function fullscreenMode(): 'api' | 'home-screen' | 'app' {
+  // (Browser fullscreen also reports display-mode: fullscreen; a home-screen app does without being in it.)
+  const app = matchMedia('(display-mode: standalone)').matches || (matchMedia('(display-mode: fullscreen)').matches && !isFullscreen());
+  if (app || (navigator as Navigator & { standalone?: boolean }).standalone) return 'app';
+  const apple = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (apple) return 'home-screen';
+  const doc = topDocument() as WebkitDocument;
+  return doc.fullscreenEnabled || doc.webkitFullscreenEnabled ? 'api' : 'home-screen';
+}
+
 /** The document to put in fullscreen: the outer page when we are its frame. */
 export function toggleFullscreen(): Promise<void> {
-  const doc = topDocument();
+  const doc = topDocument() as WebkitDocument;
   if (doc.fullscreenElement) return doc.exitFullscreen();
-  return doc.documentElement.requestFullscreen().then(async () => {
+  if (doc.webkitFullscreenElement) {
+    doc.webkitExitFullscreen?.();
+    return Promise.resolve();
+  }
+  const root = doc.documentElement as WebkitElement;
+  if (!root.requestFullscreen && root.webkitRequestFullscreen) {
+    root.webkitRequestFullscreen();
+    return Promise.resolve();
+  }
+  return root.requestFullscreen().then(async () => {
     // Keyboard Lock lets the game receive Ctrl+W/T/N-style chords in fullscreen (Chromium).
     const kb = ((embedded ? window.parent.navigator : navigator) as Navigator & { keyboard?: { lock?: () => Promise<void> } }).keyboard;
     await kb?.lock?.().catch(() => undefined);
@@ -59,12 +85,17 @@ function topDocument(): Document {
 }
 
 export function isFullscreen(): boolean {
-  return !!topDocument().fullscreenElement;
+  const doc = topDocument() as WebkitDocument;
+  return !!(doc.fullscreenElement ?? doc.webkitFullscreenElement);
 }
 
 /** Call `fn` whenever fullscreen turns on or off; returns the unsubscribe. */
 export function onFullscreenChange(fn: () => void): () => void {
   const doc = topDocument();
   doc.addEventListener('fullscreenchange', fn);
-  return () => doc.removeEventListener('fullscreenchange', fn);
+  doc.addEventListener('webkitfullscreenchange', fn);
+  return () => {
+    doc.removeEventListener('fullscreenchange', fn);
+    doc.removeEventListener('webkitfullscreenchange', fn);
+  };
 }

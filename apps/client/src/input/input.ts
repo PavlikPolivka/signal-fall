@@ -84,6 +84,8 @@ export class Input {
   private mouse = { x: -1, y: -1, inside: false };
   /** Direction the cursor left the window through (keeps scrolling until it returns), or null. */
   private exited: { dx: number; dy: number } | null = null;
+  /** The kind of pointer used last (edge scrolling follows a mouse only). */
+  private lastPointer = 'mouse';
   /** Since when the cursor has been in a panel-side edge zone (for the dwell delay). */
   private panelEdgeSince = 0;
   private drag: { x0: number; y0: number; x1: number; y1: number; button: number } | null = null;
@@ -117,6 +119,7 @@ export class Input {
       this.state.altHeld = false;
     });
     canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+    window.addEventListener('pointerdown', (e) => (this.lastPointer = e.pointerType), { capture: true });
     window.addEventListener('pointermove', (e) => this.onPointerMove(e));
     window.addEventListener('pointerup', (e) => this.onPointerUp(e));
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -175,6 +178,7 @@ export class Input {
    * - near its right/bottom edge (next to the sidebar / command bar): ramped, after a short dwell
    */
   private edgeScroll(): [number, number] {
+    if (this.lastPointer !== 'mouse') return [0, 0];
     if (this.exited) return [this.exited.dx, this.exited.dy];
     if (!this.mouse.inside) return [0, 0];
     const mx = this.mouse.x;
@@ -705,6 +709,7 @@ export class Input {
   }
 
   private onPointerMove(e: PointerEvent): void {
+    this.lastPointer = e.pointerType;
     if (e.pointerType === 'touch') {
       this.onTouchMove(e);
       return;

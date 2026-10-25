@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Win = { __signalFall: any };
@@ -60,4 +60,40 @@ test('touch: drag pans, tap selects, long press backs out', async ({ page }) => 
   // Hold until the long press registers (slow CI machines take a while).
   await expect.poll(() => page.evaluate(() => (window as unknown as Win).__signalFall.state.selection.length), { timeout: 10_000 }).toBe(0);
   await touch(page, 'pointerup', 300, 300);
+});
+
+// The iPad preset minus its browser choice (a test group can't switch browsers; the test runs on WebKit).
+const { defaultBrowserType: _browser, ...IPAD } = devices['iPad Pro 11 landscape']!;
+
+test.describe('iPad', () => {
+  test.use(IPAD);
+  test('a tap builds without a card; a long press opens the card with cancel, a tap outside closes it; fullscreen explains the home screen', async ({ page, browserName }) => {
+    test.skip(browserName !== 'webkit', 'iPad is Safari');
+    await page.goto('/play/');
+    await page.tap('[data-testid=menu-fullscreen]');
+    await expect(page.getByTestId('home-screen-note')).toContainText('Add to Home Screen');
+    await page.goto('/play/?seed=8&size=S&ai=easy');
+    await page.waitForFunction(() => (window as unknown as { __signalFall: { state: { cur: unknown } } }).__signalFall?.state?.cur);
+    await page.evaluate(() => {
+      const s = (window as unknown as { __signalFall: { state: any } }).__signalFall.state; // eslint-disable-line @typescript-eslint/no-explicit-any
+      for (let i = 0; i < s.cur.entityCount; i++) {
+        const h = s.cur.get(s.cur.ent(i), 0);
+        if (s.isOwn(h)) return s.send({ type: 'deploy', units: [h] });
+      }
+    });
+    await expect(page.locator('[data-item=dynamo]')).toBeVisible();
+    await page.waitForTimeout(1500);
+    await page.locator('[data-item=dynamo]').tap();
+    await expect(page.locator('.card-anchor')).toHaveCount(0);
+    // Keyboard letters are hidden on a touch screen.
+    await expect(page.locator('[data-item=dynamo] .key')).toBeHidden();
+    const b = page.locator('[data-item=bunkhouse]');
+    await b.dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: true });
+    await page.waitForTimeout(700);
+    await b.dispatchEvent('pointerup', { pointerType: 'touch', isPrimary: true });
+    await b.dispatchEvent('click');
+    await expect(page.getByTestId('item-card-actions')).toBeVisible();
+    await page.touchscreen.tap(300, 400);
+    await expect(page.locator('.card-anchor')).toHaveCount(0);
+  });
 });

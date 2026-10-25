@@ -123,7 +123,11 @@ export function ItemCard({ state, rule, blocked }: { state: ClientState; rule: S
         </p>
       )}
       <p class="hint muted">
-        {rule.kind === 'unit'
+        {state.touched
+          ? rule.kind === 'unit'
+            ? 'Tap: queue one · hold: this card, with cancel and repeat'
+            : 'Tap: build, then tap the map to place · hold: this card, with cancel'
+          : rule.kind === 'unit'
           ? 'Click: queue 1 · Shift+click: 5 · Ctrl+click: repeat · Right-click: cancel'
           : `Click: build, then click again to place${rule.category === 'defenses' ? ' · Shift+click the map: place and start the next' : ''} · Right-click: cancel`}
       </p>

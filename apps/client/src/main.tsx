@@ -263,6 +263,20 @@ state.rematch = () => {
   }
   go(location.pathname);
 };
+// Touch screens: the page gets data-touch (key letters hidden, bigger targets, tap wording) while a finger is
+// in use, and a mouse brings the mouse look back. The page itself never zooms: Safari ignores the viewport's
+// user-scalable, so its pinch gestures are stopped here (the map has its own pinch zoom).
+const pointerKind = (e: PointerEvent) => {
+  const touch = e.pointerType === 'touch';
+  document.documentElement.toggleAttribute('data-touch', touch);
+  if (touch && !state.touched) {
+    state.touched = true;
+    state.changed();
+  }
+};
+if (matchMedia('(pointer: coarse)').matches) document.documentElement.setAttribute('data-touch', '');
+window.addEventListener('pointerdown', pointerKind, { capture: true });
+for (const g of ['gesturestart', 'gesturechange']) document.addEventListener(g, (e) => e.preventDefault(), { passive: false });
 state.applySettings = () => {
   saveSettings(state.settings);
   renderer.effects.reduced = state.settings.effects === 'reduced';

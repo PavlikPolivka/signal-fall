@@ -3108,3 +3108,56 @@ select.handicap {
   flex: 1;
   margin-right: 6px;
 }
+
+/* Tablets: no page zoom on double tap, no long-press callouts or text selection, no rubber-banding. */
+html,
+body {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: 100%;
+}
+img,
+button {
+  -webkit-user-drag: none;
+}
+/* On a touch screen the keyboard letters only get in the way. */
+[data-touch] kbd,
+[data-touch] .item .key {
+  display: none;
+}
+/* Bigger touch targets. */
+[data-touch] .sidebar .tabs button {
+  min-height: 44px;
+}
+[data-touch] .groups button,
+[data-touch] .control-groups button {
+  min-height: 36px;
+  min-width: 40px;
+}
+/* iPad and iPhone: how to play fullscreen (from the home screen). */
+.fullscreen-note {
+  position: fixed;
+  top: 56px;
+  right: 12px;
+  z-index: 21;
+  max-width: 300px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+  background: rgba(11, 13, 16, 0.95);
+  border: 1px solid var(--accent, #e8c547);
+  border-radius: 8px;
+}
+/* A build card held open on a touch screen: its actions. */
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.card-actions button {
+  min-height: 40px;
+  padding: 0 12px;
+}

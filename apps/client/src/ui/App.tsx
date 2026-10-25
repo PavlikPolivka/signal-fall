@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'preact/hooks';
-import { go, toggleFullscreen } from '../nav';
+import { fullscreenMode, go, toggleFullscreen } from '../nav';
 import { HILL_TICKS, KIND, MARKER, POINT } from '@signal-fall/sim';
 import type { StructureRule, UnitRule } from '@signal-fall/data';
 import { E, ENT_FLAG, H, P, P_HILL } from '../protocol';
@@ -23,7 +23,7 @@ import { Tutorial } from './Tutorial';
 import { markMissionWon, nextMission } from './Campaign';
 import { Epilogue } from './Epilogue';
 import { campaignOf } from '../game/scenario';
-import { swapSavedSides } from './Setup';
+import { HOME_SCREEN_NOTE, swapSavedSides } from './Setup';
 import { clock } from '../game/saves';
 
 const FX = 1024;
@@ -49,7 +49,7 @@ export function App(props: { state: ClientState; input: Input; renderer: Rendere
       <div class="game" ref={hostRef} data-testid="game" />
       <BottomPanel state={state} input={props.input} />
       <Sidebar state={state} input={props.input} renderer={props.renderer} />
-      <HoverCards state={state} />
+      <HoverCards state={state} input={props.input} />
       {state.menuOpen && <Menu state={state} input={props.input} audio={props.audio} />}
       {state.creditsOpen && (
         <Credits
@@ -481,9 +481,13 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       )}
       {state.placing && (
         <div class="hint" data-testid="placing-hint">
-          {state.placing.planned
-            ? 'Click where to build it · click the icon again to start without a spot · Esc cancels'
-            : 'Click to place · right-click or Esc to cancel'}
+          {state.touched
+            ? state.placing.planned
+              ? 'Tap where to build it · tap the icon again to start without a spot · Cancel stops'
+              : 'Tap the map to place it · Cancel stops'
+            : state.placing.planned
+              ? 'Click where to build it · click the icon again to start without a spot · Esc cancels'
+              : 'Click to place · right-click or Esc to cancel'}
         </div>
       )}
       {emergency && (
@@ -493,12 +497,12 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
       )}
       {!hasProducer && (
         <div class="hint muted">
-          {state.mission?.squad ? 'No base on this mission: your squad is all you have.' : structureTab ? 'Deploy your construction vehicle (D) to build.' : `Needs a ${roleName(state.rules, faction.index, tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield')}.`}
+          {state.mission?.squad ? 'No base on this mission: your squad is all you have.' : structureTab ? (state.touched ? 'Select your construction vehicle and tap Deploy to build.' : 'Deploy your construction vehicle (D) to build.') : `Needs a ${roleName(state.rules, faction.index, tabIndex === 0 ? 'barracks' : tabIndex === 1 ? 'factory' : 'airfield')}.`}
         </div>
       )}
       {hasProducer && !MENU_MODES.includes(state.mode) && !state.placing && (
         <div class="hint muted" data-testid="tab-hint">
-          Press {TABS.find((t) => t.id === state.sidebarTab)!.key}, then a letter
+          {state.touched ? 'Tap to build · hold for details' : `Press ${TABS.find((t) => t.id === state.sidebarTab)!.key}, then a letter`}
         </div>
       )}
       <div class={`grid ${MENU_MODES.includes(state.mode) ? 'keys' : ''} ${art ? 'art' : ''}`} data-testid="build-grid">
@@ -546,15 +550,36 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
               aria-disabled={disabled}
               aria-label={title}
               data-item={it.id}
-              onMouseEnter={(e) => {
+              onPointerEnter={(e) => {
+                // A mouse shows the card on hover; a finger only with a long press (a tap just builds).
+                if (e.pointerType !== 'mouse') return;
                 state.hoverItem = { index: it.index, kind: it.kind, top: (e.currentTarget as HTMLElement).getBoundingClientRect().top, blocked: missing.length > 0 ? undefined : blockedReason };
                 state.changed();
               }}
-              onMouseLeave={() => {
+              onPointerLeave={(e) => {
+                if (e.pointerType !== 'mouse' || state.hoverItem?.pinned) return;
                 state.hoverItem = null;
                 state.changed();
               }}
+              onPointerDown={(e) => {
+                if (e.pointerType !== 'touch') return;
+                const top = (e.currentTarget as HTMLElement).getBoundingClientRect().top;
+                clearTimeout(itemPress.timer);
+                itemPress.held = false;
+                itemPress.timer = setTimeout(() => {
+                  itemPress.held = true;
+                  state.hoverItem = { index: it.index, kind: it.kind, top, blocked: missing.length > 0 ? undefined : blockedReason, pinned: true };
+                  state.changed();
+                }, LONG_PRESS_MS);
+              }}
+              onPointerUp={() => clearTimeout(itemPress.timer)}
+              onPointerCancel={() => clearTimeout(itemPress.timer)}
               onClick={(e) => {
+                // The tap that ends a long press opened the card: it doesn't also build.
+                if (itemPress.held) {
+                  itemPress.held = false;
+                  return;
+                }
                 if (disabled) return;
                 if (it.kind === 'structure') input.activateStructure(it);
                 else if (e.ctrlKey || e.metaKey) input.toggleRepeat(it);
@@ -1112,13 +1137,53 @@ function SelectedOne({ state, h }: { state: ClientState; h: number }) {
   );
 }
 
-function HoverCards({ state }: { state: ClientState }) {
+/** A long press on a build button (touch): opens its card instead of building. */
+const LONG_PRESS_MS = 450;
+const itemPress: { timer: ReturnType<typeof setTimeout> | undefined; held: boolean } = { timer: undefined, held: false };
+
+function HoverCards({ state, input }: { state: ClientState; input: Input }) {
   const item = state.hoverItem;
+  // A card held open on a touch screen closes with a tap anywhere outside it.
+  useEffect(() => {
+    if (!item?.pinned) return;
+    const close = (e: PointerEvent) => {
+      if ((e.target as HTMLElement).closest?.('.card-anchor')) return;
+      state.hoverItem = null;
+      state.changed();
+    };
+    const t = setTimeout(() => window.addEventListener('pointerdown', close, { capture: true }), 0);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('pointerdown', close, { capture: true });
+    };
+  }, [item?.pinned, item?.index]);
   if (item) {
     const rule = item.kind === 'unit' ? state.rules.units[item.index]! : state.rules.structures[item.index]!;
+    const close = () => {
+      state.hoverItem = null;
+      state.changed();
+    };
     return (
       <div class="card-anchor side" style={{ top: `${Math.min(item.top, window.innerHeight - 380)}px` }}>
         <ItemCard state={state} rule={rule} blocked={item.blocked} />
+        {item.pinned && (
+          <div class="card card-actions" data-testid="item-card-actions">
+            {rule.kind === 'unit' ? (
+              <>
+                <button onClick={() => input.cancelUnit(rule, false)}>Cancel one</button>
+                <button onClick={() => input.cancelUnit(rule, true)}>Cancel all</button>
+                <button class={state.repeat.has(rule.index) ? 'active' : ''} onClick={() => input.toggleRepeat(rule)}>
+                  {state.repeat.has(rule.index) ? 'Stop repeating' : 'Repeat'}
+                </button>
+              </>
+            ) : (
+              <button onClick={() => input.cancelStructure(rule)}>Cancel</button>
+            )}
+            <button data-testid="item-card-close" onClick={close}>
+              Close
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -1874,9 +1939,15 @@ function Menu({ state, input, audio }: { state: ClientState; input: Input; audio
           <button class="start" onClick={() => input.toggleMenu()}>
             Resume
           </button>
-          <button data-testid="menu-fullscreen-game" onClick={() => void toggleFullscreen().catch(() => undefined)}>
-            Fullscreen
-          </button>
+          {fullscreenMode() !== 'app' && (
+            <button
+              data-testid="menu-fullscreen-game"
+              title={fullscreenMode() === 'home-screen' ? HOME_SCREEN_NOTE : undefined}
+              onClick={() => (fullscreenMode() === 'home-screen' ? state.notice(HOME_SCREEN_NOTE) : void toggleFullscreen().catch(() => undefined))}
+            >
+              Fullscreen
+            </button>
+          )}
           <nav class="menu-sections">
             {MENU_SECTIONS.filter(([id]) => id !== 'briefing' || briefing).map(([id, label]) => (
               <button class={section === id ? 'active' : ''} data-testid={`menu-section-${id}`} onClick={() => setSection(id)}>

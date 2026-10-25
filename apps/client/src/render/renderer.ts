@@ -172,6 +172,11 @@ export class Renderer {
 
   // --- coordinate conversion ---
 
+  /** Screen px the ground is raised at a point (float tiles): 0 without hills. */
+  groundLift(u: number, v: number): number {
+    return this.terrain.hills ? this.terrain.heightAt(u, v) : 0;
+  }
+
   /** Screen y of a ground point (float tiles): lifted onto the hills when they are on. */
   gy(u: number, v: number): number {
     return isoY(u, v) - (this.terrain.hills ? this.terrain.heightAt(u, v) : 0);
@@ -1268,10 +1273,11 @@ export class Renderer {
       if (q.item < 0 || !q.at) continue;
       const rule = s.rules.structures[q.item]!;
       const done = q.ready ? 1 : q.progress / 1000;
+      const lift = this.groundLift(q.at.tx + rule.footprintW / 2, q.at.ty + rule.footprintH / 2);
       for (let y = q.at.ty; y < q.at.ty + rule.footprintH; y++) {
         for (let x = q.at.tx; x < q.at.tx + rule.footprintW; x++) {
           const px = isoX(x, y);
-          const py = this.gy(x, y);
+          const py = isoY(x, y) - lift;
           this.overlay
             .poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2])
             .fill({ color: 0x9fd7ff, alpha: 0.08 + 0.22 * done })
@@ -1470,7 +1476,7 @@ export class Renderer {
     this.drawPlannedSites();
     for (const t of this.wallPlan) {
       const px = isoX(t.tx, t.ty);
-      const py = this.gy(t.tx, t.ty);
+      const py = isoY(t.tx, t.ty) - this.groundLift(t.tx + 0.5, t.ty + 0.5);
       this.overlay.poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2]).stroke({ width: 1.5, color: 0xffd34d, alpha: 0.85 });
     }
     const ghost = this.placementGhost();
@@ -1483,10 +1489,12 @@ export class Renderer {
       const cy = ghost.ty + ghost.rule.footprintH / 2;
       this.rangeRing(isoX(cx, cy), this.gy(cx, cy), ghost.rule.weapon.range / FX, 0xffb46d);
     }
+    // A flat, even grid at the height the building will stand at (its middle), not draped over the bumps.
+    const lift = this.groundLift(ghost.tx + ghost.rule.footprintW / 2, ghost.ty + ghost.rule.footprintH / 2);
     for (let y = ghost.ty; y < ghost.ty + ghost.rule.footprintH; y++) {
       for (let x = ghost.tx; x < ghost.tx + ghost.rule.footprintW; x++) {
         const px = isoX(x, y);
-        const py = this.gy(x, y);
+        const py = isoY(x, y) - lift;
         this.overlay
           .poly([px, py, px + TILE_W / 2, py + TILE_H / 2, px, py + TILE_H, px - TILE_W / 2, py + TILE_H / 2])
           .fill({ color, alpha: 0.35 })
@@ -1588,7 +1596,7 @@ export class Renderer {
       const d = rule.footprintH;
       const height = rule.role === 'wall' ? 10 : rule.weapon ? 18 : 14 + 6 * Math.min(w, d);
       // Footprint corners relative to the center, in world px.
-      const c = (u: number, v2: number) => [isoX(u, v2), this.gy(u, v2)] as const;
+      const c = (u: number, v2: number) => [isoX(u, v2), isoY(u, v2)] as const;
       const [nX, nY] = c(-w / 2, -d / 2);
       const [eX, eY] = c(w / 2, -d / 2);
       const [sX, sY] = c(w / 2, d / 2);

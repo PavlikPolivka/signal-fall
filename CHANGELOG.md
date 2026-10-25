@@ -1,5 +1,11 @@
 # What's new
 
+## 2026-10-25 07:38 UTC
+
+- **Better on a tablet:** tapping build buttons quickly no longer zooms the page; a tap just builds, and a long press opens the card (with Cancel and Repeat), which a tap anywhere else closes; keyboard letters and mouse hints give way to tap wording; no text selection or page bounce; the view no longer edge-scrolls after a tap near the border.
+- **Fullscreen on iPad:** the button now explains how: *Share → Add to Home Screen*, then start Signal Fall from its icon to play without the browser bars (Safari only fullscreens videos).
+- **A cleaner placement grid:** while placing a building on the hills the grid is flat, at the height the building will stand, instead of draped over every bump.
+
 ## 2026-10-23 21:11 UTC
 
 - **Voice fixes in The Long Way Back:** four recordings (in Dig In, Dead Sky and Long Tom) read the actor's character notes aloud before the line. They are re-recorded.

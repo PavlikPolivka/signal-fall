@@ -158,7 +158,8 @@ export class ClientState {
   hits: { x: number; y: number; time: number }[] = [];
   /** Sidebar item under the cursor and the button's screen top. */
   /** Build button under the cursor; `blocked` says why it can't be used now (shown on its card). */
-  hoverItem: { index: number; kind: 'unit' | 'structure'; top: number; blocked?: string } | null = null;
+  /** The build card shown: hovered with a mouse, or held open by a long press on a touch screen (`pinned`). */
+  hoverItem: { index: number; kind: 'unit' | 'structure'; top: number; blocked?: string; pinned?: boolean } | null = null;
   /** World entity under the cursor and where (client px). */
   hoverEntity = -1;
   hoverPos = { x: 0, y: 0 };
