@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-25 07:44 UTC
+
+- **Tablet, part 2:** placing a building by touch shows it first (tap again or ✓ Place to build, tap elsewhere to move it); dragging on the minimap pans and holding still on it sends the selection there; a quick two-finger tap backs out like Esc; in portrait the command panel moves under the build list so the map gets the whole height; the tutorial tips talk about taps on a tablet.
+
 ## 2026-10-25 07:38 UTC
 
 - **Better on a tablet:** tapping build buttons quickly no longer zooms the page; a tap just builds, and a long press opens the card (with Cancel and Repeat), which a tap anywhere else closes; keyboard letters and mouse hints give way to tap wording; no text selection or page bounce; the view no longer edge-scrolls after a tap near the border.

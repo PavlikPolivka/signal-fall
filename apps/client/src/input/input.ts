@@ -564,6 +564,8 @@ export class Input {
   // a long press backs out like a right click ---
   private touches = new Map<number, { x: number; y: number; x0: number; y0: number; t0: number }>();
   private pinch: { d: number; zoom: number; cx: number; cy: number } | null = null;
+  /** Two fingers down: when, and whether they pinched or panned (a still, quick two-finger tap is Esc). */
+  private twoFinger: { t0: number; moved: boolean } | null = null;
   private longPress: ReturnType<typeof setTimeout> | null = null;
 
   private onTouchDown(e: PointerEvent): void {
@@ -583,6 +585,7 @@ export class Input {
     if (this.touches.size === 2) {
       const [a, b] = [...this.touches.values()];
       this.pinch = { d: Math.hypot(a!.x - b!.x, a!.y - b!.y), zoom: this.renderer.camera.zoom, cx: (a!.x + b!.x) / 2, cy: (a!.y + b!.y) / 2 };
+      this.twoFinger = { t0: performance.now(), moved: false };
       this.drag = null;
       this.renderer.drawBox(null);
       return;
@@ -615,6 +618,7 @@ export class Input {
       cam.zoom = Math.max(0.4, Math.min(2, (this.pinch.zoom * d) / Math.max(1, this.pinch.d)));
       const cx = (a!.x + b!.x) / 2;
       const cy = (a!.y + b!.y) / 2;
+      if (this.twoFinger && (Math.abs(d - this.pinch.d) > 12 || Math.hypot(a!.x - a!.x0, a!.y - a!.y0) > 12 || Math.hypot(b!.x - b!.x0, b!.y - b!.y0) > 12)) this.twoFinger.moved = true;
       cam.x -= (cx - this.pinch.cx) / cam.zoom;
       cam.y -= (cy - this.pinch.cy) / cam.zoom;
       this.pinch.cx = cx;
@@ -639,6 +643,15 @@ export class Input {
     if (this.longPress) clearTimeout(this.longPress);
     this.longPress = null;
     if (this.touches.size < 2) this.pinch = null;
+    // A quick two-finger tap that didn't pinch or pan: Esc (cancel the mode or placement, else deselect).
+    if (this.twoFinger && this.touches.size === 0) {
+      const quick = !this.twoFinger.moved && performance.now() - this.twoFinger.t0 < 350;
+      this.twoFinger = null;
+      if (quick) {
+        this.run('cancel');
+        return;
+      }
+    }
     if (!t) return;
     const d = this.drag;
     if (d) {
@@ -651,7 +664,7 @@ export class Input {
     }
     // A short tap that barely moved: a click.
     if (Math.hypot(t.x - t.x0, t.y - t.y0) < 12 && performance.now() - t.t0 < 450 && this.touches.size === 0) {
-      if (this.state.placing) this.tryPlace(t.x, t.y, false);
+      if (this.state.placing) this.touchPlace(t.x, t.y);
       else if (TARGET_MODES.includes(this.state.mode)) this.targetClick(t.x, t.y, false);
       else this.leftClick(t.x, t.y, false, false);
     }
@@ -1199,6 +1212,7 @@ export class Input {
 
   stopPlacing(): void {
     this.state.placing = null;
+    this.touchSpot = null;
     this.state.changed();
   }
 
@@ -1217,6 +1231,8 @@ export class Input {
 
   /** Last cursor position over the game view, in canvas px (for the placement ghost). */
   cursor(): { x: number; y: number } | null {
+    // Placing on a touch screen: the spot the last tap chose (there is no cursor to follow).
+    if (this.touchSpot && this.state.placing) return this.touchSpot;
     if (!this.mouse.inside) return null;
     const r = this.canvas.getBoundingClientRect();
     return { x: this.mouse.x - r.left, y: this.mouse.y - r.top };
@@ -1276,6 +1292,37 @@ export class Input {
       break;
     }
     s.changed();
+  }
+
+  /** Placing on a touch screen: the spot chosen so far (screen px in the canvas), shown as the ghost. */
+  touchSpot: { x: number; y: number } | null = null;
+
+  /**
+   * A tap while placing on a touch screen: the first tap shows the building there, a tap on the same spot
+   * (or ✓ in the touch bar) builds it, a tap elsewhere moves it.
+   */
+  private touchPlace(sx: number, sy: number): void {
+    const at = this.placementAt(sx, sy);
+    const was = this.touchSpot ? this.placementAt(this.touchSpot.x, this.touchSpot.y) : null;
+    if (at && was && Math.abs(at.tx - was.tx) <= 1 && Math.abs(at.ty - was.ty) <= 1) {
+      this.confirmTouchPlace();
+      return;
+    }
+    this.touchSpot = { x: sx, y: sy };
+    this.state.changed();
+  }
+
+  /** ✓: build where the touch ghost stands. */
+  confirmTouchPlace(): void {
+    const spot = this.touchSpot;
+    if (!spot) return;
+    const at = this.placementAt(spot.x, spot.y);
+    if (at?.error) {
+      this.state.notice(at.error);
+      return;
+    }
+    this.touchSpot = null;
+    this.tryPlace(spot.x, spot.y, false);
   }
 
   private tryPlace(sx: number, sy: number, shift: boolean): void {

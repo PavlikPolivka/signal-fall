@@ -849,11 +849,27 @@ function Minimap({ state, renderer, input, radar }: { state: ClientState; render
       panning = true;
       canvas.setPointerCapture(e.pointerId);
       pan(e);
+      // Touch: holding still orders the selection there (a mouse's right-click).
+      if (e.pointerType === 'touch') {
+        const at = { x: e.clientX, y: e.clientY };
+        clearTimeout(hold);
+        hold = setTimeout(() => {
+          const { u, v } = toTile({ clientX: at.x, clientY: at.y } as PointerEvent);
+          if (input.minimapOrder(u, v, false)) state.notice('Ordered there');
+        }, 500);
+        holdFrom = at;
+      }
     };
+    let hold: ReturnType<typeof setTimeout> | undefined;
+    let holdFrom = { x: 0, y: 0 };
     const move = (e: PointerEvent) => {
       if (panning) pan(e);
+      if (Math.hypot(e.clientX - holdFrom.x, e.clientY - holdFrom.y) > 10) clearTimeout(hold);
     };
-    const up = () => (panning = false);
+    const up = () => {
+      panning = false;
+      clearTimeout(hold);
+    };
     const noMenu = (e: Event) => e.preventDefault();
     canvas.addEventListener('pointerdown', down);
     canvas.addEventListener('pointermove', move);
@@ -1324,7 +1340,19 @@ function Hints({ state }: { state: ClientState }) {
     : refineries > 0 && harvesters < refineries * 2 && cur.tick > 3 * 60 * 20
       ? `${harvesters} harvester${harvesters === 1 ? '' : 's'} for ${refineries} refiner${refineries === 1 ? 'y' : 'ies'}: each refinery runs best with two. Build more from your factory.`
       : null;
-  const steps: [boolean, string][] = [
+  // On a touch screen the same steps, told with taps.
+  const t = state.touched;
+  const steps: [boolean, string][] = t
+    ? [
+        [has('conyard'), 'Tap your construction vehicle, then Deploy, to set up your base.'],
+        [has('power'), 'Tap Dynamo (power) in the Build tab, then tap the map where it should go and tap again to build it.'],
+        [has('refinery'), 'Build a refinery the same way: it comes with a harvester that turns Echo into credits.'],
+        [has('barracks') || has('factory'), 'Build a barracks or a vehicle factory to make an army.'],
+        [(roles.get('refinery') ?? 0) >= 2, 'Money wins matches: build a second refinery next to another Echo field, and keep two or three harvesters per refinery.'],
+        [army >= 5, 'Train units: open the Infantry or Vehicles tab and tap a unit once per unit. Hold a button for its details.'],
+        [false, 'Tap Army in the touch bar to select your army (or turn on Box and drag), then tap an enemy or the ground to attack. Destroy every enemy building to win.'],
+      ]
+    : [
     [has('conyard'), 'Select your construction vehicle and press D to deploy your base.'],
     [has('power'), 'To build power, press B, then P, and click where it should go. It builds and places itself.'],
     [has('refinery'), 'Press B, then R for a refinery: it comes with a harvester that turns Echo into credits.'],
@@ -1332,7 +1360,7 @@ function Hints({ state }: { state: ClientState }) {
     [(roles.get('refinery') ?? 0) >= 2, 'Money wins matches: build a second refinery (B, R) next to another Echo field, and keep two or three harvesters per refinery.'],
     [army >= 5, "Train units: press I, then a unit's letter once per unit (I, G, G, G queues three). V for vehicles."],
     [false, 'Select your army (drag a box or Ctrl+A) and click an enemy or the ground to attack. Destroy every enemy building to win.'],
-  ];
+      ];
   const next = steps.findIndex(([done]) => !done);
   const [, text] = steps[next]!;
   return (
@@ -1757,7 +1785,12 @@ function TouchBar({ state, input }: { state: ClientState; input: Input }) {
         Attack
       </button>
       <button onClick={() => input.run('stop')}>Stop</button>
-      <button onClick={() => input.rightClick(0, 0, false)}>Cancel</button>
+      {state.placing && input.touchSpot && (
+        <button class="start" data-testid="touch-place" onClick={() => input.confirmTouchPlace()}>
+          ✓ Place
+        </button>
+      )}
+      <button onClick={() => (state.placing ? input.stopPlacing() : input.rightClick(0, 0, false))}>Cancel</button>
     </div>
   );
 }

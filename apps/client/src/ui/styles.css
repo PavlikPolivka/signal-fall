@@ -236,6 +236,8 @@ kbd {
   position: relative;
 }
 .minimap {
+  /* Dragging on it pans the view, not the page. */
+  touch-action: none;
   width: 100%;
   aspect-ratio: 1;
   height: auto;
@@ -3160,4 +3162,26 @@ button {
 .card-actions button {
   min-height: 40px;
   padding: 0 12px;
+}
+/* Portrait tablets: the selection and command panel moves under the build list (which leaves room
+   there), so the map runs the full height of the screen. */
+@media (orientation: portrait) and (min-width: 600px) {
+  .layout {
+    grid-template-rows: calc(34px * var(--ui-scale, 1)) 1fr auto;
+  }
+  .game {
+    grid-row: 2 / 4;
+  }
+  .sidebar {
+    grid-row: 1 / 3;
+  }
+  .bottom {
+    grid-column: 2;
+    grid-row: 3;
+    grid-template-columns: 1fr;
+    border-left: 1px solid var(--line);
+  }
+  .bottom .groups {
+    flex-wrap: wrap;
+  }
 }

@@ -274,7 +274,11 @@ const pointerKind = (e: PointerEvent) => {
     state.changed();
   }
 };
-if (matchMedia('(pointer: coarse)').matches) document.documentElement.setAttribute('data-touch', '');
+// A touch-first device (a tablet) gets the touch look and wording from the start.
+if (matchMedia('(pointer: coarse)').matches) {
+  document.documentElement.setAttribute('data-touch', '');
+  state.touched = true;
+}
 window.addEventListener('pointerdown', pointerKind, { capture: true });
 for (const g of ['gesturestart', 'gesturechange']) document.addEventListener(g, (e) => e.preventDefault(), { passive: false });
 state.applySettings = () => {
