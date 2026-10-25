@@ -30,6 +30,20 @@ With six of eight cores kept busy the opening and zoomed-out views stay at 57–
 
 Chrome (Metal) runs 150–290 fps in the same scenes; it never showed these problems.
 
+After baking the team colors at match start and drawing the icons from cached canvases (no mid-game work),
+10-second runs in Zen at Retina:
+
+| Load on the machine | Opening | 400-unit battle | Zoomed out |
+|---|---|---|---|
+| None | 60 fps (p95 23 ms) | 60 (p95 23) | 60 (p95 23) |
+| One busy core (about a playing video) | 59 (p95 23) | 60 (p95 23) | 60 (p95 22) |
+| Two busy cores | 60, the odd 26–29 ms frame | 58 (p95 25) | 55 (p95 25) |
+
+A battle frame issues about 75 WebGL calls (4 draws, 14 texture binds), none of them a call that makes the page
+wait on the browser's GPU process; the game's own work is under 5 ms a frame. What remains under heavy load is
+the system scheduling other work. A runaway macOS service (`audioanalyticsd` at 100% of a core) is worth
+killing if the game stutters.
+
 ## Measuring Firefox
 
 Playwright's Firefox doesn't start here; the measurements drove a separate headless Zen over Marionette
