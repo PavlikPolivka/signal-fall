@@ -2,6 +2,7 @@
 
 ## 2026-10-27 22:06 UTC
 
+- **Ranked matches start by themselves again:** after the queue paired two players, the match waited for one of them to press Ready, although the screen said it would start on its own. Now it does.
 - **Shift+right-click works in Firefox and Zen:** clearing a whole build queue, or dropping every unit of a kind from the selection, did nothing there (those browsers keep Shift+right-click for their own menu). Firefox may still show its menu as well, but the order goes through.
 
 ## 2026-10-27 21:02 UTC
