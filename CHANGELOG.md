@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-27 22:06 UTC
+
+- **Shift+right-click works in Firefox and Zen:** clearing a whole build queue, or dropping every unit of a kind from the selection, did nothing there (those browsers keep Shift+right-click for their own menu). Firefox may still show its menu as well, but the order goes through.
+
 ## 2026-10-27 21:02 UTC
 
 - **Campaign progress follows your account:** with a saved account (email, Google or GitHub), the missions you have won are kept online, so a new computer or browser picks up where you left off. Progress from before you signed in is added to it. Guests keep their progress in their browser, as before.

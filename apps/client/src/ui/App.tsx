@@ -585,10 +585,18 @@ function Sidebar({ state, input, renderer }: { state: ClientState; input: Input;
                 else if (e.ctrlKey || e.metaKey) input.toggleRepeat(it);
                 else input.activateUnit(it, e.shiftKey ? 5 : 1);
               }}
+              // Firefox keeps Shift+right-click for its own menu and never sends contextmenu, so the Shift
+              // variant runs on mousedown (every browser) and contextmenu handles the plain right-click.
+              onMouseDown={(e) => {
+                if (e.button !== 2 || !e.shiftKey) return;
+                if (it.kind === 'structure') input.cancelStructure(it);
+                else input.cancelUnit(it, true);
+              }}
               onContextMenu={(e) => {
                 e.preventDefault();
+                if (e.shiftKey) return;
                 if (it.kind === 'structure') input.cancelStructure(it);
-                else input.cancelUnit(it, e.shiftKey);
+                else input.cancelUnit(it, false);
               }}
             >
               <Icon state={state} faction={faction.id} id={it.id} color={teamColor} />
@@ -929,10 +937,13 @@ function BottomPanel({ state, input }: { state: ClientState; input: Input }) {
                   data-type={type}
                   title={`${members.length} × ${rule.name}: click to select only these, Shift+click to drop them, right-click to drop one (Shift: all), Tab cycles`}
                   onClick={(e) => state.select(e.shiftKey ? sel.filter((x) => !members.includes(x)) : members)}
+                  // Shift+right-click on mousedown: Firefox sends no contextmenu with Shift held.
+                  onMouseDown={(e) => {
+                    if (e.button === 2 && e.shiftKey) state.select(sel.filter((x) => !members.includes(x)));
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    const drop = e.shiftKey ? members : members.slice(-1);
-                    state.select(sel.filter((x) => !drop.includes(x)));
+                    if (!e.shiftKey) state.select(sel.filter((x) => x !== members[members.length - 1]));
                   }}
                 >
                   <Icon state={state} faction={factionId} id={artId(rule)} color={TEAM_COLORS[state.field(h, E.owner) % TEAM_COLORS.length]!} />
