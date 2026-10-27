@@ -41,6 +41,8 @@ test('rematch with the sides swapped: you play the enemy faction on the same map
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
   await page.evaluate(() => (window as unknown as Win).__signalFall.state.send({ type: 'surrender' }));
   await page.click('[data-testid=end-rematch-swapped]');
+  // The rematch is a new page: until it loads, the old match (factions [0, 2]) still answers.
+  await page.waitForURL(/rematch=1/);
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur?.tick >= 0 && (window as unknown as Win).__signalFall.state.players.length === 2);
   const factions = await page.evaluate(() => (window as unknown as Win).__signalFall.state.players.map((p: { faction: number }) => p.faction));
   expect(factions).toEqual([2, 0]);
