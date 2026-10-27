@@ -101,7 +101,7 @@ pnpm --filter @signal-fall/assets atlas holdout 2x   # 2x WebP atlases for Ultra
 pnpm --filter @signal-fall/assets terrain            # procedural terrain textures
 ```
 
-Firefox e2e runs on Linux only: Playwright's Firefox build does not launch on macOS 27. CI covers it.
+Firefox e2e runs on Linux only (locally there too): Playwright's Firefox build does not launch on macOS 27. CI covers it.
 
 ## Determinism rules
 
