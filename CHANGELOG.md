@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-27 21:02 UTC
+
+- **Campaign progress follows your account:** with a saved account (email, Google or GitHub), the missions you have won are kept online, so a new computer or browser picks up where you left off. Progress from before you signed in is added to it. Guests keep their progress in their browser, as before.
+
 ## 2026-10-25 08:21 UTC
 
 - **Much faster in Firefox-based browsers:** a big battle went from about 13 frames a second to a steady 60 in Firefox and Zen. Team colors are now built into the unit art once per match instead of being blended live for every unit, and the build list's team-colored icons no longer force the browser to redraw the sidebar every frame.

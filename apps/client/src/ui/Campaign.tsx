@@ -3,12 +3,14 @@ import { Credits } from './Credits';
 import { Epilogue } from './Epilogue';
 import { CAMPAIGNS, campaignOf, type CampaignDifficulty, type CampaignSpec, type MissionSpec } from '../game/scenario';
 import { MenuScreen } from './Setup';
+import { backend } from '../net/backend';
+import { accountProgress, recordWins } from '../net/progress';
 
 const PROGRESS_KEY = 'signalfall.campaign';
 /** Short act names for the tabs: "Act II: Halcyon" shows as "Act II". */
 const actTab = (name: string) => name.split(':')[0]!;
 
-/** Missions won in this browser (by id). */
+/** Missions won in this browser (by id), merged with the account's when signed in. */
 export function campaignProgress(): Set<string> {
   try {
     return new Set(JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? '[]') as string[]);
@@ -17,13 +19,40 @@ export function campaignProgress(): Set<string> {
   }
 }
 
-export function markMissionWon(id: string): void {
-  const done = campaignProgress();
-  done.add(id);
+function saveProgress(done: Set<string>): void {
   try {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify([...done]));
   } catch {
     // Not kept.
+  }
+}
+
+export function markMissionWon(id: string): void {
+  const done = campaignProgress();
+  done.add(id);
+  saveProgress(done);
+  const sb = backend();
+  if (sb) recordWins(sb, [id], campaignDifficulty()).catch(() => {}); // The next sync retries it.
+}
+
+/**
+ * Merge this browser's progress with the account's, both ways. Returns whether the account has
+ * every mission open (testers), or null when there is nothing to sync (guest, offline, no backend).
+ */
+export async function syncCampaignProgress(): Promise<{ allMissions: boolean } | null> {
+  const sb = backend();
+  if (!sb) return null;
+  try {
+    const remote = await accountProgress(sb);
+    if (!remote) return null;
+    const done = campaignProgress();
+    const upload = [...done].filter((id) => !remote.won.includes(id));
+    for (const id of remote.won) done.add(id);
+    saveProgress(done);
+    await recordWins(sb, upload, campaignDifficulty());
+    return { allMissions: remote.allMissions };
+  } catch {
+    return null;
   }
 }
 
@@ -101,7 +130,15 @@ export function useBriefingVoice(mission: { id: string; briefing: string[] } | n
 
 /** The campaign: missions by act (each unlocked by winning the one before), and a briefing for the chosen one. */
 export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay: (m: MissionSpec) => void; brief?: string | null }) {
-  const done = campaignProgress();
+  const [done, setDone] = useState(campaignProgress);
+  const [allMissions, setAllMissions] = useState(false);
+  useEffect(() => {
+    void syncCampaignProgress().then((r) => {
+      if (!r) return;
+      setDone(campaignProgress());
+      setAllMissions(r.allMissions);
+    });
+  }, []);
   const briefedCampaign = brief ? campaignOf(brief) : null;
   const [campaign, setCampaign] = useState<CampaignSpec>(briefedCampaign ?? lastCampaign());
   const MISSIONS = campaign.missions;
@@ -161,7 +198,7 @@ export function Campaign({ onBack, onPlay, brief }: { onBack: () => void; onPlay
               m.act !== act ? null : (
                 <button
                   class={`mission ${chosen?.id === m.id ? 'active' : ''} ${done.has(m.id) ? 'won' : ''}`}
-                  disabled={i > 0 && !done.has(MISSIONS[i - 1]!.id) && !done.has(m.id)}
+                  disabled={!allMissions && i > 0 && !done.has(MISSIONS[i - 1]!.id) && !done.has(m.id)}
                   data-mission={m.id}
                   onClick={() => setChosen(m)}
                 >
