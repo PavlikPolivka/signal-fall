@@ -61,7 +61,8 @@ export function Multiplayer({
           stop = true;
           await leaveQueue(sb);
           setQueued(null);
-          void enter(m.host, undefined, m.host ? undefined : m.code, false, m.host ? m.code : undefined);
+          // Both sides know the room is ranked: the host starts it, the guest is ready without pressing Ready.
+          void enter(m.host, undefined, undefined, false, m.code);
           return;
         }
       } catch (e) {
