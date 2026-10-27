@@ -61,7 +61,7 @@ export function formationSlots(world: World, units: number[], x: number, y: numb
 
   // Spacing per unit: a bit more than its diameter side by side. Front to back a ground vehicle needs
   // its hull length (drawn about three radii long), or parked rows overlap nose to tail. (Hull-length
-  // spacing side by side too moved the faction balance; see docs/balance.)
+  // spacing side by side too moved the faction balance; see the balance tuning log.)
   const spacing = (i: number) => Math.max(FX_ONE, world.rules.units[e.type[units[i]!]!]!.radius * 2 + (FX_ONE >> 2));
   const length = (i: number) => {
     const r = world.rules.units[e.type[units[i]!]!]!;

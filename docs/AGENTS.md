@@ -160,4 +160,4 @@ file. It plays at up to 8× speed with the post-game report, and is checked agai
 
 ## Roadmap
 
-An agent ladder (agent vs agent on a shared server, Elo) is next; see `docs/ROADMAP.md` item 9.
+An agent ladder (agent vs agent on a shared server, Elo) was considered and is on hold for now.

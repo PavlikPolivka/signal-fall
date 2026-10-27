@@ -1,25 +1,18 @@
 # Signal Fall
 
-A fast, C&C-style sci-fi RTS for the browser: three asymmetric factions (Holdout, Halcyon, Choir), procedural isometric maps, skirmish vs AI and 1v1 peer-to-peer multiplayer. Built end to end by Claude Code, assets included.
+A fast, C&C-style sci-fi RTS for the browser: three asymmetric factions (Holdout, Halcyon, Choir), procedural isometric maps, skirmish vs AI, campaigns and peer-to-peer multiplayer. Built end to end by Claude Code, assets included.
 
 **https://signal-fall.app** (landing page) · **play: https://signal-fall.app/play/**
 
-See [docs/DESIGN.md](docs/DESIGN.md) for the full design.
+How the code fits together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Status
+## What's in it
 
-| Milestone | State |
-|---|---|
-| M0 Foundations | ✅ |
-| M1 Sim core | ✅ |
-| M2 Client | ✅ |
-| M3 Economy and base building | ✅ |
-| M4 Map generator | ✅ |
-| M5 AI, first playable | ✅ (human playtest pending) |
-| M6 Art and audio (Holdout) | ✅ |
-| M7 Halcyon and Choir | ✅ |
-| M8 Multiplayer | ✅ (live cross-network 20-minute match pending) |
-| M9 Polish and release | ✅ |
+Three factions with their own mechanics, generated maps with hills (three biomes, three sizes), skirmish against
+four AI levels, 1v1 and 2v2 online (rooms, a ranked queue with Elo, spectating), free-for-all and survival modes, a
+daily challenge, two fully voiced campaigns, a map editor, replays, an in-game Codex, touch controls for tablets, and
+an MCP server for LLM agents. What changed recently is in [CHANGELOG.md](CHANGELOG.md), which the game also shows as
+"What's new".
 
 ## Layout
 
