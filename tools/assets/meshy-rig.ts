@@ -9,6 +9,7 @@
  * task file, so a run resumes and nothing is paid for twice.
  */
 import { execFileSync } from 'node:child_process';
+import { keychain } from './keychain.js';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +21,7 @@ const API = 'https://api.meshy.ai/openapi/v1';
 /** Meshy animation library ids: walk-and-shoot (also idle and fire frames) and death. */
 export const CLIPS = { walk: 690, death: 184 } as const;
 
-const KEY = process.env.MESHY_API_KEY ?? execFileSync('security', ['find-generic-password', '-s', 'meshy-api', '-a', 'signal-fall', '-w']).toString().trim();
+const KEY = process.env.MESHY_API_KEY ?? keychain('meshy-api');
 const headers = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
 interface Task {

@@ -7,7 +7,7 @@ Casting and spoken directions are in gemini.json. Each line is generated once in
 tools/assets/build/voices-gemini/ (git ignores it; FORCE=1 or naming ids makes them again), transcribed back with
 a Gemini text model and compared with the script (a take that drops or adds words is made again, up to three
 times), then given its faction treatment from build.py and written over the game's mp3.
-The API key comes from the macOS keychain (service "gemini-api", account "signal-fall") or GEMINI_API_KEY.
+The API key comes from the system keychain (macOS keychain or Linux keyring; service "gemini-api", account "signal-fall") or GEMINI_API_KEY.
 """
 import base64
 import difflib
@@ -33,7 +33,11 @@ API = 'https://generativelanguage.googleapis.com/v1beta/models/'
 def api_key():
     if os.environ.get('GEMINI_API_KEY'):
         return os.environ['GEMINI_API_KEY']
-    return subprocess.run(['security', 'find-generic-password', '-s', 'gemini-api', '-a', 'signal-fall', '-w'], check=True, capture_output=True, text=True).stdout.strip()
+    if sys.platform == 'darwin':
+        cmd = ['security', 'find-generic-password', '-s', 'gemini-api', '-a', 'signal-fall', '-w']
+    else:
+        cmd = ['secret-tool', 'lookup', 'service', 'gemini-api', 'account', 'signal-fall']
+    return subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
 
 
 KEY = api_key()

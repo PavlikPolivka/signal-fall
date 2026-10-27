@@ -7,12 +7,13 @@
  * the preview (mesh) and refine (PBR textures) tasks, waits for them, records the task ids in
  * meshy/tasks/<id>.json (one file per model, so several runs can go in parallel) and downloads the
  * GLB to build/meshy/<id>.glb. Entries already done are only downloaded
- * if the GLB is missing. The API key comes from the macOS keychain (service "meshy-api") or MESHY_API_KEY.
+ * if the GLB is missing. The API key comes from the system keychain (macOS keychain or Linux keyring; service "meshy-api") or MESHY_API_KEY.
  *
  * Team color: prompts ask for bright magenta identification panels; the Blender import keys magenta
  * into the team mask.
  */
 import { execFileSync } from 'node:child_process';
+import { keychain } from './keychain.js';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,7 +42,7 @@ interface Manifest {
 
 function apiKey(): string {
   if (process.env.MESHY_API_KEY) return process.env.MESHY_API_KEY;
-  return execFileSync('security', ['find-generic-password', '-s', 'meshy-api', '-a', 'signal-fall', '-w']).toString().trim();
+  return keychain('meshy-api');
 }
 const KEY = apiKey();
 const headers = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };

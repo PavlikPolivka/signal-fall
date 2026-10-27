@@ -7,9 +7,9 @@
  * Writes the full original to build/missions/<id>.png (git ignores it) and a compact WebP for the game to
  * apps/client/public/assets/missions/<id>.webp. A regenerated image keeps the old one as missions/old/<id>_vN.webp
  * (committed, not shipped); the originals go to the `mission-art-originals` GitHub release.
- * The API key comes from the macOS keychain (service "gemini-api", account "signal-fall") or GEMINI_API_KEY.
+ * The API key comes from the system keychain (macOS keychain or Linux keyring; service "gemini-api", account "signal-fall") or GEMINI_API_KEY.
  */
-import { execFileSync } from 'node:child_process';
+import { keychain } from './keychain.js';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,7 +26,7 @@ mkdirSync(oldDir, { recursive: true });
 
 function apiKey(): string {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-  return execFileSync('security', ['find-generic-password', '-s', 'gemini-api', '-a', 'signal-fall', '-w']).toString().trim();
+  return keychain('gemini-api');
 }
 const KEY = apiKey();
 
