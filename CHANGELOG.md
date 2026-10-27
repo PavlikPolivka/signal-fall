@@ -1,5 +1,9 @@
 # What's new
 
+## 2026-10-27 21:07 UTC
+
+- **Shift+right-click works in Firefox and Zen:** clearing a whole build queue, or dropping every unit of a kind from the selection, did nothing there (those browsers keep Shift+right-click for their own menu). Firefox may still show its menu as well, but the order goes through.
+
 ## 2026-10-25 08:21 UTC
 
 - **Much faster in Firefox-based browsers:** a big battle went from about 13 frames a second to a steady 60 in Firefox and Zen. Team colors are now built into the unit art once per match instead of being blended live for every unit, and the build list's team-colored icons no longer force the browser to redraw the sidebar every frame.

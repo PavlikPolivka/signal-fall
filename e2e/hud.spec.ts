@@ -50,6 +50,17 @@ test('right-click on a selection card drops one of that type, Shift+right-click 
   expect(await count()).toBe(before - inCard);
 });
 
+test('Shift+right-click on a build button clears its whole queue (Firefox too)', async ({ page }) => {
+  await page.goto('/play/?scenario=sandbox');
+  await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
+  await page.keyboard.press('KeyI');
+  const grunt = page.locator('[data-item=grunt]');
+  await grunt.click({ modifiers: ['Shift'] });
+  await expect(grunt.locator('.count')).toHaveText('5');
+  await grunt.click({ button: 'right', modifiers: ['Shift'] });
+  await expect(grunt.locator('.count')).toHaveCount(0);
+});
+
 test('hovering an Echo field shows how much is left in it', async ({ page }) => {
   await page.goto('/play/?ai=none&size=S');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall?.state?.cur);
@@ -71,9 +82,37 @@ test('dragging with a wall picked lays a whole line, piece by piece', async ({ p
   await page.keyboard.press('KeyN');
   await page.keyboard.press('KeyW');
   await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.placing !== null);
+  // Drag across open ground: a finished piece won't place itself on a unit, so a line through the
+  // sandbox army stalls (where that is depends on the hills, the camera and where units stand).
+  const spot = await page.evaluate(() => {
+    const { state: s, input } = (window as unknown as Win).__signalFall;
+    const view = s.placementView();
+    const w = input.canvas.clientWidth / 2;
+    const h = input.canvas.clientHeight / 2;
+    const clear = (t: { tx: number; ty: number }, terrain: number) => {
+      for (let y = t.ty - 2; y <= t.ty + 2; y++) for (let x = t.tx - 2; x <= t.tx + 2; x++) if (view.unitOn(x, y)) return false;
+      const i = t.ty * view.width + t.tx;
+      return view.terrain[i] === terrain && view.echo[i] === 0
+        && !view.structures.some((b: { tx: number; ty: number; rule: { footprintW: number; footprintH: number } }) => t.tx >= b.tx && t.tx < b.tx + b.rule.footprintW && t.ty >= b.ty && t.ty < b.ty + b.rule.footprintH);
+    };
+    for (let dy = 0; dy <= 240; dy += 40) {
+      for (const sy of dy === 0 ? [0] : [dy, -dy]) {
+        for (let sx = -360; sx <= 360; sx += 40) {
+          const d = { x0: w + sx, y0: h + sy, x1: w + sx + 200, y1: h + sy + 100 };
+          const a = input.placementAt(d.x0, d.y0);
+          if (!a || a.error) continue;
+          const line = input.wallLine(d) as { tx: number; ty: number }[];
+          const terrain = view.terrain[a.ty * view.width + a.tx];
+          if (line.length >= 3 && line.every((t) => clear(t, terrain))) return d;
+        }
+      }
+    }
+    return null;
+  });
+  expect(spot).not.toBeNull();
   const box = (await page.locator('canvas').first().boundingBox())!;
-  const x = box.x + box.width / 2 + 120;
-  const y = box.y + box.height / 2 + 80;
+  const x = box.x + spot!.x0;
+  const y = box.y + spot!.y0;
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x + 100, y + 50, { steps: 5 });
