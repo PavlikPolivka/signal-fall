@@ -48,5 +48,5 @@ Pavel's Obsidian vault (`~/Documents/Pavel`), folder `Projects/Signal Fall/`, no
 
 - Commit and push to `main` per feature.
 - The sim, AI and mapgen are deterministic: no floats, no `/`, no `Math.*` (lint enforces this; use `idiv`).
-- Run Node 22: `source ~/.nvm/nvm.sh && nvm use 22`.
+- Run Node 22 (`.nvmrc`): the system Node if it is 22, or `source ~/.nvm/nvm.sh && nvm use 22`. pnpm comes from corepack or mise (`eval "$(mise env -s bash)"` if `pnpm` is not found).
 - Typecheck with `pnpm typecheck`, never `pnpm -s typecheck`: the silent flag hides failures.
