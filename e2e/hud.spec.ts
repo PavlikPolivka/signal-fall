@@ -126,7 +126,18 @@ test('dragging with a wall picked lays a whole line, piece by piece', async ({ p
   expect(st.planned).toBeGreaterThanOrEqual(2);
   // Once the first piece has placed itself, the next one is ordered.
   await page.evaluate(() => (window as unknown as Win).__signalFall.state.post({ type: 'speed', speed: 4 }));
-  await page.waitForFunction(() => (window as unknown as Win).__signalFall.state.sent.filter((c: { type: string }) => c.type === 'build').length >= 2, null, { timeout: 30_000 });
+  const probe = () => page.evaluate(() => {
+    const s = (window as unknown as Win).__signalFall.state;
+    const q = s.cur.buildQueue(s.localPlayer, 1);
+    return { tick: s.cur.tick, q: { item: q.item, progress: q.progress, ready: q.ready, at: q.at }, plan: s.wallPlan?.tiles, sent: s.sent.filter((c: { type: string }) => c.type === 'build' || c.type === 'place') };
+  });
+  const before = await probe();
+  await page
+    .waitForFunction(() => (window as unknown as Win).__signalFall.state.sent.filter((c: { type: string }) => c.type === 'build').length >= 2, null, { timeout: 30_000 })
+    .catch(async (e) => {
+      console.log('wall line stuck', JSON.stringify(before), JSON.stringify(await probe()));
+      throw e;
+    });
 });
 
 test('a power-hungry building can be switched off and on from its panel', async ({ page }) => {
