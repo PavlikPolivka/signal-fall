@@ -89,7 +89,8 @@ test.describe('iPad', () => {
     await expect(page.locator('[data-item=dynamo] .key')).toBeHidden();
     const b = page.locator('[data-item=bunkhouse]');
     await b.dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: true });
-    await page.waitForTimeout(700);
+    // Hold until the long press opens the card (on slow CI frames its timer fires late).
+    await expect(page.getByTestId('item-card-actions')).toBeVisible({ timeout: 10_000 });
     await b.dispatchEvent('pointerup', { pointerType: 'touch', isPrimary: true });
     await b.dispatchEvent('click');
     await expect(page.getByTestId('item-card-actions')).toBeVisible();
